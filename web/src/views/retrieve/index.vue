@@ -86,7 +86,9 @@
         :index-id="`${spaceUid}_${favoriteRequestID}`"
         :active-favorite="activeFavorite"
         :active-favorite-i-d="activeFavoriteID"
-        @handleClick="handleClickFavoriteItem" />
+        :visible-fields="visibleFields"
+        @handleClick="handleClickFavoriteItem"
+        @isRefreshFavorite="updateActiveFavoriteData" />
       <!-- 检索详情页左侧 -->
       <div v-show="showRetrieveCondition" class="retrieve-condition" :style="{ width: leftPanelWidth + 'px' }">
         <!-- 监控显示的 tab 切换 -->
@@ -107,12 +109,12 @@
               <span
                 v-if="isShowUiType"
                 v-bk-tooltips.light="$t('表单Tips')"
-                :disabled="isCanUseUiType || !isTableSearchType">
+                :disabled="isCanUseUiType || !isSqlSearchType">
                 <div
                   class="search-type"
                   @click="handleClickSearchType">
                   <span class="bk-icon icon-sort"></span>
-                  <span>{{isTableSearchType ? $t('表单') : 'SQL'}}</span>
+                  <span>{{isSqlSearchType ? $t('表单') : 'SQL'}}</span>
                 </div>
               </span>
               <!-- <bk-popover
@@ -138,15 +140,15 @@
           </div>
           <div class="tab-content" :style="`height:calc(100% - ${isAsIframe ? 60 : 108}px);`">
             <div class="tab-content-item" data-test-id="retrieve_div_dataQueryBox">
-              <template v-if="isTableSearchType">
-                <!-- 选择索引集 -->
-                <div class="tab-item-title">{{ $t('索引集') }}</div>
-                <select-indexSet
-                  :index-id="indexId"
-                  :index-set-list="indexSetList"
-                  :basic-loading.sync="basicLoading"
-                  @selected="handleSelectIndex"
-                  @updateIndexSetList="updateIndexSetList" />
+              <!-- 选择索引集 -->
+              <div class="tab-item-title">{{ $t('索引集') }}</div>
+              <select-indexSet
+                :index-id="indexId"
+                :index-set-list="indexSetList"
+                :basic-loading.sync="basicLoading"
+                @selected="handleSelectIndex"
+                @updateIndexSetList="updateIndexSetList" />
+              <template v-if="isSqlSearchType">
                 <!-- 查询语句 -->
                 <query-statement
                   v-model="retrieveParams.keyword"
@@ -244,7 +246,7 @@
                   </bk-button>
                   <favorite-popper
                     slot="content"
-                    :replace-favorite-data="replaceFavoriteData"
+                    :active-favorite="activeFavorite"
                     @favoriteTipsOperate="favoriteTipsOperate" />
                 </bk-popover>
                 <bk-button
@@ -352,6 +354,9 @@
     <add-collect-dialog
       v-model="isShowAddNewCollectDialog"
       :add-favorite-data="addFavoriteData"
+      :favorite-i-d="activeFavoriteID"
+      :replace-data="replaceFavoriteData"
+      :visible-fields="visibleFields"
       @submit="handleSubmitFavorite" />
   </div>
 </template>
@@ -519,9 +524,11 @@ export default {
       operatorConfig: {}, // 当前table操作的值
       authPageInfo: null,
       isShowAddNewCollectDialog: false, // 是否展示新增收藏弹窗
-      collectWidth: 0, // 收藏默认栏宽度
-      isShowCollect: false,
-      isTableSearchType: true, // 是否是sql模式
+      collectWidth: localStorage.getItem('isAutoShowCollect') === 'true' ? 240 : 0, // 收藏默认栏宽度
+      // isShowCollect: false,
+      isShowCollect: localStorage.getItem('isAutoShowCollect') === 'true',
+      isSqlSearchType: true, // 是否是sql模式
+      cacheKeywords: '', // 切换表单模式之前缓存的查询语句，用于切回sql模式时回填
       activeFavorite: {}, // 当前点击的收藏参数
       activeFavoriteID: -1,
       addFavoriteData: {}, // 新增收藏所需的参数
@@ -601,9 +608,11 @@ export default {
         this.authPageInfo = null;
         this.hasAuth = true;
       }
+      this.cacheKeywords = '';
       this.resetRetrieveCondition();
       this.$store.commit('updateIndexId', val);
       val && this.requestSearchHistory(val);
+      this.isSqlSearchType = !this.isShowUiType;
     },
     spaceUid: {
       async handler() {
@@ -613,6 +622,8 @@ export default {
         this.activeFavorite = {};
         this.activeFavoriteID = -1;
         this.retrieveParams.bk_biz_id = this.bkBizId;
+        this.isSqlSearchType = true;
+        this.cacheKeywords = '';
         this.fetchPageData();
       },
       immediate: true,
@@ -1006,13 +1017,13 @@ export default {
     },
     // 搜索记录
     retrieveFavorite({ index_set_id: indexSetID, params }) {
-      if (this.indexSetList.find(item => item.index_set_id === String(indexSetID))) {
-        delete params.search_fields;
-        this.indexId = String(indexSetID);
-        this.retrieveLog(params);
-      } else {
-        this.messageError(this.$t('没有找到该记录下相关索引集'));
-      }
+      // if (this.indexSetList.find(item => item.index_set_id === String(indexSetID))) {
+      delete params.search_fields;
+      this.indexId = String(indexSetID);
+      this.retrieveLog(params);
+      // } else {
+      //   this.messageError(this.$t('没有找到该记录下相关索引集'));
+      // }
     },
     // 关闭收藏浮层
     closeFavoritePopper() {
@@ -1581,7 +1592,8 @@ export default {
       this.showRetrieveCondition = false;
     },
     updateCollectCondition(status) {
-      this.collectWidth = status ? 300 : 0;
+      this.collectWidth = status ? 240 : 0;
+      localStorage.setItem('isAutoShowCollect', `${status}`);
       this.isShowCollect = status;
     },
     // 初始 tips 消失后显示普通的 tips
@@ -1621,14 +1633,14 @@ export default {
         host_scopes.target_node_type = '';
         host_scopes.target_nodes = [];
       }
-      const favoriteData = {
+      const favoriteData = { // 新增收藏参数
         index_set_id: this.indexId,
         space_uid: this.spaceUid,
         index_set_name: indexItem.index_set_name,
         display_fields: displayFields,
         visible_type: 'public',
         name: '',
-        is_enable_display_fields: true,
+        is_enable_display_fields: false,
         params: {
           host_scopes,
           keyword: this.retrieveParams.keyword,
@@ -1636,48 +1648,52 @@ export default {
           search_fields: [],
         },
       };
+      // 点击收藏不为空 则进行数据对比
       if (JSON.stringify(this.activeFavorite) !== '{}') {
-        const { params: { search_fields } } = this.activeFavorite;
-        const comparedSubData = {
+        // 检索参数 和 显示的收藏进行对比
+        const comparedSubData = { // 检索页面的实时
           params: {
             host_scopes: this.retrieveParams.host_scopes,
             addition: this.retrieveParams.addition,
             keyword: this.retrieveParams.keyword,
           },
         };
-        const comparedFavData = {
+        const comparedFavData = { // 收藏的对比参数
           params: {
             host_scopes: this.activeFavorite.params.host_scopes,
             addition: this.activeFavorite.params.addition,
             keyword: this.activeFavorite.params.keyword,
           },
         };
+        // 对比不同前 先判断当前收藏是否打开同时显示字段 若打开 则添加展示的替换数据
+        if (this.activeFavorite.is_enable_display_fields) {
+          comparedSubData.display_fields = this.visibleFields.map(item => item.field_name);
+          comparedFavData.display_fields = this.activeFavorite.display_fields;
+        }
+        // 若对比相同 则不显示是否替换tips
         if (JSON.stringify(comparedSubData) === JSON.stringify(comparedFavData)) {
           this.addFavoriteData = favoriteData;
           this.showFavoritePopperContent = false;
           this.isShowAddNewCollectDialog = true;
         } else {
-          // eslint-disable-next-line camelcase
-          comparedSubData.search_fields = search_fields;
-          const cloneFavorite = deepClone(this.activeFavorite);
-          cloneFavorite.params = this.retrieveParams;
-          Object.assign(this.replaceFavoriteData, cloneFavorite, comparedSubData);
+          this.addFavoriteData = {};
+          this.replaceFavoriteData = comparedSubData;
           this.showFavoritePopperContent = true; // 展示收藏是否替换Tips
-          this.isShowAddNewCollectDialog = false;
         }
-      } else { // 新增收藏
+      } else { // 点击收藏为空 新增收藏
         this.addFavoriteData = favoriteData;
         this.showFavoritePopperContent = false;
         this.isShowAddNewCollectDialog = true; // 展示新增弹窗
       }
     },
+    // 收藏更变tips操作
     favoriteTipsOperate(type) {
       this.closeFavoritePopper();
       if (type === 'add-new') {
         this.activeFavorite = {};
         this.handleClickFavorite();
       } else {
-        this.favoriteRequestID += 1;
+        this.isShowAddNewCollectDialog = true; // 展示编辑弹窗
       }
     },
     handleChangeSearchType() {
@@ -1686,17 +1702,31 @@ export default {
       localStorage.setItem('closeAutoQuery', !this.isAutoQuery);
     },
     handleClickSearchType() {
-      if (this.isTableSearchType && !this.isCanUseUiType) return;
-      this.isTableSearchType = !this.isTableSearchType;
+      // 如果当前为sql模式，且检索的keywords和收藏的keywords不一致 则不允许切换
+      if (this.isSqlSearchType && !this.isCanUseUiType) return;
+      // 切换表单模式或者sql模式
+      this.isSqlSearchType = !this.isSqlSearchType;
+      // 如果是sql模式切到表单模式 则缓存keywords  表单切回sql模式时回填缓存的keywords
+      if (this.isSqlSearchType) {
+        this.retrieveParams.keyword = this.cacheKeywords;
+      } else {
+        this.cacheKeywords = this.retrieveParams.keyword;
+      }
+      // 如果切换回sql模式 且为自动搜索 则重新请求
+      if (this.isSqlSearchType && this.isAutoQuery) {
+        this.retrieveLog();
+      }
     },
     updateKeyWords(keyword) {
+      // 表单模式 更新keywords
       Object.assign(this.retrieveParams, { keyword });
       if (this.isAutoQuery) {
         this.retrieveLog();
       }
     },
-    handleSubmitFavorite(value) {
-      if (value) this.favoriteRequestID += 1;
+    handleSubmitFavorite(isChange) {
+      // 新建或编辑收藏 刷新收藏列表
+      if (isChange) this.favoriteRequestID += 1;
     },
     // 点击收藏列表的收藏
     handleClickFavoriteItem(value) {
@@ -1708,6 +1738,10 @@ export default {
       this.activeFavoriteID = value.id;
       this.isFavoriteSearch = true;
       this.retrieveFavorite(deepClone(value));
+    },
+    // 收藏列表刷新, 判断当前是否有点击活跃的收藏 如有则进行数据更新
+    async updateActiveFavoriteData(value) {
+      this.activeFavorite = deepClone(value);
     },
   },
 };
@@ -1978,7 +2012,7 @@ export default {
               height: 32px;
               background: #FFFFFF;
               margin-right: 2px;
-              color: #c4c6cc;
+              color: #9A9BA5;
               display: flex;
               justify-content: center;
               div {

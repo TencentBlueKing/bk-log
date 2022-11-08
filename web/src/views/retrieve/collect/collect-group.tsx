@@ -68,12 +68,8 @@ export default class CollectGroup extends tsc<ICollectProps> {
         <GroupDropdown
           data={this.collectItem}
           group-list={this.groupList}
+          is-hover-title={this.isHoverTitle}
         >
-          {!this.isHoverTitle ? (
-            <span class="title-number">
-              {this.collectItem.favorites.length}
-            </span>
-          ) : undefined}
         </GroupDropdown>
       ) : (
         <span class="title-number">{this.collectItem.favorites.length}</span>
@@ -130,7 +126,13 @@ export default class CollectGroup extends tsc<ICollectProps> {
               <div class="group-item-left">
                 <div>
                   <p>
-                    <span class={{ 'active-name': item.id === this.activeFavoriteID }} >{item.name}</span>
+                    <span
+                      class={{
+                        "active-name": item.id === this.activeFavoriteID,
+                      }}
+                    >
+                      {item.name}
+                    </span>
                     {!item.is_active ? (
                       <span class="bk-icon log-icon icon-shixiao"></span>
                     ) : undefined}

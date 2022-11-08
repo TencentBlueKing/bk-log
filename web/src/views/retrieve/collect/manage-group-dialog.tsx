@@ -35,6 +35,7 @@ import {
   TableSettingContent,
   DropdownMenu,
   Popover,
+  Tag,
   Pagination,
 } from "bk-magic-vue";
 import FingerSelectColumn from "../result-table-panel/log-clustering/components/finger-select-column.vue";
@@ -65,9 +66,10 @@ interface IFavoriteItem {
   search_fields_select_list?: any[];
   visible_option: any[];
   group_option: any[];
+  params: object;
 }
 
-const settingFields = [
+const settingFields = [ // 设置显示的字段
   {
     id: "name",
     label: window.mainComponent.$t("收藏名"),
@@ -76,6 +78,7 @@ const settingFields = [
   {
     id: "group_name",
     label: window.mainComponent.$t("所属组"),
+    disabled: true,
   },
   {
     id: "visible_type",
@@ -83,7 +86,7 @@ const settingFields = [
   },
   {
     id: "display_fields",
-    label: window.mainComponent.$t("表单模式显示字段"),
+    label: window.mainComponent.$t("表单模式"),
   },
   {
     id: "source_type",
@@ -117,6 +120,7 @@ export default class GroupDialog extends tsc<IProps> {
   selectFavoriteList = []; // 列的头部的选择框收藏ID列表
   groupList = []; // 组列表
   unPrivateList = []; // 无个人组的收藏列表
+  privateList = []; // 个人组列表 只有个人的列表
   checkValue = 0; // 0为不选 1为半选 2为全选
   groupName = ""; // 输入框组名
   unknownGroupID = 0;
@@ -127,24 +131,31 @@ export default class GroupDialog extends tsc<IProps> {
     interactive: true,
     theme: "light",
   };
-  currentDeleteData = {};
-  paginationConfig = {
+  paginationConfig = { // 页数设置对象
     current: 1,
     limit: 5,
     count: 1,
-    location: "left",
     align: "right",
-    showLimit: true,
-    limitList: [5, 10],
+    showLimit: false,
+    limitList: [...Array(51).keys()].splice(1),
   };
-  sourceFilters = [];
+  cannotComparedData = [ // 不进行对比的字段 （前端操作缓存自加的字段）
+    "search_fields_select_list",
+    "visible_option",
+    "group_option",
+    "group_option_private",
+    "is_group_disabled",
+  ];
+  sourceFilters = []; // 所属组数组
+  updateSourceFilters = []; // 更变人过滤数组
+  pageSizeList = [...Array(51).keys()].splice(1); // 页数
 
   tableKey = random(10);
 
-  unPrivateOptionList = [
+  unPrivateOptionList = [ // 非本人创建的收藏的可见范围数组
     { name: window.mainComponent.$t("公开"), id: "public" },
   ];
-  allOptionList = [
+  allOptionList = [ // 本人创建的收藏的可见范围数组
     { name: window.mainComponent.$t("公开"), id: "public" },
     { name: window.mainComponent.$t("仅本人"), id: "private" },
   ];
@@ -152,22 +163,26 @@ export default class GroupDialog extends tsc<IProps> {
   tableSetting = {
     fields: settingFields,
     selectedFields: settingFields.slice(0, 5),
+    size: 'small'
   };
 
   get spaceUid() {
     return this.$store.state.spaceUid;
   }
 
-  get userMeta() { // 当前用户数据
+  get userMeta() {
+    // 当前用户数据
     return this.$store.state.userMeta;
   }
 
-  get selectCount() { // 当前选择的数据的数量
+  get selectCount() {
+    // 当前选择的数据的数量
     return this.selectFavoriteList.length;
   }
 
   @Watch("selectFavoriteList", { deep: true })
-  watchSelectListLength(list) { // 监听选择数据的数量 改变全选的check状态
+  watchSelectListLength(list) {
+    // 监听选择数据的数量 改变全选的check状态
     if (!list.length) {
       this.checkValue = 0;
       return;
@@ -179,27 +194,30 @@ export default class GroupDialog extends tsc<IProps> {
     this.checkValue = 1;
   }
 
-  @Emit("change")
+  @Emit("change") // 展示或者隐藏弹窗
   handleShowChange(value = false) {
     return value;
   }
 
-  @Emit("submit")
+  @Emit("submit") // 更新成功
   handleSubmitChange(value = false) {
     return value;
   }
 
   async handleValueChange(value) {
-    if (value) { // 展开
+    if (value) {
+      // 展开
       await this.getGroupList();
       this.getFavoriteList();
-    } else { // 关闭
+    } else {
+      // 关闭
       this.tableList = [];
       this.operateTableList = [];
       this.showTableList = [];
       this.submitTableList = [];
       this.selectFavoriteList = [];
       this.groupList = [];
+      this.updateSourceFilters = [];
       this.handleShowChange();
     }
   }
@@ -223,12 +241,16 @@ export default class GroupDialog extends tsc<IProps> {
     this.tableLoading = true;
     let searchList;
     if (this.searchValue !== "") {
-      searchList = this.operateTableList.filter((item) => item.name.includes(this.searchValue));
+      searchList = this.operateTableList.filter((item) =>
+        item.name.includes(this.searchValue)
+      );
     } else {
       searchList = this.operateTableList;
     }
+    // 赋值搜索过后的列表
     this.searchAfterList = searchList;
     setTimeout(() => {
+      // 页数最少为1
       const count = !!searchList.length ? searchList.length : 1;
       Object.assign(this.paginationConfig, { current: 1, count });
       this.selectFavoriteList = [];
@@ -261,38 +283,48 @@ export default class GroupDialog extends tsc<IProps> {
       const res = await $http.request("favorite/getFavoriteList", {
         query: {
           space_uid: this.spaceUid,
+          order_type: 'NAME_ASC',
         },
       });
+      const updateSourceFiltersSet = new Set();
       const initList = res.data.map((item) => {
-        let group_option;
+        const group_option = this.unPrivateList;
+        let group_option_private = []; // 这里存两个分组数组的原因是切换可见范围时 所属组也会切换成对应的可见范围所属组
         let visible_option;
         // 初始化表格, 判断当前的收藏是否是个人创建 若不是个人则不显示个人组
         if (item.created_by === this.userMeta.username) {
-          group_option = this.groupList;
+          group_option_private = this.privateList;
           visible_option = this.allOptionList;
         } else {
-          group_option = this.unPrivateList;
           visible_option = this.unPrivateOptionList;
         }
         // 初始化表单字段
         const search_fields_select_list = item.search_fields.map((item) => ({
           name: item,
         }));
+        const is_group_disabled = item.visible_type === 'private';
+        if (!updateSourceFiltersSet.has(item.updated_by)) updateSourceFiltersSet.add(item.updated_by);
         return {
           ...item,
           search_fields_select_list,
           group_option,
+          group_option_private,
           visible_option,
+          is_group_disabled,
         };
       });
+      this.updateSourceFilters = [...updateSourceFiltersSet].map(item=>({
+        text: item,
+        value: item,
+      }))
       this.tableList = res.data;
       this.operateTableList = initList;
       this.searchAfterList = initList;
-      this.showTableList = this.getShowTableListByPage(initList);
       Object.assign(this.paginationConfig, { count: this.tableList.length });
     } catch (error) {
     } finally {
       this.tableLoading = false;
+      this.handleSearchFilter();
     }
   }
   /** 获取组列表 */
@@ -309,6 +341,7 @@ export default class GroupDialog extends tsc<IProps> {
         group_type: item.group_type,
       }));
       this.unPrivateList = this.groupList.slice(1); // 去除个人组的列表
+      this.privateList = this.groupList.slice(0, 1); // 个人组列表
       this.sourceFilters = res.data.map((item) => ({
         text: item.name,
         value: item.name,
@@ -341,7 +374,8 @@ export default class GroupDialog extends tsc<IProps> {
           theme: "success",
           message: this.$t("新增成功"),
         });
-        this.getGroupList();
+        await this.getGroupList();
+        this.getFavoriteList();
       }
     } catch (error) {
     } finally {
@@ -360,14 +394,20 @@ export default class GroupDialog extends tsc<IProps> {
     }
   }
   /** 修改可选范围 */
-  handleChangeVisible(row, nVal: string) {
-    this.operateListChange(row, { visible_type: nVal });
+  handleSelectVisible(row, nVal: string) {
+    const group_id = nVal !== "public" ? this.privateGroupID : this.unknownGroupID
+    const group_name = this.groupList.find(item=> item.group_id === group_id).group_name;
+    this.operateListChange(row, {
+      visible_type: nVal,
+      is_group_disabled: nVal === "private",
+      group_name,
+      group_id
+    });
   }
   /** 单独修改组 */
   handleChangeGroup(row) {
     const visible_type = row.group_id === this.privateGroupID ? "private" : "public";
-    const group_name = this.groupList.find((item) => item.group_id === row.group_id)?.group_name;
-    this.operateListChange(row, { visible_type, group_name });
+    this.operateListChange(row, { visible_type });
   }
   /** 用户操作 */
   operateListChange(row, operateObj = {}) {
@@ -389,9 +429,7 @@ export default class GroupDialog extends tsc<IProps> {
       // 操作已添加到更新列表的值 进行数据对比
       Object.assign(this.submitTableList[submitIndex], row, operateObj);
       const comparedSubData = deepClone(this.submitTableList[submitIndex]);
-      delete comparedSubData.search_fields_select_list; // 获取的显示字段下拉框列表不做对比
-      delete comparedSubData.visible_option;
-      delete comparedSubData.group_option;
+      this.deleteSubmitData(comparedSubData, this.cannotComparedData); // 前端加的参数 不做对比
       const tableData = this.tableList[operateIndex];
       if (JSON.stringify(tableData) === JSON.stringify(comparedSubData)) {
         this.submitTableList.splice(submitIndex, 1); // 判断数据是否相同 相同则删除提交更新里的值
@@ -399,15 +437,17 @@ export default class GroupDialog extends tsc<IProps> {
     } else {
       // 第一次操作相同的列 添加到提交更新列表
       const comparedData = deepClone(this.operateTableList[operateIndex]);
-      delete comparedData.search_fields_select_list; // 获取的显示字段下拉框列表不做对比
-      delete comparedData.visible_option;
-      delete comparedData.group_option;
+      this.deleteSubmitData(comparedData, this.cannotComparedData); // 前端加的参数 不做对比
       const tableData = this.tableList[operateIndex];
       // 判断操作过后的值和表格里的是否相同 不同则添加到提交更新列表
       if (JSON.stringify(comparedData) !== JSON.stringify(tableData)) {
         this.submitTableList.push(comparedData);
       }
     }
+  }
+  /** 删除不做对比的参数 */
+  deleteSubmitData(data: object, list: string[]) {
+    list.forEach(item=> delete data[item]);
   }
   /** 分页操作 */
   getShowTableListByPage(list) {
@@ -436,7 +476,7 @@ export default class GroupDialog extends tsc<IProps> {
         // 当前选中选择删除
         const index = this.selectFavoriteList.findIndex((item) => item === row.id);
         if (index >= 0) this.selectFavoriteList.splice(index, 1);
-        this.showTableList = this.getShowTableListByPage(this.operateTableList);
+        this.showTableList = this.getShowTableListByPage(this.searchAfterList);
         Object.assign(this.paginationConfig, {
           count: this.operateTableList.length,
         });
@@ -456,7 +496,8 @@ export default class GroupDialog extends tsc<IProps> {
       });
   }
 
-  async batchDeleteFavorite() { // 删除接口
+  async batchDeleteFavorite() {
+    // 删除接口
     // 若没有删除则不请求
     if (!this.deleteTableIDList.length) return;
     try {
@@ -468,7 +509,8 @@ export default class GroupDialog extends tsc<IProps> {
     } catch (error) {}
   }
 
-  async batchUpdateFavorite() { //更新收藏接口  
+  async batchUpdateFavorite() {
+    //更新收藏接口
     // 若没有更新收藏则不请求
     if (!this.submitTableList.length) return;
     const params = this.submitTableList.map((item) => ({
@@ -480,6 +522,8 @@ export default class GroupDialog extends tsc<IProps> {
       visible_type: item.visible_type,
       display_fields: item.display_fields,
       is_enable_display_fields: item.is_enable_display_fields,
+      host_scopes: item.params.host_scopes,
+      addition: item.params.addition,
     }));
     try {
       await $http.request("favorite/batchFavoriteUpdate", {
@@ -492,25 +536,28 @@ export default class GroupDialog extends tsc<IProps> {
   /** 分页操作 */
   handlePageChange(current) {
     Object.assign(this.paginationConfig, { current });
-    this.showTableList = this.getShowTableListByPage(this.operateTableList);
+    this.showTableList = this.getShowTableListByPage(this.searchAfterList);
   }
   /** 每页多少数据操作 */
-  handlePageLimitChange(limit: number) {
-    Object.assign(this.paginationConfig, { limit });
-    this.showTableList = this.getShowTableListByPage(this.operateTableList);
+  handlePageLimitChange(limit: number | string) {
+    if (limit === "") limit = 5;
+    Object.assign(this.paginationConfig, { limit, current: 1 });
+    this.showTableList = this.getShowTableListByPage(this.searchAfterList);
   }
-  /** 所属组分组操作 */
+  /** 所属组和变更人分组操作 */
   sourceFilterMethod(value, row, column) {
     const property = column.property;
     this.isCannotValueChange = true;
-    setTimeout(() => { // 因为操作组会导致数据更变 即不改变数据
+    setTimeout(() => {
+      // 因为操作组会导致数据更变 即不改变数据
       this.isCannotValueChange = false;
     }, 500);
     return row[property] === value;
   }
 
-  handleSettingChange({ fields }) {
+  handleSettingChange({ fields, size }) {
     this.tableSetting.selectedFields = fields;
+    this.tableSetting.size = size;
   }
 
   checkFields(field) {
@@ -532,6 +579,40 @@ export default class GroupDialog extends tsc<IProps> {
     });
   }
 
+  renderHeaderTable(h) {
+    return h('div', {
+      class: 'render-header',
+    }, [
+      h('span', {
+        class: 'icon log-icon icon-info-fill',
+        directives: [
+          {
+            name: 'bk-tooltips',
+            value: this.$t('表单模式显示字段文案'),
+          },
+        ],
+      }),
+      h('span', this.$t("表单模式")),
+    ]);
+  }
+
+  renderHeaderFields(h) {
+    return h('div', {
+      class: 'render-header',
+    }, [
+      h('span', {
+        class: 'icon log-icon icon-info-fill',
+        directives: [
+          {
+            name: 'bk-tooltips',
+            value: this.$t('是否同时显示字段文案'),
+          },
+        ],
+      }),
+      h('span', this.$t("是否同时显示字段")),
+    ]);
+  }
+
   render() {
     const expandSlot = {
       default: ({ row }) => (
@@ -543,6 +624,12 @@ export default class GroupDialog extends tsc<IProps> {
           <div class="expand-information">
             <span>{this.$t("查询语句")}</span>
             <span>{row.keyword}</span>
+          </div>
+          <div class="expand-information">
+            <span>{this.$t("查询显示字段")}:</span>
+            {row.display_fields.map((item) => (
+              <Tag>{item}</Tag>
+            ))}
           </div>
         </div>
       ),
@@ -568,9 +655,14 @@ export default class GroupDialog extends tsc<IProps> {
           vModel={row.group_id}
           searchable
           clearable={false}
+          disabled={row.is_group_disabled}
           on-change={() => this.handleChangeGroup(row)}
         >
-          {row.group_option.map((item) => (
+          {row[
+            row.visible_type === "private"
+              ? "group_option_private"
+              : "group_option"
+          ].map((item) => (
             <Option
               id={item.group_id}
               key={item.group_id}
@@ -584,7 +676,7 @@ export default class GroupDialog extends tsc<IProps> {
       default: ({ row }) => [
         <Select
           vModel={row.visible_type}
-          on-change={(nVal) => this.handleChangeVisible(row, nVal)}
+          on-selected={(nVal) => this.handleSelectVisible(row, nVal)}
           clearable={false}
         >
           {row.visible_option.map((item) => (
@@ -630,6 +722,7 @@ export default class GroupDialog extends tsc<IProps> {
         value={this.value}
         title={this.$t("管理")}
         header-position="left"
+        render-directive="if"
         mask-close={false}
         ext-cls="manage-group"
         width={1050}
@@ -709,6 +802,7 @@ export default class GroupDialog extends tsc<IProps> {
           border={true}
           ext-cls={`${!this.selectCount && "is-not-select"}`}
           empty-text={this.$t("暂无数据")}
+          max-height={600}
           v-bkloading={{ isLoading: this.tableLoading }}
         >
           <TableColumn
@@ -757,7 +851,8 @@ export default class GroupDialog extends tsc<IProps> {
 
           {this.checkFields("display_fields") ? (
             <TableColumn
-              label={this.$t("表单模式显示字段")}
+              label={this.$t("表单模式")}
+              render-header={this.renderHeaderTable}
               key={"column_search_fields"}
               prop={"search_fields"}
               scopedSlots={selectTagSlot}
@@ -771,6 +866,9 @@ export default class GroupDialog extends tsc<IProps> {
               label={this.$t("变更人")}
               prop={"updated_by"}
               key={"column_update_by"}
+              filters={this.updateSourceFilters}
+              filter-multiple={false}
+              filter-method={this.sourceFilterMethod}
             ></TableColumn>
           ) : undefined}
 
@@ -781,7 +879,7 @@ export default class GroupDialog extends tsc<IProps> {
               key={"column_update_time"}
               scopedSlots={{
                 default: ({ row }) => [
-                  <span>{formatDate(row.updated_at)}</span>
+                  <span>{formatDate(row.updated_at)}</span>,
                 ],
               }}
             ></TableColumn>
@@ -789,8 +887,9 @@ export default class GroupDialog extends tsc<IProps> {
 
           <TableColumn
             label={this.$t("是否同时显示字段")}
+            render-header={this.renderHeaderFields}
             class-name="group-input"
-            width="140"
+            width="60"
             label-class-name="group-title"
             key={"column_switch"}
             scopedSlots={switchSlot}
@@ -800,26 +899,42 @@ export default class GroupDialog extends tsc<IProps> {
             <TableSettingContent
               key={`${this.tableKey}__settings`}
               fields={this.tableSetting.fields}
-              size={''}
+              size={this.tableSetting.size}
               selected={this.tableSetting.selectedFields}
               on-setting-change={this.handleSettingChange}
             ></TableSettingContent>
           </TableColumn>
         </Table>
 
-        <Pagination
-          class="pagination"
-          size="small"
-          current={this.paginationConfig.current}
-          limit={this.paginationConfig.limit}
-          count={this.paginationConfig.count}
-          location={this.paginationConfig.location}
-          align={this.paginationConfig.align}
-          show-limit={this.paginationConfig.showLimit}
-          limit-list={this.paginationConfig.limitList}
-          on-change={this.handlePageChange}
-          on-limit-change={this.handlePageLimitChange}
-        ></Pagination>
+        <div class="page-container">
+          <Pagination
+            size="small"
+            current={this.paginationConfig.current}
+            limit={this.paginationConfig.limit}
+            count={this.paginationConfig.count}
+            align={this.paginationConfig.align}
+            show-limit={this.paginationConfig.showLimit}
+            limit-list={this.paginationConfig.limitList}
+            on-change={this.handlePageChange}
+          ></Pagination>
+          <div class="page-limit">
+            <span>{this.$t('共计')}{this.searchAfterList.length}{this.$t('条')} {this.$t('每页')}</span>
+            <Select
+              class="page-select"
+              vModel={this.paginationConfig.limit}
+              searchable
+              behavior={"simplicity"}
+              clearable={false}
+              search-placeholder={" "}
+              on-change={this.handlePageLimitChange}
+            >
+              {this.pageSizeList.map((item) => (
+                <Option id={item} key={item} name={item}></Option>
+              ))}
+            </Select>
+            <span>条</span>
+          </div>
+        </div>
       </Dialog>
     );
   }

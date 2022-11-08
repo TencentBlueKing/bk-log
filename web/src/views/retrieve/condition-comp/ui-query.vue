@@ -96,6 +96,7 @@ export default {
 
 <style lang="scss" scoped>
 .ui-query-container {
+  margin-top: 16px;
   min-height: 100px;
 
   &:not(:last-child) .query-item-box {

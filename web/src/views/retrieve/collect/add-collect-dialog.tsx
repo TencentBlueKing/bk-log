@@ -41,14 +41,18 @@ import {
   Checkbox,
   Switcher,
   Tag,
+  Button,
 } from "bk-magic-vue";
 import $http from "../../../api";
 import "./add-collect-dialog.scss";
 
 interface IProps {
-  value?: boolean;
-  favoriteID?: number;
-  addFavoriteData?: object;
+  value: boolean;
+  favoriteID: number;
+  addFavoriteData: object;
+  replaceData?: object;
+  isClickFavoriteEdit?: boolean;
+  visibleFields: Array<any>;
 }
 
 @Component
@@ -56,9 +60,35 @@ export default class CollectDialog extends tsc<IProps> {
   @Model("change", { type: Boolean, default: false }) value: IProps["value"];
   @Prop({ type: Number, default: -1 }) favoriteID: number;
   @Prop({ type: Object, default: () => ({}) }) addFavoriteData: object;
+  @Prop({ type: Object, default: () => ({}) }) replaceData: object;
+  @Prop({ type: Boolean, default: false }) isClickFavoriteEdit: boolean;
+  @Prop({ type: Array, default: () => [] }) visibleFields: Array<any>;
   @Ref("validateForm") validateFormRef: Form;
   searchFieldsList = []; // 表单模式显示字段
   isDisableSelect = false; // 是否禁用 所属组下拉框
+  isShowAddGroup = true;
+  groupName = "";
+  baseFavoriteData = {
+    // 收藏参数
+    space_uid: -1,
+    index_set_id: -1,
+    name: "",
+    group_id: 0,
+    created_by: '',
+    params: {
+      host_scopes: {
+        modules: [],
+        ips: '',
+      },
+      addition: [],
+      keyword: null,
+      search_fields: [],
+    },
+    is_enable_display_fields: false,
+    index_set_name: "",
+    visible_type: "public",
+    display_fields: [],
+  };
   favoriteData = {
     // 收藏参数
     space_uid: -1,
@@ -75,11 +105,13 @@ export default class CollectDialog extends tsc<IProps> {
       keyword: null,
       search_fields: [],
     },
-    is_enable_display_fields: true,
+    is_enable_display_fields: false,
     index_set_name: "",
     visible_type: "public",
     display_fields: [],
   };
+  publicGroupList = []; // 可见状态为公共的时候显示的收藏组
+  privateGroupList = []; // 个人组 group_name替换为本人
   unknownGroupID = 0;
   privateGroupID = 0;
   switchVal = true;
@@ -108,6 +140,10 @@ export default class CollectDialog extends tsc<IProps> {
 
   get isCannotChangeVisible() {
     return !this.isCreateFavorite && this.favoriteData.created_by !== this.userName;
+  }
+
+  get showGroupList() {
+    return this.favoriteData.visible_type === 'public' ? this.publicGroupList : this.privateGroupList;
   }
 
   handleSelectGroup(nVal) {
@@ -140,9 +176,35 @@ export default class CollectDialog extends tsc<IProps> {
       this.getSearchFieldsList(this.favoriteData.params.keyword); // 获取表单模式显示字段
       this.isDisableSelect = this.favoriteData.visible_type === "private";
     } else {
+      this.favoriteData = this.baseFavoriteData;
       this.handleSubmitChange(false);
       this.handleShowChange();
     }
+  }
+
+   /** 新增组 */
+  async handleCreateGroup() {
+    const data = { name: this.groupName, space_uid: this.spaceUid };
+    try {
+      const res = await $http.request('favorite/createGroup', {
+        data,
+      });
+      if (res.result) {
+        this.$bkMessage({
+          message: this.$t("操作成功"),
+          theme: "success",
+        });
+        this.requestGroupList();
+      }
+    } catch (error) {}
+    finally {
+      this.isShowAddGroup = true;
+      this.groupName = "";
+    }
+  }
+
+  handleChangeGroupInputStatus() {
+    this.requestGroupList();
   }
 
   handleClickRadio(value: string) {
@@ -167,6 +229,12 @@ export default class CollectDialog extends tsc<IProps> {
       },
       () => {}
     );
+  }
+
+  handleClickDisplayFields(value) {
+    if (value) { // 如果打开 则更新当前显示的显示字段
+      this.favoriteData.display_fields = this.visibleFields.map(item=> item.field_name);
+    }
   }
 
   async getSearchFieldsList(keyword: string) {
@@ -204,6 +272,10 @@ export default class CollectDialog extends tsc<IProps> {
       space_uid: this.spaceUid,
       is_enable_display_fields,
     };
+    if (!isCreate) {
+      delete data.index_set_id
+      delete data.space_uid
+    }
     const requestStr = isCreate ? "createFavorite" : "updateFavorite";
     try {
       const res = await $http.request(`favorite/${requestStr}`, {
@@ -228,6 +300,10 @@ export default class CollectDialog extends tsc<IProps> {
         },
       });
       this.groupList = res.data;
+      this.publicGroupList = this.groupList.slice(1, this.groupList.length -2);
+      const privateItem =  this.groupList[0];
+      privateItem.name = this.$t('本人');
+      this.privateGroupList = [privateItem];
       this.unknownGroupID = this.groupList[this.groupList.length - 1]?.id;
       this.privateGroupID = this.groupList[0]?.id;
     } catch (error) {}
@@ -236,10 +312,17 @@ export default class CollectDialog extends tsc<IProps> {
   async getFavoriteData(id) {
     this.formLoading = true;
     try {
-      const res = await $http.request("favorite/getFavorite", {
-        params: { id },
-      });
-      Object.assign(this.favoriteData, res.data);
+      const res = await $http.request("favorite/getFavorite", { params: { id } });
+      const assignData = res.data;
+       // 有点击收藏列表并且与编辑的收藏id一致时，且为是否显示字段为打开时  重新拉取检索显示字段
+      if (this.isClickFavoriteEdit && assignData.is_enable_display_fields) {
+        assignData.display_fields = this.visibleFields.map(item=> item.field_name);
+      }
+      if (JSON.stringify(this.replaceData) !== "{}") { // 替换收藏 会把检索的params传过来
+        Object.assign(this.favoriteData, assignData, this.replaceData);
+      } else { // 通过id获取到的收藏
+        Object.assign(this.favoriteData, assignData);
+      }
     } catch (error) {}
     finally {
       this.formLoading = false;
@@ -286,8 +369,8 @@ export default class CollectDialog extends tsc<IProps> {
               <Input
                 class="collect-name"
                 vModel={this.favoriteData.name}
-                placeholder={`${this.$t('最多输入')} 20 ${this.$t('个字符')}`}
-                maxlength={20}
+                placeholder={`填写收藏名（长度15个字符）`}
+                maxlength={15}
               ></Input>
             </FormItem>
             <FormItem
@@ -310,14 +393,47 @@ export default class CollectDialog extends tsc<IProps> {
                 vModel={this.favoriteData.group_id}
                 disabled={this.isDisableSelect}
                 on-change={this.handleSelectGroup}
+                ext-popover-cls={'add-collect-dialog'}
               >
-                {this.groupList.map((item) => (
+                {this.showGroupList.map((item) => (
                   <Option id={item.id} key={item.id} name={item.name}></Option>
                 ))}
+                <div slot="extension">
+                  {this.isShowAddGroup ? (
+                    <div
+                      class="select-add-new-group"
+                      onClick={() => this.isShowAddGroup = false}
+                    >
+                      <div>
+                        <i class="bk-icon icon-plus-circle"></i>新增
+                      </div>
+                    </div>
+                  ) : (
+                    <li class="add-new-group-input">
+                      <Input
+                        clearable
+                        placeholder={this.$t("请输入组名")}
+                        vModel={this.groupName}
+                        maxlength={10}
+                      ></Input>
+                      <div class="operate-button">
+                        <Button text onClick={() => this.handleCreateGroup()}>
+                          {this.$t("确定")}
+                        </Button>
+                        <span onClick={() => {
+                          this.isShowAddGroup = true;
+                          this.groupName = "";
+                        }}>
+                          {this.$t("取消")}
+                        </span>
+                      </div>
+                    </li>
+                  )}
+                </div>
               </Select>
             </FormItem>
           </div>
-          <FormItem label={this.$t("表单模式显示字段")}>
+          <FormItem label={this.$t("表单模式")}>
             <div class="explanation-field">
               {this.$t("表单模式显示字段文案")}
             </div>
@@ -341,6 +457,7 @@ export default class CollectDialog extends tsc<IProps> {
               <Switcher
                 vModel={this.favoriteData.is_enable_display_fields}
                 theme="primary"
+                on-change={(value) => this.handleClickDisplayFields(value)}
               ></Switcher>
               <span class="current-filed">{this.$t("当前字段")}：</span>
               {this.favoriteData.display_fields.map((item) => (
