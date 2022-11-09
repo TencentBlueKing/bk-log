@@ -89,9 +89,8 @@ const settingFields = [ // 设置显示的字段
     label: window.mainComponent.$t("表单模式"),
   },
   {
-    id: "source_type",
+    id: "is_show_switch",
     label: window.mainComponent.$t("是否同时显示字段"),
-    disabled: true,
   },
   {
     id: "updated_by",
@@ -705,12 +704,18 @@ export default class GroupDialog extends tsc<IProps> {
     };
     const switchSlot = {
       default: ({ row }) => [
-        <div class="switcher-box">
+        <div class="switch-container">
           <Switcher
             vModel={row.is_enable_display_fields}
             theme="primary"
             on-change={(value) => this.handleSwitchChange(row, value)}
           ></Switcher>
+        </div>
+      ],
+    };
+    const deleteSlot = {
+      default: ({ row }) => [
+        <div class="switcher-box">
           <div class="delete" onClick={() => this.handleDeleteFavorite(row)}>
             <span class="bk-icon icon-delete"></span>
           </div>
@@ -885,14 +890,22 @@ export default class GroupDialog extends tsc<IProps> {
             ></TableColumn>
           ) : undefined}
 
+          {this.checkFields("is_show_switch") ? (
+            <TableColumn
+              label={this.$t("是否同时显示字段")}
+              render-header={this.renderHeaderFields}
+              class-name="group-input"
+              max-width="60"
+              label-class-name="group-title"
+              key={"column_switch"}
+              scopedSlots={switchSlot}
+            ></TableColumn>
+           ) : undefined}
+
           <TableColumn
-            label={this.$t("是否同时显示字段")}
-            render-header={this.renderHeaderFields}
-            class-name="group-input"
-            width="60"
-            label-class-name="group-title"
-            key={"column_switch"}
-            scopedSlots={switchSlot}
+            width="1"
+            key={"column_delete"}
+            scopedSlots={deleteSlot}
           ></TableColumn>
 
           <TableColumn type="setting">

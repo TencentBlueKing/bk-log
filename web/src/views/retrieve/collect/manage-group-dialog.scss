@@ -203,24 +203,22 @@
     }
   }
 
-  .switcher-box {
+  .switch-container {
     height: 42px;
-    padding: 0 15px;
-    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
 
-    @include flex-align;
-
+  .switcher-box {
+    @include flex-center;
     .delete {
       height: 42px;
       width: 42px;
       color: #979ba5;
-      border-left: 1px solid #dfe0e5;
-      position: absolute;
-      right: 0;
       font-size: 16px;
       cursor: pointer;
-
-      @include flex-center;
+      transform: translateY(8px);
     }
   }
 
@@ -249,11 +247,14 @@
 
 .new-group-popover {
   width: 240px;
+  font-size: 12px;
+  .bk-primary {
+    font-size: 12px;
+  }
 
   .operate-button {
     margin-top: 6px;
     display: flex;
-    font-size: 14px;
     align-items: center;
     justify-content: flex-end;
     color: #979ba5;

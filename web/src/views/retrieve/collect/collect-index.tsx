@@ -469,8 +469,7 @@ export default class CollectIndex extends tsc<IProps> {
                   ref="popoverGroup"
                   tippy-options={this.tippyOption}
                   placement="bottom-start"
-                  ext-cls="new-group-popover"
-                >
+                  ext-cls="new-group-popover">
                   <span class="bk-icon icon-plus-circle"></span>
                   <div slot="content">
                     <Input
@@ -480,15 +479,10 @@ export default class CollectIndex extends tsc<IProps> {
                       maxlength={10}
                     ></Input>
                     <div class="operate-button">
-                      <Button
-                        text
-                        onClick={() => this.handleClickGroupBtn("add")}
-                      >
+                      <Button text onClick={() => this.handleClickGroupBtn("add")}>
                         {this.$t("确定")}
                       </Button>
-                      <span
-                        onClick={() => this.handleClickGroupBtn("cancel")}
-                      >
+                      <span onClick={() => this.handleClickGroupBtn("cancel")}>
                         {this.$t("取消")}
                       </span>
                     </div>
@@ -504,24 +498,16 @@ export default class CollectIndex extends tsc<IProps> {
                     <span class="bk-icon icon-sort"></span>
                   </div>
                   <div slot="content">
-                    <RadioGroup
-                      vModel={this.sortType}
-                      class="sort-group-container"
-                    >
+                    <RadioGroup vModel={this.sortType} class="sort-group-container">
                       {this.groupSortList.map((item) => (
                         <Radio value={item.id}>{item.name}</Radio>
                       ))}
                     </RadioGroup>
                     <div class="operate-button">
-                      <Button
-                        theme="primary"
-                        onClick={() => this.handleClickSortBtn("sort")}
-                      >
+                      <Button theme="primary" onClick={() => this.handleClickSortBtn("sort")}>
                         {this.$t("确定")}
                       </Button>
-                      <Button
-                        onClick={() => this.handleClickSortBtn("cancel")}
-                      >
+                      <Button onClick={() => this.handleClickSortBtn("cancel")}>
                         {this.$t("取消")}
                       </Button>
                     </div>
@@ -543,8 +529,7 @@ export default class CollectIndex extends tsc<IProps> {
           favoriteID={this.editFavoriteID}
           isClickFavoriteEdit={this.isClickFavoriteEdit}
           visibleFields={this.visibleFields}
-          on-submit={(value) => value && this.getFavoriteList()}
-        />
+          on-submit={(value) => value && this.getFavoriteList()} />
       </div>
     );
   }

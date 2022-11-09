@@ -223,9 +223,8 @@ export default class CollectDialog extends tsc<IProps> {
     this.validateFormRef.validate().then(
       () => {
         if (!this.unknownGroupID) return;
-        const isCreate = this.favoriteID === -1;
         if (!this.favoriteData.group_id) this.favoriteData.group_id = this.unknownGroupID;
-        this.handleUpdateFavorite(this.favoriteData, isCreate);
+        this.handleUpdateFavorite(this.favoriteData);
       },
       () => {}
     );
@@ -247,7 +246,7 @@ export default class CollectDialog extends tsc<IProps> {
   }
 
   /** 更新收藏 */
-  async handleUpdateFavorite(subData, isCreate = true) {
+  async handleUpdateFavorite(subData) {
     const {
       index_set_id,
       params,
@@ -272,11 +271,11 @@ export default class CollectDialog extends tsc<IProps> {
       space_uid: this.spaceUid,
       is_enable_display_fields,
     };
-    if (!isCreate) {
+    if (!this.isCreateFavorite) {
       delete data.index_set_id
       delete data.space_uid
     }
-    const requestStr = isCreate ? "createFavorite" : "updateFavorite";
+    const requestStr = this.isCreateFavorite ? "createFavorite" : "updateFavorite";
     try {
       const res = await $http.request(`favorite/${requestStr}`, {
         params: { id },
@@ -376,12 +375,10 @@ export default class CollectDialog extends tsc<IProps> {
             <FormItem
               class="collect-radio"
               label={this.$t("可见范围")}
-              required
-            >
+              required>
               <RadioGroup
                 vModel={this.favoriteData.visible_type}
-                on-change={this.handleClickRadio}
-              >
+                on-change={this.handleClickRadio}>
                 <Radio value={"public"}>{this.$t("公开")}</Radio>
                 <Radio value={"private"} disabled={this.isCannotChangeVisible}>{this.$t("仅本人")}</Radio>
               </RadioGroup>
@@ -400,13 +397,8 @@ export default class CollectDialog extends tsc<IProps> {
                 ))}
                 <div slot="extension">
                   {this.isShowAddGroup ? (
-                    <div
-                      class="select-add-new-group"
-                      onClick={() => this.isShowAddGroup = false}
-                    >
-                      <div>
-                        <i class="bk-icon icon-plus-circle"></i>新增
-                      </div>
+                    <div class="select-add-new-group" onClick={() => this.isShowAddGroup = false}>
+                      <div><i class="bk-icon icon-plus-circle"></i>{this.$t('新增')}</div>
                     </div>
                   ) : (
                     <li class="add-new-group-input">
