@@ -19,16 +19,12 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-import re
-from collections import defaultdict, Counter
-from typing import Optional, Union
+from collections import defaultdict
+from typing import Optional
+from dataclasses import asdict
 
-from luqum.auto_head_tail import auto_head_tail
-from luqum.parser import parser, lexer
-from luqum.visitor import TreeTransformer
 from django.db.transaction import atomic
 
-from apps.log_esquery.constants import WILDCARD_PATTERN
 from apps.utils.local import get_request_username
 from apps.models import model_to_dict
 from apps.log_databus.constants import TargetNodeTypeEnum
@@ -37,7 +33,6 @@ from apps.log_search.constants import (
     FavoriteVisibleType,
     FavoriteGroupType,
     FavoriteListOrderType,
-    FULL_TEXT_SEARCH_FIELD_NAME,
     INDEX_SET_NOT_EXISTED,
 )
 from apps.log_search.exceptions import (
@@ -50,6 +45,7 @@ from apps.log_search.exceptions import (
     FavoriteNotAllowedDeleteException,
 )
 from apps.log_search.models import Favorite, FavoriteGroup, FavoriteGroupCustomOrder, LogIndexSet
+from apps.utils.lucene import LuceneParser, LuceneTransformer
 
 
 class FavoriteHandler(object):
@@ -274,115 +270,21 @@ class FavoriteHandler(object):
             )
         return query_string
 
-    def get_search_fields(self, keyword: str) -> list:
+    @staticmethod
+    def get_search_fields(keyword: str) -> list:
         """获取检索语句中可以拆分的字段"""
-        fields = []
-        if not keyword:
-            return fields
-        if keyword == WILDCARD_PATTERN:
-            fields.append(
-                {
-                    "pos": 0,
-                    "name": FULL_TEXT_SEARCH_FIELD_NAME,
-                    "type": FULL_TEXT_SEARCH_FIELD_NAME,
-                    "operator": "",
-                    "value": "*",
-                }
-            )
-            return fields
-        query_tree = parser.parse(keyword, lexer=lexer)
-        if self._get_node_type(query_tree) == "Word":
-            fields.append(self._parse_node_expr(query_tree))
-        if not query_tree.children:
-            return fields
-        if self._get_node_type(query_tree) == "SearchField":
-            fields.append(self._parse_node_expr(query_tree))
-        else:
-            for child in query_tree.children:
-                if isinstance(self._parse_node_expr(child), list):
-                    fields.extend(self._parse_node_expr(child))
-                else:
-                    fields.append(self._parse_node_expr(child))
-        # 去除相同field
-        fields = sorted(fields, key=lambda i: i["pos"])
-        # 以下逻辑为同名字段增加额外标识符
-        field_names = Counter([field["name"] for field in fields])
-        if not field_names:
-            return fields
-        for field_name, cnt in field_names.items():
-            if cnt > 1:
-                number = 1
-                for field in fields:
-                    if field["name"] == field_name:
-                        field["name"] = f"{field_name}({number})"
-                        number += 1
+        fields = [asdict(field) for field in LuceneParser(keyword=keyword).parsing()]
 
         return fields
 
     @staticmethod
     def generate_query_by_ui(keyword: str, params: list) -> str:
         """根据params里的参数名以及Value进行替换"""
-        if not params or not keyword:
-            return keyword
-        if keyword == WILDCARD_PATTERN:
-            return str(params[0]["value"])
-
-        query_tree = parser.parse(keyword, lexer=lexer)
-        transformer = Transformer()
-        for param in params:
-            query_tree = transformer.visit(query_tree, param)
-        query_tree = auto_head_tail(query_tree)
-        return str(query_tree)
+        return LuceneTransformer().transform(keyword=keyword, params=params)
 
     @staticmethod
-    def _get_node_type(node) -> str:
-        """获取解析语法名"""
-        return node.__class__.__name__
-
-    @staticmethod
-    def _get_node_expr_type(node) -> str:
-        """获取解析语法名"""
-        if hasattr(node, "expr"):
-            return node.expr.__class__.__name__
-        if hasattr(node, "operands"):
-            return "operands"
-        return node.__class__.__name__
-
-    def _parse_node_expr(self, node) -> Union[dict, list]:
-        """不同的解析语法调用不用的类"""
-        expr_type = self._get_node_expr_type(node)
-        if expr_type == "operands":
-            return [self._parse_node_expr(operand) for operand in node.operands]
-        if expr_type == "Word":
-            return WordNodeExpr(node=node).parse_expr()
-        if expr_type == "Phrase":
-            return PhraseNodeExpr(node=node).parse_expr()
-        if expr_type == "Range":
-            return RangeNodeExpr(node=node).parse_expr()
-        if expr_type == "Fuzzy":
-            return FuzzyNodeExpr(node=node).parse_expr()
-        if expr_type == "Regex":
-            return RegexNodeExpr(node=node).parse_expr()
-        if expr_type == "OrOperation" or expr_type == "AndOperation":
-            fields = []
-            for operand in node.expr.operands:
-                if isinstance(self._parse_node_expr(operand), list):
-                    fields.extend(self._parse_node_expr(operand))
-                else:
-                    fields.append(self._parse_node_expr(operand))
-            return fields
-        if expr_type == "FieldGroup":
-            fields = [
-                {
-                    "pos": node.pos,
-                    "name": node.name,
-                    "type": expr_type,
-                    "operator": "()",
-                    "value": str(node.expr),
-                }
-            ]
-            return fields
-        raise Exception("Unsupported expr type: {}".format(expr_type))
+    def inspect(keyword) -> dict:
+        return LuceneParser(keyword=keyword).inspect()
 
 
 class FavoriteGroupHandler(object):
@@ -481,174 +383,3 @@ class FavoriteGroupHandler(object):
         obj.group_order = group_order
         obj.save()
         return model_to_dict(obj)
-
-
-class LuceneNodeExpr(object):
-    """Lucene条件表达式解析基类"""
-
-    def __init__(self, node) -> None:
-        self.node = node
-        self.expr = node.expr
-        self.expr_type = self.expr.__class__.__name__
-        self.field = {"pos": self.node.pos, "name": self.node.name, "type": self.expr_type, "operator": "", "value": ""}
-
-    def parse_expr(self):
-        raise NotImplementedError
-
-    def update_expr(self, context: str):
-        raise NotImplementedError
-
-
-class WordNodeExpr(LuceneNodeExpr):
-    """Word 关键词解析"""
-
-    def __init__(self, node) -> None:
-        self.node = node
-        if hasattr(node, "expr"):
-            self.expr = node.expr
-            self.expr_type = self.expr.__class__.__name__
-            self.field = {
-                "pos": self.node.pos,
-                "name": self.node.name,
-                "type": self.expr_type,
-                "operator": "",
-                "value": "",
-            }
-        else:
-            self.expr = None
-            self.expr_type = None
-            self.field = {
-                "pos": self.node.pos,
-                "name": FULL_TEXT_SEARCH_FIELD_NAME,
-                "type": FULL_TEXT_SEARCH_FIELD_NAME,
-                "operator": "",
-                "value": "",
-            }
-
-    def parse_expr(self):
-        if not self.expr:
-            self.field["operator"] = "~="
-            self.field["value"] = self.node.value
-            return self.field
-
-        match = re.search(r"<=|>=|<|>", self.expr.value)
-        if match:
-            operator = match.group(0)
-            self.field["operator"] = operator
-            self.field["value"] = self.expr.value.split(operator)[-1]
-            return self.field
-
-        self.field["operator"] = "~="
-        self.field["value"] = self.expr.value
-        return self.field
-
-    def update_expr(self, context: dict):
-        self.parse_expr()
-        value = context["value"]
-        new_node = self.node.clone_item()
-        if not self.expr:
-            new_node = self.node.clone_item(value=value)
-            return new_node
-
-        if self.field["operator"] in ["<=", "<", ">=", ">"]:
-            value = "{}{}".format(self.field["operator"], value)
-        new_node.expr = self.node.expr.clone_item(value=value)
-        return new_node
-
-
-class PhraseNodeExpr(LuceneNodeExpr):
-    """Phrase 精准查询解析"""
-
-    def parse_expr(self):
-        self.field["operator"] = "="
-        self.field["value"] = self.expr.value
-        return self.field
-
-    def update_expr(self, context: dict):
-        self.parse_expr()
-        value = context["value"]
-        new_node = self.node.clone_item()
-        new_node.expr = self.node.expr.clone_item(value=value)
-        return new_node
-
-
-class RangeNodeExpr(LuceneNodeExpr):
-    """范围查询语句解析"""
-
-    def parse_expr(self):
-        if self.expr.include_low:
-            start = "["
-        else:
-            start = "{"
-        if self.expr.include_high:
-            end = "]"
-        else:
-            end = "}"
-        self.field["operator"] = f"{start}{end}"
-        self.field["value"] = str(self.expr)
-        return self.field
-
-    def update_expr(self, context: dict):
-        self.parse_expr()
-        keyword = "{}: {} ".format(self.field["name"], context["value"])
-        return parser.parse(keyword, lexer=lexer)
-
-
-class FuzzyNodeExpr(LuceneNodeExpr):
-    """模糊查询语句解析"""
-
-    def parse_expr(self):
-        self.field["operator"] = "~="
-        self.field["value"] = str(self.expr)
-        return self.field
-
-    def update_expr(self, context: dict):
-        self.parse_expr()
-        keyword = "{}: {} ".format(self.field["name"], context["value"])
-        return parser.parse(keyword, lexer=lexer)
-
-
-class RegexNodeExpr(LuceneNodeExpr):
-    def parse_expr(self):
-        self.field["operator"] = "~="
-        self.field["value"] = str(self.expr)
-        return self.field
-
-    def update_expr(self, context: dict):
-        self.parse_expr()
-        keyword = "{}: {} ".format(self.field["name"], context["value"])
-        return parser.parse(keyword, lexer=lexer)
-
-
-class Transformer(TreeTransformer):
-    def visit_search_field(self, node, context):
-        # 加个name双重保险, 存在多个同名字段, log(1), log(2)
-        if node.pos == context.get("pos"):
-            if hasattr(node, "expr"):
-                node_type = node.expr.__class__.__name__
-            else:
-                node_type = node.__class__.__name__
-            if node_type == "Word":
-                new_node = WordNodeExpr(node=node).update_expr(context)
-            elif node_type == "Phrase":
-                new_node = PhraseNodeExpr(node=node).update_expr(context)
-            elif node_type == "Range":
-                new_node = RangeNodeExpr(node=node).update_expr(context)
-            elif node_type == "Fuzzy":
-                new_node = FuzzyNodeExpr(node=node).update_expr(context)
-            elif node_type == "Regex":
-                new_node = RegexNodeExpr(node=node).update_expr(context)
-            elif node_type == "FieldGroup":
-                keyword = "{}: {} ".format(node.name, context["value"])
-                new_node = parser.parse(keyword, lexer=lexer)
-            else:
-                raise Exception(f"Unsupported node_type: {node_type}")
-
-            yield new_node
-        else:
-            yield from self.generic_visit(node, context)
-
-    def visit_word(self, node, context):
-        if node.pos == context["pos"]:
-            node.value = str(context["value"])
-        yield from self.generic_visit(node, context)
