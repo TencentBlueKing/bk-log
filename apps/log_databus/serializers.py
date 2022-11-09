@@ -1106,6 +1106,11 @@ class CollectorPluginUpdateSerializer(MultiAttrCheckSerializer, serializers.Mode
         return attrs
 
 
+class ListBCSCollectorSerializer(serializers.Serializer):
+    bk_biz_id = serializers.IntegerField(label=_("业务id"), required=False)
+    bcs_cluster_id = serializers.CharField(label=_("bcs集群id"))
+
+
 class BCSCollectorSerializer(serializers.Serializer):
     bk_biz_id = serializers.IntegerField(label=_("业务id"))
     project_id = serializers.CharField(label=_("项目id"))

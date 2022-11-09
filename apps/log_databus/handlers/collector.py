@@ -1656,16 +1656,21 @@ class CollectorHandler(object):
 
                 failed_count = 0
                 success_count = 0
-
-                for config in container_collector_configs:
-                    if config.status == ContainerCollectStatus.FAILED.value:
-                        failed_count += 1
-                    else:
-                        success_count += 1
+                pending_count = 0
 
                 # 默认是成功
                 status = CollectStatus.SUCCESS
                 status_name = RunStatus.SUCCESS
+
+                for config in container_collector_configs:
+                    if config.status == ContainerCollectStatus.FAILED.value:
+                        failed_count += 1
+                    elif config.status in [ContainerCollectStatus.PENDING.value, ContainerCollectStatus.RUNNING.value]:
+                        pending_count += 1
+                        status = CollectStatus.RUNNING
+                        status_name = RunStatus.RUNNING
+                    else:
+                        success_count += 1
 
                 if failed_count:
                     status = CollectStatus.FAILED
@@ -1684,7 +1689,7 @@ class CollectorHandler(object):
                         "total": len(container_collector_configs),
                         "success": success_count,
                         "failed": failed_count,
-                        "pending": 0,
+                        "pending": pending_count,
                     }
                 )
                 continue
@@ -2631,12 +2636,11 @@ class CollectorHandler(object):
             "bk_data_id": self.data.bk_data_id,
         }
 
-    def list_bcs_collector(self, bcs_cluster_id, bk_app_code="bk_bcs"):
-        collectors = (
-            CollectorConfig.objects.filter(bcs_cluster_id=bcs_cluster_id, bk_app_code=bk_app_code)
-            .exclude(bk_app_code="bk_log_search")
-            .order_by("-updated_at")
-        )
+    def list_bcs_collector(self, bcs_cluster_id, bk_biz_id=None, bk_app_code="bk_bcs"):
+        queryset = CollectorConfig.objects.filter(bcs_cluster_id=bcs_cluster_id, bk_app_code=bk_app_code)
+        if bk_biz_id:
+            queryset = queryset.filter(bk_biz_id=bk_biz_id)
+        collectors = queryset.exclude(bk_app_code="bk_log_search").order_by("-updated_at")
         rule_dict = {}
         if not collectors:
             return []
@@ -2670,8 +2674,11 @@ class CollectorHandler(object):
             path_container_config_dict[path_container_config.collector_config_id].append(path_container_config)
         for std_container_config in std_container_config_list:
             std_container_config_dict[std_container_config.parent_container_config_id].append(std_container_config)
-        bcs_project_id = BcsRule.objects.get(id=list(rule_dict.keys())[0]).bcs_project_id
-        bcs_path_index_set, bcs_std_index_set = LogIndexSet.get_bcs_index_set(bcs_project_id=bcs_project_id)
+
+        bcs_path_index_set, bcs_std_index_set = LogIndexSet.get_bcs_index_set(
+            space_uid=bk_biz_id_to_space_uid(bk_biz_id),
+            bcs_project_id=BcsRule.objects.get(id=list(rule_dict.keys())[0]).bcs_project_id,
+        )
         result = []
         for rule_id, collector in rule_dict.items():
             rule = {
@@ -2688,8 +2695,8 @@ class CollectorHandler(object):
                 "bcs_cluster_id": collector["path_collector_config"].bcs_cluster_id,
                 "extra_labels": collector["path_collector_config"].extra_labels,
                 "add_pod_label": collector["path_collector_config"].add_pod_label,
-                "file_index_set_id": bcs_path_index_set.index_set_id,
-                "std_index_set_id": bcs_std_index_set.index_set_id,
+                "file_index_set_id": bcs_path_index_set.index_set_id if bcs_path_index_set else None,
+                "std_index_set_id": bcs_std_index_set.index_set_id if bcs_std_index_set else None,
                 "container_config": [],
             }
 
@@ -2869,7 +2876,7 @@ class CollectorHandler(object):
     def create_or_update_bcs_project_index_set(
         self, bcs_project_id, path_index, std_index, space_uid, storage_cluster_id
     ):
-        src_index_list = LogIndexSet.objects.filter(bcs_project_id=bcs_project_id)
+        src_index_list = LogIndexSet.objects.filter(space_uid=space_uid, bcs_project_id=bcs_project_id)
         if not src_index_list:
             new_path_cls_index_set = IndexSetHandler.create(
                 index_set_name="bcs_path_log_{}".format(bcs_project_id),
@@ -3103,11 +3110,13 @@ class CollectorHandler(object):
             **{"data": {"configs": std_container_config}},
         )
 
-        bcs_path_index_set, bcs_std_index_set = LogIndexSet.get_bcs_index_set(bcs_project_id=data["project_id"])
+        bcs_path_index_set, bcs_std_index_set = LogIndexSet.get_bcs_index_set(
+            space_uid=bk_biz_id_to_space_uid(data["bk_biz_id"]), bcs_project_id=data["project_id"],
+        )
         return {
             "rule_id": rule_id,
-            "file_index_set_id": bcs_path_index_set.index_set_id,
-            "std_index_set_id": bcs_std_index_set.index_set_id,
+            "file_index_set_id": bcs_path_index_set.index_set_id if bcs_path_index_set else None,
+            "std_index_set_id": bcs_std_index_set.index_set_id if bcs_std_index_set else None,
             "bk_data_id": path_collector.bk_data_id,
             "stdout_conf": {"bk_data_id": std_collector.bk_data_id},
         }
@@ -3285,15 +3294,16 @@ class CollectorHandler(object):
             self.create_container_release(container_config=container_config)
         delete_container_configs = container_configs[config_length::]
         for config in delete_container_configs:
-            self.delete_container_release(config)
             # 增量比对后，需要真正删除配置
-            config.delete()
+            self.delete_container_release(config, delete_config=True)
 
     def create_container_release(self, container_config: ContainerCollectorConfig):
         """
         创建容器采集配置
         :param container_config: 容器采集配置实例
         """
+        from apps.log_databus.tasks.collector import create_container_release
+
         if self.data.yaml_config_enabled and container_config.raw_config:
             # 如果开启了yaml模式且有原始配置，则优先使用
             request_params = copy.deepcopy(container_config.raw_config)
@@ -3303,34 +3313,34 @@ class CollectorHandler(object):
             request_params = self.collector_container_config_to_raw_config(self.data, container_config)
         name = self.generate_bklog_config_name(container_config.id)
 
-        try:
-            result = Bcs(self.data.bcs_cluster_id).save_bklog_config(
-                bklog_config_name=name, bklog_config=request_params
-            )
-            container_config.status = (
-                ContainerCollectStatus.SUCCESS.value if result else ContainerCollectStatus.FAILED.value
-            )
-        except Exception as e:  # pylint: disable=broad-except
-            logger.exception("[create_container_release] save bklog config failed: %s", e)
-            container_config.status = ContainerCollectStatus.FAILED.value
+        container_config.status = ContainerCollectStatus.PENDING.value
         container_config.save()
+
+        create_container_release.delay(
+            bcs_cluster_id=self.data.bcs_cluster_id,
+            container_config_id=container_config.id,
+            config_name=name,
+            config_params=request_params,
+        )
 
     def generate_bklog_config_name(self, container_config_id) -> str:
         return "{}-{}-{}".format(self.data.collector_config_name_en, self.data.bk_biz_id, container_config_id).replace(
             "_", "-"
         )
 
-    def delete_container_release(self, container_config):
-        name = self.generate_bklog_config_name(container_config.id)
-        try:
-            # 删除配置，如果没抛异常，则必定成功
-            Bcs(self.data.bcs_cluster_id).delete_bklog_config(name)
-        except Exception as e:  # pylint: disable=broad-except
-            logger.exception("[delete_container_release] delete bklog config failed: %s", e)
+    def delete_container_release(self, container_config, delete_config=False):
+        from apps.log_databus.tasks.collector import delete_container_release
 
-        # 无论成败与否，都设置为已停用
-        container_config.status = ContainerCollectStatus.TERMINATED.value
+        name = self.generate_bklog_config_name(container_config.id)
+        container_config.status = ContainerCollectStatus.PENDING.value
         container_config.save()
+
+        delete_container_release.delay(
+            bcs_cluster_id=self.data.bcs_cluster_id,
+            container_config_id=container_config.id,
+            config_name=name,
+            delete_config=delete_config,
+        )
 
     def list_bcs_clusters(self, bk_biz_id):
         if not bk_biz_id:
@@ -3380,6 +3390,9 @@ class CollectorHandler(object):
                     for ns in ns_list:
                         namespaces.add(ns)
                 return [{"id": n, "name": n} for n in namespaces]
+            elif space.space_type_id == SpaceTypeEnum.BKCI.value and space.space_code:
+                project_id_to_ns = BcsHandler().list_bcs_shared_cluster_namespace(bcs_cluster_id=bcs_cluster_id)
+                return [{"id": n, "name": n} for n in project_id_to_ns.get(space.space_code, [])]
             else:
                 return []
 
