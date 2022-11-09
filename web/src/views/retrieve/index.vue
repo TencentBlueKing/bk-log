@@ -110,7 +110,7 @@
             <div class="tab-operation">
               <span
                 v-if="isShowUiType"
-                v-bk-tooltips.light="$t('表单Tips')"
+                v-bk-tooltips="{ allowHtml: true, trigger: 'click', content: '#form-tips-html', theme: 'light' }"
                 :disabled="isCanUseUiType || !isSqlSearchType">
                 <div
                   class="search-type"
@@ -119,6 +119,16 @@
                   <span>{{isSqlSearchType ? $t('表单') : 'SQL'}}</span>
                 </div>
               </span>
+              <div v-show="false">
+                <div id="form-tips-html">
+                  <span>
+                    <span
+                      style="color: #d7473f; display: inline-block; transform: translateY(-2px);"
+                      class="bk-icon icon-exclamation-circle-shape"></span>
+                    <span>{{$t('表单Tips')}}</span>
+                  </span>
+                </div>
+              </div>
               <!-- <bk-popover
                 ref="queryTipPopover"
                 placement="bottom"

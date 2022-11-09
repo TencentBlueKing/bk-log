@@ -55,19 +55,19 @@ export default {
     activeFavorite: {
       immediate: true,
       deep: true,
-      handler() {
-        this.getSearchFieldsList(this.keyword);
+      handler(value) {
+        this.getSearchFieldsList(this.keyword, value?.params?.search_fields);
       },
     },
   },
   methods: {
-    async getSearchFieldsList(keyword) {
+    async getSearchFieldsList(keyword, fieldsList = []) {
       this.loading = true;
       try {
         const res = await this.$http.request('favorite/getSearchFields', {
           data: { keyword },
         });
-        this.searchFieldsList = res.data;
+        this.searchFieldsList = res.data.filter(item => fieldsList.includes(item.name));
       } catch (error) {} finally {
         this.loading = false;
       }
