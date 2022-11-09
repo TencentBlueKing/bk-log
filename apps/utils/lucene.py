@@ -1,4 +1,5 @@
 import re
+from dataclasses import dataclass
 from typing import List
 from collections import Counter
 from luqum.visitor import TreeTransformer
@@ -27,17 +28,15 @@ def get_node_lucene_syntax(node):
     return node.__class__.__name__
 
 
+@dataclass
 class LuceneField(object):
     """Lucene解析出的Field类"""
 
-    def __init__(
-        self, pos: int = 0, name: str = "", type: str = "", operator: str = DEFAULT_FIELD_OPERATOR, value: str = ""
-    ):
-        self.pos = pos
-        self.name = name
-        self.type = type
-        self.operator = operator
-        self.value = value
+    pos: int = 0
+    name: str = ""
+    type: str = ""
+    operator: str = DEFAULT_FIELD_OPERATOR
+    value: str = ""
 
     def to_dict(self) -> dict:
         return {
@@ -72,8 +71,8 @@ class LuceneParser(object):
                             field.name = f"{name}({number})"
                             number += 1
             return fields
-        else:
-            return [fields]
+
+        return [fields]
 
     def inspect(self) -> dict:
         is_legal = True
@@ -91,8 +90,7 @@ class LuceneParser(object):
         method_name = "parsing_{}".format(node_type.lower())
         return getattr(self, method_name)(node)
 
-    @staticmethod
-    def parsing_word(node):
+    def parsing_word(self, node):
         """解析单词"""
         field = LuceneField(
             pos=node.pos,
@@ -108,8 +106,7 @@ class LuceneParser(object):
             field.value = node.value.split(operator)[-1]
         return field
 
-    @staticmethod
-    def parsing_phrase(node):
+    def parsing_phrase(self, node):
         """解析短语"""
         field = LuceneField(
             pos=node.pos,
@@ -129,8 +126,7 @@ class LuceneParser(object):
         field.value = new_field.value
         return field
 
-    @staticmethod
-    def parsing_fieldgroup(node):
+    def parsing_fieldgroup(self, node):
         """解析字段组"""
         field = LuceneField(
             pos=node.pos,
@@ -151,21 +147,18 @@ class LuceneParser(object):
                 fields.append(children_fields)
         return fields
 
-    @staticmethod
-    def parsing_range(node):
+    def parsing_range(self, node):
         """"""
         field = LuceneField(pos=node.pos, type=LuceneSyntaxEnum.RANGE, value=str(node))
         field.operator = "{}{}".format(LOW_CHAR[node.include_low], HIGH_CHAR[node.include_high])
         return field
 
-    @staticmethod
-    def parsing_fuzzy(node):
+    def parsing_fuzzy(self, node):
         """"""
         field = LuceneField(pos=node.pos, operator=DEFAULT_FIELD_OPERATOR, type=LuceneSyntaxEnum.FUZZY, value=str(node))
         return field
 
-    @staticmethod
-    def parsing_regex(node):
+    def parsing_regex(self, node):
         """"""
         field = LuceneField(pos=node.pos, operator=DEFAULT_FIELD_OPERATOR, type=LuceneSyntaxEnum.REGEX, value=str(node))
         return field

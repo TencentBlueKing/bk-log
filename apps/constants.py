@@ -127,7 +127,7 @@ class LuceneSyntaxEnum(object):
     PROHIBIT = "Prohibit"
 
 
-FULL_TEXT_SEARCH_FIELD_NAME = "全文检索"
+FULL_TEXT_SEARCH_FIELD_NAME = _("全文检索")
 
 DEFAULT_FIELD_OPERATOR = "~="
 FIELD_GROUP_OPERATOR = "()"
