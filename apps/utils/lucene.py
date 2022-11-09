@@ -38,15 +38,6 @@ class LuceneField(object):
     operator: str = DEFAULT_FIELD_OPERATOR
     value: str = ""
 
-    def to_dict(self) -> dict:
-        return {
-            "pos": self.pos,
-            "name": self.name,
-            "type": self.type,
-            "operator": self.operator,
-            "value": self.value,
-        }
-
 
 class LuceneParser(object):
     """lucene语法的解析类"""

@@ -21,6 +21,7 @@ the project delivered to anyone in the future.
 """
 from collections import defaultdict
 from typing import Optional
+from dataclasses import asdict
 
 from django.db.transaction import atomic
 
@@ -272,7 +273,7 @@ class FavoriteHandler(object):
     @staticmethod
     def get_search_fields(keyword: str) -> list:
         """获取检索语句中可以拆分的字段"""
-        fields = [field.to_dict() for field in LuceneParser(keyword=keyword).parsing()]
+        fields = [asdict(field) for field in LuceneParser(keyword=keyword).parsing()]
 
         return fields
 
