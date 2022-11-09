@@ -1992,7 +1992,9 @@ class CollectorViewSet(ModelViewSet):
         data = self.params_valid(ListBCSCollectorSerializer)
         return Response(
             CollectorHandler().list_bcs_collector(
-                bk_biz_id=data["bk_biz_id"], bcs_cluster_id=data["bcs_cluster_id"], bk_app_code=auth_info["bk_app_code"]
+                bcs_cluster_id=data["bcs_cluster_id"],
+                bk_biz_id=data.get("bk_biz_id"),
+                bk_app_code=auth_info["bk_app_code"],
             )
         )
 
