@@ -281,6 +281,10 @@ class FavoriteHandler(object):
         """根据params里的参数名以及Value进行替换"""
         return LuceneTransformer().transform(keyword=keyword, params=params)
 
+    @staticmethod
+    def inspect(keyword) -> dict:
+        return LuceneParser(keyword=keyword).inspect()
+
 
 class FavoriteGroupHandler(object):
     data: Optional[FavoriteGroup] = None

@@ -4,6 +4,7 @@ from collections import Counter
 from luqum.visitor import TreeTransformer
 from luqum.parser import parser, lexer
 from luqum.auto_head_tail import auto_head_tail
+from luqum.utils import UnknownOperationResolver
 
 from apps.constants import (
     FULL_TEXT_SEARCH_FIELD_NAME,
@@ -17,6 +18,8 @@ from apps.constants import (
     LuceneSyntaxEnum,
     WORD_RANGE_OPERATORS,
 )
+
+from apps.exceptions import IllegalLuceneSyntaxException
 
 
 def get_node_lucene_syntax(node):
@@ -51,10 +54,11 @@ class LuceneParser(object):
 
     def __init__(self, keyword: str) -> None:
         self.keyword = keyword
+        self.tree = parser.parse(keyword, lexer=lexer)
 
     def parsing(self) -> List[LuceneField]:
         """解析lucene语法入口函数"""
-        fields = self._get_method(parser.parse(self.keyword, lexer=lexer))
+        fields = self._get_method(self.tree)
         if isinstance(fields, list):
             # 以下逻辑为同名字段增加额外标识符
             names = Counter([field.name for field in fields])
@@ -70,6 +74,16 @@ class LuceneParser(object):
             return fields
         else:
             return [fields]
+
+    def inspect(self) -> dict:
+        is_legal = True
+        try:
+            self.parsing()
+        except IllegalLuceneSyntaxException:
+            is_legal = False
+            resolver = UnknownOperationResolver()
+            self.keyword = str(resolver(self.tree))
+        return {"is_legal": is_legal, "keyword": self.keyword}
 
     def _get_method(self, node):
         """获取解析方法"""
@@ -213,7 +227,7 @@ class LuceneParser(object):
 
     def parsing_unknownoperation(self, node):
         """解析未知操作"""
-        raise Exception("Unknown operation: {}".format(str(node)))
+        raise IllegalLuceneSyntaxException()
 
 
 class LuceneTransformer(TreeTransformer):

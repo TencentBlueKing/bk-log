@@ -171,6 +171,9 @@ UPDATE_QUERY_PARAMS = [
 EXPECT_NEW_QUERY = """number: >=10000 OR title: "hello" AND text: hello OR gseIndex: [100 TO 200] \
 AND log: bk~0.5 AND time: /[L-N]/ AND a: bb AND c: dd OR (a: (bb OR cc AND dd) OR x: yy) AND hello1 AND hello2"""
 
+ILLEGAL_KEYWORD = """AAA BBB"""
+INSPECT_KEYWORD_RESULT = {"is_legal": False, "keyword": "AAA AND BBB"}
+
 
 # 类全局使用USERNAME_1
 @patch("apps.models.get_request_username", lambda: USERNAME_1)
@@ -322,3 +325,7 @@ class TestLucene(TestCase):
     def test_update_query(self):
         """测试更新Lucene Query"""
         self.assertEqual(FavoriteHandler().generate_query_by_ui(KEYWORD, UPDATE_QUERY_PARAMS), EXPECT_NEW_QUERY)
+
+    def test_inspect(self):
+        """测试解析关键字"""
+        self.assertEqual(FavoriteHandler().inspect(ILLEGAL_KEYWORD), INSPECT_KEYWORD_RESULT)
