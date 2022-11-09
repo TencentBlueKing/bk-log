@@ -1233,9 +1233,7 @@ export default {
         };
         if (this.isFavoriteSearch) {
           this.isSqlSearchType = !this.isShowUiType; // 判断是否有表单模式的数组值 如果有 则切换为表单模式
-          if (this.isSqlSearchType) {
-            this.retrieveParams.keyword = this.cacheKeywords;
-          } else {
+          if (!this.isSqlSearchType) {
             this.cacheKeywords = this.retrieveParams.keyword;
           }
         }
