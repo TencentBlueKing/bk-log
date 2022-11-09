@@ -107,3 +107,35 @@ class UserOperationActionEnum(ChoicesEnum):
         (REPLACE_UPDATE, _("替换")),
         (CONFIG, _("配置")),
     )
+
+
+class LuceneSyntaxEnum(object):
+    UNKNOWN = "UnknownOperation"
+    SEARCH_FIELD = "SearchField"
+    OR_OPERATION = "OrOperation"
+    AND_OPERATION = "AndOperation"
+    WORD = "Word"
+    PHRASE = "Phrase"
+    RANGE = "Range"
+    FUZZY = "Fuzzy"
+    REGEX = "Regex"
+    GROUP = "Group"
+    FIELD_GROUP = "FieldGroup"
+    # Unary operator
+    NOT = "Not"
+    PLUS = "Plus"
+    PROHIBIT = "Prohibit"
+
+
+FULL_TEXT_SEARCH_FIELD_NAME = _("全文检索")
+
+DEFAULT_FIELD_OPERATOR = "~="
+FIELD_GROUP_OPERATOR = "()"
+NOT_OPERATOR = "NOT"
+PLUS_OPERATOR = "+"
+PROHIBIT_OPERATOR = "-"
+
+LOW_CHAR = {True: "[", False: "{"}
+HIGH_CHAR = {True: "]", False: "}"}
+
+WORD_RANGE_OPERATORS = r"<=|>=|<|>"

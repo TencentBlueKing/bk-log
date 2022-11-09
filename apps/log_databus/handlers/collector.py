@@ -1652,16 +1652,21 @@ class CollectorHandler(object):
 
                 failed_count = 0
                 success_count = 0
-
-                for config in container_collector_configs:
-                    if config.status == ContainerCollectStatus.FAILED.value:
-                        failed_count += 1
-                    else:
-                        success_count += 1
+                pending_count = 0
 
                 # 默认是成功
                 status = CollectStatus.SUCCESS
                 status_name = RunStatus.SUCCESS
+
+                for config in container_collector_configs:
+                    if config.status == ContainerCollectStatus.FAILED.value:
+                        failed_count += 1
+                    elif config.status in [ContainerCollectStatus.PENDING.value, ContainerCollectStatus.RUNNING.value]:
+                        pending_count += 1
+                        status = CollectStatus.RUNNING
+                        status_name = RunStatus.RUNNING
+                    else:
+                        success_count += 1
 
                 if failed_count:
                     status = CollectStatus.FAILED
@@ -1680,7 +1685,7 @@ class CollectorHandler(object):
                         "total": len(container_collector_configs),
                         "success": success_count,
                         "failed": failed_count,
-                        "pending": 0,
+                        "pending": pending_count,
                     }
                 )
                 continue
@@ -2626,12 +2631,11 @@ class CollectorHandler(object):
             "bk_data_id": self.data.bk_data_id,
         }
 
-    def list_bcs_collector(self, bk_biz_id, bcs_cluster_id, bk_app_code="bk_bcs"):
-        collectors = (
-            CollectorConfig.objects.filter(bk_biz_id=bk_biz_id, bcs_cluster_id=bcs_cluster_id, bk_app_code=bk_app_code)
-            .exclude(bk_app_code="bk_log_search")
-            .order_by("-updated_at")
-        )
+    def list_bcs_collector(self, bcs_cluster_id, bk_biz_id=None, bk_app_code="bk_bcs"):
+        queryset = CollectorConfig.objects.filter(bcs_cluster_id=bcs_cluster_id, bk_app_code=bk_app_code)
+        if bk_biz_id:
+            queryset = queryset.filter(bk_biz_id=bk_biz_id)
+        collectors = queryset.exclude(bk_app_code="bk_log_search").order_by("-updated_at")
         rule_dict = {}
         if not collectors:
             return []
