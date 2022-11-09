@@ -873,7 +873,8 @@ class CollectorHandler(object):
 
     def _pre_check_collector_config_en(self, model_fields: dict, bk_biz_id: int):
         qs = CollectorConfig.objects.filter(
-            collector_config_name_en=model_fields["collector_config_name_en"], bk_biz_id=bk_biz_id,
+            collector_config_name_en=model_fields["collector_config_name_en"],
+            bk_biz_id=bk_biz_id,
         )
         if self.collector_config_id:
             qs = qs.exclude(collector_config_id=self.collector_config_id)
@@ -1013,7 +1014,7 @@ class CollectorHandler(object):
         return True
 
     def _itsm_start_judge(self):
-        if self.data.collector_scenario_id == CollectorScenarioEnum.CUSTOM.value:
+        if self.data.is_custom_scenario:
             return
         if self.data.itsm_has_appling() and FeatureToggleObject.switch(name=FEATURE_COLLECTOR_ITSM):
             raise CollectNotSuccessNotCanStart
@@ -1308,6 +1309,9 @@ class CollectorHandler(object):
             ]
         }
         """
+        if self.data.is_custom_scenario:
+            return {"task_ready": True, "contents": []}
+
         if not self.data.subscription_id:
             self._update_or_create_subscription(
                 collector_scenario=CollectorScenario.get_instance(
@@ -2063,7 +2067,8 @@ class CollectorHandler(object):
         bk_biz_id = params["bk_biz_id"] if not self.data else self.data.bk_biz_id
         if target_node_type and target_node_type == TargetNodeTypeEnum.INSTANCE.value:
             illegal_ips = self._filter_illegal_ips(
-                bk_biz_id=bk_biz_id, ip_list=[target_node["ip"] for target_node in target_nodes],
+                bk_biz_id=bk_biz_id,
+                ip_list=[target_node["ip"] for target_node in target_nodes],
             )
             if illegal_ips:
                 logger.error("cat illegal IPs: {illegal_ips}".format(illegal_ips=illegal_ips))
@@ -3184,7 +3189,9 @@ class CollectorHandler(object):
             raise RuleCollectorException(RuleCollectorException.MESSAGE.format(rule_id=rule_id))
         for collector in collectors:
             self.deal_self_call(
-                collector_config_id=collector.collector_config_id, collector=collector, func=self.destroy,
+                collector_config_id=collector.collector_config_id,
+                collector=collector,
+                func=self.destroy,
             )
         bcs_rule.delete()
         return {"rule_id": rule_id}
