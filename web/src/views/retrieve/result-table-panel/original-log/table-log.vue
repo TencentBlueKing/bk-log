@@ -117,9 +117,6 @@ export default {
       clearTableWidth: state => state.clearTableWidth,
     }),
     ...mapState('globals', ['fieldTypeMap']),
-    showMonitorWeb() {
-      return this.bkMonitorUrl;
-    },
   },
   watch: {
     clearTableWidth() {
@@ -192,19 +189,19 @@ export default {
 
       window.open(url);
     },
-    handleClickTools(event, row, config = {}) {
-      const contextFields = config.contextAndRealtime.extra?.context_fields;
-      const dialogNewParams = {};
-      // 传参配置指定字段
-      if (Array.isArray(contextFields) && contextFields.length) {
-        contextFields.push(config.timeField);
-        for (const [key, val] of Object.entries(row)) {
-          if (contextFields.includes(key)) dialogNewParams[key] = val;
-        }
-      } else {
-        Object.assign(dialogNewParams, row);
-      }
+    handleClickTools(event, row, config) {
       if (['realTimeLog', 'contextLog'].includes(event)) {
+        const contextFields = config.contextAndRealtime.extra?.context_fields;
+        const dialogNewParams = {};
+        // 传参配置指定字段
+        if (Array.isArray(contextFields) && contextFields.length) {
+          contextFields.push(config.timeField);
+          for (const [key, val] of Object.entries(row)) {
+            if (contextFields.includes(key)) dialogNewParams[key] = val;
+          }
+        } else {
+          Object.assign(dialogNewParams, row);
+        }
         this.openLogDialog(dialogNewParams, event);
       } else if (event === 'monitorWeb') this.openMonitorWeb(row);
       else if (event === 'webConsole') this.openWebConsole(row);

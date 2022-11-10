@@ -126,9 +126,12 @@ class IndexSetViewSet(ModelViewSet):
                 return attrs
 
         class UpdateSerializer(CustomSerializer):
+            index_set_name = serializers.CharField(required=True)
             storage_cluster_id = serializers.IntegerField(required=False, default=None)
-            scenario_id = serializers.CharField(read_only=True)
-            project_id = serializers.CharField(read_only=True)
+            scenario_id = serializers.CharField(required=True)
+            category_id = serializers.CharField(required=True)
+            project_id = serializers.CharField(required=False)
+            bk_biz_id = serializers.IntegerField(required=False)
             bkdata_auth_url = serializers.ReadOnlyField()
 
         class ShowMoreSerializer(CustomSerializer):
@@ -466,6 +469,13 @@ class IndexSetViewSet(ModelViewSet):
         }
         """
         data = self.validated_data
+        if data["scenario_id"] == Scenario.BKDATA or settings.RUN_VER == "tencent":
+            storage_cluster_id = None
+        elif data["scenario_id"] == Scenario.ES:
+            storage_cluster_id = data["storage_cluster_id"]
+        else:
+            storage_cluster_id = IndexSetHandler.get_storage_by_table_list(data["indexes"])
+
         index_set = IndexSetHandler(index_set_id=kwargs["index_set_id"]).update(
             data["index_set_name"],
             data["view_roles"],
@@ -475,7 +485,7 @@ class IndexSetViewSet(ModelViewSet):
             time_field=data["time_field"],
             time_field_type=data["time_field_type"],
             time_field_unit=data["time_field_unit"],
-            storage_cluster_id=data.get("storage_cluster_id"),
+            storage_cluster_id=storage_cluster_id,
         )
         return Response(self.get_serializer_class()(instance=index_set).data)
 

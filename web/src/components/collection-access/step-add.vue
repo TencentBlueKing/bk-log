@@ -22,10 +22,10 @@
 
 <template>
   <div class="add-collection-container">
-    <bk-alert v-if="guideUrl" class="king-alert" type="info" closable>
+    <bk-alert class="king-alert" type="info" closable>
       <div slot="title" class="slot-title-container">
         {{ $t('接入前请查看') }}
-        <a class="link" target="_blank" :href="guideUrl"> {{ $t('接入指引') }}</a>
+        <a class="link" @click="handleGotoLink('logCollection')"> {{ $t('接入指引') }}</a>
         {{ $t('，尤其是在日志量大的情况下请务必提前沟通。') }}
       </div>
     </bk-alert>
@@ -51,23 +51,20 @@
           </bk-input>
         </bk-form-item>
         <bk-form-item
+          ext-cls="en-bk-form"
           :label="$t('dataSource.source_en_name')"
           :required="true"
           :rules="rules.collector_config_name_en"
           :property="'collector_config_name_en'">
-          <div class="config-enName-box">
-            <bk-input
-              class="w520"
-              v-model="formData.collector_config_name_en"
-              show-word-limit
-              maxlength="50"
-              data-test-id="baseMessage_input_fillEnglishName"
-              :disabled="isUpdate && !!(formData.collector_config_name_en)"
-              :placeholder="$t('dataSource.en_name_tips')"
-              @change="clearError">
-            </bk-input>
-            <p v-show="!configNameEnIsNotRepeat" class="repeat-message">{{$t('dataSource.en_name_repeat')}}</p>
-          </div>
+          <bk-input
+            class="w520"
+            v-model="formData.collector_config_name_en"
+            show-word-limit
+            maxlength="50"
+            data-test-id="baseMessage_input_fillEnglishName"
+            :disabled="isUpdate && !!formData.collector_config_name_en"
+            :placeholder="$t('dataSource.en_name_tips')">
+          </bk-input>
           <p class="en-name-tips" slot="tip">{{ $t('dataSource.en_name_placeholder') }}</p>
         </bk-form-item>
         <bk-form-item :label="$t('configDetails.remarkExplain')">
@@ -193,7 +190,6 @@
           :scenario-id="formData.collector_scenario_id"
           :current-environment="currentEnvironment"
           :config-data="formData"
-          :is-win-type-form-change.sync="isWinTypeFormChange"
           @configChange="(val) => handelFormChange(val, 'formConfig')">
         </config-log-set-item>
 
@@ -222,7 +218,7 @@
         </bk-form-item>
 
         <bk-form-item v-if="!isPhysicsEnvironment" :label="$t('Yaml模式')">
-          <bk-switcher class="mt8" v-model="isYaml" theme="primary"></bk-switcher>
+          <bk-switcher class="mt8" v-model="isYaml" theme="primary" :pre-check="handelChangeYaml"></bk-switcher>
         </bk-form-item>
 
         <yaml-editor
@@ -261,8 +257,9 @@
 
               <div class="config-container">
                 <div class="config-item container-select">
-                  <span>{{$t('NameSpace选择')}}</span>
+                  <span :class="{ 'none-hidden-dom': isNode }">{{$t('NameSpace选择')}}</span>
                   <div v-bk-tooltips.top="{ content: $t('请先选择集群'), delay: 500 }"
+                       :class="{ 'none-hidden-dom': isNode }"
                        :disabled="!!formData.bcs_cluster_id">
                     <bk-select
                       v-model="conItem.namespaces"
@@ -282,12 +279,13 @@
                   <div class="mt8 justify-bt">
                     <bk-checkbox
                       v-model="conItem.isAllContainer"
-                      :disabled="isNode"
+                      :class="{ 'none-hidden-dom': isNode }"
                       @change="(state) => handelClickAllContainer(conIndex, state)">
                       {{$t('所有容器')}}
                     </bk-checkbox>
                     <div class="justify-bt container-btn-container">
-                      <span v-if="!isContainerHaveValue(conItem.container)" class="span-box"
+                      <span v-if="!isContainerHaveValue(conItem.container)"
+                            :class="{ 'span-box': true, 'none-hidden-dom': isNode }"
                             v-bk-tooltips.top="{ content: $t('请先选择集群'), delay: 500 }"
                             :disabled="!!formData.bcs_cluster_id">
                         <div :class="{
@@ -513,6 +511,12 @@ export default {
     containerTargetDialog,
     yamlEditor,
   },
+  props: {
+    isUpdate: {
+      type: Boolean,
+      require: true,
+    },
+  },
   data() {
     return {
       guideUrl: window.COLLECTOR_GUIDE_URL,
@@ -542,7 +546,7 @@ export default {
             type: 'match', // 过滤方式类型
             match_type: 'include', // 过滤方式 可选字段 include, exclude
             match_content: '',
-            separator: '',
+            separator: '|',
             separator_filters: [ // 分隔符过滤条件
               { fieldindex: '', word: '', op: '=', logic_op: 'and' },
             ],
@@ -583,7 +587,7 @@ export default {
                 type: 'match', // 过滤方式类型
                 match_type: 'include',  // 过滤方式 可选字段 include, exclude
                 match_content: '',
-                separator: '',
+                separator: '|',
                 separator_filters: [ // 分隔符过滤条件
                   { fieldindex: '', word: '', op: '=', logic_op: 'and' },
                 ],
@@ -612,6 +616,7 @@ export default {
           },
           {
             max: 50,
+            message: this.$t('不能多于50个字符'),
             trigger: 'blur',
           },
         ],
@@ -622,19 +627,23 @@ export default {
           },
           {
             max: 50,
+            message: this.$t('不能多于50个字符'),
             trigger: 'blur',
           },
           {
             min: 5,
+            message: this.$t('不能少于5个字符'),
             trigger: 'blur',
           },
           {
             regex: /^[A-Za-z0-9_]+$/,
+            message: this.$t('enNameValidatorTips'),
             trigger: 'blur',
           },
           {
             // 检查英文名是否可用
             validator: this.checkEnName,
+            message: this.$t('dataSource.en_name_repeat'),
             trigger: 'blur',
           },
         ],
@@ -658,7 +667,6 @@ export default {
           },
         ],
       },
-      isUpdate: false,
       isHandle: false,
       isClone: false,
       globals: {},
@@ -675,7 +683,6 @@ export default {
         SET_TEMPLATE2: this.$t('configDetails.setTemplates'),
       },
       configBaseObj: {}, // 新增配置项的基础对象
-      configNameEnIsNotRepeat: true, // 英文名没有重复
       isYaml: false, // 是否是yaml模式
       yamlFormData: {}, // yaml请求成功时的表格数据
       currentEnvironment: 'linux', // 当前选中的环境
@@ -707,7 +714,6 @@ export default {
         match_labels: [],
         match_expressions: [],
       },
-      isWinTypeFormChange: false, // 是否改变过win日志类型的值
       publicLetterIndex: 0, // 公共的字母下标
       isShowLabelTargetDialog: false, // 是否展示指定标签dialog
       isShowContainerTargetDialog: false, // 是否展示指定容器dialog
@@ -719,6 +725,7 @@ export default {
       currentSetIndex: 0, // 当前操作的配置项的下标
       isExtraError: false, // 附加标签是否有出错
       nameSpaceRequest: false, // 是否正在请求namespace接口
+      uiconfigToYamlData: {}, // 切换成yaml时当前保存的ui配置
     };
   },
   computed: {
@@ -765,16 +772,16 @@ export default {
     // 获取日志类型列表
     getCollectorScenario() {
       try {
-        if (this.currentEnvironment === 'windows') return this.globalsData.collector_scenario;
-        const cloneList = JSON.parse(JSON.stringify(this.globalsData.collector_scenario));
-        const winIndex = cloneList.findIndex(item => item.id === 'wineventlog');
-        cloneList.splice(winIndex, 1);
-        return cloneList;
+        const activeScenario = this.globalsData.collector_scenario.filter(item => item.is_active);
+        if (this.currentEnvironment === 'windows') return activeScenario;
+        const winIndex = activeScenario.findIndex(item => item.id === 'wineventlog');
+        activeScenario.splice(winIndex, 1);
+        return activeScenario;
       } catch (error) {
         return [];
       }
     },
-    // 是否时编辑或者克隆
+    // 是否是编辑或者克隆
     isCloneOrUpdate() {
       return this.isUpdate || this.isClone;
     },
@@ -782,7 +789,7 @@ export default {
   watch: {
     currentEnvironment(nVal, oVal) {
       if (oVal === 'windows' && this.isWinEventLog) {
-        this.formData.collector_scenario_id =  this.globalsData.collector_scenario[0].id;
+        this.formData.collector_scenario_id = this.globalsData.collector_scenario[0].id;
       }
       if (['std_log_config', 'container_log_config', 'node_log_config'].includes(nVal)) {
         this.formData.environment = 'container';
@@ -807,15 +814,15 @@ export default {
     },
   },
   created() {
-    this.isUpdate = this.$route.name !== 'collectAdd';
     this.isClone = this.$route.query?.type === 'clone';
-    this.getLinkData();
+    this.$store.commit('updateRouterLeaveTip', false);
     this.configBaseObj = deepClone(this.formData.configs[0]); // 生成配置项的基础对象
+    this.getLinkData();
     // 克隆与编辑均进行数据回填
     if (this.isUpdate || this.isClone) {
       const cloneCollect = JSON.parse(JSON.stringify(this.curCollect));
       if (cloneCollect.environment === 'container') { // 容器环境
-        cloneCollect.yaml_config_enabled && (this.isYaml = true);
+        this.isYaml = cloneCollect.yaml_config_enabled;
         // yaml模式可能会有多种容器环境 选择第一项配置里的环境作为展示
         this.currentEnvironment = cloneCollect.configs[0].collector_type;
         this.publicLetterIndex = cloneCollect.configs.length - 1;
@@ -842,9 +849,11 @@ export default {
       } else {
         // 编辑且非克隆则禁用另一边的环境按钮
         this.initBtnListDisable();
+        this.$nextTick(() => {
         // 克隆时不缓存初始数据
         // 编辑采集项时缓存初始数据 用于对比提交时是否发生变化 未修改则不重新提交 update 接口
-        this.localParams = this.handleParams();
+          this.localParams = this.handleParams();
+        });
       }
     }
   },
@@ -869,9 +878,12 @@ export default {
     },
     /**
      * @desc: 初始化编辑的form表单值
+     * @param { Object } formData 基础表单
+     * @param { Boolean } isYamlData 是否是yaml解析出的表单数据
      * @returns { Object } 返回初始化后的Form表单
      */
-    initContainerFormData(curFormData) {
+    initContainerFormData(formData, isYamlData = false) {
+      const curFormData = deepClone(formData);
       if (!curFormData.extra_labels.length) {
         curFormData.extra_labels = [{
           key: '',
@@ -888,6 +900,9 @@ export default {
           data_encoding,
           params,
           namespaces: itemNamespace,
+          container: yamlContainer,
+          label_selector: yamlSelector,
+          collector_type,
         } = item;
         let isAllContainer = false;
         const namespaces = item.any_namespace ? ['*'] : itemNamespace;
@@ -901,8 +916,14 @@ export default {
           match_labels,
           match_expressions,
         };
-        if (!params.conditions?.separator_filters) {
-          params.conditions.separator_filters = [{ fieldindex: '', word: '', op: '=', logic_op: 'and' }];
+        if (isYamlData) {
+          Object.assign(container, yamlContainer);
+          Object.assign(label_selector, yamlSelector);
+          item.params.paths = item.params.paths.length ? item.paths.map(item => ({ value: item })) : [];
+        } else {
+          if (!params.conditions?.separator_filters) {
+            params.conditions.separator_filters = [{ fieldindex: '', word: '', op: '=', logic_op: 'and' }];
+          }
         }
         if (JSON.stringify(container) === JSON.stringify(this.allContainer)
         && JSON.stringify(label_selector) === JSON.stringify(this.allLabelSelector)) {
@@ -916,6 +937,7 @@ export default {
           container,
           label_selector,
           params,
+          collector_type,
         };
       });
       curFormData.configs = filterConfigs;
@@ -926,7 +948,7 @@ export default {
       const isCanSubmit = await this.submitDataValidate();
       if (!isCanSubmit) return;
       const params = this.handleParams();
-      if (JSON.stringify(this.localParams) === JSON.stringify(params) && !this.isWinTypeFormChange) {
+      if (JSON.stringify(this.localParams) === JSON.stringify(params)) {
         // 未修改表单 直接跳转下一步
         this.$emit('stepChange');
         this.isHandle = false;
@@ -934,19 +956,6 @@ export default {
       }
       this.$refs.validateForm.validate().then(() => {
         this.isCloseDataLink && delete params.data_link_id;
-        // wineventlog日志类型时进行params属性修改
-        if (this.isWinEventLog) {
-          const winParams = {};
-          const { selectLogSpeciesList, otherSpeciesList, eventSettingList } = this.$refs.formConfigRef;
-          if (selectLogSpeciesList.includes('Other')) {
-            selectLogSpeciesList.splice(selectLogSpeciesList.indexOf('Other'), 1);
-          }
-          winParams.winlog_name = selectLogSpeciesList.concat(otherSpeciesList);
-          eventSettingList.forEach((el) => {
-            winParams[el.type] = el.list;
-          });
-          params.params = winParams;
-        }
         this.isPhysicsEnvironment ? this.setCollection(params) : this.setContainerCollection(params);
       }, () => {});
     },
@@ -1046,6 +1055,7 @@ export default {
         if (res.code === 0) {
           this.$store.commit(`collect/${this.isUpdate ? 'updateCurCollect' : 'setCurCollect'}`, Object.assign({}, this.formData, params, res.data));
           this.$emit('stepChange');
+          this.$emit('update:is-update', true); // 新建成功,更新是否是编辑状态
           this.setDetail(res.data.collector_config_id);
         }
       })
@@ -1059,24 +1069,19 @@ export default {
       this.$emit('update:container-loading', true);
       const urlParams = {};
       let requestUrl;
-      let subParams;
       if (this.isUpdate) {
         urlParams.collector_config_id = Number(this.$route.params.collectorId);
         requestUrl = 'container/update';
       } else {
         requestUrl = 'container/create';
       }
-      if (this.isYaml) {
-        this.yamlFormData.configs.forEach(item => this.filterParams(item.params, item.collector_type));
-        subParams = Object.assign(params, this.yamlFormData, { yaml_config_enabled: true });
-      } else {
-        subParams = Object.assign(params, { yaml_config_enabled: false });
-      }
-      const updateData = { params: urlParams, data: subParams };
+      const data = Object.assign(params, this.isYaml ? this.yamlFormData : {}, { yaml_config_enabled: this.isYaml });
+      const updateData = { params: urlParams, data };
       this.$http.request(requestUrl, updateData).then((res) => {
         if (res.code === 0) {
           this.$store.commit(`collect/${this.isUpdate ? 'updateCurCollect' : 'setCurCollect'}`,
             Object.assign({}, this.formData, params, res.data));
+          this.$emit('update:is-update', true); // 新建成功,更新是否是编辑状态
           this.$emit('stepChange');
           this.setDetail(res.data.collector_config_id);
         }
@@ -1093,7 +1098,7 @@ export default {
     },
     // 处理提交参数
     handleParams() {
-      const formData = JSON.parse(JSON.stringify(this.formData));
+      const formData = deepClone(this.formData);
       const {
         collector_config_name,
         collector_config_name_en,
@@ -1139,7 +1144,9 @@ export default {
           delete item.isAllContainer;
           delete item.letterIndex;
           item.collector_type = this.currentEnvironment;
-          this.filterParams(item.params, item.collector_type);
+          // 若为标准输出 则直接清空日志路径
+          if (item.collector_type === 'std_log_config') item.params.paths = [];
+          item.params = this.filterParams(item.params, item.collector_type);
         });
         containerFromData.extra_labels = extra_labels.filter(item => !(item.key === '' && item.value === ''));
         if (this.isUpdate) {
@@ -1149,14 +1156,14 @@ export default {
           bk_biz_id: this.bkBizId,
         });
       }
-      this.filterParams(params);
+      const physicsParams = this.filterParams(params);
       // 物理环境
       Object.assign(physicsFromData, publicFromData, {
         target_node_type,
         target_object_type,
         target_nodes,
         data_encoding,
-        params,
+        params: physicsParams,
       });
       if (this.isUpdate) { // 物理环境编辑
         physicsFromData.collector_config_id = Number(this.$route.params.collectorId);
@@ -1170,35 +1177,42 @@ export default {
     },
     /**
      * @desc: 对表单的params传参参数进行处理
-     * @param { Object } params
+     * @param { Object } passParams
      * @param { String } collectorType 配置项中的容器类型
      */
-    filterParams(params, collectorType = '') {
-      if (this.formData.collector_scenario_id !== 'wineventlog') {
+    filterParams(passParams) {
+      let params = deepClone(passParams);
+      if (!this.isWinEventLog) {
         if (!this.hasMultilineReg) { // 行首正则未开启
           delete params.multiline_pattern;
           delete params.multiline_max_lines;
           delete params.multiline_timeout;
         }
         const { match_type, match_content, separator, separator_filters, type } = params.conditions;
-        params.conditions = type === 'match' ? { type, match_type, match_content } : {
+        let finallyType = type; // 如果是分隔符过滤，都没有填写或只填写一半的值，若过滤数组为空变成match不传过滤内容
+        const separatorEffectiveArr = separator_filters.filter(item => item.fieldindex && item.word);
+        !separatorEffectiveArr.length && (finallyType = 'match');
+        params.conditions = finallyType === 'match' ? { type, match_type, match_content } : {
           type,
           separator,
-          separator_filters,
+          separator_filters: separatorEffectiveArr,
         };
-        // 若为标准输出或者win日志 则直接清空日志路径
-        if (collectorType === 'std_log_config' || this.isWinEventLog) {
-          params.paths = [];
-        } else {
-          params.paths = params.paths.map(item => (typeof item === 'object' ? item.value : item));
+        if (!separatorEffectiveArr.length && type === 'separator') {  // 当前是分隔符过滤但内容都没有填写则传默认的字符串类型
+          Object.assign(params.conditions, {
+            type: 'match',
+            match_type: 'include',
+            match_content: '',
+          });
         }
+        params.paths = params.paths.map(item => (typeof item === 'object' ? item.value : item));
+      } else {
+        params = this.$refs.formConfigRef.getWinParamsData;
       }
+      return params;
     },
     // 选择日志类型
     chooseLogType(item) {
-      if (item.is_active) {
-        this.formData.collector_scenario_id = item.id;
-      }
+      if (item.is_active) this.formData.collector_scenario_id = item.id;
     },
     // 选择数据分类
     chooseDataClass() {
@@ -1259,18 +1273,9 @@ export default {
         const res =  await this.$http.request('collect/getPreCheck', {
           params: { collector_config_name_en: val, bk_biz_id: this.$store.state.bkBizId },
         });
-        if (res.data) {
-          this.configNameEnIsNotRepeat = res.data.allowed;
-          return res.data.allowed;
-        }
+        if (res.data) return res.data.allowed;
       } catch (error) {
-        this.configNameEnIsNotRepeat = true;
         return false;
-      }
-    },
-    clearError() {
-      if (!this.configNameEnIsNotRepeat) {
-        this.configNameEnIsNotRepeat = true;
       }
     },
     /**
@@ -1316,7 +1321,6 @@ export default {
      * @param { Boolean } state 状态
      */
     handelClickAllContainer(index, state) {
-      this.currentSetIndex = index;
       if (state) {
         // 点击所有容器配置项的指定标签和容器都填为空
         this.formData.configs[index].container = this.allContainer;
@@ -1385,8 +1389,7 @@ export default {
     handleNameSpaceSelect(option, index) {
       if (option[option.length - 1] === '*') { // 如果最后一步选择所有，则清空数组填所有
         const nameSpacesLength = this.formData.configs[index].namespaces.length;
-        this.formData.configs[index].namespaces.splice(0, nameSpacesLength);
-        this.formData.configs[index].namespaces.push('*');
+        this.formData.configs[index].namespaces.splice(0, nameSpacesLength, '*');
         return;
       }
       if (option.length > 1 && option.includes('*')) { // 如果选中其他的值 包含所有则去掉所有选项
@@ -1432,6 +1435,50 @@ export default {
           console.warn(err);
         });
     },
+    /**
+     * @desc: 切换ui模式或yaml模式
+     * @param { Boolean } val
+     */
+    handelChangeYaml(val) {
+      return new Promise((resolve, reject) => {
+        if (val) {
+          const { add_pod_label, extra_labels, configs } = this.handleParams();
+          const data = { add_pod_label, extra_labels, configs };
+          // 传入处理后的参数 请求ui配置转yaml的数据
+          this.$http.request('container/containerConfigsToYaml', { data }).then((res) => {
+            this.formData.yaml_config = res.data;
+            // 保存进入yaml模式之前的ui配置参数
+            Object.assign(this.uiconfigToYamlData, {
+              add_pod_label: this.formData.add_pod_label,
+              extra_labels: this.formData.extra_labels,
+              configs: this.formData.configs,
+            });
+            resolve(true);
+          })
+            .catch((err) => {
+              console.warn(err);
+              reject(false);
+            });
+        } else {
+          try {
+            // 若有报错 则回填进入yaml模式之前的ui配置参数
+            if (!this.$refs.yamlEditorRef.getSubmitState) {
+              Object.assign(this.formData, this.uiconfigToYamlData);
+            } else {
+            // 无报错 回填yamlData的参数
+              const assignData = this.initContainerFormData(this.yamlFormData, true);
+              Object.assign(this.formData, assignData);
+            }
+            resolve(true);
+          } catch (error) {
+            resolve(false);
+          }
+        }
+      });
+    },
+    /**
+     * @desc: 编进进入时判断当前环境 禁用另一边环境选择
+     */
     initBtnListDisable() {
       // const operateIndex = ['linux', 'windows'].includes(this.currentEnvironment) ? 1 : 0;
       this.environmentList[0].btnList.forEach(item => item.isDisable = true);
@@ -1443,7 +1490,7 @@ export default {
       return Object.values(labelSelector)?.some(item => item.length) || false;
     },
     isContainerHaveValue(container) {
-      return Object.values(container)?.some(item => !!item) || false;
+      return Object.values(container)?.some(Boolean) || false;
     },
   },
 };
@@ -1458,6 +1505,11 @@ export default {
   padding: 0 42px 42px;
   overflow: auto;
 
+  .en-bk-form {
+    position: relative;
+    width: 600px;
+  }
+
   .bk-form-content {
     line-height: 20px;
   }
@@ -1467,6 +1519,7 @@ export default {
 
     .link {
       color: #3a84ff;
+      cursor: pointer;
     }
   }
 
@@ -1816,13 +1869,14 @@ export default {
     margin-top: 8px;
   }
 
+  .none-hidden-dom {
+    /* stylelint-disable-next-line declaration-no-important */
+    display: none !important;
+  }
+
   .is-selected {
     /* stylelint-disable-next-line declaration-no-important */
     z-index: 2 !important;
-  }
-
-  .bk-form .bk-form-content .tooltips-icon {
-    left: 330px;
   }
 
   .rulesColor {
@@ -1837,15 +1891,6 @@ export default {
     }
   }
 
-  .config-enName-box {
-    display: flex;
-
-    .repeat-message {
-      font-size: 14px;
-      margin-left: 6px;
-      color: #ff5656;
-    }
-  }
 
   .win-content {
     padding-bottom: 20px;
@@ -1987,7 +2032,7 @@ export default {
       }
 
       .container-select {
-        width: 300px;
+        width: 460px;
       }
 
       .container-btn-container {
@@ -2051,8 +2096,8 @@ export default {
 
         .edit {
           position: absolute;
-          right: 0;
-          top: -30px;
+          left: 70px;
+          top: -28px;
           color: #3a84ff;
           cursor: pointer;
         }

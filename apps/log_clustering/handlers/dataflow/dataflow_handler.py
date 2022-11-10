@@ -61,6 +61,7 @@ from apps.log_clustering.handlers.dataflow.constants import (
     DIST_CLUSTERING_FIELDS,
     DEFAULT_MODEL_INPUT_FIELDS,
     DEFAULT_MODEL_OUTPUT_FIELDS,
+    DEFAULT_SPARK_EXECUTOR_CORES,
 )
 from apps.log_clustering.handlers.dataflow.data_cls import (
     ExportFlowCls,
@@ -768,8 +769,10 @@ class DataFlowHandler(BaseAiopsHandler):
             filter_id=model_instance_id,
             execute_config={
                 "spark.executor.instances": self.conf.get("spark.executor.instances", DEFAULT_SPARK_EXECUTOR_INSTANCES),
+                "spark.executor.cores": self.conf.get("spark.executor.cores", DEFAULT_SPARK_EXECUTOR_CORES),
                 "pseudo_shuffle": self.conf.get("pseudo_shuffle", DEFAULT_PSEUDO_SHUFFLE),
                 "spark.locality.wait": self.conf.get("spark.locality.wait", DEFAULT_SPARK_LOCALITY_WAIT),
+                "dropna_enabled": False,
             },
         )
         request_dict = self._set_username(update_model_instance_request)

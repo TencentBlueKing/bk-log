@@ -162,7 +162,7 @@
                 style="color: #3a84ff;"
                 :disabled="!globalEditable"
                 :clearable="false"
-                :popover-min-width="60">
+                :popover-min-width="100">
                 <bk-option
                   v-for="option in conditionList"
                   :key="option.id"
@@ -210,7 +210,7 @@
             theme="primary"
             data-test-id="LogCluster_button_submit"
             :title="$t('保存')"
-            :disabled="!globalEditable || !isCanEdit"
+            :disabled="!globalEditable"
             :loading="isHandle"
             @click.stop.prevent="handleSubmit">
             {{ $t('保存') }}
@@ -249,7 +249,6 @@
 
 <script>
 import RuleTable from './rule-table';
-import { mapGetters } from 'vuex';
 
 export default {
   components: {
@@ -319,6 +318,8 @@ export default {
       conditionList: [ // 过滤条件对比
         { id: '=', name: '=' },
         { id: '!=', name: '!=' },
+        { id: 'LIKE', name: 'LIKE' },
+        { id: 'NOT LIKE', name: 'NOT LIKE' },
       ],
       comparedList: [
         { id: 'and', name: 'AND' },
@@ -328,14 +329,6 @@ export default {
       isShowFingerTips: false,
       isActive: false,
     };
-  },
-  computed: {
-    ...mapGetters({
-      modifyClustering: 'retrieve/modifyClustering',
-    }),
-    isCanEdit() {
-      return this.isActive ? this.modifyClustering : true;
-    },
   },
   watch: {
     'formData.filter_rules': {

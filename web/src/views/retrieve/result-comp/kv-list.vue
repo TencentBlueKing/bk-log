@@ -37,6 +37,7 @@
             v-for="(option) in toolMenuList"
             :key="option.id"
             :class="`icon ${getHandleIcon(option, field)} ${checkDisable(option.id, field)}`"
+            v-bk-tooltips="{ content: getIconPopover(option.id, field), delay: 300 }"
             @click.stop="handleMenuClick(option.id, field)">
           </span>
         </div>
@@ -94,6 +95,14 @@ export default {
       type: Object,
       default: () => {},
     },
+    sortList: {
+      type: Array,
+      require: true,
+    },
+    retrieveParams: {
+      type: Object,
+      require: true,
+    },
   },
   data() {
     return {
@@ -104,6 +113,15 @@ export default {
         // { id: 'chart', icon: 'log-icon icon-chart' },
         { id: 'copy', icon: 'log-icon icon-copy' },
       ],
+      toolMenuTips: {
+        is: `${this.$t('添加')} is ${this.$t('过滤项')}`,
+        not: `${this.$t('添加')} is not ${this.$t('过滤项')}`,
+        hiddenField: this.$t('隐藏字段'),
+        displayField: this.$t('显示字段'),
+        copy: this.$t('复制'),
+        text_is: `${this.$t('文本类型')}${this.$t('不支持')} is ${this.$t('操作')}`,
+        text_not: `${this.$t('文本类型')}${this.$t('不支持')} is not ${this.$t('操作')}`,
+      },
     };
   },
   computed: {
@@ -147,7 +165,18 @@ export default {
     },
     checkDisable(id, field) {
       const type = this.getFieldType(field);
-      return (['is', 'not'].includes(id) && type === 'text') || type === '__virtual__'  ? 'is-disabled' : '';
+      const isExist = this.filterIsExist(id, field);
+      return (['is', 'not'].includes(id) && type === 'text') || type === '__virtual__' || isExist  ? 'is-disabled' : '';
+    },
+    getIconPopover(id, field) {
+      const type = this.getFieldType(field);
+      if (type === 'text' && ['is', 'not'].includes(id)) return this.toolMenuTips[`text_${id}`];
+      if (type === '__virtual__' && ['is', 'not'].includes(id)) return this.$t('unKnowIconTips');
+      if (this.filterIsExist(id, field)) return this.$t('已添加过滤条件');
+      if (id !== 'display') return this.toolMenuTips[id];
+
+      const isDisplay = this.visibleFields.some(item => item.field_name === field);
+      return this.toolMenuTips[isDisplay ? 'hiddenField' : 'displayField'];
     },
     handleMenuClick(operator, item, field) {
       let params = {};
@@ -186,6 +215,13 @@ export default {
         }
         params.operation = 'display';
         params.displayFieldNames = displayFieldNames;
+        if (!displayFieldNames.length) return; // 可以设置为全部隐藏，但是不请求接口
+        this.$http.request('retrieve/postFieldsConfig', {
+          params: { index_set_id: this.$route.params.indexId },
+          data: { display_fields: displayFieldNames, sort_list: this.sortList },
+        }).catch((e) => {
+          console.warn(e);
+        });
       }
 
       if (Object.keys(params).length) this.$emit('menuClick', params);
@@ -251,6 +287,18 @@ export default {
           return;
       }
     },
+    filterIsExist(id, field) {
+      if (this.retrieveParams?.addition.length) {
+        if (id === 'not') id = 'is not';
+        const curValue = this.tableRowDeepView(this.data, field, this.getFieldType(field), false);
+        return this.retrieveParams.addition.some((addition) => {
+          return addition.field === field
+        && addition.operator === id
+        && addition.value.toString() === curValue.toString();
+        });
+      }
+      return false;
+    },
   },
 };
 </script>
@@ -271,9 +319,10 @@ export default {
         white-space: nowrap;
 
         ::v-deep .icon-ext {
-          width: 18px;
+          width: 13px;
+          display: inline-block;
           font-size: 12px;
-          transform: scale(.8);
+          transform: translateX(-1px) scale(.8);
         }
       }
 

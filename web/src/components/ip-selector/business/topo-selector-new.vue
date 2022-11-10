@@ -416,13 +416,12 @@
     private async handleGetDefaultData () {
       if (['dynamic-topo', 'static-topo'].includes(this.active)) {
         // 动态拓扑默认组件数据
-        if (!this.topoTree.length) {
-          const data = await this.getTopoTree()
+        const data = await this.getTopoTree()
           this.topoTree = this.removeIpNodes(data)
           this.active === 'dynamic-topo' && this.handleSetDefaultCheckedNodes()
-        }
         return [
           {
+            id: '0',
             name: this.$t('根节点'),
             children: this.topoTree,
           },

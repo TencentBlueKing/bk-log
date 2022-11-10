@@ -417,7 +417,8 @@ class SearchViewSet(APIViewSet):
             raise BaseSearchIndexSetException(BaseSearchIndexSetException.MESSAGE.format(index_set_id=index_set_id))
 
         output = StringIO()
-        search_handler = SearchHandlerEsquery(index_set_id, data)
+        export_fields = data.get("export_fields", [])
+        search_handler = SearchHandlerEsquery(index_set_id, search_dict=data, export_fields=export_fields)
         result = search_handler.search()
         result_list = result.get("origin_log_list")
         for item in result_list:
@@ -508,7 +509,10 @@ class SearchViewSet(APIViewSet):
             FeatureToggleObject.toggle(FEATURE_ASYNC_EXPORT_COMMON).feature_config.get(FEATURE_ASYNC_EXPORT_NOTIFY_TYPE)
         )
         task_id, size = AsyncExportHandlers(
-            index_set_id=int(index_set_id), bk_biz_id=data["bk_biz_id"], search_dict=data
+            index_set_id=int(index_set_id),
+            bk_biz_id=data["bk_biz_id"],
+            search_dict=data,
+            export_fields=data["export_fields"],
         ).async_export()
         return Response(
             {
@@ -768,26 +772,26 @@ class SearchViewSet(APIViewSet):
                 {
                     "operator": "is",
                     "label": "is",
-                    "placeholder": _("请输入，注意空格符号")
+                    "placeholder": _("请选择或直接输入")
                 },
                 {
                     "operator": "is one of",
                     "label": "is one of "，
-                    "placeholder": _("逗号分隔")
+                    "placeholder": _("请选择或直接输入，逗号分隔")
                 },
             ],
             "result": true
         }
         """
         data = [
-            {"operator": "is", "label": _("is"), "placeholder": _("请输入，注意空格符号")},
-            {"operator": "is one of", "label": _("is one of"), "placeholder": _("逗号分隔")},
-            {"operator": "is not", "label": _("is not"), "placeholder": _("请输入，注意空格符号")},
-            {"operator": "is not one of", "label": _("is not one of"), "placeholder": _("逗号分隔")},
-            {"operator": "gt", "label": _("大于"), "placeholder": _("请输入可以支持范围过滤字段相应的值，如整数")},
-            {"operator": "gte", "label": _("大于等于"), "placeholder": _("请输入可以支持范围过滤字段相应的值，如整数")},
-            {"operator": "lt", "label": _("小于"), "placeholder": _("请输入可以支持范围过滤字段相应的值，如整数")},
-            {"operator": "lte", "label": _("小于等于"), "placeholder": _("请输入可以支持范围过滤字段相应的值，如整数")},
+            {"operator": "is", "label": _("is"), "placeholder": _("请选择或直接输入")},
+            {"operator": "is one of", "label": _("is one of"), "placeholder": _("请选择或直接输入，逗号分隔")},
+            {"operator": "is not", "label": _("is not"), "placeholder": _("请选择或直接输入")},
+            {"operator": "is not one of", "label": _("is not one of"), "placeholder": _("请选择或直接输入，逗号分隔")},
+            {"operator": "gt", "label": _("大于"), "placeholder": _("请选择或直接输入")},
+            {"operator": "gte", "label": _("大于等于"), "placeholder": _("请选择或直接输入")},
+            {"operator": "lt", "label": _("小于"), "placeholder": _("请选择或直接输入")},
+            {"operator": "lte", "label": _("小于等于"), "placeholder": _("请选择或直接输入")},
             {"operator": "exists", "label": _("exists"), "placeholder": _("确认字段已存在")},
             {"operator": "does not exists", "label": _("does not exists"), "placeholder": _("确认字段不存在")},
         ]
