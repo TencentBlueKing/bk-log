@@ -328,6 +328,13 @@ class CollectorConfig(CollectorBase):
         """
         return self.environment == Environment.CONTAINER
 
+    @property
+    def is_custom_scenario(self):
+        """
+        是否为自定义上报场景
+        """
+        return self.collector_scenario_id == CollectorScenarioEnum.CUSTOM.value
+
 
 class ContainerCollectorConfig(SoftDeleteModel):
     collector_config_id = models.IntegerField(_("采集项id"), db_index=True)
