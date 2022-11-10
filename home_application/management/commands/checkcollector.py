@@ -39,4 +39,3 @@ class Command(BaseCommand):
         print("采集项健康状态检查工具\n")
         c = CollectorCheckHandler(collector_config_id=collector_config_id, hosts=hosts, debug=debug)
         c.run()
-        c.command_format()

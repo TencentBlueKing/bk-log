@@ -58,6 +58,7 @@ class CollectorCheckHandler(object):
         except CollectorConfig.DoesNotExist:
             init_check_report.add_error(f"不存在的采集项ID: {self.collector_config_id}")
             self.story_report.append(init_check_report)
+            self.output(init_check_report)
             return
 
         # 快速脚本执行的参数target_server
@@ -80,6 +81,7 @@ class CollectorCheckHandler(object):
             except Exception as e:  # pylint: disable=broad-except
                 init_check_report.add_error(f"输入合法的hosts, err: {e}, 参考: 0:ip1,0:ip2,1:ip3")
                 self.story_report.append(init_check_report)
+                self.output(init_check_report)
                 return
         else:
             # 不同的target_node_type
@@ -97,9 +99,11 @@ class CollectorCheckHandler(object):
             else:
                 init_check_report.add_error(f"暂不支持该target_node_type: {target_node_type}")
                 self.story_report.append(init_check_report)
+                self.output(init_check_report)
         if not self.story_report:
             init_check_report.add_info("初始化检查成功")
             self.story_report.append(init_check_report)
+            self.output(init_check_report)
 
     def run(self):
         self.pre_run()
@@ -108,38 +112,44 @@ class CollectorCheckHandler(object):
 
         check_agent_report = self.check_agent()
         self.story_report.append(check_agent_report)
+        self.output(check_agent_report)
 
         check_route_report = self.check_route()
         self.story_report.append(check_route_report)
+        self.output(check_route_report)
 
         check_kafka_report = self.check_kafka()
         self.story_report.append(check_kafka_report)
+        self.output(check_kafka_report)
 
         check_transfer_report = self.check_transfer()
         self.story_report.append(check_transfer_report)
+        self.output(check_transfer_report)
 
         check_es_report = self.check_es()
         self.story_report.append(check_es_report)
+        self.output(check_es_report)
 
-    def command_format(self):
+    def summary_output(self):
         is_success = "失败"
         if not any([i.has_problem() for i in self.story_report]):
             is_success = "成功"
         print(f"\n采集项检查{is_success}\n\n\n")
-        for story_m in self.story_report:
-            print("-" * 100)
-            if story_m.has_problem():
-                self.error(story_m.name, "存在问题, 查看详细报错")
-            else:
-                self.info(story_m.name, "正常")
-            if self.debug:
-                for story_info in story_m.info:
-                    self.info(story_m.name, story_info)
-            for story_warning in story_m.warning:
-                self.warning(story_m.name, story_warning)
-            for story_error in story_m.error:
-                self.error(story_m.name, story_error)
-            print("\n")
+
+    def output(self, story_m):
+        print("-" * 100)
+        if story_m.has_problem():
+            self.error(story_m.name, "存在问题, 查看详细报错")
+        else:
+            self.info(story_m.name, "正常")
+        if self.debug:
+            for story_info in story_m.info:
+                self.info(story_m.name, story_info)
+        for story_warning in story_m.warning:
+            self.warning(story_m.name, story_warning)
+        for story_error in story_m.error:
+            self.error(story_m.name, story_error)
+        print("\n")
 
     def api_format(self):
         is_success = "失败"
