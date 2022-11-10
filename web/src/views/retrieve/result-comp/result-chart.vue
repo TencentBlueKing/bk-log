@@ -66,6 +66,7 @@
         style="width: 80px"
         v-model="chartInterval"
         :clearable="false"
+        behavior="simplicity"
         ext-cls="select-custom"
         size="small"
         data-test-id="generalTrendEcharts_div_selectCycle"
