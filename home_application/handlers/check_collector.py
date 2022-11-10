@@ -132,6 +132,8 @@ class CollectorCheckHandler(object):
         self.story_report.append(check_es_report)
         self.output(check_es_report)
 
+        self.summary_output()
+
     def summary_output(self):
         is_success = "失败"
         if not any([i.has_problem() for i in self.story_report]):
