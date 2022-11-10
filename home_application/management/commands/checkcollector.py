@@ -21,6 +21,8 @@ the project delivered to anyone in the future.
 """
 import os
 from django.core.management.base import BaseCommand
+
+from home_application.constants import GSE_PATH, IPC_PATH
 from home_application.handlers.check_collector import CollectorCheckHandler
 
 
@@ -34,8 +36,14 @@ class Command(BaseCommand):
         collector_config_id = options.get("collector_config_id")
         hosts = options.get("hosts")
         debug = options.get("debug")
+
+        gse_path = os.environ.get("GSE_ROOT_PATH", GSE_PATH)
+        ipc_path = os.environ.get("GSE_IPC_PATH", IPC_PATH)
+
         os.system("clear")
         print("*" * 100)
         print("采集项健康状态检查工具\n")
-        c = CollectorCheckHandler(collector_config_id=collector_config_id, hosts=hosts, debug=debug)
+        c = CollectorCheckHandler(
+            collector_config_id=collector_config_id, hosts=hosts, debug=debug, gse_path=gse_path, ipc_path=ipc_path
+        )
         c.run()
