@@ -79,12 +79,13 @@ class CheckRouteStory(BaseStory):
         }
         try:
             data = GseApi.query_stream_to(params)
-            if data[0].get("stream_to_id", 0) == stream_id:
-                stream_name = data[0]["name"]
-                report_mode = data[0]["report_mode"]
+            if data[0].get("metadata", {}).get("stream_to_id", 0) == stream_id:
+                stream_to = data[0].get("stream_to", {})
+                stream_name = stream_to["name"]
+                report_mode = stream_to["report_mode"]
                 if report_mode != "kafka":
                     return
-                addrs = data[0].get(report_mode, {}).get("storage_address", [])
+                addrs = stream_to.get(report_mode, {}).get("storage_address", [])
                 if not addrs:
                     return
                 for addr in addrs:

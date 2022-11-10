@@ -38,6 +38,8 @@ from home_application.constants import (
     JOB_SUCCESS_STATUS,
     CHECK_AGENT_STEP,
     JOB_STATUS,
+    GSE_PATH,
+    IPC_PATH,
 )
 from home_application.handlers.collector_checker.base import BaseStory
 
@@ -47,11 +49,13 @@ logger = logging.getLogger()
 class CheckAgentStory(BaseStory):
     name = CHECK_STORY_1
 
-    def __init__(self, bk_biz_id: int, target_server: dict, subscription_id: int):
+    def __init__(self, bk_biz_id: int, target_server: dict, subscription_id: int, gse_path: str, ipc_path: str):
         super().__init__()
         self.bk_biz_id = bk_biz_id
         self.target_server = target_server
         self.subscription_id = subscription_id
+        self.gse_path = gse_path or GSE_PATH
+        self.ipc_path = ipc_path or IPC_PATH
         self.job_instance_id = 0
         self.step_instance_id = 0
         self.ip_status = []
@@ -64,7 +68,9 @@ class CheckAgentStory(BaseStory):
         self.format_ip_logs()
 
     def execute_script(self):
-        script_param = f"--subscription_id={self.subscription_id}"
+        script_param = (
+            f"--subscription_id={self.subscription_id} --ipc_socket_file={self.ipc_path} --gse_path={self.gse_path}"
+        )
         params = {
             "bk_biz_id": self.bk_biz_id,
             "bk_username": DEFAULT_BK_USERNAME,
