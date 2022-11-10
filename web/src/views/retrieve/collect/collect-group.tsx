@@ -134,7 +134,9 @@ export default class CollectGroup extends tsc<ICollectProps> {
                       {item.name}
                     </span>
                     {!item.is_active ? (
-                      <span class="bk-icon log-icon icon-shixiao"></span>
+                       <span v-bk-tooltips={{content: this.$t('数据源不存在'), placement: 'right'}}>
+                          <span class="bk-icon log-icon icon-shixiao"></span>
+                       </span>
                     ) : undefined}
                   </p>
                   <p class="creator">{item.created_by || "--"}</p>

@@ -22,53 +22,33 @@
 
 <template>
   <div class="result-header">
-    <!-- 重新展开 -->
-    <!-- <template>
-      <div
-        v-if="showExpandInitTips"
-        key="1"
-        v-bk-tooltips="expandInitTips"
-        class="open-condition"
-        @click="$emit('open')">
-        <span class="bk-icon icon-angle-double-right"></span>
-      </div>
-      <div v-else v-bk-tooltips="expandTips" key="2" class="open-condition" @click="$emit('open')">
-        <span class="bk-icon icon-angle-double-right"></span>
-      </div>
-    </template> -->
     <!-- 检索左侧 -->
     <div class="result-left">
       <div class="icon-container">
-        <div
-          v-if="showCollectInitTips"
-          v-bk-tooltips="collectInitTips"
-          :class="['result-icon-box',{ 'light-icon': !isShowCollect }]"
-          @click="handleClickResultIcon('collect')">
-          <span class="bk-icon icon-star"></span>
-        </div>
-        <div
-          v-else
-          v-bk-tooltips="{ content: `${$t('点击重新展开')}${$t('收藏')}`, disabled: isShowCollect, }"
-          :class="['result-icon-box',{ 'light-icon': !isShowCollect }]"
-          @click="handleClickResultIcon('collect')">
-          <span class="bk-icon icon-star"></span>
-        </div>
-        <div
-          v-if="showExpandInitTips"
-          key="1"
-          v-bk-tooltips="expandInitTips"
-          :class="['result-icon-box',{ 'light-icon': !showRetrieveCondition }]"
-          @click="handleClickResultIcon('search')">
-          <span class="bk-icon log-icon icon-jiansuo"></span>
-        </div>
-        <div
-          v-else
-          key="2"
-          v-bk-tooltips.bottom="{ content: `${$t('点击重新展开')}${$t('检索')}`, disabled: showRetrieveCondition, }"
-          :class="['result-icon-box',{ 'light-icon': !showRetrieveCondition }]"
-          @click="handleClickResultIcon('search')">
-          <span class="bk-icon log-icon icon-jiansuo"></span>
-        </div>
+        <bk-popover
+          ref="showFavoriteBtnRef"
+          :tippy-options="expandTips">
+          <div
+            :class="['result-icon-box',{ 'light-icon': !isShowCollect }]"
+            @click="handleClickResultIcon('collect')">
+            <span class="bk-icon icon-star"></span>
+          </div>
+          <div slot="content">
+            {{`${isShowCollect ? $t('点击收起') : $t('点击展开')}${$t('收藏')}`}}
+          </div>
+        </bk-popover>
+        <bk-popover
+          ref="showSearchBtnRef"
+          :tippy-options="collectTips">
+          <div
+            :class="['result-icon-box',{ 'light-icon': !showRetrieveCondition }]"
+            @click="handleClickResultIcon('search')">
+            <span class="bk-icon log-icon icon-jiansuo"></span>
+          </div>
+          <div slot="content">
+            {{`${showRetrieveCondition ? $t('点击收起') : $t('点击展开')}${$t('检索')}`}}
+          </div>
+        </bk-popover>
       </div>
       <biz-menu-select v-if="!isAsIframe" theme="light"></biz-menu-select>
     </div>
@@ -190,35 +170,21 @@ export default {
   },
   data() {
     return {
-      expandInitTips: {
-        content: `${this.$t('点击重新展开')}${this.$t('检索')}`,
-        trigger: 'click',
-        showOnInit: true,
+      expandTips: {
         placement: 'bottom',
+        trigger: 'mouseenter',
         onHidden: () => {
           this.$emit('initTipsHidden');
         },
       },
-      expandTips: {
-        content: `${this.$t('点击重新展开')}${this.$t('检索')}`,
+      expandText: '',
+      collectTips: {
         placement: 'bottom',
-        disabled: !this.showRetrieveCondition,
-      },
-      collectInitTips: {
-        content: `${this.$t('点击重新展开')}${this.$t('检索')}`,
-        trigger: 'click',
-        showOnInit: true,
-        placement: 'bottom',
+        trigger: 'mouseenter',
         onHidden: () => {
           this.isFirstCloseCollect = true;
         },
       },
-      collectTips: {
-        content: `${this.$t('点击重新展开')}${this.$t('收藏')}`,
-        placement: 'bottom',
-        disabled: this.isShowCollect,
-      },
-      showCollectInitTips: false,
       refreshActive: false, // 自动刷新下拉激活
       refreshTimer: null, // 自动刷新定时器
       refreshTimeout: 0, // 0 这里表示关闭自动刷新
@@ -341,7 +307,6 @@ export default {
     },
     handleClickResultIcon(type) {
       if (type === 'collect') {
-        this.showCollectInitTips = !this.isFirstCloseCollect;
         this.$emit('updateCollectCondition', !this.isShowCollect);
       } else {
         this.showRetrieveCondition ? this.$emit('closeRetrieveCondition') : this.$emit('open');
