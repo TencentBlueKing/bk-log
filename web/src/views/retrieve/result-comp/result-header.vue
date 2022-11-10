@@ -177,7 +177,6 @@ export default {
           this.$emit('initTipsHidden');
         },
       },
-      expandText: '',
       collectTips: {
         placement: 'bottom',
         trigger: 'mouseenter',

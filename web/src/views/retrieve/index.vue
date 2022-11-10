@@ -1415,6 +1415,7 @@ export default {
         this.statisticalFieldsData = this.getStatisticalFieldsData(this.logList);
         this.computeRetrieveDropdownData(this.logList);
       } catch (err) {
+        this.isNextTime = false;
         this.$refs.resultMainRef.isPageOver = false;
       } finally {
         this.requesting = false;
@@ -2034,14 +2035,16 @@ export default {
             ::v-deep .query-btn {
               width: 32px;
               height: 32px;
-              background: #FFFFFF;
+              background: #fff;
               margin-right: 2px;
-              color: #9A9BA5;
+              color: #9a9ba5;
               display: flex;
               justify-content: center;
+
               div {
                 transform: translateY(-2px);
               }
+
               .bk-icon {
                 font-size: 16px;
               }
