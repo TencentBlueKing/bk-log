@@ -244,6 +244,26 @@
     }
   }
 }
+.add-new-page-container {
+  .add-new-page-input {
+    display: flex;
+  }
+  .operate-button {
+    font-size: 16px;
+    margin-left: 6px;
+    justify-content: space-between;
+    color: #979ba5;
+
+    span {
+      cursor: pointer;
+    }
+
+    > :first-child {
+      color: #3a84ff;
+      margin-right: 12px;
+    }
+  }
+}
 
 .new-group-popover {
   width: 240px;

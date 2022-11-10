@@ -108,9 +108,10 @@
           <div class="tab-header">
             <span class="tab-title">{{ $t('数据检索') }}</span>
             <div class="tab-operation">
-              <span
-                v-if="isShowUiType"
-                v-bk-tooltips="{ allowHtml: true, trigger: 'click', content: '#form-tips-html', theme: 'light' }"
+              <bk-popover
+                v-show="isShowUiType"
+                ref="formTipsRef"
+                :tippy-options="formTippyOptions"
                 :disabled="isCanUseUiType || !isSqlSearchType">
                 <div
                   class="search-type"
@@ -118,9 +119,7 @@
                   <span class="bk-icon icon-sort"></span>
                   <span>{{isSqlSearchType ? $t('表单') : 'SQL'}}</span>
                 </div>
-              </span>
-              <div v-show="false">
-                <div id="form-tips-html">
+                <div slot="content">
                   <span>
                     <span
                       style="color: #d7473f; display: inline-block; transform: translateY(-2px);"
@@ -128,26 +127,7 @@
                     <span>{{$t('表单Tips')}}</span>
                   </span>
                 </div>
-              </div>
-              <!-- <bk-popover
-                ref="queryTipPopover"
-                placement="bottom"
-                theme="light"
-                :transfer="true"
-                trigger="click">
-                <span class="bk-icon icon-cog" @click="toggleCog"></span>
-                <div slot="content" class="auto-query-popover-content">
-                  <span>{{ $t('是否开启自动查询') }}</span>
-                  <bk-switcher
-                    v-model="isAutoQuery"
-                    theme="primary"
-                    size="small"
-                    @change="switchAutoQuery">
-                  </bk-switcher>
-                  <span class="confirm-btn" v-if="!isHideAutoQueryTips" @click="toggleNotice">{{ $t('知道了') }}</span>
-                </div>
-              </bk-popover> -->
-              <!-- <span class="bk-icon icon-angle-double-left-line" @click="closeRetrieveCondition"></span> -->
+              </bk-popover>
             </div>
           </div>
           <div class="tab-content" :style="`height:calc(100% - ${isAsIframe ? 60 : 108}px);`">
@@ -169,10 +149,12 @@
                   @retrieve="retrieveLog" />
                 <retrieve-detail-input
                   v-model="retrieveParams.keyword"
+                  :check-keyword-data="checkKeywordData"
                   :is-auto-query="isAutoQuery"
                   :retrieved-keyword="retrievedKeyword"
                   :dropdown-data="retrieveDropdownData"
-                  @retrieve="retrieveLog" />
+                  @retrieve="retrieveLog"
+                  @clearCheckData="clearCheckData" />
               </template>
               <template v-else>
                 <ui-query
@@ -365,6 +347,7 @@
 
     <add-collect-dialog
       v-model="isShowAddNewCollectDialog"
+      :is-favorite-add="isFavoriteAdd"
       :add-favorite-data="addFavoriteData"
       :favorite-i-d="activeFavoriteID"
       :replace-data="replaceFavoriteData"
@@ -539,11 +522,20 @@ export default {
       collectWidth: localStorage.getItem('isAutoShowCollect') === 'true' ? 240 : 0, // 收藏默认栏宽度
       isShowCollect: localStorage.getItem('isAutoShowCollect') === 'true',
       isSqlSearchType: true, // 是否是sql模式
-      cacheKeywords: '', // 切换表单模式之前缓存的查询语句，用于切回sql模式时回填
       activeFavorite: {}, // 当前点击的收藏参数
       activeFavoriteID: -1,
       favoriteList: [],
       favoriteLoading: false,
+      formTippyOptions: {
+        placement: 'top',
+        theme: 'light',
+        trigger: 'mouseenter',
+      },
+      checkKeywordData: {
+        isKeywordsError: false,
+        resetKeyword: '',
+      },
+      isFavoriteAdd: true,
       addFavoriteData: {}, // 新增收藏所需的参数
       favoriteRequestID: 0, // 参数改变更新收藏
       replaceFavoriteData: {}, // 收藏判断不同后的替换参数
@@ -621,7 +613,6 @@ export default {
         this.authPageInfo = null;
         this.hasAuth = true;
       }
-      this.cacheKeywords = '';
       this.isSqlSearchType = true;
       this.resetRetrieveCondition();
       this.$store.commit('updateIndexId', val);
@@ -636,7 +627,6 @@ export default {
         this.activeFavoriteID = -1;
         this.retrieveParams.bk_biz_id = this.bkBizId;
         this.isSqlSearchType = true;
-        this.cacheKeywords = '';
         this.fetchPageData();
         this.getFavoriteList();
       },
@@ -1218,6 +1208,7 @@ export default {
           this.tableLoading = false;
         }
       } finally {
+        this.handleCheckKeywords(this.retrieveParams.keyword); // 检查语句是否有错误;
         // 如果是收藏检索并且开启检索显示, 则更新显示字段
         if (this.isFavoriteSearch && this.activeFavorite?.is_enable_display_fields) {
           const { display_fields: favoriteDisplayFields } = this.activeFavorite;
@@ -1231,12 +1222,7 @@ export default {
             }
           }).filter(Boolean);
         };
-        if (this.isFavoriteSearch) {
-          this.isSqlSearchType = !this.isShowUiType; // 判断是否有表单模式的数组值 如果有 则切换为表单模式
-          if (!this.isSqlSearchType) {
-            this.cacheKeywords = this.retrieveParams.keyword;
-          }
-        }
+        if (this.isFavoriteSearch) this.isSqlSearchType = !this.isShowUiType; // 判断是否有表单模式的数组值 如果有 则切换为表单模式
         // 搜索完毕后，如果开启了自动刷新，会在 timeout 后自动刷新
         this.$refs.resultHeader && this.$refs.resultHeader.setRefreshTime();
         this.isFavoriteSearch = false;
@@ -1612,6 +1598,11 @@ export default {
       this.collectWidth = status ? 240 : 0;
       localStorage.setItem('isAutoShowCollect', `${status}`);
       this.isShowCollect = status;
+      if (!status) {
+        this.activeFavorite = {};
+        this.activeFavoriteID = -1;
+        this.isSqlSearchType = true;
+      }
     },
     // 初始 tips 消失后显示普通的 tips
     handleInitTipsHidden() {
@@ -1637,7 +1628,7 @@ export default {
       };
     },
     // 点击新增收藏
-    handleClickFavorite() {
+    handleClickFavorite(isAdd = false) {
       // 如果点击过收藏，进行参数判断
       const displayFields = this.visibleFields.map(item => item.field_name);
       const indexItem = this.indexSetList.find(item => item.index_set_id === String(this.indexId));
@@ -1660,58 +1651,42 @@ export default {
         is_enable_display_fields: false,
         params: {
           host_scopes,
-          keyword: this.retrieveParams.keyword,
+          keyword: Boolean(this.retrieveParams.keyword) ? this.retrieveParams.keyword : '*',
           addition: this.retrieveParams.addition,
           search_fields: [],
         },
       };
-      // 点击收藏不为空 则进行数据对比
+      // 收藏列表有点击,收藏不为空 则提示是否替换
       if (JSON.stringify(this.activeFavorite) !== '{}') {
-        // 检索参数 和 显示的收藏进行对比
-        const comparedSubData = { // 检索页面的实时
+        this.showFavoritePopperContent = true; // 展示收藏是否替换Tips
+        const comparedSubData = { // 检索页面的数据
           params: {
             host_scopes: this.retrieveParams.host_scopes,
             addition: this.retrieveParams.addition,
             keyword: this.retrieveParams.keyword,
           },
+          display_fields: this.visibleFields.map(item => item.field_name),
         };
-        const comparedFavData = { // 收藏的对比参数
-          params: {
-            host_scopes: this.activeFavorite.params.host_scopes,
-            addition: this.activeFavorite.params.addition,
-            keyword: this.activeFavorite.params.keyword,
-          },
-        };
-        // 对比不同前 先判断当前收藏是否打开同时显示字段 若打开 则添加展示的替换数据
-        if (this.activeFavorite.is_enable_display_fields) {
-          comparedSubData.display_fields = this.visibleFields.map(item => item.field_name);
-          comparedFavData.display_fields = this.activeFavorite.display_fields;
-        }
-        // 若对比相同 则不显示是否替换tips
-        if (JSON.stringify(comparedSubData) === JSON.stringify(comparedFavData)) {
-          this.addFavoriteData = favoriteData;
-          this.showFavoritePopperContent = false;
-          this.isShowAddNewCollectDialog = true;
-        } else {
-          this.addFavoriteData = {};
-          this.replaceFavoriteData = comparedSubData;
-          this.showFavoritePopperContent = true; // 展示收藏是否替换Tips
-        }
-      } else { // 点击收藏为空 新增收藏
+        this.replaceFavoriteData = comparedSubData;
+      } else {
         this.addFavoriteData = favoriteData;
-        this.showFavoritePopperContent = false;
         this.isShowAddNewCollectDialog = true; // 展示新增弹窗
+        this.showFavoritePopperContent = false;
+      };
+      if (isAdd) {
+        this.addFavoriteData = favoriteData;
       }
     },
     // 收藏更变tips操作
     favoriteTipsOperate(type) {
       this.closeFavoritePopper();
       if (type === 'add-new') {
-        this.activeFavorite = {};
-        this.handleClickFavorite();
+        this.handleClickFavorite(true);
+        this.isFavoriteAdd = true;
       } else {
-        this.isShowAddNewCollectDialog = true; // 展示编辑弹窗
+        this.isFavoriteAdd = false;
       }
+      this.isShowAddNewCollectDialog = true; // 展示编辑弹窗
     },
     handleChangeSearchType() {
       if (this.tableLoading) return;
@@ -1737,20 +1712,14 @@ export default {
       }
     },
     handleClickSearchType() {
+      if (this.isSqlSearchType) {
+        this.$refs.formTipsRef?.instance.set({ trigger: 'click' });
+      }
       // 如果当前为sql模式，且检索的keywords和收藏的keywords不一致 则不允许切换
       if (this.isSqlSearchType && !this.isCanUseUiType) return;
       // 切换表单模式或者sql模式
       this.isSqlSearchType = !this.isSqlSearchType;
       // 如果是sql模式切到表单模式 则缓存keywords  表单切回sql模式时回填缓存的keywords
-      if (this.isSqlSearchType) {
-        this.retrieveParams.keyword = this.cacheKeywords;
-      } else {
-        this.cacheKeywords = this.retrieveParams.keyword;
-      }
-      // 如果切换回sql模式 且为自动搜索 则重新请求
-      if (this.isSqlSearchType && this.isAutoQuery) {
-        this.retrieveLog();
-      }
     },
     updateKeyWords(keyword) {
       // 表单模式 更新keywords
@@ -1762,6 +1731,8 @@ export default {
     handleSubmitFavorite(isChange) {
       // 新建或编辑收藏 刷新收藏列表
       if (isChange) this.favoriteRequestID += 1;
+      if (!this.isShowCollect) this.collectWidth = 240;
+      this.isShowCollect = true;
     },
     // 点击收藏列表的收藏
     handleClickFavoriteItem(value) {
@@ -1773,6 +1744,24 @@ export default {
       this.activeFavoriteID = value.id;
       this.isFavoriteSearch = true;
       this.retrieveFavorite(deepClone(value));
+    },
+    async handleCheckKeywords(keyword) { // 检查检索语句是否有误
+      if (keyword === '') keyword = '*';
+      try {
+        const res = await this.$http.request('favorite/checkKeywords', {
+          data: { keyword },
+        });
+        this.checkKeywordData = {
+          isKeywordsError: !res.data.is_legal,
+          resetKeyword: res.data.keyword,
+        };
+      } catch (error) {}
+    },
+    clearCheckData() { // 清空自动搜索的
+      this.checkKeywordData = {
+        isKeywordsError: false,
+        resetKeyword: '',
+      };
     },
     // 收藏列表刷新, 判断当前是否有点击活跃的收藏 如有则进行数据更新
     async updateActiveFavoriteData(value) {

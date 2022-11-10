@@ -180,6 +180,11 @@ export default class CollectIndex extends tsc<IProps> {
         this.getFavoriteList();
         break;
       case "reset-group-name": // 重命名
+        const isCanRename = /^[\u4e00-\u9fa5_a-zA-Z0-9`~!@#$%^&*()_\-+=<>?:"{}|,.\/;'\\[\]·~！@#￥%……&*（）——\-+={}|《》？：“”【】、；‘'，。、]+$/im.test(value);
+        if (!isCanRename) {
+          this.showMessagePop(this.$t("组名不规范"), 'error');
+          return;
+        }
         await this.handleUpdateGroupName(value, false);
         this.getFavoriteList();
         break;
@@ -214,7 +219,7 @@ export default class CollectIndex extends tsc<IProps> {
       case "dismiss-group": // 解散分组
         this.$bkInfo({
           title: `${this.$t("当前分组为")}${value.group_name}，${this.$t("是否解散")}？`,
-          subTitle: `${this.$t('解散文案')}。`,
+          subTitle: `${this.$t('解散文案')}`,
           type: "warning",
           confirmFn: async () => {
             await this.deleteGroup(value.group_id);

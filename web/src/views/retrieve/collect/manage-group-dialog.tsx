@@ -130,14 +130,17 @@ export default class GroupDialog extends tsc<IProps> {
     interactive: true,
     theme: "light",
   };
+  pageNumber = 1;
   paginationConfig = { // 页数设置对象
     current: 1,
     limit: 5,
     count: 1,
     align: "right",
     showLimit: false,
-    limitList: [...Array(51).keys()].splice(1),
+    limitList: [5, 10, 20, 50],
   };
+  isShowAddPage = true;
+  isShowAddGroup = true;
   cannotComparedData = [ // 不进行对比的字段 （前端操作缓存自加的字段）
     "search_fields_select_list",
     "visible_option",
@@ -147,7 +150,7 @@ export default class GroupDialog extends tsc<IProps> {
   ];
   sourceFilters = []; // 所属组数组
   updateSourceFilters = []; // 更变人过滤数组
-  pageSizeList = [...Array(51).keys()].splice(1); // 页数
+  pageSizeList = [5, 10, 20, 50]; // 页数
 
   tableKey = random(10);
 
@@ -266,7 +269,7 @@ export default class GroupDialog extends tsc<IProps> {
   /** 多选移动至分组操作 */
   handleClickMoveGroup(value) {
     this.selectFavoriteList.forEach((item) => {
-      this.operateListChange({ id: item }, { group_id: value.group_id });
+      this.operateListChange({ id: item }, { group_id: value.group_id, is_group_disabled: false });
     });
   }
   /** 获取字段下拉框列表请求 */
@@ -378,6 +381,8 @@ export default class GroupDialog extends tsc<IProps> {
       }
     } catch (error) {
     } finally {
+      this.isShowAddGroup = true;
+      this.groupName = "";
       this.popoverGroupRef.hideHandler();
     }
   }
@@ -563,6 +568,15 @@ export default class GroupDialog extends tsc<IProps> {
     return this.tableSetting.selectedFields.some((item) => item.id === field);
   }
 
+  handleCreateNumber() {
+    if(!this.pageSizeList.includes(Number(this.pageNumber))) {
+      this.pageSizeList.push(Number(this.pageNumber));
+      this.paginationConfig.limitList.push(Number(this.pageNumber));
+    }
+    this.isShowAddPage = true;
+    this.pageNumber = 1;
+  };
+
   renderHeader(h) {
     return h(FingerSelectColumn, {
       class: {
@@ -655,6 +669,8 @@ export default class GroupDialog extends tsc<IProps> {
           searchable
           clearable={false}
           disabled={row.is_group_disabled}
+          popover-min-width={200}
+          ext-popover-cls="add-new-page-container"
           on-change={() => this.handleChangeGroup(row)}
         >
           {row[
@@ -668,6 +684,31 @@ export default class GroupDialog extends tsc<IProps> {
               name={item.group_name}
             ></Option>
           ))}
+          <div slot="extension">
+            {this.isShowAddGroup ? (
+              <div class="select-add-new-group" onClick={() => (this.isShowAddGroup = false)}>
+                <div>
+                  <i class="bk-icon icon-plus-circle"></i>
+                  {this.$t("新增")}
+                </div>
+              </div>
+            ) : (
+              <li class="add-new-page-input">
+                <Input
+                  vModel={this.groupName}
+                  maxlength={10}
+                  behavior={"simplicity"}
+                ></Input>
+                <div class="operate-button">
+                  <span class="bk-icon icon-check-line" onClick={() => this.handleAddGroupName()}></span>
+                  <span class="bk-icon icon-close-line-2" onClick={() => {
+                      this.isShowAddGroup = true;
+                      this.groupName = '';
+                    }}></span>
+                </div>
+              </li>
+            )}
+          </div>
         </Select>,
       ],
     };
@@ -759,7 +800,10 @@ export default class GroupDialog extends tsc<IProps> {
                 >
                   {this.$t("确定")}
                 </Button>
-                <span onClick={() => this.popoverGroupRef.hideHandler()}>
+                <span onClick={() => {
+                  this.popoverGroupRef.hideHandler();
+                  this.groupName = "";
+                }}>
                   {this.$t("取消")}
                 </span>
               </div>
@@ -935,17 +979,43 @@ export default class GroupDialog extends tsc<IProps> {
             <Select
               class="page-select"
               vModel={this.paginationConfig.limit}
-              searchable
               behavior={"simplicity"}
               clearable={false}
               search-placeholder={" "}
+              popover-min-width={200}
+              ext-popover-cls="add-new-page-container"
               on-change={this.handlePageLimitChange}
             >
               {this.pageSizeList.map((item) => (
                 <Option id={item} key={item} name={item}></Option>
               ))}
+              <div slot="extension">
+                {this.isShowAddPage ? (
+                  <div class="select-add-new-group" onClick={() => this.isShowAddPage = false}>
+                    <div><i class="bk-icon icon-plus-circle"></i>{this.$t('新增')}</div>
+                  </div>
+                ) : (
+                  <li class="add-new-page-input">
+                    <Input
+                      vModel={this.pageNumber}
+                      min={1}
+                      type={'number'}
+                      behavior={'simplicity'}
+                      show-controls={false}
+                      precision={0}
+                    ></Input>
+                    <div class="operate-button">
+                      <span class='bk-icon icon-check-line' onClick={() => this.handleCreateNumber()}></span>
+                      <span class='bk-icon icon-close-line-2'onClick={() => {
+                        this.isShowAddPage = true;
+                        this.pageNumber = 1;
+                      }}></span>
+                    </div>
+                  </li>
+                )}
+              </div>
             </Select>
-            <span>条</span>
+            <span>{this.$t('条')}</span>
           </div>
         </div>
       </Dialog>

@@ -21,15 +21,9 @@
  */
 
 import { Component as tsc } from "vue-tsx-support";
-import {
-  Component,
-  Ref,
-  Emit,
-  Prop,
-  Watch,
-} from "vue-property-decorator";
+import { Component, Ref, Emit, Prop, Watch } from "vue-property-decorator";
 import { Input } from "bk-magic-vue";
-import { IFavoriteItem } from '../collect-index';
+import { IFavoriteItem } from "../collect-index";
 import "./manage-input.scss";
 
 interface IProps {
@@ -75,7 +69,9 @@ export default class ManageInput extends tsc<IProps> {
           <div class="collect-name">
             {this.inputStr}
             {!this.favoriteData.is_active ? (
-              <span class="bk-icon log-icon icon-shixiao"></span>
+              <span v-bk-tooltips={{content: this.$t('数据源不存在'), placement: 'right'}}>
+                <span class="bk-icon log-icon icon-shixiao"></span>
+              </span>
             ) : undefined}
           </div>
         )}

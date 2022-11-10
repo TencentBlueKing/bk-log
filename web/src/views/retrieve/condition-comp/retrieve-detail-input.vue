@@ -33,6 +33,13 @@
       @blur="handleBlur"
       @keydown="handleKeydown"
     ></bk-input>
+    <div v-if="getIsKeywordsError" class="refresh-keywords">
+      <span>{{$t('检索语句有误')}}</span>
+      <span @click="handleRefreshKeywords">
+        <span class="log-icon icon-refresh-icon"></span>
+        <span>{{$t('自动转换')}}</span>
+      </span>
+    </div>
     <!-- 搜索提示 -->
     <ul
       v-if="renderDropdown"
@@ -144,6 +151,10 @@ export default {
       type: Boolean,
       default: false,
     },
+    checkKeywordData: {
+      type: Object,
+      default: () => ({}),
+    }
   },
   data() {
     return {
@@ -157,6 +168,8 @@ export default {
       showColon: false, // : :*
       showContinue: false, // AND OR
       isSearchRecord: false,
+      isKeywordsError: false, // 语句是否有误
+      resetKeyword: '',
       originFieldList: [], // 所有字段列表 ['name', 'age']
       fieldList: [], // 显示字段列表，['name', 'age']
       valueList: [], // 字段可能的值 ['"arman"', '"xxx yyy"'] [18, 22]
@@ -170,6 +183,12 @@ export default {
               || this.showColon
               || this.showContinue);
     },
+    getIsKeywordsError() { // 是否是父组件传过来的语法错误提示
+      return this.checkKeywordData.isKeywordsError || this.isKeywordsError;
+    },
+    getResetKeyword() { // 是否是父组件传过来的语法错误keyword
+      return this.checkKeywordData.resetKeyword || this.resetKeyword;
+    }
   },
   watch: {
     showDropdown(val) {
@@ -300,6 +319,13 @@ export default {
       });
     },
     handleBlur(val) {
+      if (!this.isAutoQuery) {
+        this.blurTimer && clearTimeout(this.blurTimer);
+        this.blurTimer = setTimeout(() => {
+          if (this.shouldHandleBlur) this.handleCheckKeywords(val.trim()); // 检查语句是否有错误;
+          this.$emit('clearCheckData');
+        }, 200);
+      }
       if (this.isSearchRecord || !this.isAutoQuery) return;
 
       // blur 时检索
@@ -317,6 +343,21 @@ export default {
           // 点击了下拉菜单，会再次聚焦
         }
       }, 200);
+    },
+    handleRefreshKeywords() { // 替换语句
+      this.$emit('change', this.getResetKeyword);
+      this.isKeywordsError = false;
+      this.resetKeyword = '';
+    },
+    async handleCheckKeywords(keyword) { // 检查检索语句是否有误
+      if (keyword === '') keyword = '*';
+      try {
+        const res = await this.$http.request('favorite/checkKeywords', {
+          data: { keyword },
+        });
+        this.isKeywordsError = !res.data.is_legal;
+        this.resetKeyword = res.data.keyword;
+      } catch (error) {}
     },
     closeDropdown() {
       this.showDropdown = false;
@@ -474,6 +515,18 @@ export default {
 
   .retrieve-detail-input {
     position: relative;
+
+    .refresh-keywords {
+      margin-top: 4px;
+      font-size: 12px;
+      > :first-child {
+        color: #EA3636;
+      }
+      > :last-child {
+        cursor: pointer;
+        color: #3A84FF;
+      }
+    }
 
     .king-input-retrieve {
       ::v-deep .bk-form-input {
