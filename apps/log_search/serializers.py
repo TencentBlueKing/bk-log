@@ -444,6 +444,14 @@ class GenerateQuerySerializer(serializers.Serializer):
     params = serializers.ListField(required=False, default=[], label=_("替换Query请求参数"), child=GenerateQueryParam())
 
 
+class InspectSerializer(serializers.Serializer):
+    """
+    语法检查以及转换序列化
+    """
+
+    keyword = serializers.CharField(label=_("检索关键词"), required=True)
+
+
 class FavoriteGroupListSerializer(serializers.Serializer):
     """
     获取收藏组

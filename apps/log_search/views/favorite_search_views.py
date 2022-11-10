@@ -40,6 +40,7 @@ from apps.log_search.serializers import (
     GenerateQuerySerializer,
     BatchUpdateFavoriteSerializer,
     BatchDeleteFavoriteSerializer,
+    InspectSerializer,
 )
 from apps.utils.drf import list_route
 
@@ -553,6 +554,32 @@ class FavoriteViewSet(APIViewSet):
         """
         data = self.params_valid(GenerateQuerySerializer)
         return Response(FavoriteHandler().generate_query_by_ui(keyword=data["keyword"], params=data["params"]))
+
+    @list_route(methods=["POST"], url_path="inspect")
+    def inspect(self, request, *args, **kwargs):
+        """
+        @api {POST} /search/favorite/inspect/ 03_检索收藏-检查语法是否合理，并提供转换后的keyword
+        @apiDescription 语法检查以及转换
+        @apiName inspect
+        @apiGroup 21_Favorite
+        @apiParam {string} keyword
+        @apiParamExample {json} 请求参数
+        {
+            "keyword": 'AAA BBB'
+        }
+        @apiSuccessExample {json} 成功返回：
+        {
+            "message": "",
+            "code": 0,
+            "data": {
+                "is_legal": false,
+                "keyword": 'AAA AND BBB'
+            }
+            "result": true
+        }
+        """
+        data = self.params_valid(InspectSerializer)
+        return Response(FavoriteHandler().inspect(keyword=data["keyword"]))
 
 
 class FavoriteGroupViewSet(APIViewSet):
