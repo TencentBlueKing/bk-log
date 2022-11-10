@@ -782,3 +782,15 @@
   dest_path: /api/v1/meta/projects/mine/
   dest_http_method: GET
   is_hidden: True
+
+- path: /v1/bk_log/meta/spaces/mine/
+  name: meta_spaces_mine
+  label: 日志平台-获取用户空间列表
+  label_en: bk_log get spaces mine
+  method: GET
+  api_type: query
+  comp_codename: generic.v2.bk_log.bk_log_component
+  dest_path: /api/v1/meta/spaces/mine/
+  dest_http_method: GET
+  is_hidden: True
+
