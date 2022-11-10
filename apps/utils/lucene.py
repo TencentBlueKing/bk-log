@@ -1,7 +1,9 @@
 import re
 from dataclasses import dataclass
 from typing import List
-from collections import Counter
+from collections import Counter, deque
+
+from luqum.exceptions import ParseSyntaxError, IllegalCharacterError
 from luqum.visitor import TreeTransformer
 from luqum.parser import parser, lexer
 from luqum.auto_head_tail import auto_head_tail
@@ -18,6 +20,13 @@ from apps.constants import (
     HIGH_CHAR,
     LuceneSyntaxEnum,
     WORD_RANGE_OPERATORS,
+    BRACKET_DICT,
+    UNEXPECTED_WORD_RE,
+    UNEXPECTED_UNMATCHED_EXCEPTION,
+    UNEXPECTED_RANGE_RE,
+    ILLEGAL_CHARACTER_RE,
+    MAX_RESOLVE_TIMES,
+    UNEXPECTED_SINGLE_RANGE_RE,
 )
 
 from apps.exceptions import IllegalLuceneSyntaxException
@@ -44,11 +53,11 @@ class LuceneParser(object):
 
     def __init__(self, keyword: str) -> None:
         self.keyword = keyword
-        self.tree = parser.parse(keyword, lexer=lexer)
 
     def parsing(self) -> List[LuceneField]:
         """解析lucene语法入口函数"""
-        fields = self._get_method(self.tree)
+        tree = parser.parse(self.keyword, lexer=lexer)
+        fields = self._get_method(tree)
         if isinstance(fields, list):
             # 以下逻辑为同名字段增加额外标识符
             names = Counter([field.name for field in fields])
@@ -66,14 +75,29 @@ class LuceneParser(object):
         return [fields]
 
     def inspect(self) -> dict:
-        is_legal = True
+        result = {"is_legal": False, "keyword": self.keyword, "message": ""}
+        origin_keyword = self.keyword
+        try:
+            parser.parse(self.keyword, lexer=lexer)
+        except Exception:
+            resolve_result = LuceneResolver(self.keyword).resolve()
+            if resolve_result["is_legal"]:
+                self.keyword = resolve_result["keyword"]
+            else:
+                result["message"] = resolve_result["message"]
+                return result
+
         try:
             self.parsing()
         except IllegalLuceneSyntaxException:
-            is_legal = False
             resolver = UnknownOperationResolver()
-            self.keyword = str(resolver(self.tree))
-        return {"is_legal": is_legal, "keyword": self.keyword}
+            self.keyword = str(resolver(parser.parse(self.keyword, lexer=lexer)))
+
+        if origin_keyword != self.keyword:
+            result["is_legal"] = False
+            result["keyword"] = self.keyword
+
+        return result
 
     def _get_method(self, node):
         """获取解析方法"""
@@ -244,3 +268,121 @@ class LuceneTransformer(TreeTransformer):
         for param in params:
             query_tree = self.visit(query_tree, param)
         return str(auto_head_tail(query_tree))
+
+
+class LuceneResolver(object):
+    """Lucene错误语句转换器"""
+
+    def __init__(self, keyword: str) -> None:
+        self.keyword = keyword
+
+    def resolve(self) -> dict:
+        result = {"is_legal": False, "keyword": self.keyword, "message": ""}
+        # resolve_range 放这里是因为SearchField类型解析错误的range格式会解析成 unexpected 'TO'
+        # resolve_range 里会一次性把所有的异常Range语法都转换成功
+        self.resolve_range()
+        # 最多执行 MAX_RESOLVE_TIMES 次转换
+        for i in range(MAX_RESOLVE_TIMES):
+            once_result = self.resolve_once()
+            if isinstance(once_result, Exception):
+                result["message"] = str(once_result)
+                break
+            if once_result:
+                result["is_legal"] = True
+                result["keyword"] = self.keyword
+                break
+
+        return result
+
+    def resolve_once(self):
+        """解析异常"""
+        try:
+            parser.parse(self.keyword, lexer=lexer)
+            return True
+        except ParseSyntaxError as e:
+            if str(e) == UNEXPECTED_UNMATCHED_EXCEPTION:
+                self.resolve_colon()
+                self.resolve_bracket()
+                return False
+            match = re.search(UNEXPECTED_WORD_RE, str(e))
+            if match:
+                self.resolve_unexpected_word(match)
+                return False
+            # 此时抛出异常是因为这种情况语句已经没办法转换了
+            raise Exception(f"无法转换的语句: {self.keyword}")
+        except IllegalCharacterError as e:
+            match = re.search(ILLEGAL_CHARACTER_RE, str(e))
+            if match:
+                self.resolve_unexpected_word(match)
+            return False
+        except Exception:
+            raise Exception(f"无法转换的语句: {self.keyword}")
+
+    def resolve_unexpected_word(self, match):
+        """修复异常单词"""
+        unexpect_word_len = len(match[1])
+        position = int(str(match[2]))
+        self.keyword = self.keyword[:position] + self.keyword[position + unexpect_word_len :]
+
+    def resolve_colon(self):
+        """修复异常的:"""
+        if self.keyword.find(":") == len(self.keyword) - 1:
+            self.keyword = self.keyword[:-1]
+
+    def resolve_range(self):
+        """修复Range语法"""
+        # 可能存在多个非法Range语法
+        match_groups = []
+        p = re.compile(UNEXPECTED_RANGE_RE)
+        for m in p.finditer(self.keyword):
+            match_groups.append([m.start(), m.end()])
+
+        remain_keyword = []
+        for i in range(len(match_groups)):
+            if i == 0:
+                remain_keyword.append(self.keyword[: match_groups[i][0]])
+            else:
+                remain_keyword.append(self.keyword[match_groups[i - 1][1] : match_groups[i][0]])
+            # 进行单个Range语法的修复
+            match = re.search(UNEXPECTED_SINGLE_RANGE_RE, self.keyword[match_groups[i][0] : match_groups[i][1]])
+            if match:
+                start = match.group(1).strip()
+                end = match.group(2).strip()
+                if start and end:
+                    continue
+                if not start:
+                    start = "*"
+                if not end:
+                    end = "*"
+                remain_keyword.append(f"[{start} TO {end}]")
+
+            if i == len(match_groups) - 1:
+                remain_keyword.append(self.keyword[match_groups[i][1] :])
+
+        self.keyword = "".join(remain_keyword)
+
+    def resolve_bracket(self):
+        """修复括号不匹配"""
+        s = deque()
+        for index in range(len(self.keyword)):
+            symbol = self.keyword[index]
+            # 左括号入栈
+            if symbol in BRACKET_DICT.keys():
+                s.append({"symbol": symbol, "index": index})
+                continue
+            if symbol in BRACKET_DICT.values():
+                if s and symbol == BRACKET_DICT.get(s[-1]["symbol"], ""):
+                    # 右括号出栈
+                    s.pop()
+                    continue
+                s.append({"symbol": symbol, "index": index})
+                # 如果栈首尾匹配, 则异常的括号是栈顶向下第二个
+                if s[-1]["symbol"] == BRACKET_DICT.get(s[0]["symbol"], ""):
+                    self.keyword = self.keyword[: s[-2]["index"]] + self.keyword[s[-2]["index"] + 1 :]
+                # 否则异常的括号是栈顶元素
+                else:
+                    self.keyword = self.keyword[: s[-1]["index"]] + self.keyword[s[-1]["index"] + 1 :]
+                return
+
+        if s:
+            self.keyword = self.keyword[: s[-1]["index"]] + self.keyword[s[-1]["index"] + 1 :]
