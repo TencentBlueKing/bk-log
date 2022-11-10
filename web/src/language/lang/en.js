@@ -1552,4 +1552,11 @@ export default {
   共计: 'Total',
   条: 'piece',
   每页: 'per page',
+  数据源不存在: 'Data source does not exist',
+  收藏名不规范: 'Favorite names are not standardized, only Chinese, English, numbers and special symbols are supported.',
+  组名不规范: 'Group names are not standardized, only Chinese, English, numbers and special symbols are supported.',
+  点击收起: 'Click to close',
+  新增成功: 'Added Successfully',
+  检索语句有误: 'There is a syntax error in the current statement, click to query',
+  自动转换: 'automatic conversion',
 };

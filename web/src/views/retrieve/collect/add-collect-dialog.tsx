@@ -53,12 +53,14 @@ interface IProps {
   replaceData?: object;
   isClickFavoriteEdit?: boolean;
   visibleFields: Array<any>;
+  isFavoriteAdd: boolean;
 }
 
 @Component
 export default class CollectDialog extends tsc<IProps> {
   @Model("change", { type: Boolean, default: false }) value: IProps["value"];
   @Prop({ type: Number, default: -1 }) favoriteID: number;
+  @Prop({ type: Boolean, default: true }) isFavoriteAdd: boolean;
   @Prop({ type: Object, default: () => ({}) }) addFavoriteData: object;
   @Prop({ type: Object, default: () => ({}) }) replaceData: object;
   @Prop({ type: Boolean, default: false }) isClickFavoriteEdit: boolean;
@@ -121,6 +123,13 @@ export default class CollectDialog extends tsc<IProps> {
     name: [
       {
         required: true,
+        trigger: 'blur',
+      },
+      {
+        validator:  (val) => {
+          return /^[\u4e00-\u9fa5_a-zA-Z0-9`~!@#$%^&*()_\-+=<>?:"{}|,.\/;'\\[\]·~！@#￥%……&*（）——\-+={}|《》？：“”【】、；‘'，。、]+$/im.test(val);
+        },
+        message: window.mainComponent.$t("收藏名不规范"),
         trigger: "blur",
       }
     ],
@@ -131,7 +140,7 @@ export default class CollectDialog extends tsc<IProps> {
   }
 
   get isCreateFavorite() { // 根据传参判断新增还是编辑
-    return Boolean(Object.keys(this.addFavoriteData).length);
+    return Boolean(Object.keys(this.addFavoriteData).length) && this.isFavoriteAdd;
   }
 
   get userName() { // 当前用户数据
@@ -170,6 +179,7 @@ export default class CollectDialog extends tsc<IProps> {
       if (this.isCreateFavorite) {
         // 判断是否是新增
         Object.assign(this.favoriteData, this.addFavoriteData); // 合并新增收藏详情
+        this.favoriteData.group_id = 0;
       } else {
         await this.getFavoriteData(this.favoriteID); //获取收藏详情
       }
@@ -203,10 +213,6 @@ export default class CollectDialog extends tsc<IProps> {
     }
   }
 
-  handleChangeGroupInputStatus() {
-    this.requestGroupList();
-  }
-
   handleClickRadio(value: string) {
     if (value === "private") {
       this.isDisableSelect = true;
@@ -232,7 +238,9 @@ export default class CollectDialog extends tsc<IProps> {
 
   handleClickDisplayFields(value) {
     if (value) { // 如果打开 则更新当前显示的显示字段
-      this.favoriteData.display_fields = this.visibleFields.map(item=> item.field_name);
+      if(this.isCreateFavorite || this.isClickFavoriteEdit) {
+        this.favoriteData.display_fields = this.visibleFields.map(item=> item.field_name);
+      }
     }
   }
 
@@ -299,7 +307,7 @@ export default class CollectDialog extends tsc<IProps> {
         },
       });
       this.groupList = res.data;
-      this.publicGroupList = this.groupList.slice(1, this.groupList.length -2);
+      this.publicGroupList = this.groupList.slice(1, this.groupList.length -1);
       const privateItem =  this.groupList[0];
       privateItem.name = this.$t('本人');
       this.privateGroupList = [privateItem];

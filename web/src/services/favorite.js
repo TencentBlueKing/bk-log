@@ -125,6 +125,13 @@ const groupUpdateOrder = {
   url: '/search/favorite_group/update_order/',
   method: 'post',
 };
+/**
+ * 检索语句语法检测
+ */
+const checkKeywords = {
+  url: '/search/favorite/inspect/',
+  method: 'post',
+};
 
 export {
   getFavorite,
@@ -142,4 +149,5 @@ export {
   batchFavoriteUpdate,
   batchFavoriteDelete,
   groupUpdateOrder,
+  checkKeywords,
 };
