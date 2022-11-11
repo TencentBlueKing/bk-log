@@ -348,7 +348,6 @@ export default {
 
 <style lang="scss">
   .result-header {
-    position: absolute;
     display: flex;
     justify-content: space-between;
     // align-items: center;
@@ -358,7 +357,17 @@ export default {
     background: #fff;
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .1);
     font-size: 12px;
-    z-index: 1000;
+    position: relative;
+
+    &:after {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 4px;
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .1);
+      content: '';
+      z-index: 1000;
+    }
 
     .result-left {
       display: flex;
@@ -547,7 +556,7 @@ export default {
 
     .step-box {
       min-height: 60px;
-      z-index: 999;
+      z-index: 1001;
 
       .target-arrow {
         /* stylelint-disable-next-line declaration-no-important */
