@@ -27,9 +27,16 @@
       <div class="icon-container">
         <bk-popover
           ref="showFavoriteBtnRef"
+          :disabled="showCollectIntroGuide"
           :tippy-options="expandTips">
           <div
-            :class="['result-icon-box',{ 'light-icon': !isShowCollect }]"
+            :class="[
+              'result-icon-box',
+              {
+                'light-icon': !isShowCollect,
+                'disabled': showCollectIntroGuide
+              }
+            ]"
             @click="handleClickResultIcon('collect')">
             <span class="bk-icon icon-star"></span>
           </div>
@@ -50,7 +57,9 @@
           </div>
         </bk-popover>
       </div>
-      <biz-menu-select v-if="!isAsIframe" theme="light"></biz-menu-select>
+      <div class="biz-menu-box" id="bizSelectorGuide" v-if="!isAsIframe">
+        <biz-menu-select theme="light"></biz-menu-select>
+      </div>
     </div>
     <!-- 检索结果 -->
     <!-- <div class="result-text"></div> -->
@@ -117,6 +126,20 @@
         </div>
       </bk-popover>
     </div>
+    <step-box
+      v-if="showCollectIntroGuide"
+      placement="bottom"
+      :has-border="true"
+      :tip-styles="{
+        top: '50px',
+        left: '14px',
+      }"
+    >
+      <div slot="title">{{ $t('检索收藏功能支持分组和管理') }}</div>
+      <template slot="action">
+        <div class="action-text" @click="handleCloseGuide">{{ $t('知道了') }}</div>
+      </template>
+    </step-box>
   </div>
 </template>
 
@@ -124,11 +147,13 @@
 import { mapState } from 'vuex';
 import BizMenuSelect from '@/components/biz-menu';
 import TimeRange from '../../../components/time-range/time-range';
+import StepBox from '@/components/step-box';
 
 export default {
   components: {
     BizMenuSelect,
     TimeRange,
+    StepBox,
   },
   props: {
     showRetrieveCondition: {
@@ -212,6 +237,7 @@ export default {
       ],
       isFirstCloseCollect: false,
       showSettingMenuList: [],
+      showCollectIntroGuide: localStorage.getItem('showCollectIntroGuide') !== 'false',
     };
   },
   computed: {
@@ -312,11 +338,15 @@ export default {
         this.showRetrieveCondition ? this.$emit('closeRetrieveCondition') : this.$emit('open');
       }
     },
+    handleCloseGuide() {
+      this.showCollectIntroGuide = false;
+      localStorage.setItem('showCollectIntroGuide', false);
+    },
   },
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
   .result-header {
     position: absolute;
     display: flex;
@@ -376,7 +406,18 @@ export default {
             transform: translateY(2px);
             font-size: 18px;
           }
+
+          &.disabled {
+            cursor: not-allowed;
+
+            /* stylelint-disable-next-line declaration-no-important */
+            pointer-events: none !important;
+          }
         }
+      }
+
+      .biz-menu-box {
+        position: relative;
       }
     }
 
@@ -501,6 +542,21 @@ export default {
         position: absolute;
         left: 0;
         top: 20px;
+      }
+    }
+
+    .step-box {
+      min-height: 60px;
+      z-index: 999;
+
+      .target-arrow {
+        /* stylelint-disable-next-line declaration-no-important */
+        top: -5px !important;
+
+        /* stylelint-disable-next-line declaration-no-important */
+        left: 10px !important;
+        border-top: 1px solid #dcdee5;
+        border-left: 1px solid #dcdee5;
       }
     }
   }
