@@ -66,6 +66,7 @@
         style="width: 80px"
         v-model="chartInterval"
         :clearable="false"
+        behavior="simplicity"
         ext-cls="select-custom"
         size="small"
         data-test-id="generalTrendEcharts_div_selectCycle"
@@ -334,7 +335,7 @@ export default {
 <style lang="scss" scoped>
   .monitor-echarts-container {
     position: relative;
-    height: 200px;
+    height: 190px;
     background-color: #fff;
     overflow: hidden;
 
