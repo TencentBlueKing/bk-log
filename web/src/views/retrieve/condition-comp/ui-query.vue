@@ -39,6 +39,10 @@ export default {
       type: Object,
       required: true,
     },
+    isFavoriteSearch: {
+      type: Boolean,
+      required: true,
+    },
     keyword: {
       type: String,
       required: true,
@@ -56,7 +60,8 @@ export default {
       immediate: true,
       deep: true,
       handler(value) {
-        this.getSearchFieldsList(this.keyword, value?.params?.search_fields);
+        const keyword = this.isFavoriteSearch ? value?.params?.keyword : this.keyword; 
+        this.getSearchFieldsList(keyword, value?.params?.search_fields);
       },
     },
   },
