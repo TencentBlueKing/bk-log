@@ -188,7 +188,7 @@ export default {
       const newUrl = this.$router.resolve({
         name: 'es-cluster-manage',
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: window.localStorage.getItem('space_uid'),
         },
       });
       window.open(newUrl.href, '_blank');

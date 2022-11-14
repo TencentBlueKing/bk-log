@@ -70,7 +70,7 @@ export default {
       this.$router.push({
         name: id,
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: window.localStorage.getItem('space_uid'),
         },
       });
       if (this.activeManageNav.id === id) {

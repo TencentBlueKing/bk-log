@@ -72,7 +72,7 @@
           <template slot-scope="props">
             <span
               class="text-active"
-              v-cursor="{ active: !(props.row.permission && props.row.permission.view_collection) }"
+              v-cursor="{ active: !(props.row.permission && props.row.permission[authorityMap.VIEW_COLLECTION_AUTH]) }"
               @click="operateHandler(props.row, 'view')">
               {{ props.row.collector_config_name }}
             </span>
@@ -109,9 +109,10 @@
           :label="$t('dataSource.collector_scenario_name')"
           min-width="50"
           class-name="filter-column"
-          prop="collector_scenario_name"
+          prop="collector_scenario_id"
           column-key="collector_scenario_id"
           :filters="checkcFields('collector_scenario_name') ? scenarioFilters : []"
+          :filter-method="scenarioFiltersMethod"
           :filter-multiple="false">
           <template slot-scope="props">
             <span :class="{ 'text-disabled': props.row.status === 'stop' }">
@@ -124,9 +125,10 @@
           :label="$t('dataSource.category_name')"
           min-width="50"
           class-name="filter-column"
-          prop="category_name"
+          prop="category_id"
           column-key="category_id"
           :filters="checkcFields('category_name') ? categoryFilters : []"
+          :filter-method="categoryFiltersMethod"
           :filter-multiple="false">
           <template slot-scope="props">
             <span :class="{ 'text-disabled': props.row.status === 'stop' }">
@@ -190,7 +192,7 @@
               v-else
               v-cursor="{
                 active: !(props.row.permission &&
-                  props.row.permission.view_collection) &&
+                  props.row.permission[authorityMap.VIEW_COLLECTION_AUTH]) &&
                   props.row.status !== 'terminated'
               }"
               @click.stop="operateHandler(props.row, 'status')">
@@ -247,7 +249,7 @@
               text
               class="king-button"
               :disabled="!props.row.is_active || (!props.row.index_set_id && !props.row.bkdata_index_set_ids.length)"
-              v-cursor="{ active: !(props.row.permission && props.row.permission.search_log) }"
+              v-cursor="{ active: !(props.row.permission && props.row.permission[authorityMap.SEARCH_LOG_AUTH]) }"
               @click="operateHandler(props.row, 'search')">
               {{ $t('nav.retrieve') }}
             </bk-button>
@@ -256,7 +258,9 @@
               theme="primary"
               text
               class="king-button"
-              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+              v-cursor="{
+                active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
+              }"
               @click.stop="operateHandler(props.row, 'edit')">
               {{ $t('编辑') }}
             </bk-button>
@@ -266,7 +270,9 @@
               text
               class="king-button"
               :disabled="!props.row.table_id"
-              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+              v-cursor="{
+                active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
+              }"
               @click.stop="operateHandler(props.row, 'clean')">
               {{ $t('logClean.goToClean') }}
             </bk-button>
@@ -281,7 +287,9 @@
                 <li>
                   <a
                     href="javascript:;"
-                    v-cursor="{ active: !(props.row.permission && props.row.permission.view_collection) }"
+                    v-cursor="{
+                      active: !(props.row.permission && props.row.permission[authorityMap.VIEW_COLLECTION_AUTH])
+                    }"
                     @click="operateHandler(props.row, 'view')">
                     {{ $t('详情') }}
                   </a>
@@ -300,7 +308,9 @@
                   <a
                     href="javascript:;"
                     v-else
-                    v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+                    v-cursor="{
+                      active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
+                    }"
                     @click.stop="operateHandler(props.row, 'stop')">{{$t('btn.block')}}</a>
                 </li>
                 <li v-else>
@@ -316,7 +326,9 @@
                   <a
                     href="javascript:;"
                     v-else
-                    v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+                    v-cursor="{
+                      active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
+                    }"
                     @click.stop="operateHandler(props.row, 'start')">{{$t('btn.start')}}</a>
                 </li>
                 <li>
@@ -332,7 +344,9 @@
                   <a
                     href="javascript:;"
                     v-else
-                    v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+                    v-cursor="{
+                      active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
+                    }"
                     @click.stop="operateHandler(props.row, 'delete')">{{$t('btn.delete')}}</a>
                 </li>
                 <!-- 存储设置 -->
@@ -346,7 +360,9 @@
                   <a
                     href="javascript:;"
                     v-else
-                    v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+                    v-cursor="{
+                      active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
+                    }"
                     @click.stop="operateHandler(props.row, 'storage')">{{$t('logClean.storageSetting')}}</a>
                 </li>
                 <!-- 克隆 -->
@@ -360,7 +376,9 @@
                   <a
                     href="javascript:;"
                     v-else
-                    v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+                    v-cursor="{
+                      active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
+                    }"
                     @click.stop="operateHandler(props.row, 'clone')">{{ $t('克隆') }}</a>
                 </li>
               </ul>
@@ -384,6 +402,7 @@
 import { projectManages } from '@/common/util';
 import collectedItemsMixin from '@/mixins/collected-items-mixin';
 import { mapGetters } from 'vuex';
+import * as authorityMap from '../../../../../common/authority-map';
 
 export default {
   name: 'CollectionItem',
@@ -481,11 +500,14 @@ export default {
   },
   computed: {
     ...mapGetters({
-      projectId: 'projectId',
+      spaceUid: 'spaceUid',
       bkBizId: 'bkBizId',
       authGlobalInfo: 'globals/authContainerInfo',
     }),
     ...mapGetters('globals', ['globalsData']),
+    authorityMap() {
+      return authorityMap;
+    },
     scenarioFilters() {
       const { collector_scenario } = this.globalsData;
       const target = [];
@@ -553,7 +575,7 @@ export default {
               collectorId: row.collector_config_id || '',
             },
             query: {
-              projectId: window.localStorage.getItem('project_id'),
+              spaceUid: window.localStorage.getItem('space_uid'),
             },
           });
         }
@@ -624,7 +646,7 @@ export default {
         params,
         query: {
           ...query,
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: window.localStorage.getItem('space_uid'),
           backRoute,
         },
       });
@@ -650,6 +672,14 @@ export default {
     },
     stopStatusPolling() {
       clearTimeout(this.timer);
+    },
+    scenarioFiltersMethod(value, row, column) {
+      const property = column.property;
+      return row[property] === value;
+    },
+    categoryFiltersMethod(value, row, column) {
+      const property = column.property;
+      return row[property] === value;
     },
     requestData() {
       this.isTableLoading = true;

@@ -634,7 +634,7 @@ export const base64Decode = (str) => {
 
 export const makeMessage = (message, traceId) => {
   const resMsg = `
-    ${traceId || '--'} ：                                               
+    ${traceId || '--'} ：
     ${message}
   `;
   message && console.log(`
@@ -645,3 +645,36 @@ export const makeMessage = (message, traceId) => {
   `);
   return resMsg;
 };
+
+export class Storage {
+  /** 过期时长 */
+  express = null;
+  constructor(express) {
+    this.express = express;
+  }
+  /** 设置缓存 */
+  set(key, value, express = this.express) {
+    const data = {
+      value,
+      updateTime: Date.now(),
+      express,
+    };
+    localStorage.setItem(key, JSON.stringify(data));
+  }
+  /** 获取缓存 */
+  get(key) {
+    const dataStr = localStorage.getItem(key);
+    if (!dataStr) return null;
+    const data = JSON.parse(dataStr);
+    const nowTime = Date.now();
+    if (data.express && data.express < (nowTime - data.updateTime)) {
+      this.remove(key);
+      return null;
+    }
+    return data.value;
+  }
+  /** 移除缓存 */
+  remove(key) {
+    localStorage.removeItem(key);
+  }
+}

@@ -32,7 +32,7 @@ class UserSearchHistorySerializer(serializers.Serializer):
     pagesize = serializers.IntegerField(required=True)
 
     def validate(self, attrs):
-        super().validate(attrs)
+        attrs = super().validate(attrs)
         attrs["start_time"] = attrs["start_time"].replace("&nbsp;", " ")
         attrs["end_time"] = attrs["end_time"].replace("&nbsp;", " ")
         return attrs
@@ -54,7 +54,7 @@ class UserSearchHistoryOperationStatisticSerializer(serializers.Serializer):
     end_time = serializers.CharField(required=True)
 
     def validate(self, attrs):
-        super().validate(attrs)
+        attrs = super().validate(attrs)
         attrs["start_time"] = attrs["start_time"].replace("&nbsp;", " ")
         attrs["end_time"] = attrs["end_time"].replace("&nbsp;", " ")
         return attrs

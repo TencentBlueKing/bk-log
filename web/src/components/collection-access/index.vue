@@ -127,6 +127,7 @@ import stepField from './step-field';
 import stepStorage from './step-storage.vue';
 import stepResult from './step-result';
 import advanceCleanLand from '@/components/collection-access/advance-clean-land';
+import * as authorityMap from '../../common/authority-map';
 
 export default {
   name: 'AccessSteps',
@@ -165,6 +166,7 @@ export default {
     }),
     ...mapGetters('collect', ['curCollect']),
     ...mapGetters(['bkBizId']),
+    ...mapGetters(['spaceUid']),
     isCommon() {
       return ['add', 'edit'].some(item => item === this.operateType);
     },
@@ -210,13 +212,13 @@ export default {
     async initPage() {
       try {
         const paramData = this.$route.name === 'collectAdd' ? {
-          action_ids: ['create_collection'],
+          action_ids: [authorityMap.CREATE_COLLECTION_AUTH],
           resources: [{
-            type: 'biz',
-            id: this.bkBizId,
+            type: 'space',
+            id: this.spaceUid,
           }],
         } : {
-          action_ids: ['manage_collection'],
+          action_ids: [authorityMap.MANAGE_COLLECTION_AUTH],
           resources: [{
             type: 'collection',
             id: this.$route.params.collectorId,
