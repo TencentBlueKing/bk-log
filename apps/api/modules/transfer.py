@@ -375,5 +375,35 @@ class _TransferApi(object):
             before_request=add_esb_info_before_request,
         )
 
+        # space
+        self.list_space_types = DataAPI(
+            method="GET",
+            url=MONITOR_APIGATEWAY_ROOT + "metadata_list_space_types/",
+            module=self.MODULE,
+            description=_("查询空间类型列表"),
+            before_request=add_esb_info_before_request,
+        )
+        self.list_spaces = DataAPI(
+            method="GET",
+            url=MONITOR_APIGATEWAY_ROOT + "metadata_list_spaces/",
+            module=self.MODULE,
+            description=_("查询空间实例列表"),
+            before_request=add_esb_info_before_request,
+        )
+        self.get_space_detail = DataAPI(
+            method="GET",
+            url=MONITOR_APIGATEWAY_ROOT + "metadata_get_space_detail/",
+            module=self.MODULE,
+            description=_("查看具体空间实例详情"),
+            before_request=add_esb_info_before_request,
+        )
+        self.list_sticky_spaces = DataAPI(
+            method="GET",
+            url=MONITOR_APIGATEWAY_ROOT + "metadata_list_sticky_spaces/",
+            module=self.MODULE,
+            description=_("查询置顶空间实例列表"),
+            before_request=add_esb_info_before_request,
+        )
+
 
 Transfer = _TransferApi()

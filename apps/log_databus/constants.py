@@ -30,7 +30,7 @@ from apps.utils import ChoicesEnum
 META_PARAMS_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 RESTORE_INDEX_SET_PREFIX = "restore_"
 
-BKLOG_RESULT_TABLE_PATTERN = rf"(\d*?_{settings.TABLE_ID_PREFIX}_.*)_.*_.*"
+BKLOG_RESULT_TABLE_PATTERN = rf"(({settings.TABLE_SPACE_PREFIX}_)?\d*?_{settings.TABLE_ID_PREFIX}_.*)_.*_.*"
 
 NOT_FOUND_CODE = "[404]"
 
@@ -380,11 +380,15 @@ class ContainerCollectorType(object):
 
 
 class ContainerCollectStatus(ChoicesEnum):
+    PENDING = "PENDING"
+    RUNNING = "RUNNING"
     SUCCESS = "SUCCESS"
     FAILED = "FAILED"
     TERMINATED = "TERMINATED"
 
     _choices_labels = (
+        (PENDING, _("等待中")),
+        (RUNNING, _("部署中")),
         (SUCCESS, _("成功")),
         (FAILED, _("失败")),
         (TERMINATED, _("已停用")),

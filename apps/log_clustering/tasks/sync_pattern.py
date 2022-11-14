@@ -29,6 +29,7 @@ from apps.log_clustering.constants import (
     PATTERN_SIGNATURE_INDEX,
     ORIGIN_LOG_INDEX,
 )
+from apps.log_clustering.exceptions import ModelReleaseNotFoundException
 from apps.log_clustering.handlers.aiops.aiops_model.aiops_model_handler import AiopsModelHandler
 from apps.log_clustering.models import AiopsModel, AiopsSignatureAndPattern
 
@@ -41,9 +42,11 @@ def sync_pattern():
 
 
 def sync(model_id):
-    release_id = AiopsModelHandler().get_latest_released_id(model_id=model_id)
-    if not release_id:
+    try:
+        release_id = AiopsModelHandler().get_latest_released_id(model_id=model_id)
+    except ModelReleaseNotFoundException:
         return None
+
     patterns = get_pattern(model_id=model_id, release_id=release_id)
     created_patterns = get_created_pattern(patterns=patterns, model_id=model_id)
     AiopsSignatureAndPattern.objects.bulk_create(

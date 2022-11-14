@@ -101,7 +101,6 @@ class TestStrategies(TestCase):
             self.assertEqual(content["data"][index]["file_type"], STRATEGIES_LIST_RESULT["data"][index]["file_type"])
 
     @override_settings(MIDDLEWARE=("apps.tests.middlewares.OverrideMiddleware",))
-    @patch("apps.log_search.handlers.meta.MetaHandler.get_project_info", lambda _, __: {"project_id": 2})
     @patch("apps.log_search.handlers.meta.MetaHandler.get_user", lambda: {"operator": USER})
     @patch("apps.decorators.user_operation_record.delay", return_value=None)
     @patch(

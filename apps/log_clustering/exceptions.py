@@ -87,3 +87,8 @@ class BkdataRegexException(BaseClusteringException):
 class BkdataFieldsException(BaseClusteringException):
     ERROR_CODE = "012"
     MESSAGE = _("不允许删除参与日志聚类字段: {field}")
+
+
+class ModelReleaseNotFoundException(BaseClusteringException):
+    ERROR_CODE = "013"
+    MESSAGE = _("模型找不到对应的发布版本: {model_id}")

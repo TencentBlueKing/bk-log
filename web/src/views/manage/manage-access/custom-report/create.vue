@@ -82,17 +82,27 @@
         </bk-form-item>
         <bk-form-item
           required
+          ext-cls="en-bk-form"
+          :icon-offset="120"
           :label="$t('customReport.englishName')"
           :property="'collector_config_name_en'"
           :rules="baseRules.collector_config_name_en">
-          <bk-input
-            class="form-input"
-            show-word-limit
-            maxlength="50"
-            data-test-id="addNewCustomBox_input_englishName"
-            v-model="formData.collector_config_name_en"
-            :disabled="submitLoading || isEdit"
-            :placeholder="$t('dataSource.en_name_tips')"></bk-input>
+          <div class="en-name-box">
+            <div>
+              <bk-input
+                class="form-input"
+                show-word-limit
+                maxlength="50"
+                data-test-id="addNewCustomBox_input_englishName"
+                v-model="formData.collector_config_name_en"
+                :disabled="submitLoading || isEdit"
+                :placeholder="$t('dataSource.en_name_tips')"></bk-input>
+              <span v-if="!isTextValid" class="text-error">{{formData.collector_config_name_en}}</span>
+            </div>
+            <span v-bk-tooltips.top="$t('自动转换成正确的英文名格式')">
+              <bk-button v-if="!isTextValid" text @click="handleEnConvert">{{$t('自动转换')}}</bk-button>
+            </span>
+          </div>
         </bk-form-item>
         <!-- 数据分类 -->
         <bk-form-item
@@ -101,7 +111,7 @@
           :property="'category_id'"
           :rules="baseRules.category_id">
           <bk-select
-            style="width: 320px;"
+            style="width: 500px;"
             v-model="formData.category_id"
             data-test-id="addNewCustomBox_select_selectDataCategory"
             :disabled="submitLoading">
@@ -155,7 +165,7 @@
           :rules="storageRules.data_link_id"
           :property="'data_link_id'">
           <bk-select
-            style="width: 320px;"
+            style="width: 500px;"
             v-model="formData.data_link_id"
             data-test-id="addNewCustomBox_select_selectDataLink"
             :clearable="false"
@@ -174,9 +184,8 @@
           class="form-inline-div"
           :rules="storageRules.table_id"
           :property="'table_id'">
-          <!-- <div class="prefix">{{formData.table_id_prefix}}</div> -->
           <bk-input
-            style="width: 320px"
+            style="width: 500px;"
             disabled
             v-model="formData.collector_config_name_en"
             data-test-id="addNewCustomBox_input_configName"
@@ -184,14 +193,14 @@
             minlength="5"
             :placeholder="$t('dataManage.input_number')">
             <template slot="prepend">
-              <div class="group-text">{{`${bkBizId}_bklog_`}}</div>
+              <div class="group-text">{{showGroupText}}</div>
             </template>
           </bk-input>
         </bk-form-item>
         <!-- 过期时间 -->
         <bk-form-item :label="$t('configDetails.expirationTime')">
           <bk-select
-            style="width: 320px;"
+            style="width: 500px;"
             v-model="formData.retention"
             data-test-id="addNewCustomBox_select_expireDate"
             :clearable="false"
@@ -365,14 +374,17 @@ export default {
           },
           {
             max: 50,
+            message: this.$t('不能多于50个字符'),
             trigger: 'blur',
           },
           {
             min: 5,
+            message: this.$t('不能少于5个字符'),
             trigger: 'blur',
           },
           {
-            regex: /^[A-Za-z0-9_]+$/,
+            validator: this.checkEnNameValidator,
+            message: this.$t('enNameValidatorTips'),
             trigger: 'blur',
           },
         ],
@@ -418,11 +430,11 @@ export default {
       clusterList: [], // 共享集群
       exclusiveList: [], // 独享集群
       editStorageClusterID: null,
+      isTextValid: true,
     };
   },
   computed: {
     ...mapGetters({
-      projectId: 'projectId',
       bkBizId: 'bkBizId',
       globalsData: 'globals/globalsData',
     }),
@@ -434,6 +446,9 @@ export default {
     isCloseDataLink() {
       // 没有可上报的链路时，编辑采集配置链路ID为0或null时，隐藏链路配置框，并且不做空值校验。
       return !this.linkConfigurationList.length || (this.isEdit && !this.formData.data_link_id);
+    },
+    showGroupText() {
+      return Number(this.bkBizId) > 0 ? `${this.bkBizId}_bklog_` : `space_${Math.abs(Number(this.bkBizId))}_bklog_`;
     },
   },
   watch: {
@@ -567,6 +582,25 @@ export default {
     handleActiveDetails(state) {
       this.isOpenWindow = state;
     },
+    checkEnNameValidator(val) {
+      this.isTextValid = new RegExp(/^[A-Za-z0-9_]+$/).test(val);
+      return this.isTextValid;
+    },
+    handleEnConvert() {
+      const str = this.formData.collector_config_name_en;
+      const convertStr = str.split('').reduce((pre, cur) => {
+        if (cur === '-') cur = '_';
+        if (!/\w/.test(cur)) cur = '';
+        return pre += cur;
+      }, '');
+      this.formData.collector_config_name_en = convertStr;
+      this.$refs.validateForm.validate().then(() => {
+        this.isTextValid = true;
+      })
+        .catch(() => {
+          if (convertStr.length < 5) this.isTextValid = true;
+        });
+    },
   },
   // eslint-disable-next-line no-unused-vars
   beforeRouteLeave(to, from, next) {
@@ -598,6 +632,27 @@ export default {
       padding: 0 420px 0 24px;
     }
 
+    .en-bk-form {
+      width: 680px;
+
+      .en-name-box {
+        align-items: center;
+
+        @include flex-justify(space-between);
+      }
+
+      .text-error {
+        display: inline-block;
+        position: absolute;
+        top: 6px;
+        left: 12px;
+        font-size: 12px;
+        color: transparent;
+        pointer-events: none;
+        text-decoration: red wavy underline;
+      }
+    }
+
     .create-form {
       background: #fff;
       padding: 24px 37px;
@@ -614,7 +669,7 @@ export default {
       }
 
       .form-input {
-        width: 320px;
+        width: 500px;
       }
 
       .group-tip {

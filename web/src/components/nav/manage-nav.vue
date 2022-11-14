@@ -68,7 +68,7 @@ export default {
         this.$router.push({
           name: id,
           query: {
-            projectId: window.localStorage.getItem('project_id'),
+            spaceUid: window.localStorage.getItem('space_uid'),
           },
         });
       }
@@ -79,7 +79,7 @@ export default {
         this.$router.push({
           name: !!backRoute ? backRoute : this.$route.meta.backName,
           query: {
-            projectId: window.localStorage.getItem('project_id'),
+            spaceUid: window.localStorage.getItem('space_uid'),
           },
         });
       }
