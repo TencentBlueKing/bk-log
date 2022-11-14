@@ -427,10 +427,6 @@ export default {
       height: calc(100% - 56px) !important;
     }
 
-    .biz-menu {
-      padding-bottom: 10px;
-      border-bottom: 1px solid rgba(240,241,245,.16);
-    }
   }
   // 表格单元 v-bk-overflow-tips
   .bk-table .bk-table-body-wrapper .table-ceil-container {
