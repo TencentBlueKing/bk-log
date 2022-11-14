@@ -98,7 +98,9 @@ class BKUnifyLogBeatCheck(object):
         restart_times = 10
         restart_records_file = "/tmp/bkc.log"
         today = datetime.datetime.now().strftime("%Y%m%d")
-        output = get_command("grep {} {} | wc -l".format(today, restart_records_file))
+        output = get_command(
+            "cat {} | grep {} | grep {} | wc -l".format(restart_records_file, today, MODULE_BKUNIFYLOGBEAT)
+        )
         if not output or int(output) > restart_times:
             result.message = "restart/reload times is over %d" % restart_times
             result.add_to_result()
