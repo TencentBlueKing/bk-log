@@ -184,25 +184,8 @@ export default {
     },
   },
   watch: {
-    keyword(val) {
-      const groupList = this.groupList;
-      if (!!val) {
-        for (const key in groupList) {
-          const gItem = groupList[key];
-          if (!gItem.list.length) continue;
-          const keyword = val.trim().toLocaleLowerCase();
-          const filterList = gItem.list.filter((item) => {
-            return item.space_name.toLocaleLowerCase().indexOf(keyword) > -1
-             || item.space_code.toLocaleLowerCase().indexOf(keyword) > -1;
-          });
-          gItem.keywordList = filterList;
-        }
-      } else {
-        for (const key in groupList) {
-          const gItem = groupList[key];
-          gItem.keywordList = gItem.list;
-        }
-      }
+    keyword() {
+      this.initGroupList();
     },
   },
   created() {
@@ -314,10 +297,10 @@ export default {
 
         if ((show && keyword) || (!this.searchTypeId && !show)) {
           show = (item.space_name.toLocaleLowerCase().indexOf(keyword) > -1
-        // || item.py_text.toLocaleLowerCase().indexOf(keyword) > -1
-        || `${item.id}`.includes(keyword));
+        || item.py_text.toLocaleLowerCase().indexOf(keyword) > -1
+        // || `${item.id}`.includes(keyword));
+        || `${item.space_code}`.includes(keyword));
         }
-
         if (show) {
           const tags = [{ id: item.space_type_id, name: item.space_type_name, type: item.space_type_id }];
           if (item.space_type_id === 'bkci' && item.space_code) {
@@ -471,6 +454,26 @@ export default {
 
             &:hover .apply-text {
               display: flex;
+            }
+
+            .list-item-left {
+              /* stylelint-disable-next-line declaration-no-important */
+              display: inline-flex !important;
+              flex: 1;
+              flex-wrap: nowrap;
+              margin-right: 8px;
+
+              @include ellipsis();
+
+              .list-item-name {
+                @include ellipsis();
+              }
+
+              .list-item-id {
+                margin-left: 8px;
+
+                @include ellipsis();
+              }
             }
           }
 
