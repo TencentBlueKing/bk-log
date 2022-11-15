@@ -72,8 +72,8 @@ class CollectMetricCollector(object):
                 dimensions={
                     "is_active": group["is_active"],
                     "collect_scenario": group["collector_scenario_id"],
-                    "target_biz_id": group["bk_biz_id"],
-                    "target_biz_name": MetricUtils.get_instance().get_biz_name(group["bk_biz_id"]),
+                    "bk_biz_id": group["bk_biz_id"],
+                    "bk_biz_name": MetricUtils.get_instance().get_biz_name(group["bk_biz_id"]),
                 },
                 timestamp=MetricUtils.get_instance().report_ts,
             )
@@ -110,8 +110,8 @@ class CollectMetricCollector(object):
                 metric_value=group["count"],
                 dimensions={
                     "custom_type": group["custom_type"],
-                    "target_biz_id": group["bk_biz_id"],
-                    "target_biz_name": MetricUtils.get_instance().get_biz_name(group["bk_biz_id"]),
+                    "bk_biz_id": group["bk_biz_id"],
+                    "bk_biz_name": MetricUtils.get_instance().get_biz_name(group["bk_biz_id"]),
                 },
                 timestamp=MetricUtils.get_instance().report_ts,
             )
@@ -175,8 +175,8 @@ class CollectMetricCollector(object):
                     dimensions={
                         "collector_config_id": collect.collector_config_id,
                         "collector_config_name": collect.collector_config_name,
-                        "target_biz_id": collect.bk_biz_id,
-                        "target_biz_name": MetricUtils.get_instance().get_biz_name(collect.bk_biz_id),
+                        "bk_biz_id": collect.bk_biz_id,
+                        "bk_biz_name": MetricUtils.get_instance().get_biz_name(collect.bk_biz_id),
                     },
                     timestamp=MetricUtils.get_instance().report_ts,
                 )
@@ -189,8 +189,8 @@ class CollectMetricCollector(object):
                     dimensions={
                         "collector_config_id": collect.collector_config_id,
                         "collector_config_name": collect.collector_config_name,
-                        "target_biz_id": collect.bk_biz_id,
-                        "target_biz_name": MetricUtils.get_instance().get_biz_name(collect.bk_biz_id),
+                        "bk_biz_id": collect.bk_biz_id,
+                        "bk_biz_name": MetricUtils.get_instance().get_biz_name(collect.bk_biz_id),
                     },
                     timestamp=MetricUtils.get_instance().report_ts,
                 )
@@ -392,8 +392,8 @@ class CleanMetricCollector(object):
                             metric_name="count",
                             metric_value=aggregation_datas[index_set_id][etl_config],
                             dimensions={
-                                "target_biz_id": bk_biz_id,
-                                "target_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                                "bk_biz_id": bk_biz_id,
+                                "bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
                                 "index_set_id": index_set_id,
                                 "index_set_name": index_sets[index_set_id]["index_set_name"],
                                 "clean_type": etl_config,
@@ -513,8 +513,8 @@ class CleanMetricCollector(object):
                 dimensions={
                     "collector_config_id": collector_config_id,
                     "collector_config_name": collector_config_dict[collector_config_id]["collector_config_name"],
-                    "target_biz_id": collector_config_dict[collector_config_id]["bk_biz_id"],
-                    "target_biz_name": MetricUtils.get_instance().get_biz_name(
+                    "bk_biz_id": collector_config_dict[collector_config_id]["bk_biz_id"],
+                    "bk_biz_name": MetricUtils.get_instance().get_biz_name(
                         collector_config_dict[collector_config_id]["bk_biz_id"]
                     ),
                 },

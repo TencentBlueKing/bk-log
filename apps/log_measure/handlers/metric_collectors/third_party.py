@@ -48,8 +48,8 @@ class ThirdPartyMetricCollector(object):
                 metric_name="count",
                 metric_value=count,
                 dimensions={
-                    "target_biz_id": bk_biz_id,
-                    "target_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                    "bk_biz_id": bk_biz_id,
+                    "bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
                 },
                 timestamp=MetricUtils.get_instance().report_ts,
             )
