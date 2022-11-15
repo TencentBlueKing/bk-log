@@ -132,12 +132,19 @@ class ClusteringMonitorHandler(object):
             signature=signature,
             strategy_type=strategy_type,
         )
+
+        labels = DEFAULT_LABEL
+        if strategy_type == StrategiesType.NORMAL_STRATEGY:
+            labels += [f"LogClustering/NewLog/{self.index_set_id}"]
+        else:
+            labels += [f"LogClustering/NewClass/{self.index_set_id}"]
+
         strategy = MonitorApi.save_alarm_strategy_v2(
             params={
                 "bk_biz_id": self.bk_biz_id,
                 "scenario": DEFAULT_SCENARIO,
                 "name": name,
-                "labels": DEFAULT_LABEL,
+                "labels": labels,
                 "is_enabled": True,
                 "items": [
                     {

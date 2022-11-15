@@ -21,7 +21,7 @@ the project delivered to anyone in the future.
 """
 from apps.log_databus.constants import TargetNodeTypeEnum
 from apps.log_databus.models import CollectorConfig
-from home_application.constants import CHECK_STORY_0
+from home_application.constants import CHECK_STORY_0, GSE_PATH, IPC_PATH
 from home_application.handlers.collector_checker import (
     CheckAgentStory,
     CheckESStory,
@@ -33,7 +33,7 @@ from home_application.handlers.collector_checker import (
 
 
 class CollectorCheckHandler(object):
-    def __init__(self, collector_config_id, hosts=None, debug=False):
+    def __init__(self, collector_config_id, hosts=None, debug=False, gse_path=GSE_PATH, ipc_path=IPC_PATH):
         self.collector_config_id = collector_config_id
         self.hosts = hosts
         self.debug = debug
@@ -45,6 +45,8 @@ class CollectorCheckHandler(object):
         self.bk_biz_id = None
         self.target_server = None
         self.collector_config = None
+        self.gse_path = gse_path
+        self.ipc_path = ipc_path
 
         self.story_report = []
         self.kafka = []
@@ -130,6 +132,8 @@ class CollectorCheckHandler(object):
         self.story_report.append(check_es_report)
         self.output(check_es_report)
 
+        self.summary_output()
+
     def summary_output(self):
         is_success = "失败"
         if not any([i.has_problem() for i in self.story_report]):
@@ -191,6 +195,8 @@ class CollectorCheckHandler(object):
             bk_biz_id=self.bk_biz_id,
             target_server=self.target_server,
             subscription_id=self.subscription_id,
+            gse_path=self.gse_path,
+            ipc_path=self.ipc_path,
         )
         story.check()
         return story.get_report()
