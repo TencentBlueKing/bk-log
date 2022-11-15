@@ -110,12 +110,15 @@ class UserOperationActionEnum(ChoicesEnum):
 
 
 class LuceneSyntaxEnum(object):
+    """Lucene语法枚举"""
+
     UNKNOWN = "UnknownOperation"
     SEARCH_FIELD = "SearchField"
     OR_OPERATION = "OrOperation"
     AND_OPERATION = "AndOperation"
     WORD = "Word"
     PHRASE = "Phrase"
+    PROXIMITY = "Proximity"
     RANGE = "Range"
     FUZZY = "Fuzzy"
     REGEX = "Regex"
@@ -125,6 +128,28 @@ class LuceneSyntaxEnum(object):
     NOT = "Not"
     PLUS = "Plus"
     PROHIBIT = "Prohibit"
+
+
+class LuceneSyntaxExceptionEnum(ChoicesEnum):
+    """Lucene语法异常枚举"""
+
+    CHINESE_PUNCTUATION = "chinese_punctuation"
+    ILLEGAL_CHARACTER = "illegal_character"
+    ILLEGAL_RANGE_SYNTAX = "illegal_range_syntax"
+    ILLEGAL_BRACKET = "illegal_bracket"
+    ILLEGAL_COLON = "illegal_colon"
+    UNKNOWN_OPERATOR = "unknown_operator"
+    UNKNOWN_SYNTAX_EXCEPTION = "unknown_syntax_exception"
+
+    _choices_labels = (
+        (CHINESE_PUNCTUATION, _("中文标点异常")),
+        (ILLEGAL_CHARACTER, _("异常字符")),
+        (ILLEGAL_RANGE_SYNTAX, _("非法RANGE语法")),
+        (ILLEGAL_BRACKET, _("括号不匹配")),
+        (ILLEGAL_COLON, _("多余的冒号")),
+        (UNKNOWN_OPERATOR, _("未知操作符")),
+        (UNKNOWN_SYNTAX_EXCEPTION, _("未知异常")),
+    )
 
 
 FULL_TEXT_SEARCH_FIELD_NAME = _("全文检索")
@@ -151,6 +176,9 @@ UNEXPECTED_UNMATCHED_EXCEPTION = (
 UNEXPECTED_RANGE_RE = r"(\[.*?TO.*?\])"
 UNEXPECTED_SINGLE_RANGE_RE = r"\[(.*)TO(.*)\]"
 ILLEGAL_CHARACTER_RE = r"Illegal character '(.*)' at position (\d+)"
+
+# 中文符号匹配
+CHINESE_PUNCTUATION_RE = r"(“.*?”)"
 
 # 最大语法修复次数
 MAX_RESOLVE_TIMES = 10
