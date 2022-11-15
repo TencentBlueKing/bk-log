@@ -123,11 +123,11 @@ class BkLogJsonEtlStorage(EtlStorage):
                                             "next": None,
                                             "subtype": "assign_obj",
                                             "label": "labelb140",
-                                            "assign": [
-                                                {"key": "data", "assign_to": "data", "type": "text"}
+                                            "assign": (
+                                                [{"key": "data", "assign_to": "data", "type": "text"}]
                                                 if retain_original_text
-                                                else {},
-                                            ]
+                                                else []
+                                            )
                                             + [
                                                 self._to_bkdata_assign(built_in_field)
                                                 for built_in_field in built_in_fields
