@@ -78,237 +78,239 @@
       <div class="page-loading-wrap" v-if="basicLoading || tableLoading">
         <div class="page-loading-bar"></div>
       </div>
-      <!-- 收藏列表 -->
-      <collect-index
-        :width.sync="collectWidth"
-        :is-show.sync="isShowCollect"
-        :favorite-loading="favoriteLoading"
-        :favorite-list="favoriteList"
-        :style="{ width: collectWidth + 'px' }"
-        :index-id="`${favoriteRequestID}`"
-        :active-favorite="activeFavorite"
-        :active-favorite-i-d="activeFavoriteID"
-        :visible-fields="visibleFields"
-        @handleClick="handleClickFavoriteItem"
-        @isRefreshFavorite="updateActiveFavoriteData" />
-      <!-- 检索详情页左侧 -->
-      <div v-show="showRetrieveCondition" class="retrieve-condition" :style="{ width: leftPanelWidth + 'px' }">
-        <!-- 监控显示的 tab 切换 -->
-        <!-- <div v-if="isAsIframe" class="bk-button-group">
+      <div class="result-content">
+        <!-- 收藏列表 -->
+        <collect-index
+          :width.sync="collectWidth"
+          :is-show.sync="isShowCollect"
+          :favorite-loading="favoriteLoading"
+          :favorite-list="favoriteList"
+          :style="{ width: collectWidth + 'px' }"
+          :index-id="`${favoriteRequestID}`"
+          :active-favorite="activeFavorite"
+          :active-favorite-i-d="activeFavoriteID"
+          :visible-fields="visibleFields"
+          @handleClick="handleClickFavoriteItem"
+          @isRefreshFavorite="updateActiveFavoriteData" />
+        <!-- 检索详情页左侧 -->
+        <div v-show="showRetrieveCondition" class="retrieve-condition" :style="{ width: leftPanelWidth + 'px' }">
+          <!-- 监控显示的 tab 切换 -->
+          <!-- <div v-if="isAsIframe" class="bk-button-group">
           <bk-button @click="handleCheckMonitor">{{ $t('指标检索') }}</bk-button>
           <bk-button class="is-selected">{{ $t('日志检索') }}</bk-button>
           <bk-button @click="handleCheckEvent">{{ $t('事件检索') }}</bk-button>
         </div> -->
 
-        <!-- <div class="biz-menu-box" id="bizSelectorGuide" v-if="!isAsIframe">
+          <!-- <div class="biz-menu-box" id="bizSelectorGuide" v-if="!isAsIframe">
           <biz-menu-select theme="light"></biz-menu-select>
         </div> -->
 
-        <div class="king-tab" :class="isAsIframe && 'as-iframe'">
-          <div class="tab-header">
-            <span class="tab-title">{{ $t('数据检索') }}</span>
-            <div class="tab-operation">
-              <bk-popover
-                v-show="isShowUiType"
-                ref="formTipsRef"
-                :tippy-options="formTippyOptions"
-                :disabled="isCanUseUiType || !isSqlSearchType">
-                <div
-                  class="search-type"
-                  @click="handleClickSearchType">
-                  <span class="bk-icon icon-sort"></span>
-                  <span>{{isSqlSearchType ? $t('表单') : 'SQL'}}</span>
-                </div>
-                <div slot="content">
-                  <span>
-                    <span
-                      style="color: #d7473f; display: inline-block; transform: translateY(-2px);"
-                      class="bk-icon icon-exclamation-circle-shape"></span>
-                    <span>{{$t('表单Tips')}}</span>
-                  </span>
-                </div>
-              </bk-popover>
-            </div>
-          </div>
-          <div class="tab-content" :style="`height:calc(100% - ${isAsIframe ? 60 : 108}px);`">
-            <div class="tab-content-item" data-test-id="retrieve_div_dataQueryBox">
-              <!-- 选择索引集 -->
-              <div class="tab-item-title">{{ $t('索引集') }}</div>
-              <select-indexSet
-                :index-id="indexId"
-                :index-set-list="indexSetList"
-                :basic-loading.sync="basicLoading"
-                @selected="handleSelectIndex"
-                @updateIndexSetList="updateIndexSetList" />
-              <template v-if="isSqlSearchType">
-                <!-- 查询语句 -->
-                <query-statement
-                  v-model="retrieveParams.keyword"
-                  :history-records="statementSearchrecords"
-                  @updateSearchParam="updateSearchParam"
-                  @retrieve="retrieveLog" />
-                <retrieve-detail-input
-                  v-model="retrieveParams.keyword"
-                  :check-keyword-data="checkKeywordData"
-                  :is-auto-query="isAutoQuery"
-                  :retrieved-keyword="retrievedKeyword"
-                  :dropdown-data="retrieveDropdownData"
-                  @retrieve="retrieveLog"
-                  @clearCheckData="clearCheckData" />
-              </template>
-              <template v-else>
-                <ui-query
-                  :keyword="retrieveParams.keyword"
-                  :active-favorite="activeFavorite"
-                  @updateKeyWords="updateKeyWords"></ui-query>
-              </template>
-              <!-- 添加过滤条件 -->
-              <div class="tab-item-title flex-item-title">
-                <span>{{ $t('过滤条件') }}</span>
-                <div class="filter-item">
-                  <span
-                    @click="openIpQuick"
-                    data-test-id="dataQuery_span_addIP"
-                  >{{ $t('添加IP') }}</span>
-                  <filter-condition-item
-                    :filter-condition="retrieveParams.addition"
-                    :total-fields="totalFields"
-                    :field-alias-map="fieldAliasMap"
-                    :statistical-fields-data="statisticalFieldsData"
-                    @addFilterCondition="addFilterCondition"
-                    @removeFilterCondition="removeFilterCondition" />
-                </div>
-              </div>
-              <div class="add-filter-condition-container">
-                <ip-quick
-                  :target-node="retrieveParams.host_scopes.target_nodes"
-                  :target-node-type="retrieveParams.host_scopes.target_node_type"
-                  @openIpQuick="openIpQuick"
-                  @confirm="handleSaveIpQuick" />
-                <div class="cut-line" v-if="showFilterCutline"></div>
-                <template v-for="(item, index) in retrieveParams.addition">
-                  <filter-condition-item
-                    :key="item.field + index + item.value"
-                    :edit-index="index"
-                    :is-add="false"
-                    :edit-data="item"
-                    :filter-condition="retrieveParams.addition"
-                    :total-fields="totalFields"
-                    :field-alias-map="fieldAliasMap"
-                    :statistical-fields-data="statisticalFieldsData"
-                    @addFilterCondition="addFilterCondition"
-                    @removeFilterCondition="() => removeFilterCondition(index)" />
-                </template>
-              </div>
-              <!-- 查询收藏清空按钮 -->
-              <div class="retrieve-button-group">
-                <div v-if="tableLoading" class="loading-box">
-                  <div class="loading" v-bkloading="{ isLoading: true, theme: 'primary', mode: 'spin' }"></div>
-                </div>
-                <bk-button
-                  v-else
-                  class="query-btn"
-                  :icon="getSearchType.icon"
-                  @click="handleChangeSearchType">
-                </bk-button>
-                <bk-button
-                  v-cursor="{ active: isSearchAllowed === false }"
-                  theme="primary"
-                  data-test-id="dataQuery_button_filterSearch"
-                  :class="{ 'query-search': true,'loading': tableLoading }"
-                  @click="retrieveLog">
-                  <!-- {{ $t('查询') }} -->
-                  {{ getSearchType.text }}
-                </bk-button>
+          <div class="king-tab" :class="isAsIframe && 'as-iframe'">
+            <div class="tab-header">
+              <span class="tab-title">{{ $t('数据检索') }}</span>
+              <div class="tab-operation">
                 <bk-popover
-                  ref="favoritePopper"
-                  trigger="click"
-                  placement="top"
-                  theme="light"
-                  :disabled="!showFavoritePopperContent">
-                  <bk-button
-                    style="width: 86px;margin: 0 8px;font-size: 12px"
-                    data-test-id="dataQuery_button_collection"
-                    @click="handleClickFavorite">
-                    <span style="display: flex;align-items: center;justify-content: center;">
+                  v-show="isShowUiType"
+                  ref="formTipsRef"
+                  :tippy-options="formTippyOptions"
+                  :disabled="isCanUseUiType || !isSqlSearchType">
+                  <div
+                    class="search-type"
+                    @click="handleClickSearchType">
+                    <span class="bk-icon icon-sort"></span>
+                    <span>{{isSqlSearchType ? $t('表单') : 'SQL'}}</span>
+                  </div>
+                  <div slot="content">
+                    <span>
                       <span
-                        class="bk-icon icon-star"
-                        style="margin-right: 2px;margin-top: -4px;font-size: 12px;">
-                      </span>
-                      <span>{{ $t('收藏') }}</span>
+                        style="color: #d7473f; display: inline-block; transform: translateY(-2px);"
+                        class="bk-icon icon-exclamation-circle-shape"></span>
+                      <span>{{$t('表单Tips')}}</span>
                     </span>
-                  </bk-button>
-                  <favorite-popper
-                    slot="content"
-                    :active-favorite="activeFavorite"
-                    @favoriteTipsOperate="favoriteTipsOperate" />
+                  </div>
                 </bk-popover>
-                <bk-button
-                  style="font-size: 12px"
-                  @click="clearCondition"
-                  data-test-id="dataQuery_button_phrasesClear">
-                  {{ $t('清空') }}
-                </bk-button>
               </div>
             </div>
-            <div class="tab-content-item" data-test-id="retrieve_div_fieldFilterBox">
-              <!-- 字段过滤 -->
-              <div class="tab-item-title field-filter-title" style="color: #313238;">{{ $t('字段过滤') }}</div>
-              <field-filter
-                :retrieve-params="retrieveParams"
-                :total-fields="totalFields"
-                :visible-fields="visibleFields"
-                :sort-list="sortList"
-                :field-alias-map="fieldAliasMap"
-                :show-field-alias="showFieldAlias"
-                :statistical-fields-data="statisticalFieldsData"
-                :parent-loading="tableLoading"
-                @fieldsUpdated="handleFieldsUpdated" />
+            <div class="tab-content" :style="`height:calc(100% - ${isAsIframe ? 60 : 108}px);`">
+              <div class="tab-content-item" data-test-id="retrieve_div_dataQueryBox">
+                <!-- 选择索引集 -->
+                <div class="tab-item-title">{{ $t('索引集') }}</div>
+                <select-indexSet
+                  :index-id="indexId"
+                  :index-set-list="indexSetList"
+                  :basic-loading.sync="basicLoading"
+                  @selected="handleSelectIndex"
+                  @updateIndexSetList="updateIndexSetList" />
+                <template v-if="isSqlSearchType">
+                  <!-- 查询语句 -->
+                  <query-statement
+                    v-model="retrieveParams.keyword"
+                    :history-records="statementSearchrecords"
+                    @updateSearchParam="updateSearchParam"
+                    @retrieve="retrieveLog" />
+                  <retrieve-detail-input
+                    v-model="retrieveParams.keyword"
+                    :check-keyword-data="checkKeywordData"
+                    :is-auto-query="isAutoQuery"
+                    :retrieved-keyword="retrievedKeyword"
+                    :dropdown-data="retrieveDropdownData"
+                    @retrieve="retrieveLog"
+                    @clearCheckData="clearCheckData" />
+                </template>
+                <template v-else>
+                  <ui-query
+                    :keyword="retrieveParams.keyword"
+                    :active-favorite="activeFavorite"
+                    @updateKeyWords="updateKeyWords"></ui-query>
+                </template>
+                <!-- 添加过滤条件 -->
+                <div class="tab-item-title flex-item-title">
+                  <span>{{ $t('过滤条件') }}</span>
+                  <div class="filter-item">
+                    <span
+                      @click="openIpQuick"
+                      data-test-id="dataQuery_span_addIP"
+                    >{{ $t('添加IP') }}</span>
+                    <filter-condition-item
+                      :filter-condition="retrieveParams.addition"
+                      :total-fields="totalFields"
+                      :field-alias-map="fieldAliasMap"
+                      :statistical-fields-data="statisticalFieldsData"
+                      @addFilterCondition="addFilterCondition"
+                      @removeFilterCondition="removeFilterCondition" />
+                  </div>
+                </div>
+                <div class="add-filter-condition-container">
+                  <ip-quick
+                    :target-node="retrieveParams.host_scopes.target_nodes"
+                    :target-node-type="retrieveParams.host_scopes.target_node_type"
+                    @openIpQuick="openIpQuick"
+                    @confirm="handleSaveIpQuick" />
+                  <div class="cut-line" v-if="showFilterCutline"></div>
+                  <template v-for="(item, index) in retrieveParams.addition">
+                    <filter-condition-item
+                      :key="item.field + index + item.value"
+                      :edit-index="index"
+                      :is-add="false"
+                      :edit-data="item"
+                      :filter-condition="retrieveParams.addition"
+                      :total-fields="totalFields"
+                      :field-alias-map="fieldAliasMap"
+                      :statistical-fields-data="statisticalFieldsData"
+                      @addFilterCondition="addFilterCondition"
+                      @removeFilterCondition="() => removeFilterCondition(index)" />
+                  </template>
+                </div>
+                <!-- 查询收藏清空按钮 -->
+                <div class="retrieve-button-group">
+                  <div v-if="tableLoading" class="loading-box">
+                    <div class="loading" v-bkloading="{ isLoading: true, theme: 'primary', mode: 'spin' }"></div>
+                  </div>
+                  <bk-button
+                    v-else
+                    class="query-btn"
+                    :icon="getSearchType.icon"
+                    @click="handleChangeSearchType">
+                  </bk-button>
+                  <bk-button
+                    v-cursor="{ active: isSearchAllowed === false }"
+                    theme="primary"
+                    data-test-id="dataQuery_button_filterSearch"
+                    :class="{ 'query-search': true,'loading': tableLoading }"
+                    @click="retrieveLog">
+                    <!-- {{ $t('查询') }} -->
+                    {{ getSearchType.text }}
+                  </bk-button>
+                  <bk-popover
+                    ref="favoritePopper"
+                    trigger="click"
+                    placement="top"
+                    theme="light"
+                    :disabled="!showFavoritePopperContent">
+                    <bk-button
+                      style="width: 86px;margin: 0 8px;font-size: 12px"
+                      data-test-id="dataQuery_button_collection"
+                      @click="handleClickFavorite">
+                      <span style="display: flex;align-items: center;justify-content: center;">
+                        <span
+                          class="bk-icon icon-star"
+                          style="margin-right: 2px;margin-top: -4px;font-size: 12px;">
+                        </span>
+                        <span>{{ $t('收藏') }}</span>
+                      </span>
+                    </bk-button>
+                    <favorite-popper
+                      slot="content"
+                      :active-favorite="activeFavorite"
+                      @favoriteTipsOperate="favoriteTipsOperate" />
+                  </bk-popover>
+                  <bk-button
+                    style="font-size: 12px"
+                    @click="clearCondition"
+                    data-test-id="dataQuery_button_phrasesClear">
+                    {{ $t('清空') }}
+                  </bk-button>
+                </div>
+              </div>
+              <div class="tab-content-item" data-test-id="retrieve_div_fieldFilterBox">
+                <!-- 字段过滤 -->
+                <div class="tab-item-title field-filter-title" style="color: #313238;">{{ $t('字段过滤') }}</div>
+                <field-filter
+                  :retrieve-params="retrieveParams"
+                  :total-fields="totalFields"
+                  :visible-fields="visibleFields"
+                  :sort-list="sortList"
+                  :field-alias-map="fieldAliasMap"
+                  :show-field-alias="showFieldAlias"
+                  :statistical-fields-data="statisticalFieldsData"
+                  :parent-loading="tableLoading"
+                  @fieldsUpdated="handleFieldsUpdated" />
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      <!-- 检索详情页右侧检索结果 -->
-      <div class="retrieve-result" :style="{ width: 'calc(100% - ' + sumLeftWidth + 'px)' }">
-        <!-- 无权限页面 -->
-        <auth-container-page v-if="showAuthInfo" :info="showAuthInfo" />
-        <template v-else>
-          <!-- 初始化加载时显示这个空的盒子 避免先显示内容 再显示无权限页面 -->
-          <div v-if="!hasAuth && !showAuthInfo && !isNoIndexSet" style="height: 100%;background: #f4f7fa;"></div>
-          <!-- 无索引集 申请索引集页面 -->
-          <no-index-set v-if="isNoIndexSet" />
-          <!-- 详情右侧 -->
-          <result-main
-            ref="resultMainRef"
-            v-else
-            :sort-list="sortList"
-            :table-loading="tableLoading"
-            :retrieve-params="retrieveParams"
-            :took-time="tookTime"
-            :index-set-list="indexSetList"
-            :table-data="tableData"
-            :visible-fields="visibleFields"
-            :total-fields="totalFields"
-            :field-alias-map="fieldAliasMap"
-            :show-field-alias="showFieldAlias"
-            :bk-monitor-url="bkmonitorUrl"
-            :async-export-usable="asyncExportUsable"
-            :async-export-usable-reason="asyncExportUsableReason"
-            :statistical-fields-data="statisticalFieldsData"
-            :time-field="timeField"
-            :config-data="clusteringData"
-            :apm-relation="apmRelationData"
-            :clean-config="cleanConfig"
-            :picker-time-range="pickerTimeRange"
-            :date-picker-value="datePickerValue"
-            :index-set-item="indexSetItem"
-            :operator-config="operatorConfig"
-            @request-table-data="requestTableData"
-            @fieldsUpdated="handleFieldsUpdated"
-            @shouldRetrieve="retrieveLog"
-            @addFilterCondition="addFilterCondition"
-            @showSettingLog="handleSettingMenuClick('clustering')" />
-        </template>
+        <!-- 检索详情页右侧检索结果 -->
+        <div class="retrieve-result" :style="{ width: 'calc(100% - ' + sumLeftWidth + 'px)' }">
+          <!-- 无权限页面 -->
+          <auth-container-page v-if="showAuthInfo" :info="showAuthInfo" />
+          <template v-else>
+            <!-- 初始化加载时显示这个空的盒子 避免先显示内容 再显示无权限页面 -->
+            <div v-if="!hasAuth && !showAuthInfo && !isNoIndexSet" style="height: 100%;background: #f4f7fa;"></div>
+            <!-- 无索引集 申请索引集页面 -->
+            <no-index-set v-if="isNoIndexSet" />
+            <!-- 详情右侧 -->
+            <result-main
+              ref="resultMainRef"
+              v-else
+              :sort-list="sortList"
+              :table-loading="tableLoading"
+              :retrieve-params="retrieveParams"
+              :took-time="tookTime"
+              :index-set-list="indexSetList"
+              :table-data="tableData"
+              :visible-fields="visibleFields"
+              :total-fields="totalFields"
+              :field-alias-map="fieldAliasMap"
+              :show-field-alias="showFieldAlias"
+              :bk-monitor-url="bkmonitorUrl"
+              :async-export-usable="asyncExportUsable"
+              :async-export-usable-reason="asyncExportUsableReason"
+              :statistical-fields-data="statisticalFieldsData"
+              :time-field="timeField"
+              :config-data="clusteringData"
+              :apm-relation="apmRelationData"
+              :clean-config="cleanConfig"
+              :picker-time-range="pickerTimeRange"
+              :date-picker-value="datePickerValue"
+              :index-set-item="indexSetItem"
+              :operator-config="operatorConfig"
+              @request-table-data="requestTableData"
+              @fieldsUpdated="handleFieldsUpdated"
+              @shouldRetrieve="retrieveLog"
+              @addFilterCondition="addFilterCondition"
+              @showSettingLog="handleSettingMenuClick('clustering')" />
+          </template>
+        </div>
       </div>
       <!-- 可拖拽页面布局宽度 -->
       <div
@@ -1811,6 +1813,7 @@ export default {
 
     .page-loading-wrap {
       position: absolute;
+      top: 0;
       width: 100%;
       height: 4px;
       z-index: 2400;
@@ -1858,13 +1861,17 @@ export default {
     /*详情页*/
     .retrieve-detail-container {
       position: relative;
-      display: flex;
+      // display: flex;
       height: 100%;
+
+      .result-content {
+        display: flex;
+        height: calc(100% - 52px);
+      }
 
       .retrieve-condition {
         display: flow-root;
         width: 450px;
-        margin-top: 52px;
         box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .1);
         background: #fff;
 
@@ -2034,14 +2041,16 @@ export default {
             ::v-deep .query-btn {
               width: 32px;
               height: 32px;
-              background: #FFFFFF;
+              background: #fff;
               margin-right: 2px;
-              color: #9A9BA5;
+              color: #9a9ba5;
               display: flex;
               justify-content: center;
+
               div {
                 transform: translateY(-2px);
               }
+
               .bk-icon {
                 font-size: 16px;
               }
@@ -2098,7 +2107,7 @@ export default {
       .drag-bar {
         position: absolute;
         left: 449px;
-        top: 0;
+        top: 52px;
         width: 1px;
         height: 100%;
         background: #dcdee5;

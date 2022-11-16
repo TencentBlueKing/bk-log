@@ -1559,4 +1559,5 @@ export default {
   新增成功: 'Added Successfully',
   检索语句有误: 'There is a syntax error in the current statement, click to query',
   自动转换: 'automatic conversion',
+  检索收藏功能支持分组和管理: 'Retrieval collection function supports grouping and management',
 };
