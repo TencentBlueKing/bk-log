@@ -145,16 +145,5 @@ WORD_RANGE_OPERATORS = r"<=|>=|<|>"
 
 BRACKET_DICT = {"[": "]", "(": ")", "{": "}"}
 
-# 非法字符串匹配
-UNEXPECTED_WORD_RE = r"Syntax error in input : unexpected  '(.*)' at position (\d+)"
-
-# 非法RANGE语法匹配
-UNEXPECTED_RANGE_RE = r"(\[.*?TO.*?\])"
-UNEXPECTED_SINGLE_RANGE_RE = r"\[(.*)TO(.*)\]"
-ILLEGAL_CHARACTER_RE = r"Illegal character '(.*)' at position (\d+)"
-
-# 中文符号匹配
-CHINESE_PUNCTUATION_RE = r"(“.*?”)"
-
 # 最大语法修复次数
 MAX_RESOLVE_TIMES = 10
