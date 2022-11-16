@@ -33,12 +33,17 @@
       @blur="handleBlur"
       @keydown="handleKeydown"
     ></bk-input>
-    <div v-if="getIsKeywordsError" class="refresh-keywords">
-      <span>{{$t('检索语句有误')}}</span>
-      <span @click="handleRefreshKeywords">
+    <div v-if="isKeywordsError" class="refresh-keywords">
+      <span class="error-message">{{$t('检索语句有误')}}</span>
+      <span v-if="keywordIsResolved" @click="handleRefreshKeywords">
+        <span class="error-message">, {{$t('点击可进行')}}</span>
         <span class="log-icon icon-refresh-icon"></span>
-        <span>{{$t('自动转换')}}</span>
+        <span class="refresh-btn">{{$t('自动转换')}}</span>
       </span>
+      <div v-if="!!keywordErrorMessage">
+        <span class="error-title">{{$t('错误原因')}}: </span>
+        <span class="error-message">{{keywordErrorMessage}}</span>
+      </div>
     </div>
     <!-- 搜索提示 -->
     <ul
@@ -154,7 +159,7 @@ export default {
     checkKeywordData: {
       type: Object,
       default: () => ({}),
-    }
+    },
   },
   data() {
     return {
@@ -169,7 +174,9 @@ export default {
       showContinue: false, // AND OR
       isSearchRecord: false,
       isKeywordsError: false, // 语句是否有误
-      resetKeyword: '',
+      keywordErrorMessage: '', // 无法修复的语句的原因
+      keywordIsResolved: false, // 语句是否可以被修复
+      resetKeyword: '', // 修复过后的语句
       originFieldList: [], // 所有字段列表 ['name', 'age']
       fieldList: [], // 显示字段列表，['name', 'age']
       valueList: [], // 字段可能的值 ['"arman"', '"xxx yyy"'] [18, 22]
@@ -183,12 +190,6 @@ export default {
               || this.showColon
               || this.showContinue);
     },
-    getIsKeywordsError() { // 是否是父组件传过来的语法错误提示
-      return this.checkKeywordData.isKeywordsError || this.isKeywordsError;
-    },
-    getResetKeyword() { // 是否是父组件传过来的语法错误keyword
-      return this.checkKeywordData.resetKeyword || this.resetKeyword;
-    }
   },
   watch: {
     showDropdown(val) {
@@ -319,13 +320,12 @@ export default {
       });
     },
     handleBlur(val) {
-      if (!this.isAutoQuery) {
-        this.blurTimer && clearTimeout(this.blurTimer);
-        this.blurTimer = setTimeout(() => {
-          if (this.shouldHandleBlur) this.handleCheckKeywords(val.trim()); // 检查语句是否有错误;
-          this.$emit('clearCheckData');
-        }, 200);
-      }
+      // 非自动搜索时 鼠标失焦后 判断语句是否出错
+      this.blurTimer && clearTimeout(this.blurTimer);
+      this.blurTimer = setTimeout(() => {
+        if (this.shouldHandleBlur) this.handleCheckKeywords(val.trim()); // 检查语句是否有错误;
+      }, 200);
+
       if (this.isSearchRecord || !this.isAutoQuery) return;
 
       // blur 时检索
@@ -333,11 +333,13 @@ export default {
       // 下拉菜单 click 事件在 blur 事件触发后 100+ms 后触发
       // 所以 blur 事件回调延迟 200ms 执行，让 click 事件执行后才确认如何执行
       this.blurTimer && clearTimeout(this.blurTimer);
-      this.blurTimer = setTimeout(() => {
+      this.blurTimer = setTimeout(async () => {
         if (this.shouldHandleBlur) { // 非点击下拉触发的 blur 事件
           this.showDropdown = false;
+          // 自动搜索时 先判断语句是否出错 如果出错 则提示出错原因 且不进行请求
           if (this.retrievedKeyword !== val.trim()) {
-            this.$emit('retrieve');
+            const isCanAutoSearch = await this.handleCheckKeywords(val.trim());
+            if (isCanAutoSearch) this.$emit('retrieve');
           }
         } else {
           // 点击了下拉菜单，会再次聚焦
@@ -345,19 +347,28 @@ export default {
       }, 200);
     },
     handleRefreshKeywords() { // 替换语句
-      this.$emit('change', this.getResetKeyword);
-      this.isKeywordsError = false;
+      this.$emit('change', this.resetKeyword);
       this.resetKeyword = '';
+      this.isKeywordsError = false;
+      this.keywordIsResolved = false;
+      this.keywordErrorMessage = '';
+      this.resetKeyword = '';
+      if (this.isAutoQuery) this.$emit('retrieve');
     },
     async handleCheckKeywords(keyword) { // 检查检索语句是否有误
       if (keyword === '') keyword = '*';
       try {
-        const res = await this.$http.request('favorite/checkKeywords', {
+        const { data } = await this.$http.request('favorite/checkKeywords', {
           data: { keyword },
         });
-        this.isKeywordsError = !res.data.is_legal;
-        this.resetKeyword = res.data.keyword;
-      } catch (error) {}
+        this.isKeywordsError = !data.is_legal;
+        this.keywordIsResolved = data.is_resolved;
+        this.keywordErrorMessage = data.message;
+        this.resetKeyword = data.keyword;
+        return data.is_legal || !data.is_resolved;
+      } catch (error) {
+        return true;
+      }
     },
     closeDropdown() {
       this.showDropdown = false;
@@ -519,12 +530,19 @@ export default {
     .refresh-keywords {
       margin-top: 4px;
       font-size: 12px;
-      > :first-child {
-        color: #EA3636;
+
+      .error-message {
+        color: #ea3636;
       }
-      > :last-child {
+
+      .error-title {
+        color: #63656e;
+      }
+
+      .refresh-btn,
+      .icon-refresh-icon {
         cursor: pointer;
-        color: #3A84FF;
+        color: #3a84ff;
       }
     }
 
