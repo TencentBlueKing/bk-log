@@ -394,7 +394,7 @@ class IllegalBracketInspector(BaseInspector):
     syntax_error_message = _("括号不匹配")
     # 非预期语法re
     unexpect_unmatched_re = (
-        "Syntax error in input : unexpected end of expression" " (maybe due to unmatched parenthesis) at the end!"
+        "Syntax error in input : unexpected end of expression (maybe due to unmatched parenthesis) at the end!"
     )
 
     def inspect(self):
@@ -437,7 +437,7 @@ class IllegalColonInspector(BaseInspector):
     syntax_error_message = _("多余的冒号")
     # 非预期语法re
     unexpect_unmatched_re = (
-        "Syntax error in input : unexpected end of expression" " (maybe due to unmatched parenthesis) at the end!"
+        "Syntax error in input : unexpected end of expression (maybe due to unmatched parenthesis) at the end!"
     )
 
     def inspect(self):
