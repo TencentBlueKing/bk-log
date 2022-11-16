@@ -8,6 +8,7 @@ from luqum.visitor import TreeTransformer
 from luqum.parser import parser, lexer
 from luqum.auto_head_tail import auto_head_tail
 from luqum.utils import UnknownOperationResolver
+from django.utils.translation import ugettext_lazy as _
 
 from apps.constants import (
     FULL_TEXT_SEARCH_FIELD_NAME,
@@ -21,14 +22,7 @@ from apps.constants import (
     LuceneSyntaxEnum,
     WORD_RANGE_OPERATORS,
     BRACKET_DICT,
-    UNEXPECTED_WORD_RE,
-    UNEXPECTED_UNMATCHED_EXCEPTION,
-    UNEXPECTED_RANGE_RE,
-    ILLEGAL_CHARACTER_RE,
     MAX_RESOLVE_TIMES,
-    UNEXPECTED_SINGLE_RANGE_RE,
-    CHINESE_PUNCTUATION_RE,
-    LuceneSyntaxExceptionEnum,
 )
 
 from apps.exceptions import UnknownLuceneOperatorException
@@ -267,7 +261,7 @@ class InspectResult(object):
 class BaseInspector(object):
     """检查器基类"""
 
-    syntax_exception_type = None
+    syntax_error_message = ""
 
     def __init__(self, keyword: str):
         self.keyword = keyword
@@ -279,7 +273,7 @@ class BaseInspector(object):
     def set_illegal(self):
         """设置检查结果为非法"""
         self.result.is_legal = False
-        self.result.message = str(LuceneSyntaxExceptionEnum.get_choice_label(self.syntax_exception_type))
+        self.result.message = self.syntax_error_message
 
     def inspect(self):
         """检查"""
@@ -299,10 +293,12 @@ class BaseInspector(object):
 class ChinesePunctuationInspector(BaseInspector):
     """中文引号转换"""
 
-    syntax_exception_type = LuceneSyntaxExceptionEnum.CHINESE_PUNCTUATION.value
+    syntax_error_message = _("中文标点异常")
+
+    chinese_punctuation_re = r"(“.*?”)"
 
     def inspect(self):
-        p = re.compile(CHINESE_PUNCTUATION_RE)
+        p = re.compile(self.chinese_punctuation_re)
         match_groups = [m for m in p.finditer(self.keyword)]
         if not match_groups:
             return
@@ -315,18 +311,23 @@ class ChinesePunctuationInspector(BaseInspector):
 class IllegalCharacterInspector(BaseInspector):
     """非法字符检查"""
 
-    syntax_exception_type = LuceneSyntaxExceptionEnum.ILLEGAL_CHARACTER.value
+    syntax_error_message = _("异常字符")
+
+    # 非法字符正则
+    illegal_character_re = r"Illegal character '(.*)' at position (\d+)"
+    # 非预期字符正则
+    unexpect_word_re = r"Syntax error in input : unexpected  '(.*)' at position (\d+)"
 
     def inspect(self):
         try:
             parser.parse(self.keyword, lexer=lexer)
         except IllegalCharacterError as e:
-            match = re.search(ILLEGAL_CHARACTER_RE, str(e))
+            match = re.search(self.illegal_character_re, str(e))
             if match:
                 self.remove_unexpected_character(match)
                 self.set_illegal()
         except ParseSyntaxError as e:
-            match = re.search(UNEXPECTED_WORD_RE, str(e))
+            match = re.search(self.unexpect_word_re, str(e))
             if match:
                 self.remove_unexpected_character(match)
                 self.set_illegal()
@@ -337,15 +338,22 @@ class IllegalCharacterInspector(BaseInspector):
 class IllegalRangeSyntaxInspector(BaseInspector):
     """非法RANGE语法检查"""
 
-    syntax_exception_type = LuceneSyntaxExceptionEnum.ILLEGAL_RANGE_SYNTAX.value
+    syntax_error_message = _("非法RANGE语法")
+
+    # 非预期字符正则
+    unexpect_word_re = r"Syntax error in input : unexpected  '(.*)' at position (\d+)"
+
+    # RANGE语法正则
+    range_re = r"(\[.*?TO.*?\])"
+    single_range_re = r"\[(.*)TO(.*)\]"
 
     def inspect(self):
         try:
             parser.parse(self.keyword, lexer=lexer)
         except ParseSyntaxError as e:
-            match = re.search(UNEXPECTED_WORD_RE, str(e))
+            match = re.search(self.unexpect_word_re, str(e))
             if match and match.group(1) == "TO":
-                p = re.compile(UNEXPECTED_RANGE_RE)
+                p = re.compile(self.range_re)
                 match_groups = [[m.start(), m.end()] for m in p.finditer(self.keyword)]
                 if not match_groups:
                     return
@@ -362,7 +370,7 @@ class IllegalRangeSyntaxInspector(BaseInspector):
             else:
                 remain_keyword.append(self.keyword[match_groups[i - 1][1] : match_groups[i][0]])
             # 进行单个Range语法的修复
-            match = re.search(UNEXPECTED_SINGLE_RANGE_RE, self.keyword[match_groups[i][0] : match_groups[i][1]])
+            match = re.search(self.single_range_re, self.keyword[match_groups[i][0] : match_groups[i][1]])
             if match:
                 start = match.group(1).strip()
                 end = match.group(2).strip()
@@ -383,13 +391,17 @@ class IllegalRangeSyntaxInspector(BaseInspector):
 class IllegalBracketInspector(BaseInspector):
     """修复括号不匹配"""
 
-    syntax_exception_type = LuceneSyntaxExceptionEnum.ILLEGAL_BRACKET.value
+    syntax_error_message = _("括号不匹配")
+    # 非预期语法re
+    unexpect_unmatched_re = (
+        "Syntax error in input : unexpected end of expression" " (maybe due to unmatched parenthesis) at the end!"
+    )
 
     def inspect(self):
         try:
             parser.parse(self.keyword, lexer=lexer)
         except ParseSyntaxError as e:
-            if str(e) == UNEXPECTED_UNMATCHED_EXCEPTION:
+            if str(e) == self.unexpect_unmatched_re:
                 s = deque()
                 for index in range(len(self.keyword)):
                     symbol = self.keyword[index]
@@ -422,13 +434,17 @@ class IllegalBracketInspector(BaseInspector):
 class IllegalColonInspector(BaseInspector):
     """修复冒号不匹配"""
 
-    syntax_exception_type = LuceneSyntaxExceptionEnum.ILLEGAL_COLON.value
+    syntax_error_message = _("多余的冒号")
+    # 非预期语法re
+    unexpect_unmatched_re = (
+        "Syntax error in input : unexpected end of expression" " (maybe due to unmatched parenthesis) at the end!"
+    )
 
     def inspect(self):
         try:
             parser.parse(self.keyword, lexer=lexer)
         except ParseSyntaxError as e:
-            if str(e) == UNEXPECTED_UNMATCHED_EXCEPTION:
+            if str(e) == self.unexpect_unmatched_re:
                 if self.keyword.find(":") == len(self.keyword) - 1:
                     self.keyword = self.keyword[:-1]
                     self.set_illegal()
@@ -439,7 +455,7 @@ class IllegalColonInspector(BaseInspector):
 class UnknownOperatorInspector(BaseInspector):
     """修复未知运算符"""
 
-    syntax_exception_type = LuceneSyntaxExceptionEnum.UNKNOWN_OPERATOR.value
+    syntax_error_message = _("未知操作符")
 
     def inspect(self):
         try:
@@ -455,7 +471,7 @@ class UnknownOperatorInspector(BaseInspector):
 class DefaultInspector(BaseInspector):
     """默认检查器, 用于最后检查语法错误是否被修复"""
 
-    syntax_exception_type = LuceneSyntaxExceptionEnum.UNKNOWN_SYNTAX_EXCEPTION.value
+    syntax_error_message = _("未知异常")
 
     def inspect(self):
         try:
@@ -491,12 +507,6 @@ class LuceneSyntaxResolver(object):
             self.keyword = inspector.keyword
             result = inspector.get_result()
             if not result.is_legal:
-                # 默认检查器当且仅当所有检查器都无法修复语法错误时才会被执行
-                if (
-                    inspector_class.syntax_exception_type == LuceneSyntaxExceptionEnum.UNKNOWN_SYNTAX_EXCEPTION.value
-                    and messages
-                ):
-                    continue
                 messages.append(str(asdict(result)["message"]))
         if not messages:
             return True
@@ -508,17 +518,12 @@ class LuceneSyntaxResolver(object):
             if self.inspect():
                 is_resolved = True
                 break
-        if (
-            is_resolved
-            and str(
-                LuceneSyntaxExceptionEnum.get_choice_label(LuceneSyntaxExceptionEnum.UNKNOWN_SYNTAX_EXCEPTION.value)
-            )
-            in self.messages
-        ):
-            self.messages.remove(LuceneSyntaxExceptionEnum.UNKNOWN_SYNTAX_EXCEPTION.value)
+        self.messages = set(self.messages)
+        if is_resolved and str(DefaultInspector.syntax_error_message) in self.messages:
+            self.messages.remove(str(DefaultInspector.syntax_error_message))
         return {
             "is_legal": False if self.messages else True,
             "is_resolved": is_resolved,
-            "message": "\n".join(set(self.messages)),
+            "message": "\n".join(self.messages),
             "keyword": self.keyword,
         }

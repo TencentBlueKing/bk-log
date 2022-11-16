@@ -130,28 +130,6 @@ class LuceneSyntaxEnum(object):
     PROHIBIT = "Prohibit"
 
 
-class LuceneSyntaxExceptionEnum(ChoicesEnum):
-    """Lucene语法异常枚举"""
-
-    CHINESE_PUNCTUATION = "chinese_punctuation"
-    ILLEGAL_CHARACTER = "illegal_character"
-    ILLEGAL_RANGE_SYNTAX = "illegal_range_syntax"
-    ILLEGAL_BRACKET = "illegal_bracket"
-    ILLEGAL_COLON = "illegal_colon"
-    UNKNOWN_OPERATOR = "unknown_operator"
-    UNKNOWN_SYNTAX_EXCEPTION = "unknown_syntax_exception"
-
-    _choices_labels = (
-        (CHINESE_PUNCTUATION, _("中文标点异常")),
-        (ILLEGAL_CHARACTER, _("异常字符")),
-        (ILLEGAL_RANGE_SYNTAX, _("非法RANGE语法")),
-        (ILLEGAL_BRACKET, _("括号不匹配")),
-        (ILLEGAL_COLON, _("多余的冒号")),
-        (UNKNOWN_OPERATOR, _("未知操作符")),
-        (UNKNOWN_SYNTAX_EXCEPTION, _("未知异常")),
-    )
-
-
 FULL_TEXT_SEARCH_FIELD_NAME = _("全文检索")
 
 DEFAULT_FIELD_OPERATOR = "~="
@@ -169,9 +147,7 @@ BRACKET_DICT = {"[": "]", "(": ")", "{": "}"}
 
 # 非法字符串匹配
 UNEXPECTED_WORD_RE = r"Syntax error in input : unexpected  '(.*)' at position (\d+)"
-UNEXPECTED_UNMATCHED_EXCEPTION = (
-    "Syntax error in input : unexpected end of expression (maybe due to unmatched parenthesis) at the end!"
-)
+
 # 非法RANGE语法匹配
 UNEXPECTED_RANGE_RE = r"(\[.*?TO.*?\])"
 UNEXPECTED_SINGLE_RANGE_RE = r"\[(.*)TO(.*)\]"
