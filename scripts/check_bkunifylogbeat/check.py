@@ -25,11 +25,11 @@ STEP_CHECK_GSEAGENT_SOCKET = "socket"
 
 subscription_id = 0
 socket_between_gse_agent_and_beat = "/var/run/ipc.state.report"
-collector_home_path = "/usr/local/gse/plugins/"
-collector_bin_path = os.path.join(collector_home_path, "bin", MODULE_BKUNIFYLOGBEAT)
-collector_etc_path = os.path.join(collector_home_path, "etc", MODULE_BKUNIFYLOGBEAT)
+gse_path = "/usr/local/gse/"
+collector_bin_path = os.path.join(gse_path, "plugins/bin", MODULE_BKUNIFYLOGBEAT)
+collector_etc_path = os.path.join(gse_path, "plugins/etc", MODULE_BKUNIFYLOGBEAT)
+procinfo_file_path = os.path.join(gse_path, "agent/etc/procinfo.json")
 config_name_suffix = "%s_sub_" % MODULE_BKUNIFYLOGBEAT
-procinfo_file_path = "/usr/local/gse/agent/etc/procinfo.json"
 
 check_result = {"status": False, "data": []}
 
@@ -82,7 +82,7 @@ class BKUnifyLogBeatCheck(object):
     def check_process():
         result = Result(MODULE_BKUNIFYLOGBEAT, STEP_CHECK_BKUNIFYLOGBEAT_PROCESS)
         output = get_command("ps -ef | grep bkunifylogbeat | awk '{print $2}' | xargs pwdx")
-        if collector_home_path not in str(output):
+        if gse_path not in str(output):
             result.message = "bkunifylogbeat is not running"
             result.add_to_result()
             return
@@ -91,14 +91,16 @@ class BKUnifyLogBeatCheck(object):
         pid = pid_to_dir[0][0]
         for pid_dir in pid_to_dir:
             pid, bin_dir = pid_dir
-            if bin_dir.strip().startswith(collector_home_path):
+            if bin_dir.strip().startswith(gse_path):
                 break
 
         # 是否频繁重启
         restart_times = 10
         restart_records_file = "/tmp/bkc.log"
         today = datetime.datetime.now().strftime("%Y%m%d")
-        output = get_command("grep {} {} | wc -l".format(today, restart_records_file))
+        output = get_command(
+            "cat {} | grep {} | grep {} | wc -l".format(restart_records_file, today, MODULE_BKUNIFYLOGBEAT)
+        )
         if not output or int(output) > restart_times:
             result.message = "restart/reload times is over %d" % restart_times
             result.add_to_result()
@@ -165,7 +167,7 @@ def _get_opt_parser():
     opt_parser = OptionParser()
 
     opt_parser.add_option(
-        "-p", "--path", action="store", type="string", dest="path", help="""collector_home_path""", default=""
+        "-p", "--gse_path", action="store", type="string", dest="path", help="""gse_path""", default=""
     )
 
     opt_parser.add_option(
@@ -192,15 +194,21 @@ def _get_opt_parser():
 
 
 def arg_parse():
-    global collector_home_path
+    global gse_path
     global subscription_id
     global socket_between_gse_agent_and_beat
+    global collector_bin_path
+    global collector_etc_path
+    global procinfo_file_path
 
     parser = _get_opt_parser()
     (options, args) = parser.parse_args(sys.argv)
 
     if options.path:
-        collector_home_path = options.path
+        gse_path = options.path
+        collector_bin_path = os.path.join(gse_path, "plugins/bin", MODULE_BKUNIFYLOGBEAT)
+        collector_etc_path = os.path.join(gse_path, "plugins/etc", MODULE_BKUNIFYLOGBEAT)
+        procinfo_file_path = os.path.join(gse_path, "agent/etc/procinfo.json")
     if options.subscription_id:
         subscription_id = options.subscription_id
     if options.ipc_socket_file:
