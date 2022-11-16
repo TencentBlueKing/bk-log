@@ -34,13 +34,23 @@
       ]"
       @mousedown="handleProjectChange(item)"
     >
-      <span class="text" :title="item.space_name">
-        {{item.space_name}}
-        <span :class="`${theme}-item-code`">(#{{item.space_code}})</span>
+      <span class="list-item-left">
+        <span class="list-item-name" v-bk-overflow-tips>{{ item.space_name }}</span>
+        <span :class="`list-item-id ${theme}-item-code`" v-bk-overflow-tips>
+          <!-- ({{ item.space_type_id === eTagsType.biz ? `#${item.id}` : (item.space_id || item.space_code)}}) -->
+          ({{ `#${item.space_id || item.space_code}` }})
+        </span>
       </span>
       <span class="list-item-right">
-        <span :class="['list-item-tag', `${theme}-theme`, eTagsType[item.space_type_id] || 'other-type']">
-          {{item.space_type_name}}
+        <span
+          v-for="(tag) in item.tags"
+          class="list-item-tag"
+          :key="tag.id"
+          :style="{
+            ...spaceTypeMap[tag.id][theme]
+          }"
+        >
+          {{ tag.name }}
         </span>
       </span>
       <span
@@ -56,6 +66,7 @@
 <script>
 import navMenuMixin from '@/mixins/nav-menu-mixin';
 import * as authorityMap from '../../common/authority-map';
+import { SPACE_TYPE_MAP } from '@/store/constant';
 
 export default {
   mixins: [navMenuMixin],
@@ -72,16 +83,20 @@ export default {
   data() {
     return {
       eTagsType: {
-        bkcc: 'bkcc', /** 蓝鲸配置平台 */
-        bcs: 'bcs', /** 蓝鲸容器平台 */
-        bkdevops: 'bkdevops', /** 蓝盾 */
-        bksaas: 'bksaas', /** 蓝鲸应用 */
+        biz: 'bkcc', /** 业务 */
+        paas: 'paas', /** PaaS应用 */
+        container: 'bcs', /** 蓝鲸容器平台 */
+        research: 'bkci', /** 研发项目 */
+        monitor: 'monitor', /** 监控空间 */
       },
     };
   },
   computed: {
     authorityMap() {
       return authorityMap;
+    },
+    spaceTypeMap() {
+      return SPACE_TYPE_MAP;
     },
   },
   watch: {},

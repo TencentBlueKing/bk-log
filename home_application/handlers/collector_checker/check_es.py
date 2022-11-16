@@ -130,14 +130,9 @@ class CheckESStory(BaseStory):
             if not index_alias_info_dict.get(physical_index):
                 self.report.add_error(f"物理索引: {physical_index} 不存在alias别名")
                 continue
-            index_alias_list = list(index_alias_info_dict[physical_index]["aliases"].keys())
-            write_prefix_index_list = []
-            for index_alias in index_alias_list:
-                if index_alias.startswith(INDEX_WRITE_PREFIX):
-                    write_prefix_index_list.append(index_alias)
-            if write_prefix_index_list:
-                self.report.add_warning(
-                    "物理索引: {} 存在 write_ 开头的alias别名: \n{}".format(physical_index, "\n".join(write_prefix_index_list))
-                )
-            else:
-                self.report.add_info(f"物理索引: {physical_index} alias别名正常")
+
+            if physical_index.startswith(INDEX_WRITE_PREFIX):
+                self.report.add_warning(f"集群存在 write_ 开头的索引: \n{physical_index}")
+                return
+
+            self.report.add_info(f"物理索引: {physical_index} alias别名正常")

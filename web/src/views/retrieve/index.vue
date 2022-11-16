@@ -159,6 +159,7 @@
                 </template>
                 <template v-else>
                   <ui-query
+                    :is-favorite-search="isFavoriteSearch"
                     :keyword="retrieveParams.keyword"
                     :active-favorite="activeFavorite"
                     @updateKeyWords="updateKeyWords"></ui-query>
@@ -1738,13 +1739,13 @@ export default {
     },
     // 点击收藏列表的收藏
     handleClickFavoriteItem(value) {
+      this.isFavoriteSearch = true;
       if (!value.params.host_scopes.target_node_type) {
         value.params.host_scopes.target_node_type = '';
         value.params.host_scopes.target_nodes = [];
       }
       this.activeFavorite = deepClone(value);
       this.activeFavoriteID = value.id;
-      this.isFavoriteSearch = true;
       this.retrieveFavorite(deepClone(value));
     },
     async handleCheckKeywords(keyword) { // 检查检索语句是否有误
