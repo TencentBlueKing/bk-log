@@ -122,7 +122,7 @@ class ApiRequestError(ApiError):
     ERROR_CODE = "015"
 
 
-class IllegalLuceneSyntaxException(BaseException):
+class UnknownLuceneOperatorException(BaseException):
     """非法的lucene语法异常"""
 
     ERROR_CODE = "500"

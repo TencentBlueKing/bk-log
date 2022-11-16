@@ -110,12 +110,15 @@ class UserOperationActionEnum(ChoicesEnum):
 
 
 class LuceneSyntaxEnum(object):
+    """Lucene语法枚举"""
+
     UNKNOWN = "UnknownOperation"
     SEARCH_FIELD = "SearchField"
     OR_OPERATION = "OrOperation"
     AND_OPERATION = "AndOperation"
     WORD = "Word"
     PHRASE = "Phrase"
+    PROXIMITY = "Proximity"
     RANGE = "Range"
     FUZZY = "Fuzzy"
     REGEX = "Regex"
@@ -139,3 +142,8 @@ LOW_CHAR = {True: "[", False: "{"}
 HIGH_CHAR = {True: "]", False: "}"}
 
 WORD_RANGE_OPERATORS = r"<=|>=|<|>"
+
+BRACKET_DICT = {"[": "]", "(": ")", "{": "}"}
+
+# 最大语法修复次数
+MAX_RESOLVE_TIMES = 10

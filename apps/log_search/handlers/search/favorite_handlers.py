@@ -45,7 +45,7 @@ from apps.log_search.exceptions import (
     FavoriteNotAllowedDeleteException,
 )
 from apps.log_search.models import Favorite, FavoriteGroup, FavoriteGroupCustomOrder, LogIndexSet
-from apps.utils.lucene import LuceneParser, LuceneTransformer
+from apps.utils.lucene import LuceneParser, LuceneTransformer, LuceneSyntaxResolver
 
 
 class FavoriteHandler(object):
@@ -284,7 +284,7 @@ class FavoriteHandler(object):
 
     @staticmethod
     def inspect(keyword) -> dict:
-        return LuceneParser(keyword=keyword).inspect()
+        return LuceneSyntaxResolver(keyword=keyword).resolve()
 
 
 class FavoriteGroupHandler(object):
