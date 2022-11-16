@@ -335,4 +335,9 @@ class TestLucene(TestCase):
     def test_inspect(self):
         """测试解析关键字"""
         inspect_result = LuceneSyntaxResolver(keyword=ILLEGAL_KEYWORD).resolve()
-        self.assertDictEqual(inspect_result, INSPECT_KEYWORD_RESULT)
+        self.assertEqual(inspect_result["is_legal"], INSPECT_KEYWORD_RESULT["is_legal"])
+        self.assertEqual(inspect_result["is_resolved"], INSPECT_KEYWORD_RESULT["is_resolved"])
+        self.assertEqual(inspect_result["keyword"], INSPECT_KEYWORD_RESULT["keyword"])
+        self.assertEqual(
+            sorted(inspect_result["message"].split("\n")), sorted(INSPECT_KEYWORD_RESULT["message"].split("\n"))
+        )
