@@ -586,9 +586,6 @@ export default {
 
       .select-icon {
         /* stylelint-disable-next-line declaration-no-important */
-        top: 9px !important;
-
-        /* stylelint-disable-next-line declaration-no-important */
         right: 2px !important;
       }
 
