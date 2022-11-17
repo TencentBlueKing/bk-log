@@ -57,7 +57,7 @@ export default {
     };
   },
   computed: {
-    ...mapState(['projectId', 'bkBizId']),
+    ...mapState(['spaceUid', 'bkBizId']),
   },
   watch: {
     value: {

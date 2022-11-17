@@ -133,8 +133,7 @@ class TestUserOperationRecord(TestCase):
     @patch("apps.decorators.user_operation_record.delay", user_operation_record_delay)
     @patch("apps.api.TransferApi.get_cluster_info", lambda _: [{"cluster_config": {"custom_option": {"bk_biz_id": 1}}}])
     @patch(
-        "apps.log_databus.handlers.storage.StorageHandler.connectivity_detect",
-        connectivity_detect_test,
+        "apps.log_databus.handlers.storage.StorageHandler.connectivity_detect", connectivity_detect_test,
     )
     @patch("apps.api.TransferApi.modify_cluster_info", lambda _: {"auth_info": {"password": ""}})
     @patch("apps.log_databus.handlers.storage.get_request_username", lambda: "admin")
@@ -240,7 +239,7 @@ class TestUserOperationRecord(TestCase):
                 }
             ],
             bk_app_code="bk-log-4",
-            project_id=1,
+            space_uid="bkcc__2",
         )
 
         IndexSetHandler.replace(
@@ -257,5 +256,5 @@ class TestUserOperationRecord(TestCase):
                 }
             ],
             bk_app_code="bk-log-4",
-            project_id=1,
+            space_uid="bkcc__2",
         )

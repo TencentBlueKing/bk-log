@@ -20,16 +20,15 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import abc
-from collections import defaultdict
-from typing import Dict, List
 
 from django.db.models import Q
 
 from apps.api import TransferApi
-from apps.iam import Permission
+from apps.iam import Permission, ResourceEnum
 from apps.log_databus.constants import STORAGE_CLUSTER_TYPE, REGISTERED_SYSTEM_DEFAULT
 from apps.log_databus.models import CollectorConfig
-from apps.log_search.models import LogIndexSet, ProjectInfo
+from apps.log_search.models import LogIndexSet
+from bkm_space.utils import bk_biz_id_to_space_uid, space_uid_to_bk_biz_id
 from iam import PathEqDjangoQuerySetConverter, make_expression, ObjectSet, DjangoQuerySetConverter
 from iam.eval.constants import KEYWORD_BK_IAM_PATH_FIELD_SUFFIX, OP
 from iam.resource.provider import ResourceProvider, ListResult
@@ -53,7 +52,7 @@ class CollectionResourceProvider(BaseResourceProvider):
         elif filter.parent:
             parent_id = filter.parent["id"]
             if parent_id:
-                queryset = CollectorConfig.objects.filter(bk_biz_id=str(parent_id))
+                queryset = CollectorConfig.objects.filter(bk_biz_id=parent_id)
         elif filter.search and filter.resource_type_chain:
             # 返回结果需要带上资源拓扑路径信息
             with_path = True
@@ -72,16 +71,23 @@ class CollectionResourceProvider(BaseResourceProvider):
                 for item in queryset[page.slice_from : page.slice_to]
             ]
         else:
-            results = [
-                {
-                    "id": str(item.pk),
-                    "display_name": item.collector_config_name,
-                    "_bk_iam_path_": [
-                        [{"type": "biz", "id": str(item.bk_biz_id), "display_name": str(item.bk_biz_id)}]
-                    ],
-                }
-                for item in queryset[page.slice_from : page.slice_to]
-            ]
+            results = []
+            for item in queryset[page.slice_from : page.slice_to]:
+                results.append(
+                    {
+                        "id": str(item.pk),
+                        "display_name": item.collector_config_name,
+                        "_bk_iam_path_": [
+                            [
+                                {
+                                    "type": ResourceEnum.BUSINESS.id,
+                                    "id": str(item.bk_biz_id),
+                                    "display_name": str(item.bk_biz_id),
+                                }
+                            ]
+                        ],
+                    }
+                )
 
         return ListResult(results=results, count=queryset.count())
 
@@ -92,7 +98,10 @@ class CollectionResourceProvider(BaseResourceProvider):
 
         queryset = CollectorConfig.objects.filter(pk__in=ids)
 
-        results = [{"id": str(item.pk), "display_name": item.collector_config_name} for item in queryset]
+        results = [
+            {"id": str(item.pk), "display_name": item.collector_config_name, "_bk_iam_approver_": item.created_by}
+            for item in queryset
+        ]
         return ListResult(results=results, count=queryset.count())
 
     def list_instance_by_policy(self, filter, page, **options):
@@ -100,12 +109,14 @@ class CollectionResourceProvider(BaseResourceProvider):
         if not expression:
             return ListResult(results=[], count=0)
 
-        key_mapping = {
-            "collection.id": "pk",
-            "collection.owner": "created_by",
-            "collection._bk_iam_path_": "bk_biz_id",
-        }
-        converter = PathEqDjangoQuerySetConverter(key_mapping, {"bk_biz_id": lambda value: value[1:-1].split(",")[1]})
+        converter = PathEqDjangoQuerySetConverter(
+            key_mapping={
+                "collection.id": "pk",
+                "collection.owner": "created_by",
+                "collection._bk_iam_path_": "bk_biz_id",
+            },
+            value_hooks={"bk_biz_id": lambda value: value[1:-1].split(",")[1]},
+        )
         filters = converter.convert(expression)
         queryset = CollectorConfig.objects.filter(filters)
         results = [
@@ -120,7 +131,7 @@ class CollectionResourceProvider(BaseResourceProvider):
         if not filter.parent or "id" not in filter.parent:
             queryset = CollectorConfig.objects.filter(collector_config_name__icontains=filter.keyword)
         else:
-            parent_id = int(filter.parent.get("id"))
+            parent_id = filter.parent.get("id")
             queryset = CollectorConfig.objects.filter(
                 bk_biz_id=parent_id, collector_config_name__icontains=filter.keyword
             )
@@ -177,7 +188,9 @@ class EsSourceResourceProvider(BaseResourceProvider):
                 "display_name": cluster["cluster_config"]["cluster_name"],
                 "bk_biz_id": str(cluster["cluster_config"]["custom_option"]["bk_biz_id"]),
                 "owner": cluster["cluster_config"]["creator"],
-                "_bk_iam_path_": "/biz,{}/".format(cluster["cluster_config"]["custom_option"]["bk_biz_id"]),
+                "_bk_iam_path_": "/{},{}/".format(
+                    ResourceEnum.BUSINESS.id, cluster["cluster_config"]["custom_option"]["bk_biz_id"],
+                ),
             }
             for cluster in clusters
             if cluster["cluster_config"].get("registered_system") != REGISTERED_SYSTEM_DEFAULT
@@ -193,7 +206,7 @@ class EsSourceResourceProvider(BaseResourceProvider):
         if filter.parent:
             parent_id = filter.parent["id"]
             if parent_id:
-                clusters = [cluster for cluster in clusters if cluster["bk_biz_id"] == str(parent_id)]
+                clusters = [cluster for cluster in clusters if str(cluster["bk_biz_id"]) == str(parent_id)]
         elif filter.search and filter.resource_type_chain:
             # 返回结果需要带上资源拓扑路径信息
             with_path = True
@@ -214,14 +227,25 @@ class EsSourceResourceProvider(BaseResourceProvider):
                 for item in clusters[page.slice_from : page.slice_to]
             ]
         else:
-            results = [
-                {
-                    "id": item["id"],
-                    "display_name": item["display_name"],
-                    "_bk_iam_path_": [[{"type": "biz", "id": item["bk_biz_id"], "display_name": item["bk_biz_id"]}]],
-                }
-                for item in clusters[page.slice_from : page.slice_to]
-            ]
+            results = []
+            for item in clusters[page.slice_from : page.slice_to]:
+                results.append(
+                    {
+                        {
+                            "id": item["id"],
+                            "display_name": item["display_name"],
+                            "_bk_iam_path_": [
+                                [
+                                    {
+                                        "type": ResourceEnum.BUSINESS.id,
+                                        "id": str(item["bk_biz_id"]),
+                                        "display_name": str(item["bk_biz_id"]),
+                                    }
+                                ]
+                            ],
+                        }
+                    }
+                )
 
         return ListResult(results=results, count=len(clusters))
 
@@ -232,7 +256,10 @@ class EsSourceResourceProvider(BaseResourceProvider):
             ids = [str(i) for i in filter.ids]
             clusters = [cluster for cluster in clusters if str(cluster["id"]) in ids]
 
-        results = [{"id": item["id"], "display_name": item["display_name"]} for item in clusters]
+        results = [
+            {"id": item["id"], "display_name": item["display_name"], "_bk_iam_approver_": item["owner"]}
+            for item in clusters
+        ]
         return ListResult(results=results, count=len(clusters))
 
     def list_instance_by_policy(self, filter, page, **options):
@@ -265,7 +292,7 @@ class EsSourceResourceProvider(BaseResourceProvider):
     def search_instance(self, filter, page, **options):
         clusters = self.list_clusters()
         if filter.parent and "id" in filter.parent:
-            parent_id = int(filter.parent.get("id"))
+            parent_id = filter.parent.get("id")
             clusters = [
                 cluster
                 for cluster in clusters
@@ -290,38 +317,16 @@ class IndicesResourceProvider(BaseResourceProvider):
             if field.endswith(KEYWORD_BK_IAM_PATH_FIELD_SUFFIX) and operator == OP.STARTS_WITH:
                 return self._in
 
-    @classmethod
-    def get_biz_id_mapping(self) -> Dict[str, List]:
-        """
-        获取业务ID到项目ID的映射
-        """
-        mapping = defaultdict(list)
-        for project in ProjectInfo.objects.exclude(bk_biz_id__isnull=True).values("project_id", "bk_biz_id"):
-            mapping[str(project["bk_biz_id"])].append(project["project_id"])
-        return mapping
-
-    @classmethod
-    def get_project_id_mapping(cls) -> Dict[str, str]:
-        """
-        获取项目ID到业务ID的映射
-        """
-        mapping = defaultdict(str)
-        for project in ProjectInfo.objects.exclude(bk_biz_id__isnull=True).values("project_id", "bk_biz_id"):
-            mapping[str(project["project_id"])] = str(project["bk_biz_id"])
-        return mapping
-
     def list_instance(self, filter, page, **options):
         queryset = []
         with_path = False
-
-        biz_id_mapping = self.get_biz_id_mapping()
 
         if not (filter.parent or filter.search or filter.resource_type_chain):
             queryset = LogIndexSet.objects.all()
         elif filter.parent:
             parent_id = filter.parent["id"]
             if parent_id:
-                queryset = LogIndexSet.objects.filter(project_id__in=biz_id_mapping[str(parent_id)])
+                queryset = LogIndexSet.objects.filter(space_uid=bk_biz_id_to_space_uid(parent_id))
         elif filter.search and filter.resource_type_chain:
             # 返回结果需要带上资源拓扑路径信息
             with_path = True
@@ -340,23 +345,26 @@ class IndicesResourceProvider(BaseResourceProvider):
                 for item in queryset[page.slice_from : page.slice_to]
             ]
         else:
-            project_id_mapping = self.get_project_id_mapping()
-            results = [
-                {
-                    "id": str(item.pk),
-                    "display_name": item.index_set_name,
-                    "_bk_iam_path_": [
-                        [
-                            {
-                                "type": "biz",
-                                "id": project_id_mapping[str(item.project_id)],
-                                "display_name": project_id_mapping[str(item.project_id)],
-                            }
-                        ]
-                    ],
-                }
-                for item in queryset[page.slice_from : page.slice_to]
-            ]
+            results = []
+            bk_biz_id_mapping = {}
+            for item in queryset[page.slice_from : page.slice_to]:
+                if item.space_uid not in bk_biz_id_mapping:
+                    bk_biz_id_mapping[item.space_uid] = str(space_uid_to_bk_biz_id(item.space_uid))
+                results.append(
+                    {
+                        "id": str(item.pk),
+                        "display_name": item.index_set_name,
+                        "_bk_iam_path_": [
+                            [
+                                {
+                                    "type": ResourceEnum.BUSINESS.id,
+                                    "id": bk_biz_id_mapping[item.space_uid],
+                                    "display_name": bk_biz_id_mapping[item.space_uid],
+                                }
+                            ]
+                        ],
+                    }
+                )
 
         return ListResult(results=results, count=queryset.count())
 
@@ -367,7 +375,10 @@ class IndicesResourceProvider(BaseResourceProvider):
 
         queryset = LogIndexSet.objects.filter(pk__in=ids)
 
-        results = [{"id": str(item.pk), "display_name": item.index_set_name} for item in queryset]
+        results = [
+            {"id": str(item.pk), "display_name": item.index_set_name, "_bk_iam_approver_": item.created_by}
+            for item in queryset
+        ]
         return ListResult(results=results, count=queryset.count())
 
     def list_instance_by_policy(self, filter, page, **options):
@@ -375,15 +386,13 @@ class IndicesResourceProvider(BaseResourceProvider):
         if not expression:
             return ListResult(results=[], count=0)
 
-        biz_id_mapping = self.get_biz_id_mapping()
-
         key_mapping = {
             "indices.id": "pk",
             "indices.owner": "created_by",
-            "indices._bk_iam_path_": "project_id",
+            "indices._bk_iam_path_": "space_uid",
         }
         converter = self.PathInDjangoQuerySetConverter(
-            key_mapping, {"project_id": lambda value: biz_id_mapping[value[1:-1].split(",")[1]]}
+            key_mapping, {"space_uid": lambda value: bk_biz_id_to_space_uid(value[1:-1].split(",")[1])}
         )
         filters = converter.convert(expression)
         queryset = LogIndexSet.objects.filter(filters)
@@ -395,13 +404,13 @@ class IndicesResourceProvider(BaseResourceProvider):
         return ListResult(results=results, count=queryset.count())
 
     def search_instance(self, filter, page, **options):
-        biz_id_mapping = self.get_biz_id_mapping()
         if not filter.parent or "id" not in filter.parent:
             queryset = LogIndexSet.objects.filter(index_set_name__icontains=filter.keyword)
         else:
             parent_id = filter.parent.get("id")
-            project_id = biz_id_mapping[parent_id]
-            queryset = LogIndexSet.objects.filter(project_id__in=project_id, index_set_name__icontains=filter.keyword)
+            queryset = LogIndexSet.objects.filter(
+                space_uid=bk_biz_id_to_space_uid(parent_id), index_set_name__icontains=filter.keyword
+            )
 
         return ListResult(
             results=[

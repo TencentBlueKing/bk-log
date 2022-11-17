@@ -31,7 +31,7 @@ const list = {
       {
         index_set_id: 1,
         index_set_name: '登陆日志',
-        project_id: 1,
+        space_uid: 1,
         source_id: 1,
         source_name: 'ES集群',
         scenario_id: 'es',
@@ -64,7 +64,7 @@ const info = {
   data: {
     index_set_id: 1,
     index_set_name: '登陆日志',
-    project_id: 1,
+    space_uid: 1,
     source_id: 1,
     source_name: 'ES集群',
     scenario_id: 'es',

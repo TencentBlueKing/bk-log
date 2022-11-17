@@ -26,10 +26,10 @@ from django.utils.translation import ugettext as _
 
 from apps.grafana.constants import TRACE_DATASOURCE_TYPE
 from apps.grafana.model import TraceDatasourceMap
-from apps.log_search.handlers.meta import MetaHandler
 from apps.log_search.models import LogIndexSet
 from apps.utils.db import array_hash
 from bk_dataview.grafana.provisioning import BaseProvisioning, Datasource
+from bkm_space.utils import bk_biz_id_to_space_uid
 
 
 class Provisioning(BaseProvisioning):
@@ -53,10 +53,9 @@ class Provisioning(BaseProvisioning):
 
 class TraceProvisioning(BaseProvisioning):
     def datasources(self, request, org_name: str, org_id: int) -> List[Datasource]:
-        project_info = MetaHandler.get_project_info(org_name)
-        trace_index_sets = LogIndexSet.objects.filter(is_trace_log=True, project_id=project_info["project_id"]).values(
-            "index_set_name", "index_set_id"
-        )
+        trace_index_sets = LogIndexSet.objects.filter(
+            is_trace_log=True, space_uid=bk_biz_id_to_space_uid(org_name)
+        ).values("index_set_name", "index_set_id")
         datasource_maps = TraceDatasourceMap.objects.filter(bk_biz_id=org_name).values("datasource_id", "index_set_id")
         datasource_map_hash = array_hash(datasource_maps, "index_set_id", "datasource_id")
         trace_index_set_hash = array_hash(trace_index_sets, "index_set_id", "index_set_name")
@@ -102,9 +101,7 @@ class TraceProvisioning(BaseProvisioning):
     ):
         if datasource.type == TRACE_DATASOURCE_TYPE:
             TraceDatasourceMap.objects.update_or_create(
-                bk_biz_id=org_name,
-                index_set_id=datasource.jsonData["index_set_id"],
-                datasource_id=datasource.id,
+                bk_biz_id=org_name, index_set_id=datasource.jsonData["index_set_id"], datasource_id=datasource.id,
             )
 
     def dashboards(self, request, org_name, org_id) -> list:

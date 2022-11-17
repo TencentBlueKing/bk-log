@@ -42,7 +42,7 @@
                 :id="item.index_set_id"
                 :name="item.computedName">
                 <div
-                  v-if="!(item.permission && item.permission.search_log)"
+                  v-if="!(item.permission && item.permission[authorityMap.SEARCH_LOG_AUTH])"
                   class="option-slot-container no-authority"
                   @click.stop>
                   <span class="text">{{item.computedName}}</span>
@@ -297,6 +297,7 @@ import chartView from './chart-view.vue';
 import TimeFormatter from '@/components/common/time-formatter';
 import tableRowDeepViewMixin from '@/mixins/table-row-deep-view-mixin';
 import TraceDetail from '@/components/trace-detail';
+import * as authorityMap from '../../../common/authority-map';
 
 export default {
   name: 'TraceIndex',
@@ -483,30 +484,29 @@ export default {
   },
   computed: {
     ...mapState({
-      projectId: state => state.projectId,
+      spaceUid: state => state.spaceUid,
       bkBizId: state => state.bkBizId,
       indexIdCache: state => state.traceIndexId,
     }),
     ...mapGetters({
       authGlobalInfo: 'globals/authContainerInfo',
     }),
+    authorityMap() {
+      return authorityMap;
+    },
   },
   watch: {
     indexId(val) {
       const option = this.indexSetList.find(item => item.index_set_id === val);
       // eslint-disable-next-line camelcase
-      this.isSearchAllowed = Boolean(option?.permission?.search_log);
+      this.isSearchAllowed = Boolean(option?.permission?.[authorityMap.SEARCH_LOG_AUTH]);
       this.searchData = {};
       this.totalFields = [];
       this.initDateTime();
       this.searchHandle();
       this.$store.commit('updateTraceIndexId', this.indexId);
     },
-    '$route.query.bizId'() {
-      this.initDateTime();
-      this.$nextTick(() => this.getIndexSet());
-    },
-    '$route.query.projectId'() {
+    '$route.query.spaceUid'() {
       this.initDateTime();
       this.$nextTick(() => this.getIndexSet());
     },
@@ -555,7 +555,7 @@ export default {
       try {
         this.basicLoading = true;
         const res = await this.$store.dispatch('getApplyData', {
-          action_ids: ['search_log'],
+          action_ids: [authorityMap.SEARCH_LOG_AUTH],
           resources: [{
             type: 'indices',
             id: item.index_set_id,
@@ -602,7 +602,7 @@ export default {
         // const routeData = this.$router.resolve({
         //   path: `/trace?indexId=${this.indexId}&traceId=${row.traceID}&startTime=${row.startTime}`,
         //   query: {
-        //     projectId: this.projectId,
+        //     spaceUid: this.spaceUid,
         //   },
         // });
         // window.open(routeData.href, '_blank');
@@ -673,7 +673,7 @@ export default {
           const s2 = [];
           for (const item of res.data) {
             // eslint-disable-next-line camelcase
-            if (item.permission?.search_log) {
+            if (item.permission?.[authorityMap.SEARCH_LOG_AUTH]) {
               s1.push(item);
             } else {
               s2.push(item);
@@ -682,9 +682,9 @@ export default {
           this.indexSetList = s1.concat(s2);
           // 如果都没有权限直接显示页面无权限
           // eslint-disable-next-line camelcase
-          if (!this.indexSetList[0]?.permission?.search_log) {
+          if (!this.indexSetList[0]?.permission?.[authorityMap.SEARCH_LOG_AUTH]) {
             this.$store.dispatch('getApplyData', {
-              action_ids: ['search_log'],
+              action_ids: [authorityMap.SEARCH_LOG_AUTH],
               resources: [{
                 type: 'indices',
                 id: this.indexSetList[0].index_set_id,
@@ -717,7 +717,7 @@ export default {
     },
     async searchHandle() {
       const paramData = {
-        action_ids: ['search_log'],
+        action_ids: [authorityMap.SEARCH_LOG_AUTH],
         resources: [{
           type: 'indices',
           id: this.indexId,

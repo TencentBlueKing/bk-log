@@ -122,7 +122,7 @@ class PluginConditionSerializer(serializers.Serializer):
     separator_filters = PluginConditionSeparatorFiltersSerializer(label=_("过滤规则"), required=False, many=True)
 
     def validate(self, attrs):
-        super().validate(attrs)
+        attrs = super().validate(attrs)
 
         condition_type = attrs["type"]
         separator_filters = attrs["separator_filters"] if "separator_filters" in attrs else []
@@ -297,6 +297,8 @@ class CollectorCreateSerializer(serializers.Serializer):
     params = PluginParamSerializer()
 
     def validate(self, attrs):
+        attrs = super().validate(attrs)
+
         if attrs["collector_scenario_id"] == "section":
             for field in ["multiline_pattern", "multiline_max_lines", "multiline_timeout"]:
                 if field not in attrs["params"]:
@@ -311,6 +313,7 @@ class CollectorCreateSerializer(serializers.Serializer):
 
 class CreateContainerCollectorSerializer(serializers.Serializer):
     bk_biz_id = serializers.IntegerField(label=_("业务ID"))
+    collector_plugin_id = serializers.IntegerField(label=_("采集插件ID"), required=False)
     collector_config_name = serializers.CharField(label=_("采集名称"), max_length=50)
     collector_config_name_en = serializers.RegexField(
         label=_("采集英文名称"), min_length=5, max_length=50, regex=COLLECTOR_CONFIG_NAME_EN_REGEX
@@ -327,6 +330,7 @@ class CreateContainerCollectorSerializer(serializers.Serializer):
     extra_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=LablesSerializer())
     yaml_config_enabled = serializers.BooleanField(label=_("是否使用yaml配置模式"), default=False)
     yaml_config = serializers.CharField(label=_("yaml配置内容"), default="", allow_blank=True)
+    platform_username = serializers.CharField(label=_("平台用户"), required=False)
 
     def validate_yaml_config(self, value):
         try:
@@ -359,6 +363,7 @@ class CollectorUpdateSerializer(serializers.Serializer):
 
 
 class UpdateContainerCollectorSerializer(serializers.Serializer):
+    bk_biz_id = serializers.IntegerField(label=_("业务ID"))
     collector_config_name = serializers.CharField(label=_("采集名称"), max_length=50)
     collector_config_name_en = serializers.RegexField(
         label=_("采集英文名称"), min_length=5, max_length=50, regex=COLLECTOR_CONFIG_NAME_EN_REGEX
@@ -416,6 +421,8 @@ class BatchSubscriptionStatusSerializer(serializers.Serializer):
     collector_id_list = serializers.CharField(label=_("采集项ID"))
 
     def validate(self, attrs):
+        attrs = super().validate(attrs)
+
         if not validate_param_value(attrs["collector_id_list"]):
             raise ValidationError(_("collector_id_list不符合格式，采集项ID（多个ID用半角,分隔）"))
         return attrs
@@ -425,6 +432,8 @@ class TaskStatusSerializer(serializers.Serializer):
     task_id_list = serializers.CharField(label=_("部署任务ID"), allow_blank=True)
 
     def validate(self, attrs):
+        attrs = super().validate(attrs)
+
         # 当task_is_list为空的情况不需要做相关验证
         if not attrs["task_id_list"]:
             return attrs
@@ -483,6 +492,8 @@ class VisibleSerializer(serializers.Serializer):
     bk_biz_labels = serializers.DictField(label=_("业务标签"), required=False, default={})
 
     def validate(self, attrs):
+        attrs = super().validate(attrs)
+
         if attrs["visible_type"] == VisibleEnum.MULTI_BIZ.value and not attrs.get("visible_bk_biz"):
             raise ValidationError(_("可见类型为多业务时，可见业务范围不能为空"))
 
@@ -531,6 +542,8 @@ class StorageCreateSerializer(serializers.Serializer):
     option = serializers.JSONField(label=_("第三方平台配置"), required=False)
 
     def validate(self, attrs):
+        attrs = super().validate(attrs)
+
         if not attrs["enable_hot_warm"]:
             return attrs
         if not all(
@@ -555,6 +568,8 @@ class StorageDetectSerializer(serializers.Serializer):
     es_auth_info = AuthInfoSerializer(label=_("凭据信息"), required=False, allow_null=True)
 
     def validate(self, attrs):
+        attrs = super().validate(attrs)
+
         if not attrs.get("es_auth_info"):
             return attrs
         attrs["username"] = attrs["es_auth_info"].get("username", "")
@@ -591,6 +606,8 @@ class StorageUpdateSerializer(serializers.Serializer):
     option = serializers.JSONField(label=_("第三方平台配置"), required=False)
 
     def validate(self, attrs):
+        attrs = super().validate(attrs)
+
         if not attrs["enable_hot_warm"]:
             return attrs
         if not all(
@@ -701,7 +718,7 @@ class CollectorEtlStorageSerializer(serializers.Serializer):
     assessment_config = AssessmentConfig(label=_("评估配置"), required=False)
 
     def validate(self, attrs):
-        super().validate(attrs)
+        attrs = super().validate(attrs)
 
         if attrs.get("need_assessment", False) and not attrs.get("assessment_config"):
             raise ValidationError(_("评估配置不能为空"))
@@ -783,7 +800,7 @@ class CleanSerializer(serializers.Serializer):
     pagesize = serializers.IntegerField(label=_("页面大小"))
 
     def validate(self, attrs):
-        super().validate(attrs)
+        attrs = super().validate(attrs)
         if attrs["page"] < 0 or attrs["pagesize"] < 0:
             raise ValidationError(_("分页参数不能为负数"))
         return attrs
@@ -794,7 +811,7 @@ class PageSerializer(serializers.Serializer):
     pagesize = serializers.IntegerField(label=_("页面大小"))
 
     def validate(self, attrs):
-        super().validate(attrs)
+        attrs = super().validate(attrs)
         if attrs["page"] < 0 or attrs["pagesize"] < 0:
             raise ValidationError(_("分页参数不能为负数"))
         return attrs
@@ -965,6 +982,8 @@ class CollectorPluginCreateSerializer(MultiAttrCheckSerializer, serializers.Mode
         return not is_allow_alone_data_id or create_public_data_id
 
     def validate(self, attrs: dict) -> dict:
+        attrs = super().validate(attrs)
+
         # bk_biz_id 允许为空，默认置0
         if not attrs.get("bk_biz_id"):
             attrs["bk_biz_id"] = 0
@@ -993,7 +1012,7 @@ class CollectorPluginCreateSerializer(MultiAttrCheckSerializer, serializers.Mode
 class CreateCollectorPluginInstanceSerializer(serializers.Serializer):
     bk_biz_id = serializers.IntegerField(label=_("业务ID"))
     bkdata_biz_id = serializers.IntegerField(label=_("数据平台业务ID"), required=False)
-    bkdata_username = serializers.CharField(label=_("数据平台用户"), required=False)
+    platform_username = serializers.CharField(label=_("平台用户"), required=False)
     collector_config_name = serializers.CharField(label=_("采集名称"), max_length=50)
     collector_config_name_en = serializers.RegexField(
         label=_("采集英文名称"), min_length=5, max_length=50, regex=COLLECTOR_CONFIG_NAME_EN_REGEX
@@ -1010,7 +1029,7 @@ class CreateCollectorPluginInstanceSerializer(serializers.Serializer):
 
 
 class UpdateCollectorPluginInstanceSerializer(serializers.Serializer):
-    bkdata_username = serializers.CharField(label=_("数据平台用户"), required=False)
+    platform_username = serializers.CharField(label=_("平台用户"), required=False)
     collector_config_id = serializers.IntegerField(label=_("采集项ID"))
     collector_config_name = serializers.CharField(label=_("采集名称"), max_length=50)
     collector_config_name_en = serializers.RegexField(
@@ -1066,6 +1085,7 @@ class CollectorPluginUpdateSerializer(MultiAttrCheckSerializer, serializers.Mode
         ]
 
     def validate(self, attrs: dict) -> dict:
+        attrs = super().validate(attrs)
 
         # 不允许独立清洗规则或有dataid时
         if attrs.get("is_allow_alone_etl_config") is False or attrs.get("is_allow_alone_data_id"):
@@ -1084,6 +1104,11 @@ class CollectorPluginUpdateSerializer(MultiAttrCheckSerializer, serializers.Mode
             )
 
         return attrs
+
+
+class ListBCSCollectorSerializer(serializers.Serializer):
+    bk_biz_id = serializers.IntegerField(label=_("业务id"), required=False)
+    bcs_cluster_id = serializers.CharField(label=_("bcs集群id"))
 
 
 class BCSCollectorSerializer(serializers.Serializer):
@@ -1117,6 +1142,8 @@ class MatchLabelsSerializer(serializers.Serializer):
 
 
 class ValidateContainerCollectorYamlSerializer(serializers.Serializer):
+    bk_biz_id = serializers.IntegerField(label=_("业务id"))
+    bcs_cluster_id = serializers.CharField(label=_("bcs集群id"))
     yaml_config = serializers.CharField(label=_("YAML配置的base64"), allow_blank=True)
 
     def validate_yaml_config(self, value):
@@ -1193,6 +1220,7 @@ class ContainerCollectorYamlSerializer(serializers.Serializer):
     addPodLabel = serializers.BooleanField(label=_("上报时是否把标签带上"), default=False)
 
     def validate(self, attrs):
+        attrs = super().validate(attrs)
         if attrs["logConfigType"] != ContainerCollectorType.STDOUT and not attrs.get("path"):
             raise SlzValidationError(_("当日志类型不为标准输出时，日志采集路径为必填项"))
         return attrs
