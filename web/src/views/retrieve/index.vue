@@ -1019,9 +1019,14 @@ export default {
     },
     // 搜索记录
     retrieveFavorite({ index_set_id: indexSetID, params }) {
-      delete params.search_fields;
-      this.indexId = String(indexSetID);
-      this.retrieveLog(params);
+      if (this.indexSetList.find(item => item.index_set_id === String(indexSetID))) {
+        this.isFavoriteSearch = true;
+        delete params.search_fields;
+        this.indexId = String(indexSetID);
+        this.retrieveLog(params);
+      } else {
+        this.messageError(this.$t('没有找到该记录下相关索引集'));
+      }
     },
     // 关闭收藏浮层
     closeFavoritePopper() {
