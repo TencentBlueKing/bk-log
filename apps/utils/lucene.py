@@ -340,52 +340,38 @@ class IllegalRangeSyntaxInspector(BaseInspector):
 
     syntax_error_message = _("非法RANGE语法")
 
-    # 非预期字符正则
-    unexpect_word_re = r"Syntax error in input : unexpected  '(.*)' at position (\d+)"
-
     # RANGE语法正则
-    range_re = r"(\[.*?TO.*?\])"
-    single_range_re = r"\[(.*)TO(.*)\]"
+    range_re = r":[\s]?[\[]?.*?TO.*"
 
     def inspect(self):
         try:
             parser.parse(self.keyword, lexer=lexer)
-        except ParseSyntaxError as e:
-            match = re.search(self.unexpect_word_re, str(e))
-            if match and match.group(1) == "TO":
-                p = re.compile(self.range_re)
-                match_groups = [[m.start(), m.end()] for m in p.finditer(self.keyword)]
-                if not match_groups:
-                    return
-                self.resolve(match_groups)
-                self.set_illegal()
         except Exception:
-            return
+            new_keyword = self.keyword
+            for i in self.keyword.split("AND"):
+                for keyword_slice in i.split("OR"):
+                    match = re.search(self.range_re, keyword_slice)
+                    if not match:
+                        continue
+                    match_range_str = match.string.split(":")[-1].strip()
+                    new_match_range_str = match_range_str
+                    if not new_match_range_str.startswith("["):
+                        new_match_range_str = "[" + new_match_range_str
+                    if not new_match_range_str.endswith("]"):
+                        new_match_range_str = new_match_range_str + "]"
+                    start, end = new_match_range_str[1:-1].split("TO")
+                    start = start.strip()
+                    end = end.strip()
+                    if not start:
+                        start = "*"
+                    if not end:
+                        end = "*"
+                    new_range_str = f"[{start} TO {end}]"
+                    new_keyword = new_keyword.replace(match_range_str, new_range_str)
 
-    def resolve(self, match_groups: list):
-        remain_keyword = []
-        for i in range(len(match_groups)):
-            if i == 0:
-                remain_keyword.append(self.keyword[: match_groups[i][0]])
-            else:
-                remain_keyword.append(self.keyword[match_groups[i - 1][1] : match_groups[i][0]])
-            # 进行单个Range语法的修复
-            match = re.search(self.single_range_re, self.keyword[match_groups[i][0] : match_groups[i][1]])
-            if match:
-                start = match.group(1).strip()
-                end = match.group(2).strip()
-                if start and end:
-                    continue
-                if not start:
-                    start = "*"
-                if not end:
-                    end = "*"
-                remain_keyword.append(f"[{start} TO {end}]")
-
-            if i == len(match_groups) - 1:
-                remain_keyword.append(self.keyword[match_groups[i][1] :])
-
-        self.keyword = "".join(remain_keyword)
+            if self.keyword != new_keyword:
+                self.set_illegal()
+            self.keyword = new_keyword
 
 
 class IllegalBracketInspector(BaseInspector):
