@@ -172,12 +172,12 @@ UPDATE_QUERY_PARAMS = [
 EXPECT_NEW_QUERY = """number: >=10000 OR title: "hello" AND text: hello OR gseIndex: [100 TO 200] \
 AND log: bk~0.5 AND time: /[L-N]/ AND a: bb AND c: dd OR (a: (bb OR cc AND dd) OR x: yy) AND hello1 AND hello2"""
 
-ILLEGAL_KEYWORD = """log:: ERROR AND log: [TO 200] AND time: [100 TO]"""
+ILLEGAL_KEYWORD = """log:: ERROR AND log: [TO 200] AND time: [100 TO OR log: TO 100]"""
 INSPECT_KEYWORD_RESULT = {
     "is_legal": False,
     "is_resolved": True,
     "message": "非法RANGE语法\n异常字符",
-    "keyword": "log: ERROR AND log: [* TO 200] AND time: [100 TO *]",
+    "keyword": "log: ERROR AND log: [* TO 200] AND time: [100 TO *] OR log: [* TO 100]",
 }
 
 
