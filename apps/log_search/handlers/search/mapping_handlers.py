@@ -221,22 +221,69 @@ class MappingHandlers(object):
             return self._get_context_fields(final_fields_list)
 
         # 其它情况
+        return self._get_default_fields(final_fields_list)
+
+    def _get_default_fields(self, final_fields_list):
+        """默认字段"""
         display_fields_list = []
-        if self.scenario_id == Scenario.ES:
-            produce_fields = OUTER_PRODUCE_FIELDS
-        elif self.scenario_id in [Scenario.BKDATA, Scenario.LOG]:
-            produce_fields = INNER_PRODUCE_FIELDS
-        else:
-            produce_fields = list()
-        range_num = len(final_fields_list) if len(final_fields_list) < 5 else 5
-        for index_n in range(range_num):
-            field_name = final_fields_list[index_n]["field_name"]
-            if field_name not in produce_fields:
-                final_fields_list[index_n]["is_display"] = True
-                display_fields_list.append(field_name)
+        final_field_name_list = [field["field_name"] for field in final_fields_list]
+        index_set_obj = LogIndexSet.objects.filter(index_set_id=self.index_set_id).first()
+
+        def get_text_fields():
+            """获取text类型字段"""
+            text_fields = []
+            if "log" in final_field_name_list:
+                text_fields.append("log")
+            type_text_fields = [field["field_name"] for field in final_fields_list if field["field_type"] == "text"]
+            if "log" in text_fields and "log" in type_text_fields:
+                type_text_fields.remove("log")
+            if type_text_fields:
+                text_fields.append(type_text_fields[0])
+                return time_fields
+            type_keyword_fields = [
+                field["field_name"] for field in final_fields_list if field["field_type"] == "keyword"
+            ]
+            if "log" in text_fields and "log" in type_keyword_fields:
+                type_keyword_fields.remove("log")
+            if type_keyword_fields:
+                text_fields.append(type_keyword_fields[0])
+            return text_fields
+
+        # 索引不存在时间字段时候的优先顺序
+        time_fields = ["dteventtimestamp", "dtEventTimeStamp", "timestamp"]
+        # 对象字段优先顺序
+        object_fields = ["__ext.io_kubernetes_pod", "serverIp", "ip"]
+
+        # 先取索引的时间字段, 不存在则按照优先顺序区
+        index_set_time_field = index_set_obj.time_field
+        if index_set_time_field and index_set_time_field not in time_fields:
+            time_fields = [index_set_time_field] + time_fields
+        for time_field in time_fields:
+            if time_field in final_field_name_list:
+                display_fields_list.append(time_field)
+                break
+        # 根据对象字段的优先顺序来确定字段
+        for object_field in object_fields:
+            if object_field in final_field_name_list:
+                display_fields_list.append(object_field)
+                break
+        # 动态获取text字段
+        for text_field in get_text_fields():
+            if text_field in final_field_name_list:
+                display_fields_list.append(text_field)
+
+        # 移除下划线前缀的字段
+        for display_field in display_fields_list:
+            if display_field.startswith("_") and display_field != "__ext.io_kubernetes_pod":
+                display_fields_list.remove(display_field)
+
+        for field_n in range(len(final_field_name_list)):
+            field_name = final_field_name_list[field_n]
+            if field_name in display_fields_list:
+                final_fields_list[field_n]["is_display"] = True
             else:
-                final_fields_list[index_n]["is_display"] = False
-        display_fields_list = self._sort_display_fields(display_fields_list)
+                final_fields_list[field_n]["is_display"] = False
+
         return final_fields_list, display_fields_list
 
     def _get_mapping(self):
