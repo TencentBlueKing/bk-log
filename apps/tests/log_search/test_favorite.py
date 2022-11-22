@@ -27,6 +27,7 @@ from unittest.mock import patch
 from apps.log_search.constants import FavoriteGroupType, FavoriteVisibleType
 from apps.log_search.handlers.search.favorite_handlers import FavoriteGroupHandler, FavoriteHandler
 from apps.log_search.models import FavoriteGroup
+from apps.utils.lucene import LuceneSyntaxResolver
 
 # 公共参数
 SPACE_UID = "test_space_uid"
@@ -171,8 +172,13 @@ UPDATE_QUERY_PARAMS = [
 EXPECT_NEW_QUERY = """number: >=10000 OR title: "hello" AND text: hello OR gseIndex: [100 TO 200] \
 AND log: bk~0.5 AND time: /[L-N]/ AND a: bb AND c: dd OR (a: (bb OR cc AND dd) OR x: yy) AND hello1 AND hello2"""
 
-ILLEGAL_KEYWORD = """AAA BBB"""
-INSPECT_KEYWORD_RESULT = {"is_legal": False, "keyword": "AAA AND BBB"}
+ILLEGAL_KEYWORD = """log:: ERROR AND log: [TO 200] AND time: [100 TO OR log: TO 100]"""
+INSPECT_KEYWORD_RESULT = {
+    "is_legal": False,
+    "is_resolved": True,
+    "message": "非法RANGE语法\n异常字符",
+    "keyword": "log: ERROR AND log: [* TO 200] AND time: [100 TO *] OR log: [* TO 100]",
+}
 
 
 # 类全局使用USERNAME_1
@@ -328,4 +334,10 @@ class TestLucene(TestCase):
 
     def test_inspect(self):
         """测试解析关键字"""
-        self.assertEqual(FavoriteHandler().inspect(ILLEGAL_KEYWORD), INSPECT_KEYWORD_RESULT)
+        inspect_result = LuceneSyntaxResolver(keyword=ILLEGAL_KEYWORD).resolve()
+        self.assertEqual(inspect_result["is_legal"], INSPECT_KEYWORD_RESULT["is_legal"])
+        self.assertEqual(inspect_result["is_resolved"], INSPECT_KEYWORD_RESULT["is_resolved"])
+        self.assertEqual(inspect_result["keyword"], INSPECT_KEYWORD_RESULT["keyword"])
+        self.assertEqual(
+            sorted(inspect_result["message"].split("\n")), sorted(INSPECT_KEYWORD_RESULT["message"].split("\n"))
+        )

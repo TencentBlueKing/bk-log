@@ -1,11 +1,14 @@
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from typing import List
-from collections import Counter
+from collections import Counter, deque
+
+from luqum.exceptions import ParseSyntaxError, IllegalCharacterError
 from luqum.visitor import TreeTransformer
 from luqum.parser import parser, lexer
 from luqum.auto_head_tail import auto_head_tail
 from luqum.utils import UnknownOperationResolver
+from django.utils.translation import ugettext_lazy as _
 
 from apps.constants import (
     FULL_TEXT_SEARCH_FIELD_NAME,
@@ -18,9 +21,11 @@ from apps.constants import (
     HIGH_CHAR,
     LuceneSyntaxEnum,
     WORD_RANGE_OPERATORS,
+    BRACKET_DICT,
+    MAX_RESOLVE_TIMES,
 )
 
-from apps.exceptions import IllegalLuceneSyntaxException
+from apps.exceptions import UnknownLuceneOperatorException
 
 
 def get_node_lucene_syntax(node):
@@ -44,11 +49,11 @@ class LuceneParser(object):
 
     def __init__(self, keyword: str) -> None:
         self.keyword = keyword
-        self.tree = parser.parse(keyword, lexer=lexer)
 
     def parsing(self) -> List[LuceneField]:
         """解析lucene语法入口函数"""
-        fields = self._get_method(self.tree)
+        tree = parser.parse(self.keyword, lexer=lexer)
+        fields = self._get_method(tree)
         if isinstance(fields, list):
             # 以下逻辑为同名字段增加额外标识符
             names = Counter([field.name for field in fields])
@@ -64,16 +69,6 @@ class LuceneParser(object):
             return fields
 
         return [fields]
-
-    def inspect(self) -> dict:
-        is_legal = True
-        try:
-            self.parsing()
-        except IllegalLuceneSyntaxException:
-            is_legal = False
-            resolver = UnknownOperationResolver()
-            self.keyword = str(resolver(self.tree))
-        return {"is_legal": is_legal, "keyword": self.keyword}
 
     def _get_method(self, node):
         """获取解析方法"""
@@ -154,6 +149,17 @@ class LuceneParser(object):
         field = LuceneField(pos=node.pos, operator=DEFAULT_FIELD_OPERATOR, type=LuceneSyntaxEnum.REGEX, value=str(node))
         return field
 
+    def parsing_proximity(self, node):
+        """"""
+        field = LuceneField(
+            pos=node.pos,
+            name=FULL_TEXT_SEARCH_FIELD_NAME,
+            operator=DEFAULT_FIELD_OPERATOR,
+            type=LuceneSyntaxEnum.PROXIMITY,
+            value=str(node),
+        )
+        return field
+
     def parsing_oroperation(self, node):
         """解析或操作"""
         fields = []
@@ -211,7 +217,7 @@ class LuceneParser(object):
 
     def parsing_unknownoperation(self, node):
         """解析未知操作"""
-        raise IllegalLuceneSyntaxException()
+        raise UnknownLuceneOperatorException()
 
 
 class LuceneTransformer(TreeTransformer):
@@ -244,3 +250,266 @@ class LuceneTransformer(TreeTransformer):
         for param in params:
             query_tree = self.visit(query_tree, param)
         return str(auto_head_tail(query_tree))
+
+
+@dataclass
+class InspectResult(object):
+    is_legal: bool = True
+    message: str = ""
+
+
+class BaseInspector(object):
+    """检查器基类"""
+
+    syntax_error_message = ""
+
+    def __init__(self, keyword: str):
+        self.keyword = keyword
+        self.result = InspectResult()
+
+    def get_result(self):
+        return self.result
+
+    def set_illegal(self):
+        """设置检查结果为非法"""
+        self.result.is_legal = False
+        self.result.message = self.syntax_error_message
+
+    def inspect(self):
+        """检查"""
+        raise NotImplementedError
+
+    def remove_unexpected_character(self, match):
+        """根据RE match来移除异常字符"""
+        unexpect_word_len = len(match[1])
+        position = int(str(match[2]))
+        self.keyword = self.keyword[:position] + self.keyword[position + unexpect_word_len :]
+
+    def replace_unexpected_character(self, pos: int, char: str):
+        """替换字符"""
+        self.keyword[pos] = char
+
+
+class ChinesePunctuationInspector(BaseInspector):
+    """中文引号转换"""
+
+    syntax_error_message = _("中文标点异常")
+
+    chinese_punctuation_re = r"(“.*?”)"
+
+    def inspect(self):
+        p = re.compile(self.chinese_punctuation_re)
+        match_groups = [m for m in p.finditer(self.keyword)]
+        if not match_groups:
+            return
+        for m in p.finditer(self.keyword):
+            self.replace_unexpected_character(m.start(), '"')
+            self.replace_unexpected_character(m.end(), '"')
+        self.set_illegal()
+
+
+class IllegalCharacterInspector(BaseInspector):
+    """非法字符检查"""
+
+    syntax_error_message = _("异常字符")
+
+    # 非法字符正则
+    illegal_character_re = r"Illegal character '(.*)' at position (\d+)"
+    # 非预期字符正则
+    unexpect_word_re = r"Syntax error in input : unexpected  '(.*)' at position (\d+)"
+
+    def inspect(self):
+        try:
+            parser.parse(self.keyword, lexer=lexer)
+        except IllegalCharacterError as e:
+            match = re.search(self.illegal_character_re, str(e))
+            if match:
+                self.remove_unexpected_character(match)
+                self.set_illegal()
+        except ParseSyntaxError as e:
+            match = re.search(self.unexpect_word_re, str(e))
+            if match:
+                self.remove_unexpected_character(match)
+                self.set_illegal()
+        except Exception:
+            return
+
+
+class IllegalRangeSyntaxInspector(BaseInspector):
+    """非法RANGE语法检查"""
+
+    syntax_error_message = _("非法RANGE语法")
+
+    # RANGE语法正则
+    range_re = r":[\s]?[\[]?.*?TO.*"
+
+    def inspect(self):
+        try:
+            parser.parse(self.keyword, lexer=lexer)
+        except Exception:
+            new_keyword = self.keyword
+            for i in self.keyword.split("AND"):
+                for keyword_slice in i.split("OR"):
+                    match = re.search(self.range_re, keyword_slice)
+                    if not match:
+                        continue
+                    match_range_str = match.string.split(":")[-1].strip()
+                    new_match_range_str = match_range_str
+                    if not new_match_range_str.startswith("["):
+                        new_match_range_str = "[" + new_match_range_str
+                    if not new_match_range_str.endswith("]"):
+                        new_match_range_str = new_match_range_str + "]"
+                    start, end = new_match_range_str[1:-1].split("TO")
+                    start = start.strip()
+                    end = end.strip()
+                    if not start:
+                        start = "*"
+                    if not end:
+                        end = "*"
+                    new_range_str = f"[{start} TO {end}]"
+                    new_keyword = new_keyword.replace(match_range_str, new_range_str)
+
+            if self.keyword != new_keyword:
+                self.set_illegal()
+            self.keyword = new_keyword
+
+
+class IllegalBracketInspector(BaseInspector):
+    """修复括号不匹配"""
+
+    syntax_error_message = _("括号不匹配")
+    # 非预期语法re
+    unexpect_unmatched_re = (
+        "Syntax error in input : unexpected end of expression (maybe due to unmatched parenthesis) at the end!"
+    )
+
+    def inspect(self):
+        try:
+            parser.parse(self.keyword, lexer=lexer)
+        except ParseSyntaxError as e:
+            if str(e) == self.unexpect_unmatched_re:
+                s = deque()
+                for index in range(len(self.keyword)):
+                    symbol = self.keyword[index]
+                    # 左括号入栈
+                    if symbol in BRACKET_DICT.keys():
+                        s.append({"symbol": symbol, "index": index})
+                        continue
+                    if symbol in BRACKET_DICT.values():
+                        if s and symbol == BRACKET_DICT.get(s[-1]["symbol"], ""):
+                            # 右括号出栈
+                            s.pop()
+                            continue
+                        s.append({"symbol": symbol, "index": index})
+                        # 如果栈首尾匹配, 则异常的括号是栈顶向下第二个
+                        if s[-1]["symbol"] == BRACKET_DICT.get(s[0]["symbol"], ""):
+                            self.keyword = self.keyword[: s[-2]["index"]] + self.keyword[s[-2]["index"] + 1 :]
+                        # 否则异常的括号是栈顶元素
+                        else:
+                            self.keyword = self.keyword[: s[-1]["index"]] + self.keyword[s[-1]["index"] + 1 :]
+                        self.set_illegal()
+                        return
+                if not s:
+                    return
+                self.keyword = self.keyword[: s[-1]["index"]] + self.keyword[s[-1]["index"] + 1 :]
+                self.set_illegal()
+        except Exception:
+            return
+
+
+class IllegalColonInspector(BaseInspector):
+    """修复冒号不匹配"""
+
+    syntax_error_message = _("多余的冒号")
+    # 非预期语法re
+    unexpect_unmatched_re = (
+        "Syntax error in input : unexpected end of expression (maybe due to unmatched parenthesis) at the end!"
+    )
+
+    def inspect(self):
+        try:
+            parser.parse(self.keyword, lexer=lexer)
+        except ParseSyntaxError as e:
+            if str(e) == self.unexpect_unmatched_re:
+                if self.keyword.find(":") == len(self.keyword) - 1:
+                    self.keyword = self.keyword[:-1]
+                    self.set_illegal()
+        except Exception:
+            return
+
+
+class UnknownOperatorInspector(BaseInspector):
+    """修复未知运算符"""
+
+    syntax_error_message = _("未知操作符")
+
+    def inspect(self):
+        try:
+            parser.parse(self.keyword, lexer=lexer)
+        except UnknownLuceneOperatorException:
+            resolver = UnknownOperationResolver()
+            self.keyword = str(resolver(parser.parse(self.keyword, lexer=lexer)))
+            self.set_illegal()
+        except Exception:
+            return
+
+
+class DefaultInspector(BaseInspector):
+    """默认检查器, 用于最后检查语法错误是否被修复"""
+
+    syntax_error_message = _("未知异常")
+
+    def inspect(self):
+        try:
+            parser.parse(self.keyword, lexer=lexer)
+            LuceneParser(keyword=self.keyword).parsing()
+        except Exception:
+            self.set_illegal()
+
+
+class LuceneSyntaxResolver(object):
+    """lucene语法检查以及修复器"""
+
+    REGISTERED_INSPECTORS = [
+        ChinesePunctuationInspector,
+        # IllegalRangeInspector得放在前面是因为 RANGE 的语法会和 IllegalCharacterInspector 中的 TO 冲突
+        IllegalRangeSyntaxInspector,
+        IllegalCharacterInspector,
+        IllegalColonInspector,
+        IllegalBracketInspector,
+        UnknownOperatorInspector,
+        DefaultInspector,
+    ]
+
+    def __init__(self, keyword: str):
+        self.keyword = keyword
+        self.messages = []
+
+    def inspect(self):
+        messages = []
+        for inspector_class in self.REGISTERED_INSPECTORS:
+            inspector = inspector_class(self.keyword)
+            inspector.inspect()
+            self.keyword = inspector.keyword
+            result = inspector.get_result()
+            if not result.is_legal:
+                messages.append(str(asdict(result)["message"]))
+        if not messages:
+            return True
+        self.messages.extend(messages)
+
+    def resolve(self):
+        is_resolved = False
+        for i in range(MAX_RESOLVE_TIMES):
+            if self.inspect():
+                is_resolved = True
+                break
+        self.messages = set(self.messages)
+        if is_resolved and str(DefaultInspector.syntax_error_message) in self.messages:
+            self.messages.remove(str(DefaultInspector.syntax_error_message))
+        return {
+            "is_legal": False if self.messages else True,
+            "is_resolved": is_resolved,
+            "message": "\n".join(self.messages),
+            "keyword": self.keyword,
+        }

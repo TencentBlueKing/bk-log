@@ -154,3 +154,7 @@ DEFAULT_GSE_API_PLAT_NAME = "bkmonitor"  # GSE分配给监控的平台名称，�
 
 # API_FORMAT_CONTENT_TYPE
 API_FORMAT_CONTENT_TYPE = "text/plain; charset=UTF-8"
+
+# gse agent
+IPC_PATH = "/var/run/ipc.state.report"
+GSE_PATH = "/usr/local/gse/"

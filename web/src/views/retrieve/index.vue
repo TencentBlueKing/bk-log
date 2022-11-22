@@ -150,12 +150,10 @@
                     @retrieve="retrieveLog" />
                   <retrieve-detail-input
                     v-model="retrieveParams.keyword"
-                    :check-keyword-data="checkKeywordData"
                     :is-auto-query="isAutoQuery"
                     :retrieved-keyword="retrievedKeyword"
                     :dropdown-data="retrieveDropdownData"
-                    @retrieve="retrieveLog"
-                    @clearCheckData="clearCheckData" />
+                    @retrieve="retrieveLog" />
                 </template>
                 <template v-else>
                   <ui-query
@@ -533,10 +531,6 @@ export default {
         placement: 'top',
         theme: 'light',
         trigger: 'mouseenter',
-      },
-      checkKeywordData: {
-        isKeywordsError: false,
-        resetKeyword: '',
       },
       isFavoriteAdd: true,
       addFavoriteData: {}, // 新增收藏所需的参数
@@ -1025,9 +1019,14 @@ export default {
     },
     // 搜索记录
     retrieveFavorite({ index_set_id: indexSetID, params }) {
-      delete params.search_fields;
-      this.indexId = String(indexSetID);
-      this.retrieveLog(params);
+      if (this.indexSetList.find(item => item.index_set_id === String(indexSetID))) {
+        this.isFavoriteSearch = true;
+        delete params.search_fields;
+        this.indexId = String(indexSetID);
+        this.retrieveLog(params);
+      } else {
+        this.messageError(this.$t('没有找到该记录下相关索引集'));
+      }
     },
     // 关闭收藏浮层
     closeFavoritePopper() {
@@ -1211,7 +1210,6 @@ export default {
           this.tableLoading = false;
         }
       } finally {
-        this.handleCheckKeywords(this.retrieveParams.keyword); // 检查语句是否有错误;
         // 如果是收藏检索并且开启检索显示, 则更新显示字段
         if (this.isFavoriteSearch && this.activeFavorite?.is_enable_display_fields) {
           const { display_fields: favoriteDisplayFields } = this.activeFavorite;
@@ -1750,24 +1748,6 @@ export default {
       this.activeFavorite = deepClone(value);
       this.activeFavoriteID = value.id;
       this.retrieveFavorite(deepClone(value));
-    },
-    async handleCheckKeywords(keyword) { // 检查检索语句是否有误
-      if (keyword === '') keyword = '*';
-      try {
-        const res = await this.$http.request('favorite/checkKeywords', {
-          data: { keyword },
-        });
-        this.checkKeywordData = {
-          isKeywordsError: !res.data.is_legal,
-          resetKeyword: res.data.keyword,
-        };
-      } catch (error) {}
-    },
-    clearCheckData() { // 清空自动搜索的
-      this.checkKeywordData = {
-        isKeywordsError: false,
-        resetKeyword: '',
-      };
     },
     // 收藏列表刷新, 判断当前是否有点击活跃的收藏 如有则进行数据更新
     async updateActiveFavoriteData(value) {
