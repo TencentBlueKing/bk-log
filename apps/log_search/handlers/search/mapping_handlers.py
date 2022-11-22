@@ -36,6 +36,7 @@ from apps.log_search.constants import (
     LOG_ASYNC_FIELDS,
     FEATURE_ASYNC_EXPORT_COMMON,
     FieldDataTypeEnum,
+    DEFAULT_INDEX_OBJECT_FIELDS_PRIORITY,
 )
 from apps.utils.cache import cache_ten_minute
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
@@ -46,11 +47,7 @@ from apps.log_search.exceptions import (
     FieldsDateNotExistException,
     IndexSetNotHaveConflictIndex,
 )
-from apps.log_search.models import (
-    LogIndexSet,
-    Scenario,
-    UserIndexSetConfig,
-)
+from apps.log_search.models import LogIndexSet, Scenario, UserIndexSetConfig, LogIndexSetData
 from apps.utils.local import get_local_param
 from apps.utils.time_handler import generate_time_range
 
@@ -225,66 +222,53 @@ class MappingHandlers(object):
 
     def _get_default_fields(self, final_fields_list):
         """默认字段"""
-        display_fields_list = []
-        final_field_name_list = [field["field_name"] for field in final_fields_list]
-        index_set_obj = LogIndexSet.objects.filter(index_set_id=self.index_set_id).first()
+        display_fields_list = [self._get_time_field(), self._get_object_field(final_fields_list)]
+        display_fields_list.extend(self._get_text_fields(final_fields_list))
 
-        def get_text_fields():
-            """获取text类型字段"""
-            text_fields = []
-            if "log" in final_field_name_list:
-                text_fields.append("log")
-            type_text_fields = [field["field_name"] for field in final_fields_list if field["field_type"] == "text"]
-            if "log" in text_fields and "log" in type_text_fields:
-                type_text_fields.remove("log")
-            if type_text_fields:
-                text_fields.append(type_text_fields[0])
-                return time_fields
-            type_keyword_fields = [
-                field["field_name"] for field in final_fields_list if field["field_type"] == "keyword"
-            ]
-            if "log" in text_fields and "log" in type_keyword_fields:
-                type_keyword_fields.remove("log")
-            if type_keyword_fields:
-                text_fields.append(type_keyword_fields[0])
-            return text_fields
-
-        # 索引不存在时间字段时候的优先顺序
-        time_fields = ["dteventtimestamp", "dtEventTimeStamp", "timestamp"]
-        # 对象字段优先顺序
-        object_fields = ["__ext.io_kubernetes_pod", "serverIp", "ip"]
-
-        # 先取索引的时间字段, 不存在则按照优先顺序区
-        index_set_time_field = index_set_obj.time_field
-        if index_set_time_field and index_set_time_field not in time_fields:
-            time_fields = [index_set_time_field] + time_fields
-        for time_field in time_fields:
-            if time_field in final_field_name_list:
-                display_fields_list.append(time_field)
-                break
-        # 根据对象字段的优先顺序来确定字段
-        for object_field in object_fields:
-            if object_field in final_field_name_list:
-                display_fields_list.append(object_field)
-                break
-        # 动态获取text字段
-        for text_field in get_text_fields():
-            if text_field in final_field_name_list:
-                display_fields_list.append(text_field)
-
-        # 移除下划线前缀的字段
-        for display_field in display_fields_list:
-            if display_field.startswith("_") and display_field != "__ext.io_kubernetes_pod":
-                display_fields_list.remove(display_field)
-
-        for field_n in range(len(final_field_name_list)):
-            field_name = final_field_name_list[field_n]
+        for field_n in range(len(final_fields_list)):
+            field_name = final_fields_list[field_n]["field_name"]
             if field_name in display_fields_list:
                 final_fields_list[field_n]["is_display"] = True
             else:
                 final_fields_list[field_n]["is_display"] = False
 
         return final_fields_list, display_fields_list
+
+    def _get_time_field(self):
+        """获取索引时间字段"""
+        index_set_obj: LogIndexSet = LogIndexSet.objects.filter(index_set_id=self.index_set_id).first()
+        if index_set_obj.time_field:
+            return index_set_obj.time_field
+
+        index_set_obj: LogIndexSetData = LogIndexSetData.objects.filter(index_set_id=self.index_set_id).first()
+        return index_set_obj.time_field
+
+    def _get_object_field(self, final_fields_list):
+        """获取对象字段"""
+        final_field_name_list = [field["field_name"] for field in final_fields_list]
+        for field in DEFAULT_INDEX_OBJECT_FIELDS_PRIORITY:
+            if field in final_field_name_list:
+                return field
+        return ""
+
+    def _get_text_fields(self, final_fields_list: list):
+        """获取text类型字段"""
+        final_field_name_list = [field["field_name"] for field in final_fields_list]
+        if "log" in final_field_name_list:
+            return ["log"]
+        type_text_fields = [
+            field["field_name"]
+            for field in final_fields_list
+            if field["field_type"] == "text" and not field["field_name"].startswith("_")
+        ]
+        if type_text_fields:
+            return type_text_fields[:2] if len(type_text_fields) > 2 else type_text_fields
+        type_keyword_fields = [
+            field["field_name"]
+            for field in final_fields_list
+            if field["field_type"] == "keyword" and not field["field_name"].startswith("_")
+        ]
+        return type_keyword_fields[:2] if len(type_keyword_fields) > 2 else type_keyword_fields
 
     def _get_mapping(self):
         return self._get_latest_mapping(index_set_id=self.index_set_id)
