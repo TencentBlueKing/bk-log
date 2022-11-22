@@ -47,7 +47,7 @@ class BkLogJsonEtlStorage(EtlStorage):
         option = {
             "retain_original_text": etl_params.get("retain_original_text", False),
             "separator_node_source": "data",
-            "separator_node_action": "json",
+            "separator_node_action": etl_params.get("separator_node_action", "json"),
             "separator_node_name": self.separator_node_name,
             "separator_fields_remove": "",
             "etl_flat": etl_params.get("etl_flat", False),

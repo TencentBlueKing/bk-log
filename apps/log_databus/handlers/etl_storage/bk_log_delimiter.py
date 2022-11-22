@@ -77,7 +77,7 @@ class BkLogDelimiterEtlStorage(EtlStorage):
         option = {
             "retain_original_text": etl_params.get("retain_original_text", False),
             "separator_node_source": "data",
-            "separator_node_action": "delimiter",
+            "separator_node_action": etl_params.get("separator_node_action", "delimiter"),
             "separator_node_name": self.separator_node_name,
             "separator": etl_params["separator"],
             "etl_flat": etl_params.get("etl_flat", False),
