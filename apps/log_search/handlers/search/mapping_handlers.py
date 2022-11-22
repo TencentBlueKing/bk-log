@@ -46,6 +46,7 @@ from apps.log_search.exceptions import (
     SearchGetSchemaException,
     FieldsDateNotExistException,
     IndexSetNotHaveConflictIndex,
+    SearchNotTimeFieldType,
 )
 from apps.log_search.models import LogIndexSet, Scenario, UserIndexSetConfig, LogIndexSetData
 from apps.utils.local import get_local_param
@@ -222,7 +223,9 @@ class MappingHandlers(object):
 
     def _get_default_fields(self, final_fields_list):
         """默认字段"""
-        display_fields_list = [self._get_time_field(), self._get_object_field(final_fields_list)]
+        display_fields_list = [self._get_time_field()]
+        if self._get_object_field(final_fields_list):
+            display_fields_list.append(self._get_object_field(final_fields_list))
         display_fields_list.extend(self._get_text_fields(final_fields_list))
 
         for field_n in range(len(final_fields_list)):
@@ -241,6 +244,9 @@ class MappingHandlers(object):
             return index_set_obj.time_field
 
         index_set_obj: LogIndexSetData = LogIndexSetData.objects.filter(index_set_id=self.index_set_id).first()
+        if not index_set_obj:
+            raise SearchNotTimeFieldType()
+
         return index_set_obj.time_field
 
     def _get_object_field(self, final_fields_list):
@@ -249,7 +255,7 @@ class MappingHandlers(object):
         for field in DEFAULT_INDEX_OBJECT_FIELDS_PRIORITY:
             if field in final_field_name_list:
                 return field
-        return ""
+        return None
 
     def _get_text_fields(self, final_fields_list: list):
         """获取text类型字段"""
@@ -262,13 +268,13 @@ class MappingHandlers(object):
             if field["field_type"] == "text" and not field["field_name"].startswith("_")
         ]
         if type_text_fields:
-            return type_text_fields[:2] if len(type_text_fields) > 2 else type_text_fields
+            return type_text_fields[:2]
         type_keyword_fields = [
             field["field_name"]
             for field in final_fields_list
             if field["field_type"] == "keyword" and not field["field_name"].startswith("_")
         ]
-        return type_keyword_fields[:2] if len(type_keyword_fields) > 2 else type_keyword_fields
+        return type_keyword_fields[:2]
 
     def _get_mapping(self):
         return self._get_latest_mapping(index_set_id=self.index_set_id)
