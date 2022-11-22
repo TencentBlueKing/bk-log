@@ -1502,4 +1502,5 @@ export default {
   不可删除: 'not deleted',
   自动转换成正确的英文名格式: 'Automatically convert to the correct English name format',
   自动转换: 'Automatically convert',
+  一键检测: 'One key detection',
 };

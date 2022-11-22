@@ -282,7 +282,7 @@
                 style="margin-left: 5px; font-size: 14px; font-weight: bold;"
                 slot="dropdown-trigger">
               </i>
-              <ul class="bk-dropdown-list" slot="dropdown-content">
+              <ul class="bk-dropdown-list collection-operation-list" slot="dropdown-content">
                 <!-- 查看详情 -->
                 <li>
                   <a
@@ -381,6 +381,11 @@
                     }"
                     @click.stop="operateHandler(props.row, 'clone')">{{ $t('克隆') }}</a>
                 </li>
+                <li>
+                  <a href="javascript:;" @click.stop="handleShowReport(props.row)">
+                    {{ $t('一键检测') }}
+                  </a>
+                </li>
               </ul>
             </bk-dropdown-menu>
           </div>
@@ -395,6 +400,10 @@
         </bk-table-column>
       </bk-table>
     </section>
+    <collection-report-view
+      v-model="reportDetailShow"
+      @closeReport="() => reportDetailShow = false"
+    />
   </section>
 </template>
 
@@ -403,9 +412,13 @@ import { projectManages } from '@/common/util';
 import collectedItemsMixin from '@/mixins/collected-items-mixin';
 import { mapGetters } from 'vuex';
 import * as authorityMap from '../../../../../common/authority-map';
+import CollectionReportView from '../../components/collection-report-view';
 
 export default {
   name: 'CollectionItem',
+  components: {
+    CollectionReportView,
+  },
   mixins: [collectedItemsMixin],
   data() {
     const settingFields = [
@@ -496,6 +509,8 @@ export default {
         fields: settingFields,
         selectedFields: settingFields.slice(1, 8),
       },
+      // 一键检测弹窗配置
+      reportDetailShow: false,
     };
   },
   computed: {
@@ -805,6 +820,10 @@ export default {
         });
       });
     },
+    handleShowReport(data) {
+      console.log(data);
+      this.reportDetailShow = true;
+    },
   },
 };
 </script>
@@ -920,6 +939,10 @@ export default {
     .bk-dropdown-list a.text-disabled:hover {
       color: #c4c6cc;
       cursor: not-allowed;
+    }
+
+    .collection-operation-list {
+      max-height: 190px;
     }
 
     .collect-table-operate {
