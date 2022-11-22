@@ -1125,3 +1125,71 @@ ERROR_MSG_CHECK_FIELDS_FROM_BKDATA = _(", 请在计算平台清洗中调整")
 ERROR_MSG_CHECK_FIELDS_FROM_LOG = _(", 请联系平台管理员")
 
 DEFAULT_INDEX_OBJECT_FIELDS_PRIORITY = ["__ext.io_kubernetes_pod", "serverIp", "ip"]
+
+
+class OperatorEnum:
+    EQ = {"operator": "=", "label": _("等于"), "placeholder": _("请选择或直接输入")}
+    NE = {"operator": "!=", "label": _("不等于"), "placeholder": _("请选择或直接输入")}
+    LT = {"operator": "<", "label": _("小于"), "placeholder": _("请选择或直接输入")}
+    LE = {"operator": "<=", "label": _("小于等于"), "placeholder": _("请选择或直接输入")}
+    GE = {"operator": ">", "label": _("大于"), "placeholder": _("请选择或直接输入")}
+    GT = {"operator": ">=", "label": _("大于等于"), "placeholder": _("请选择或直接输入")}
+    EXISTS = {"operator": "exists", "label": _("exists"), "placeholder": _("确认字段已存在")}
+    NOT_EXISTS = {"operator": "does not exists", "label": _("does not exists"), "placeholder": _("确认字段不存在")}
+
+
+OPERATORS = {
+    "keyword": [OperatorEnum.EQ, OperatorEnum.NE, OperatorEnum.EXISTS, OperatorEnum.NOT_EXISTS],
+    "text": [OperatorEnum.EXISTS, OperatorEnum.NOT_EXISTS],
+    "integer": [
+        OperatorEnum.EQ,
+        OperatorEnum.NE,
+        OperatorEnum.LT,
+        OperatorEnum.LE,
+        OperatorEnum.GE,
+        OperatorEnum.GT,
+        OperatorEnum.EXISTS,
+        OperatorEnum.NOT_EXISTS,
+    ],
+    "long": [
+        OperatorEnum.EQ,
+        OperatorEnum.NE,
+        OperatorEnum.LT,
+        OperatorEnum.LE,
+        OperatorEnum.GE,
+        OperatorEnum.GT,
+        OperatorEnum.EXISTS,
+        OperatorEnum.NOT_EXISTS,
+    ],
+    "double": [
+        OperatorEnum.EQ,
+        OperatorEnum.NE,
+        OperatorEnum.LT,
+        OperatorEnum.LE,
+        OperatorEnum.GE,
+        OperatorEnum.GT,
+        OperatorEnum.EXISTS,
+        OperatorEnum.NOT_EXISTS,
+    ],
+    "date": [
+        OperatorEnum.EQ,
+        OperatorEnum.NE,
+        OperatorEnum.LT,
+        OperatorEnum.LE,
+        OperatorEnum.GE,
+        OperatorEnum.GT,
+        OperatorEnum.EXISTS,
+        OperatorEnum.NOT_EXISTS,
+    ],
+    "bool": [OperatorEnum.EQ, OperatorEnum.NE, OperatorEnum.EXISTS, OperatorEnum.NOT_EXISTS],
+    "conflict": [
+        OperatorEnum.EQ,
+        OperatorEnum.NE,
+        OperatorEnum.LT,
+        OperatorEnum.LE,
+        OperatorEnum.GE,
+        OperatorEnum.GT,
+        OperatorEnum.EXISTS,
+        OperatorEnum.NOT_EXISTS,
+    ],
+}
