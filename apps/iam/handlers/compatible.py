@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 import copy
 
-from django.conf import settings
-
 from apps.utils.log import logger
 from iam import IAM
 from iam.exceptions import AuthAPIError
@@ -13,31 +11,18 @@ class CompatibleIAM(IAM):
     兼容模式的IAM客户端
     """
 
-    def _has_v1_actions(self):
-        """
-        是否存在V1的操作ID
-        """
-        ok, message, data = self._client.query(settings.BK_IAM_SYSTEM_ID)
-        if not ok:
-            return True
-        return "view_business" in [action["id"] for action in data["actions"]]
-
     def in_compatibility_mode(self):
         if hasattr(CompatibleIAM, "__compatibility_mode"):
             return getattr(CompatibleIAM, "__compatibility_mode")
 
-        if not self._has_v1_actions():
-            # 如果V1的操作不存在，则兼容模式必定关闭
-            compatibility_mode = False
-        else:
-            from apps.log_search.models import GlobalConfig
+        from apps.log_search.models import GlobalConfig
 
-            # 存在V1操作时，通过开关去判断是否开启兼容模式
-            try:
-                compatibility_mode = GlobalConfig.objects.get(config_id="IAM_V1_COMPATIBLE").configs
-            except GlobalConfig.DoesNotExist:
-                # 配置不存在时，默认打开兼容模式
-                compatibility_mode = True
+        # 存在V1操作时，通过开关去判断是否开启兼容模式
+        try:
+            compatibility_mode = GlobalConfig.objects.get(config_id="IAM_V1_COMPATIBLE").configs
+        except GlobalConfig.DoesNotExist:
+            # 配置不存在时，默认打开兼容模式
+            compatibility_mode = True
 
         setattr(CompatibleIAM, "__compatibility_mode", compatibility_mode)
 
