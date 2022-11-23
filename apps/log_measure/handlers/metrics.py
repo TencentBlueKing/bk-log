@@ -189,7 +189,12 @@ class BaseMetricCollector(object):
     @classmethod
     def append_total_metric(cls, metrics):
         total = sum(metric.metric_value for metric in metrics)
-        metrics.append(Metric(metric_name="total", metric_value=total,))
+        metrics.append(
+            Metric(
+                metric_name="total",
+                metric_value=total,
+            )
+        )
         return metrics
 
 
@@ -247,7 +252,12 @@ class MetricCollector(BaseMetricCollector):
 
         http_auth = (username, password) if username and password else None
         es_client = Elasticsearch(
-            hosts=[domain_name], http_auth=http_auth, scheme="http", port=port, verify_certs=False, timeout=10,
+            hosts=[domain_name],
+            http_auth=http_auth,
+            scheme="http",
+            port=port,
+            verify_certs=False,
+            timeout=10,
         )
         if not es_client.ping(params={"request_timeout": 10}):
             raise EsConnectFailException()
@@ -280,8 +290,8 @@ class MetricCollector(BaseMetricCollector):
                 metric_name="count",
                 metric_value=len(group["instances"]),
                 dimensions={
-                    "target_biz_id": biz_mapping[group["subscription_id"]]["bk_biz_id"],
-                    "target_biz_name": self.get_biz_name(biz_mapping[group["subscription_id"]]["bk_biz_id"]),
+                    "bk_biz_id": biz_mapping[group["subscription_id"]]["bk_biz_id"],
+                    "bk_biz_name": self.get_biz_name(biz_mapping[group["subscription_id"]]["bk_biz_id"]),
                     "category_id": biz_mapping[group["subscription_id"]]["category_id"],
                     "collector_config_id": biz_mapping[group["subscription_id"]]["collector_config_id"],
                 },

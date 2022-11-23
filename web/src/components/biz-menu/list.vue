@@ -34,10 +34,11 @@
       ]"
       @mousedown="handleProjectChange(item)"
     >
-      <span class="text" :title="item.space_name">
-        {{item.space_name}}
-        <span :class="`${theme}-item-code`" v-bk-overflow-tips>
-          ({{ item.space_type_id === eTagsType.biz ? `#${item.id}` : (item.space_id || item.space_code)}})
+      <span class="list-item-left">
+        <span class="list-item-name" v-bk-overflow-tips>{{ item.space_name }}</span>
+        <span :class="`list-item-id ${theme}-item-code`" v-bk-overflow-tips>
+          <!-- ({{ item.space_type_id === eTagsType.biz ? `#${item.id}` : (item.space_id || item.space_code)}}) -->
+          ({{ `#${item.space_id || item.space_code}` }})
         </span>
       </span>
       <span class="list-item-right">
