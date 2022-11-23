@@ -19,7 +19,7 @@ class CompatibleIAM(IAM):
         """
         ok, message, data = self._client.query(settings.BK_IAM_SYSTEM_ID)
         if not ok:
-            return False
+            return True
         return "view_business" in [action["id"] for action in data["actions"]]
 
     def in_compatibility_mode(self):
