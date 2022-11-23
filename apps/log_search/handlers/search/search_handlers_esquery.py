@@ -49,7 +49,6 @@ from apps.log_search.constants import (
     ASYNC_SORTED,
     FieldDataTypeEnum,
     MAX_EXPORT_REQUEST_RETRY,
-    DEFAULT_BK_CLOUD_ID,
     ERROR_MSG_CHECK_FIELDS_FROM_BKDATA,
     ERROR_MSG_CHECK_FIELDS_FROM_LOG,
 )
@@ -84,6 +83,7 @@ from apps.log_search.handlers.search.search_sort_builder import SearchSortBuilde
 from apps.log_search.handlers.search.pre_search_handlers import PreSearchHandlers
 from apps.log_search.constants import TimeFieldTypeEnum, TimeFieldUnitEnum
 from apps.utils.log import logger
+from apps.utils.lucene import generate_query_string
 
 max_len_dict = Dict[str, int]  # pylint: disable=invalid-name
 
@@ -744,56 +744,7 @@ class SearchHandler(object):
 
     @staticmethod
     def _build_query_string(history):
-        key_word = history["params"].get("keyword", "")
-        if key_word is None:
-            key_word = ""
-        query_string = key_word
-        # IP快选、过滤条件
-        host_scopes = history["params"].get("host_scopes", {})
-
-        target_nodes = host_scopes.get("target_nodes", [])
-
-        if target_nodes:
-            if host_scopes["target_node_type"] == TargetNodeTypeEnum.INSTANCE.value:
-                query_string += " AND ({})".format(
-                    ",".join([f"{target_node['bk_cloud_id']}:{target_node['ip']}" for target_node in target_nodes])
-                )
-            elif host_scopes["target_node_type"] == TargetNodeTypeEnum.DYNAMIC_GROUP.value:
-                # target_nodes: [
-                #   "11c290dc-66e8-11ec-84ba-1e84cfcf753a",
-                #   "11c290dc-66e8-11ec-84ba-1e84cfcf753a"
-                # ]
-                dynamic_name_list = [str(target_node["name"]) for target_node in target_nodes]
-                query_string += " AND (dynamic_group_name:" + ",".join(dynamic_name_list) + ")"
-            else:
-                first_node, *_ = target_nodes
-                target_list = [str(target_node["bk_inst_id"]) for target_node in target_nodes]
-                query_string += f" AND ({first_node['bk_obj_id']}:" + ",".join(target_list) + ")"
-
-        if host_scopes.get("modules"):
-            modules_list = [str(_module["bk_inst_id"]) for _module in host_scopes["modules"]]
-            query_string += " ADN (modules:" + ",".join(modules_list) + ")"
-            host_scopes["target_node_type"] = TargetNodeTypeEnum.TOPO.value
-            host_scopes["target_nodes"] = host_scopes["modules"]
-
-        if host_scopes.get("ips"):
-            query_string += " AND (ips:" + host_scopes["ips"] + ")"
-            host_scopes["target_node_type"] = TargetNodeTypeEnum.INSTANCE.value
-            host_scopes["target_nodes"] = [
-                {"ip": ip, "bk_cloud_id": DEFAULT_BK_CLOUD_ID} for ip in host_scopes["ips"].split(",")
-            ]
-
-        additions = history["params"].get("addition", [])
-
-        if additions:
-            query_string += (
-                " AND ("
-                + " AND ".join(
-                    [f'{addition["field"]} {addition["operator"]} {addition["value"]}' for addition in additions]
-                )
-                + ")"
-            )
-        history["query_string"] = query_string
+        history["query_string"] = generate_query_string(history["params"])
         return history
 
     @staticmethod

@@ -26,6 +26,8 @@ from apps.constants import (
 )
 
 from apps.exceptions import UnknownLuceneOperatorException
+from apps.log_databus.constants import TargetNodeTypeEnum
+from apps.log_search.constants import DEFAULT_BK_CLOUD_ID, BOOL_OPERATORS_VALUES
 
 
 def get_node_lucene_syntax(node):
@@ -513,3 +515,53 @@ class LuceneSyntaxResolver(object):
             "message": "\n".join(self.messages),
             "keyword": self.keyword,
         }
+
+
+def generate_query_string(params: dict) -> str:
+    """生成查询字符串"""
+    key_word = params.get("keyword", "")
+    if key_word is None:
+        key_word = ""
+    query_string = key_word
+    host_scopes = params.get("host_scopes", {})
+    target_nodes = host_scopes.get("target_nodes", [])
+
+    if target_nodes:
+        if host_scopes["target_node_type"] == TargetNodeTypeEnum.INSTANCE.value:
+            query_string += " AND ({})".format(
+                ",".join([f"{target_node['bk_cloud_id']}:{target_node['ip']}" for target_node in target_nodes])
+            )
+        elif host_scopes["target_node_type"] == TargetNodeTypeEnum.DYNAMIC_GROUP.value:
+            dynamic_name_list = [str(target_node["name"]) for target_node in target_nodes]
+            query_string += " AND (dynamic_group_name:" + ",".join(dynamic_name_list) + ")"
+        else:
+            first_node, *_ = target_nodes
+            target_list = [str(target_node["bk_inst_id"]) for target_node in target_nodes]
+            query_string += f" AND ({first_node['bk_obj_id']}:" + ",".join(target_list) + ")"
+
+    if host_scopes.get("modules"):
+        modules_list = [str(_module["bk_inst_id"]) for _module in host_scopes["modules"]]
+        query_string += " AND (modules:" + ",".join(modules_list) + ")"
+        host_scopes["target_node_type"] = TargetNodeTypeEnum.TOPO.value
+        host_scopes["target_nodes"] = host_scopes["modules"]
+
+    if host_scopes.get("ips"):
+        query_string += " AND (ips:" + host_scopes["ips"] + ")"
+        host_scopes["target_node_type"] = TargetNodeTypeEnum.INSTANCE.value
+        host_scopes["target_nodes"] = [
+            {"ip": ip, "bk_cloud_id": DEFAULT_BK_CLOUD_ID} for ip in host_scopes["ips"].split(",")
+        ]
+
+    additions = params.get("addition", [])
+    if additions:
+        str_additions = []
+        for addition in additions:
+            if addition["operator"] in BOOL_OPERATORS_VALUES.keys():
+                str_additions.append(
+                    f'{addition["field"]} {addition["operator"]} {BOOL_OPERATORS_VALUES[addition["operator"]]}'
+                )
+            else:
+                str_additions.append(f'{addition["field"]} {addition["operator"]} {addition["value"]}')
+
+        query_string += " AND (" + " AND ".join(str_additions) + ")"
+    return query_string

@@ -26,7 +26,8 @@ from django.conf import settings
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.feature_toggle.plugins.constants import USER_GUIDE_CONFIG
 from apps.iam import Permission, ActionEnum
-from apps.log_search.constants import UserMetaConfType
+from apps.log_search.constants import UserMetaConfType, UserFunctionGuideType
+from apps.log_search.exceptions import FunctionGuideException
 from apps.utils import APIModel
 from apps.api import BKLoginApi, CmsiApi, TransferApi
 from apps.log_search.models import ProjectInfo, UserMetaConf, Space
@@ -205,12 +206,36 @@ class MetaHandler(APIModel):
                 toggle_key: {**toggle_val, **{"current_step": user_meta_conf.conf.get(toggle_key, 0)}}
                 for toggle_key, toggle_val in feature_config.items()
             }
+        # 获取用户功能指引
+        user_function_guide, __ = UserMetaConf.objects.get_or_create(
+            username=username,
+            type=UserMetaConfType.FUNCTION_GUIDE,
+            defaults={"conf": {i: False for i in UserFunctionGuideType.get_keys()}},
+        )
+        meta_conf["function_guide"] = user_function_guide.conf
         return meta_conf
 
     @classmethod
     def update_user_guide(cls, username, user_guide_dict):
-        user_meta_conf = UserMetaConf.objects.filter(username=username, type=UserMetaConfType.USER_GUIDE).first()
-        if not user_meta_conf:
-            user_meta_conf = UserMetaConf.objects.create(username=username, type=UserMetaConfType.USER_GUIDE, conf={})
-        user_meta_conf.conf.update(user_guide_dict)
-        user_meta_conf.save()
+        if "default" in user_guide_dict.keys():
+            user_meta_conf = UserMetaConf.objects.filter(username=username, type=UserMetaConfType.USER_GUIDE).first()
+            if not user_meta_conf:
+                user_meta_conf = UserMetaConf.objects.create(
+                    username=username, type=UserMetaConfType.USER_GUIDE, conf={}
+                )
+            user_meta_conf.conf.update(user_guide_dict)
+            user_meta_conf.save()
+            return
+        # 非default的情况，只更新function_guide
+        for key in user_guide_dict.keys():
+            if key not in UserFunctionGuideType.get_keys():
+                raise FunctionGuideException()
+
+        user_function_guide = UserMetaConf.objects.filter(
+            username=username,
+            type=UserMetaConfType.FUNCTION_GUIDE,
+        ).first()
+        if not user_function_guide:
+            raise FunctionGuideException()
+        user_function_guide.conf.update(user_guide_dict)
+        user_function_guide.save()
