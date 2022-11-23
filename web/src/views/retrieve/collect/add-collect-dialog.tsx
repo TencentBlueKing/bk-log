@@ -155,7 +155,7 @@ export default class CollectDialog extends tsc<IProps> {
     return this.favoriteData.visible_type === 'public' ? this.publicGroupList : this.privateGroupList;
   }
 
-  handleSelectGroup(nVal) {
+  handleSelectGroup(nVal: number) {
     let visible_type = "public";
     this.isDisableSelect = false;
     nVal === this.privateGroupID && (visible_type = "private");
@@ -169,8 +169,11 @@ export default class CollectDialog extends tsc<IProps> {
   }
 
   @Emit("submit")
-  handleSubmitChange(value) {
-    return value;
+  handleSubmitChange(isSubmit: boolean, resValue?: object) {
+    return {
+      isSubmit,
+      resValue
+    };
   }
 
   async handleValueChange(value) {
@@ -291,7 +294,7 @@ export default class CollectDialog extends tsc<IProps> {
       });
       if (res.result) {
         this.handleShowChange();
-        this.handleSubmitChange(true);
+        this.handleSubmitChange(true, res.data);
       } else {
         this.handleSubmitChange(false);
       }

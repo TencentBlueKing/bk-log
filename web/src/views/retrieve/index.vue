@@ -1729,11 +1729,14 @@ export default {
         this.retrieveLog();
       }
     },
-    handleSubmitFavorite(isChange) {
+    handleSubmitFavorite({ isSubmit, resValue }) {
       // 新建或编辑收藏 刷新收藏列表
-      if (isChange) this.favoriteRequestID += 1;
-      if (!this.isShowCollect) this.collectWidth = 240;
-      this.isShowCollect = true;
+      if (isSubmit) {
+        this.favoriteRequestID += 1;
+        this.handleClickFavoriteItem(resValue);
+        if (!this.isShowCollect) this.collectWidth = 240;
+        this.isShowCollect = true;
+      };
     },
     // 点击收藏列表的收藏
     handleClickFavoriteItem(value) {
