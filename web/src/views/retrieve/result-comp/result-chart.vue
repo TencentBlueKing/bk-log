@@ -332,10 +332,10 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
   .monitor-echarts-container {
     position: relative;
-    height: 190px;
+    height: 160px;
     background-color: #fff;
     overflow: hidden;
 
@@ -350,12 +350,12 @@ export default {
 
     .converge-cycle {
       position: absolute;
-      top: 21px;
+      top: 17px;
       left: 80px;
       font-size: 12px;
       color: #63656e;
       display: inline-block;
-      margin-left: 32px;
+      margin-left: 24px;
 
       .select-custom {
         display: inline-block;
@@ -388,11 +388,21 @@ export default {
     }
 
     .title-wrapper {
-      padding: 18px 24px 0;
+      padding: 14px 24px 0;
     }
 
     .monitor-echart-wrap {
+      height: 106px;
       padding-top: 0;
+      padding-bottom: 0;
+
+      .chart-wrapper {
+        /* stylelint-disable-next-line declaration-no-important */
+        min-height: 116px !important;
+
+        /* stylelint-disable-next-line declaration-no-important */
+        max-height: 116px !important;
+      }
     }
   }
 </style>
