@@ -9,7 +9,7 @@ from apps.utils.log import logger
 from bkm_space.utils import space_uid_to_bk_biz_id
 
 
-@periodic_task(run_every=crontab(minute="*/1"))
+@periodic_task(run_every=crontab(minute="*/5"))
 @share_lock()
 def sync():
     """
