@@ -217,6 +217,7 @@ class MetaHandler(APIModel):
 
     @classmethod
     def update_user_guide(cls, username, user_guide_dict):
+        # 更新顶级菜单指引, user_guide_dict的key为 default
         if "default" in user_guide_dict.keys():
             user_meta_conf = UserMetaConf.objects.filter(username=username, type=UserMetaConfType.USER_GUIDE).first()
             if not user_meta_conf:
@@ -226,8 +227,8 @@ class MetaHandler(APIModel):
             user_meta_conf.conf.update(user_guide_dict)
             user_meta_conf.save()
             return
-        # 非default的情况，只更新function_guide
-        for key in user_guide_dict.keys():
+        # 更新新功能菜单指引, user_guide_dict的key为 function_guide
+        for key in user_guide_dict["function_guide"].keys():
             if key not in UserFunctionGuideType.get_keys():
                 raise FunctionGuideException()
 
@@ -237,5 +238,5 @@ class MetaHandler(APIModel):
         ).first()
         if not user_function_guide:
             raise FunctionGuideException()
-        user_function_guide.conf.update(user_guide_dict)
+        user_function_guide.conf.update(user_guide_dict["function_guide"])
         user_function_guide.save()
