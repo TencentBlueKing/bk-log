@@ -68,20 +68,15 @@ export default class CollectGroup extends tsc<ICollectProps> {
         <GroupDropdown
           data={this.collectItem}
           group-list={this.groupList}
-          is-hover-title={this.isHoverTitle}
-        >
-        </GroupDropdown>
-      ) : (
-        <span class="title-number">{this.collectItem.favorites.length}</span>
-      );
+          is-hover-title={this.isHoverTitle} />
+      ) : <span class="title-number">{this.collectItem.favorites.length}</span>;
     };
     const collectDropdownSlot = (item) => (
       <div onClick={() => (this.clickDrop = true)}>
         <GroupDropdown
           drop-type={"collect"}
           data={item}
-          group-list={this.groupList}
-        ></GroupDropdown>
+          group-list={this.groupList} />
       </div>
     );
     return (
@@ -93,21 +88,13 @@ export default class CollectGroup extends tsc<ICollectProps> {
               {
                 "is-active": !this.isShow,
                 "is-move-cur": !this.isSearchFilter && !this.isCannotChange,
-              },
+              }
             ]}
             onMouseenter={() => (this.isHoverTitle = true)}
             onMouseleave={() => (this.isHoverTitle = false)}
           >
-            <span
-              class="group-cur"
-              onClick={() => (this.isShow = !this.isShow)}
-            >
-              <span
-                class={[
-                  "bk-icon icon-play-shape",
-                  { "is-active": !this.isShow },
-                ]}
-              ></span>
+            <span class="group-cur" onClick={() => (this.isShow = !this.isShow)}>
+              <span class={["bk-icon icon-play-shape", { "is-active": !this.isShow }]}></span>
               <span>{this.collectItem.group_name}</span>
             </span>
             {groupDropdownSlot()}
@@ -117,22 +104,12 @@ export default class CollectGroup extends tsc<ICollectProps> {
           {this.collectItem.favorites.map((item, index) => (
             <div
               key={index}
-              class={[
-                "group-item",
-                { active: item.id === this.activeFavoriteID },
-              ]}
-              onClick={() => this.handleClickCollect(item)}
-            >
+              class={["group-item",{ active: item.id === this.activeFavoriteID }]}
+              onClick={() => this.handleClickCollect(item)}>
               <div class="group-item-left">
                 <div>
                   <p>
-                    <span
-                      class={{
-                        "active-name": item.id === this.activeFavoriteID,
-                      }}
-                    >
-                      {item.name}
-                    </span>
+                    <span class={{"active-name": item.id === this.activeFavoriteID}}>{item.name}</span>
                     {!item.is_active ? (
                        <span v-bk-tooltips={{content: this.$t('数据源不存在'), placement: 'right'}}>
                           <span class="bk-icon log-icon icon-shixiao"></span>

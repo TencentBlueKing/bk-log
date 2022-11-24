@@ -133,7 +133,7 @@ export default class CollectGroup extends tsc<IProps> {
         extCls: "more-container",
         onHidden: () => {
           // 删除实例
-          if (!this.operatePopoverInstance.props.hideOnClick) {
+          if (!this.operatePopoverInstance?.props.hideOnClick) {
             this.operatePopoverInstance?.destroy();
             this.operatePopoverInstance = null;
           }

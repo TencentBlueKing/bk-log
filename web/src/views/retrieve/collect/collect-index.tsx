@@ -40,7 +40,7 @@ import "./collect-index.scss";
 interface IProps {
   collectWidth: number;
   isShowCollect: boolean;
-  indexId: string;
+  favoriteRequestID: number;
   activeFavoriteID: number;
   visibleFields: Array<any>;
   favoriteList: any;
@@ -73,7 +73,7 @@ type visibleType = "private" | "public" | "unknown";
 export default class CollectIndex extends tsc<IProps> {
   @PropSync("width", { type: Number }) collectWidth: number;
   @PropSync("isShow", { type: Boolean }) isShowCollect: boolean;
-  @Prop({ type: String, required: true }) indexId: string;
+  @Prop({ type: Number, required: true }) favoriteRequestID: number;
   @Prop({ type: Boolean, required: true }) favoriteLoading: boolean;
   @Prop({ type: Array, required: true }) favoriteList: any;
   @Prop({ type: Number, required: true }) activeFavoriteID: number;
@@ -150,13 +150,13 @@ export default class CollectIndex extends tsc<IProps> {
   }
 
 
-  @Watch("indexId")
+  @Watch("favoriteRequestID")
   async handleChangeIndexSet() {
+    if (!this.isShowCollect) return;
     this.collectList = [];
     this.filterCollectList = [];
     this.groupList = [];
-    if (!this.isShowCollect) return;
-    await this.getFavoriteList();
+    this.getFavoriteList();
   }
 
   @Emit("handleClick")
@@ -168,6 +168,17 @@ export default class CollectIndex extends tsc<IProps> {
   handleUpdateActiveFavoriteData(value) {
     return value;
   }
+
+  @Emit('favoriteDialogSubmit')
+  handleSubmitFavoriteData({isEdit, resValue}) {
+    return {
+      isEdit, 
+      resValue
+    }
+  }
+
+  @Emit('requestFavoriteList')
+  getFavoriteList() {};
 
   async handleUserOperate(obj) {
     const { type, value } = obj;
@@ -313,23 +324,6 @@ export default class CollectIndex extends tsc<IProps> {
     } catch (error) {}
   }
 
-  /** 获取收藏列表 */
-  async getFavoriteList() {
-    try {
-      this.collectLoading = true;
-      const res = await $http.request("favorite/getFavoriteByGroupList", {
-        query: {
-          space_uid: this.spaceUid,
-          order_type: this.baseSortType,
-        },
-      });
-      this.handleInitFavoriteList(res.data);
-    } catch (error) {
-    } finally {
-      this.collectLoading = false;
-    }
-  }
-
   handleInitFavoriteList(value) {
     this.collectList = value;
     this.groupList = value.map((item) => ({
@@ -343,13 +337,17 @@ export default class CollectIndex extends tsc<IProps> {
     this.isShowGroupTitle = !(this.collectList.length === 2 && !this.collectList[0].favorites.length);
     this.filterCollectList = deepClone(this.collectList);
     if (this.activeFavoriteID >= 0) { // 获取列表后 判断当前是否有点击的活跃收藏 如果有 则进行数据更新
-      this.collectList.forEach(item => {
-        item.favorites.forEach(fItem=>{
+      let isFind = false;
+      for (const cItem of this.collectList) {
+        if (isFind) break;
+        for (const fItem of cItem.favorites) {
           if(fItem.id === this.activeFavoriteID) {
+            isFind = true;
             this.handleUpdateActiveFavoriteData(fItem);
+            break;
           }
-        })
-      })
+        }
+      }
     }
   };
 
@@ -385,7 +383,6 @@ export default class CollectIndex extends tsc<IProps> {
   async handleUpdateFavorite(favoriteData) {
     try {
       const {
-        index_set_id,
         params,
         name,
         group_id,
@@ -395,7 +392,6 @@ export default class CollectIndex extends tsc<IProps> {
       } = favoriteData;
       const { host_scopes, addition, keyword, search_fields } = params;
       const data = {
-        index_set_id,
         name,
         group_id,
         display_fields,
@@ -404,7 +400,6 @@ export default class CollectIndex extends tsc<IProps> {
         addition,
         keyword,
         search_fields,
-        space_uid: this.spaceUid,
       };
       const res = await $http.request("favorite/updateFavorite", {
         params: { id },
@@ -497,8 +492,7 @@ export default class CollectIndex extends tsc<IProps> {
                   ref="popoverSort"
                   tippy-options={this.tippyOption}
                   placement="bottom-start"
-                  ext-cls="sort-group-popover"
-                >
+                  ext-cls="sort-group-popover">
                   <div class="icon-box">
                     <span class="bk-icon icon-sort"></span>
                   </div>
@@ -528,13 +522,13 @@ export default class CollectIndex extends tsc<IProps> {
         ></div>
         <ManageGroupDialog 
           vModel={this.isShowManageDialog}
-          on-submit={(value) => value && this.getFavoriteList()} />
+          onSubmit={(value) => value && this.getFavoriteList()} />
         <AddCollectDialog
           vModel={this.isShowAddNewFavoriteDialog}
           favoriteID={this.editFavoriteID}
           isClickFavoriteEdit={this.isClickFavoriteEdit}
           visibleFields={this.visibleFields}
-          on-submit={(value) => value && this.getFavoriteList()} />
+          onSubmit={this.handleSubmitFavoriteData} />
       </div>
     );
   }

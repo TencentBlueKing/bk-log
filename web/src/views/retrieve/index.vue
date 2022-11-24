@@ -86,12 +86,14 @@
           :favorite-loading="favoriteLoading"
           :favorite-list="favoriteList"
           :style="{ width: collectWidth + 'px' }"
-          :index-id="`${favoriteRequestID}`"
+          :favorite-request-i-d="favoriteRequestID"
           :active-favorite="activeFavorite"
           :active-favorite-i-d="activeFavoriteID"
           :visible-fields="visibleFields"
           @handleClick="handleClickFavoriteItem"
-          @isRefreshFavorite="updateActiveFavoriteData" />
+          @isRefreshFavorite="updateActiveFavoriteData"
+          @favoriteDialogSubmit="handleSubmitFavorite"
+          @requestFavoriteList="getFavoriteList" />
         <!-- 检索详情页左侧 -->
         <div v-show="showRetrieveCondition" class="retrieve-condition" :style="{ width: leftPanelWidth + 'px' }">
           <!-- 监控显示的 tab 切换 -->
@@ -1021,9 +1023,9 @@ export default {
     retrieveFavorite({ index_set_id: indexSetID, params }) {
       if (this.indexSetList.find(item => item.index_set_id === String(indexSetID))) {
         this.isFavoriteSearch = true;
-        delete params.search_fields;
         this.indexId = String(indexSetID);
-        this.retrieveLog(params);
+        const {search_fields, ...reset} = params;
+        this.retrieveLog(reset);
       } else {
         this.messageError(this.$t('没有找到该记录下相关索引集'));
       }
@@ -1702,7 +1704,7 @@ export default {
         const res = await this.$http.request('favorite/getFavoriteByGroupList', {
           query: {
             space_uid: this.spaceUid,
-            order_type: this.baseSortType,
+            order_type: localStorage.getItem("favoriteSortType"),
           },
         });
         this.favoriteList = res.data;
@@ -1729,10 +1731,9 @@ export default {
         this.retrieveLog();
       }
     },
-    handleSubmitFavorite({ isSubmit, resValue }) {
-      // 新建或编辑收藏 刷新收藏列表
-      if (isSubmit) {
-        this.favoriteRequestID += 1;
+    handleSubmitFavorite({ isCreate, resValue }) {
+      this.favoriteRequestID += 1; // 编辑或新增刷新收藏列表
+      if (isCreate) { // 新建收藏 刷新收藏列表同时高亮显示新增的收藏
         this.handleClickFavoriteItem(resValue);
         if (!this.isShowCollect) this.collectWidth = 240;
         this.isShowCollect = true;
