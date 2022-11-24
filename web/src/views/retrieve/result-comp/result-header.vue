@@ -237,12 +237,13 @@ export default {
       ],
       isFirstCloseCollect: false,
       showSettingMenuList: [],
-      showCollectIntroGuide: localStorage.getItem('showCollectIntroGuide') !== 'false',
+      showCollectIntroGuide: false,
     };
   },
   computed: {
     ...mapState({
       bkBizId: state => state.bkBizId,
+      userGuideData: state => state.userGuideData,
     }),
     refreshTimeText() {
       return this.refreshTimeList.find(item => item.id === this.refreshTimeout).name;
@@ -264,6 +265,9 @@ export default {
         this.setIsShowExtract(val === 'log');
       },
     },
+  },
+  created() {
+    this.showCollectIntroGuide = this.userGuideData?.function_guide?.search_favorite ?? false;
   },
   mounted() {
     document.addEventListener('visibilitychange', this.handleVisibilityChange);
@@ -339,8 +343,15 @@ export default {
       }
     },
     handleCloseGuide() {
-      this.showCollectIntroGuide = false;
-      localStorage.setItem('showCollectIntroGuide', false);
+      this.$http.request('meta/updateUserGuide', {
+        data: { function_guide: 'search_favorite' },
+      })
+        .then(() => {
+          this.showCollectIntroGuide = false;
+        })
+        .catch((e) => {
+          console.warn(e);
+        });
     },
   },
 };
