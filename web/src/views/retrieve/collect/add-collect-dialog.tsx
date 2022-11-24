@@ -169,9 +169,9 @@ export default class CollectDialog extends tsc<IProps> {
   }
 
   @Emit("submit")
-  handleSubmitChange(isSubmit: boolean, resValue?: object) {
+  handleSubmitChange(isCreate: boolean, resValue?: object) {
     return {
-      isSubmit,
+      isCreate,
       resValue
     };
   }
@@ -190,7 +190,6 @@ export default class CollectDialog extends tsc<IProps> {
       this.isDisableSelect = this.favoriteData.visible_type === "private";
     } else {
       this.favoriteData = this.baseFavoriteData;
-      this.handleSubmitChange(false);
       this.handleShowChange();
     }
   }
@@ -269,8 +268,7 @@ export default class CollectDialog extends tsc<IProps> {
       is_enable_display_fields,
     } = subData;
     const { host_scopes, addition, keyword, search_fields } = params;
-    const data = {
-      index_set_id,
+    let data = {
       name,
       group_id,
       display_fields,
@@ -279,12 +277,13 @@ export default class CollectDialog extends tsc<IProps> {
       addition,
       keyword,
       search_fields,
-      space_uid: this.spaceUid,
       is_enable_display_fields,
     };
-    if (!this.isCreateFavorite) {
-      delete data.index_set_id
-      delete data.space_uid
+    if (this.isCreateFavorite) {
+      Object.assign(data, {
+        index_set_id,
+        space_uid: this.spaceUid
+      })
     }
     const requestStr = this.isCreateFavorite ? "createFavorite" : "updateFavorite";
     try {
@@ -293,10 +292,8 @@ export default class CollectDialog extends tsc<IProps> {
         data,
       });
       if (res.result) {
+        this.handleSubmitChange(this.isCreateFavorite, res.data);
         this.handleShowChange();
-        this.handleSubmitChange(true, res.data);
-      } else {
-        this.handleSubmitChange(false);
       }
     } catch (error) {}
   }

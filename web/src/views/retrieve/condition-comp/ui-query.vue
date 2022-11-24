@@ -33,6 +33,8 @@
 </template>
 
 <script>
+import { deepClone } from '../../../components/monitor-echarts/utils';
+
 export default {
   props: {
     activeFavorite: {
@@ -50,7 +52,8 @@ export default {
   },
   data() {
     return {
-      searchFieldsList: [],
+      searchFieldsList: [], // 表单展示字段
+      cacheFieldsList: [], // 修改字段之前的缓存字段
       loading: false,
     };
   },
@@ -60,7 +63,7 @@ export default {
       immediate: true,
       deep: true,
       handler(value) {
-        const keyword = this.isFavoriteSearch ? value?.params?.keyword : this.keyword; 
+        const keyword = this.isFavoriteSearch ? value?.params?.keyword : this.keyword;
         this.getSearchFieldsList(keyword, value?.params?.search_fields);
       },
     },
@@ -73,11 +76,16 @@ export default {
           data: { keyword },
         });
         this.searchFieldsList = res.data.filter(item => fieldsList.includes(item.name));
+        this.cacheFieldsList = deepClone(this.searchFieldsList); // 赋值缓存的展示字段
       } catch (error) {} finally {
         this.loading = false;
       }
     },
     async handleChangeValue() {
+      const cacheValueStr = this.cacheFieldsList.map(item => item.value).join(',');
+      const searchValueStr = this.searchFieldsList.map(item => item.value).join(',');
+      if (cacheValueStr === searchValueStr) return; // 鼠标失焦后判断每个值是否和缓存的一样 如果一样 则不请求
+      this.cacheFieldsList = deepClone(this.searchFieldsList); // 重新赋值缓存的展示字段
       const keyword = this.activeFavorite.params.keyword;
       const params = this.searchFieldsList
         .filter(item => Boolean(item.value))
