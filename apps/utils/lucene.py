@@ -27,7 +27,7 @@ from apps.constants import (
 
 from apps.exceptions import UnknownLuceneOperatorException
 from apps.log_databus.constants import TargetNodeTypeEnum
-from apps.log_search.constants import DEFAULT_BK_CLOUD_ID, BOOL_OPERATORS_VALUES
+from apps.log_search.constants import DEFAULT_BK_CLOUD_ID, OperatorEnum
 
 
 def get_node_lucene_syntax(node):
@@ -556,10 +556,8 @@ def generate_query_string(params: dict) -> str:
     if additions:
         str_additions = []
         for addition in additions:
-            if addition["operator"] in BOOL_OPERATORS_VALUES.keys():
-                str_additions.append(
-                    f'{addition["field"]} {addition["operator"]} {BOOL_OPERATORS_VALUES[addition["operator"]]}'
-                )
+            if addition["operator"] in [OperatorEnum.IS_TRUE["operator"], OperatorEnum.IS_FALSE["operator"]]:
+                str_additions.append(f'{addition["field"]} {addition["operator"]}')
             else:
                 str_additions.append(f'{addition["field"]} {addition["operator"]} {addition["value"]}')
 

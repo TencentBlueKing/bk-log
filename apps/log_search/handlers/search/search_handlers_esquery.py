@@ -81,7 +81,7 @@ from apps.log_search.handlers.biz import BizHandler
 from apps.log_search.handlers.search.mapping_handlers import MappingHandlers
 from apps.log_search.handlers.search.search_sort_builder import SearchSortBuilder
 from apps.log_search.handlers.search.pre_search_handlers import PreSearchHandlers
-from apps.log_search.constants import TimeFieldTypeEnum, TimeFieldUnitEnum
+from apps.log_search.constants import TimeFieldTypeEnum, TimeFieldUnitEnum, OperatorEnum
 from apps.utils.log import logger
 from apps.utils.lucene import generate_query_string
 
@@ -1034,6 +1034,9 @@ class SearchHandler(object):
             scenario_id=self.scenario_id,
             storage_cluster_id=self.storage_cluster_id,
         )
+        # 获取各个字段类型
+        final_fields_list, __ = mapping_handlers.get_all_fields_by_index_id()
+        field_type_map = {i["field_name"]: i["field_type"] for i in final_fields_list}
         filter_list: list = new_attrs.get("addition", [])
         new_filter_list: list = []
         for item in filter_list:
@@ -1052,6 +1055,11 @@ class SearchHandler(object):
             # 此处对于前端传递filter为空字符串需要放行
             if (not field or not value or not operator) and not isinstance(value, str):
                 continue
+            # bool类型的字段且操作符为 is true 和 is false的时候做转换
+            if field_type_map.get(field, "") == "bool":
+                if operator in [OperatorEnum.IS_TRUE["operator"], OperatorEnum.IS_FALSE["operator"]]:
+                    value = "is"
+                    operator = operator.split(" ")[-1]
 
             new_filter_list.append(
                 {"field": field, "value": value, "operator": operator, "condition": condition, "type": _type}

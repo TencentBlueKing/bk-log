@@ -1257,8 +1257,3 @@ OPERATORS = {
         OperatorEnum.NOT_EXISTS,
     ],
 }
-
-BOOL_OPERATORS_VALUES = {
-    OperatorEnum.IS_TRUE["operator"]: True,
-    OperatorEnum.IS_FALSE["operator"]: False,
-}
