@@ -218,9 +218,6 @@ export default {
         this.resetData();
       }
     },
-    filterFields(val) {
-      this.handleFieldChange(val[0]?.id);
-    },
   },
   created() {
     // 请求过滤条件符号
@@ -275,8 +272,8 @@ export default {
         this.operatorsKeyList = Object.keys(this.filterAllOperators);
       })
         .catch(e => console.warn(e));
-      this.localData = params;
       this.handleFieldChange(params.field);
+      this.localData = params;
       this.$nextTick(() => {
         Object.assign(this.coreData, params, {});
       });
@@ -311,7 +308,7 @@ export default {
       }
       this.isShowValue = ['exists', 'does not exists'].includes(operator);
       this.isHaveCompared = ['<', '<=', '>', '>='].includes(operator);
-      if (this.isHaveCompared) this.coreData.value = [''];
+      if (this.isHaveCompared) this.coreData.value = [this.coreData.value[0] || ''];
       for (const item of this.filterOperators) {
         if (item.operator === operator) {
           this.filterPlaceholder = item.placeholder || this.$t('form.pleaseEnter');
