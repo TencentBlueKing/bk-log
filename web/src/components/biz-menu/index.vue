@@ -387,7 +387,7 @@ export default {
         overflow: auto;
         border-radius: 2px;
         box-shadow: 0px 2px 6px 0px rgba(0,0,0,.20);
-        z-index: 1000;
+        z-index: 2000;
 
         .biz-list {
           display: flex;
