@@ -1058,8 +1058,8 @@ class SearchHandler(object):
             # bool类型的字段且操作符为 is true 和 is false的时候做转换
             if field_type_map.get(field, "") == "bool":
                 if operator in [OperatorEnum.IS_TRUE["operator"], OperatorEnum.IS_FALSE["operator"]]:
-                    value = "is"
-                    operator = operator.split(" ")[-1]
+                    operator = "is"
+                    value = operator.split(" ")[-1]
 
             new_filter_list.append(
                 {"field": field, "value": value, "operator": operator, "condition": condition, "type": _type}
