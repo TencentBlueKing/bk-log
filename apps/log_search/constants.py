@@ -1113,6 +1113,18 @@ class UserMetaConfType(object):
     """
 
     USER_GUIDE = "user_guide"
+    FUNCTION_GUIDE = "function_guide"
+
+
+class UserFunctionGuideType(ChoicesEnum):
+    """
+    用户功能引导类型
+    """
+
+    # 检索收藏
+    SEARCH_FAVORITE = "search_favorite"
+
+    _choices_keys = (SEARCH_FAVORITE,)
 
 
 # 索引集无数据检查缓存前缀
@@ -1173,3 +1185,75 @@ class FavoriteListOrderType(ChoicesEnum):
 
 INDEX_SET_NOT_EXISTED = _("索引集不存在")
 FULL_TEXT_SEARCH_FIELD_NAME = _("全文检索")
+
+
+class OperatorEnum:
+    """操作符枚举"""
+
+    EQ = {"operator": "is one of", "label": "=", "placeholder": _("请选择或直接输入，逗号分隔")}
+    NE = {"operator": "is not one of", "label": "!=", "placeholder": _("请选择或直接输入，逗号分隔")}
+    LT = {"operator": "<", "label": "<", "placeholder": _("请选择或直接输入")}
+    LE = {"operator": "<=", "label": "<=", "placeholder": _("请选择或直接输入")}
+    GE = {"operator": ">", "label": ">", "placeholder": _("请选择或直接输入")}
+    GT = {"operator": ">=", "label": ">=", "placeholder": _("请选择或直接输入")}
+    EXISTS = {"operator": "exists", "label": _("exists"), "placeholder": _("确认字段已存在")}
+    NOT_EXISTS = {"operator": "does not exists", "label": _("does not exists"), "placeholder": _("确认字段不存在")}
+    IS_TRUE = {"operator": "is true", "label": "is true", "placeholder": _("字段为true")}
+    IS_FALSE = {"operator": "is false", "label": "is false", "placeholder": _("字段为false")}
+
+
+OPERATORS = {
+    "keyword": [OperatorEnum.EQ, OperatorEnum.NE, OperatorEnum.EXISTS, OperatorEnum.NOT_EXISTS],
+    "text": [OperatorEnum.EXISTS, OperatorEnum.NOT_EXISTS],
+    "integer": [
+        OperatorEnum.EQ,
+        OperatorEnum.NE,
+        OperatorEnum.LT,
+        OperatorEnum.LE,
+        OperatorEnum.GE,
+        OperatorEnum.GT,
+        OperatorEnum.EXISTS,
+        OperatorEnum.NOT_EXISTS,
+    ],
+    "long": [
+        OperatorEnum.EQ,
+        OperatorEnum.NE,
+        OperatorEnum.LT,
+        OperatorEnum.LE,
+        OperatorEnum.GE,
+        OperatorEnum.GT,
+        OperatorEnum.EXISTS,
+        OperatorEnum.NOT_EXISTS,
+    ],
+    "double": [
+        OperatorEnum.EQ,
+        OperatorEnum.NE,
+        OperatorEnum.LT,
+        OperatorEnum.LE,
+        OperatorEnum.GE,
+        OperatorEnum.GT,
+        OperatorEnum.EXISTS,
+        OperatorEnum.NOT_EXISTS,
+    ],
+    "date": [
+        OperatorEnum.EQ,
+        OperatorEnum.NE,
+        OperatorEnum.LT,
+        OperatorEnum.LE,
+        OperatorEnum.GE,
+        OperatorEnum.GT,
+        OperatorEnum.EXISTS,
+        OperatorEnum.NOT_EXISTS,
+    ],
+    "bool": [OperatorEnum.IS_TRUE, OperatorEnum.IS_FALSE, OperatorEnum.EXISTS, OperatorEnum.NOT_EXISTS],
+    "conflict": [
+        OperatorEnum.EQ,
+        OperatorEnum.NE,
+        OperatorEnum.LT,
+        OperatorEnum.LE,
+        OperatorEnum.GE,
+        OperatorEnum.GT,
+        OperatorEnum.EXISTS,
+        OperatorEnum.NOT_EXISTS,
+    ],
+}

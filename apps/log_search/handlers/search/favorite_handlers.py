@@ -27,9 +27,7 @@ from django.db.transaction import atomic
 
 from apps.utils.local import get_request_username
 from apps.models import model_to_dict
-from apps.log_databus.constants import TargetNodeTypeEnum
 from apps.log_search.constants import (
-    DEFAULT_BK_CLOUD_ID,
     FavoriteVisibleType,
     FavoriteGroupType,
     FavoriteListOrderType,
@@ -42,10 +40,9 @@ from apps.log_search.exceptions import (
     FavoriteNotExistException,
     FavoriteVisibleTypeNotAllowedModifyException,
     FavoriteAlreadyExistException,
-    FavoriteNotAllowedDeleteException,
 )
 from apps.log_search.models import Favorite, FavoriteGroup, FavoriteGroupCustomOrder, LogIndexSet
-from apps.utils.lucene import LuceneParser, LuceneTransformer, LuceneSyntaxResolver
+from apps.utils.lucene import LuceneParser, LuceneTransformer, LuceneSyntaxResolver, generate_query_string
 
 
 class FavoriteHandler(object):
@@ -71,7 +68,7 @@ class FavoriteHandler(object):
             result["is_active"] = False
             result["index_set_name"] = INDEX_SET_NOT_EXISTED
 
-        result["query_string"] = self._generate_query_string(self.data.params)
+        result["query_string"] = generate_query_string(self.data.params)
         result["created_at"] = result["created_at"]
         result["updated_at"] = result["updated_at"]
         return result
@@ -211,64 +208,11 @@ class FavoriteHandler(object):
             )
 
     def delete(self):
-        # 只有收藏的创建者才可以删除
-        if self.data.created_by != self.username:
-            raise FavoriteNotAllowedDeleteException()
         self.data.delete()
 
     @staticmethod
     def batch_delete(id_list: list):
         Favorite.objects.filter(id__in=id_list).delete()
-
-    @staticmethod
-    def _generate_query_string(params):
-        key_word = params.get("keyword", "")
-        if key_word is None:
-            key_word = ""
-        query_string = key_word
-        host_scopes = params.get("host_scopes", {})
-        target_nodes = host_scopes.get("target_nodes", [])
-
-        if target_nodes:
-            if host_scopes["target_node_type"] == TargetNodeTypeEnum.INSTANCE.value:
-                query_string += " AND ({})".format(
-                    ",".join([f"{target_node['bk_cloud_id']}:{target_node['ip']}" for target_node in target_nodes])
-                )
-            elif host_scopes["target_node_type"] == TargetNodeTypeEnum.DYNAMIC_GROUP.value:
-                # target_nodes: [
-                #   "11c290dc-66e8-11ec-84ba-1e84cfcf753a",
-                #   "11c290dc-66e8-11ec-84ba-1e84cfcf753a"
-                # ]
-                dynamic_name_list = [str(target_node["name"]) for target_node in target_nodes]
-                query_string += " AND (dynamic_group_name:" + ",".join(dynamic_name_list) + ")"
-            else:
-                first_node, *_ = target_nodes
-                target_list = [str(target_node["bk_inst_id"]) for target_node in target_nodes]
-                query_string += f" AND ({first_node['bk_obj_id']}:" + ",".join(target_list) + ")"
-
-        if host_scopes.get("modules"):
-            modules_list = [str(_module["bk_inst_id"]) for _module in host_scopes["modules"]]
-            query_string += " ADN (modules:" + ",".join(modules_list) + ")"
-            host_scopes["target_node_type"] = TargetNodeTypeEnum.TOPO.value
-            host_scopes["target_nodes"] = host_scopes["modules"]
-
-        if host_scopes.get("ips"):
-            query_string += " AND (ips:" + host_scopes["ips"] + ")"
-            host_scopes["target_node_type"] = TargetNodeTypeEnum.INSTANCE.value
-            host_scopes["target_nodes"] = [
-                {"ip": ip, "bk_cloud_id": DEFAULT_BK_CLOUD_ID} for ip in host_scopes["ips"].split(",")
-            ]
-
-        additions = params.get("addition", [])
-        if additions:
-            query_string += (
-                " AND ("
-                + " AND ".join(
-                    [f'{addition["field"]} {addition["operator"]} {addition["value"]}' for addition in additions]
-                )
-                + ")"
-            )
-        return query_string
 
     @staticmethod
     def get_search_fields(keyword: str) -> list:

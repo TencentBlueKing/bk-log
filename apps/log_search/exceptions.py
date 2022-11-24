@@ -388,11 +388,6 @@ class FavoriteGroupNotAllowedDeleteException(BaseException):
     MESSAGE = _("只有公开收藏组可以删除")
 
 
-class FavoriteNotAllowedDeleteException(BaseException):
-    ERROR_CODE = "434"
-    MESSAGE = _("只有收藏创建者才可以删除")
-
-
 # =================================================
 # 导出
 # =================================================
@@ -436,3 +431,8 @@ class BkJwtVerifyFailException(BasePermException):
 class SettingMenuException(BasePermException):
     ERROR_CODE = "1001"
     MESSAGE = _("配置中menu对象异常")
+
+
+class FunctionGuideException(BaseException):
+    ERROR_CODE = "1002"
+    MESSAGE = _("不存在该功能引导")
