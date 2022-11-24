@@ -40,7 +40,6 @@ from apps.log_search.exceptions import (
     FavoriteNotExistException,
     FavoriteVisibleTypeNotAllowedModifyException,
     FavoriteAlreadyExistException,
-    FavoriteNotAllowedDeleteException,
 )
 from apps.log_search.models import Favorite, FavoriteGroup, FavoriteGroupCustomOrder, LogIndexSet
 from apps.utils.lucene import LuceneParser, LuceneTransformer, LuceneSyntaxResolver, generate_query_string
@@ -209,9 +208,6 @@ class FavoriteHandler(object):
             )
 
     def delete(self):
-        # 只有收藏的创建者才可以删除
-        if self.data.created_by != self.username:
-            raise FavoriteNotAllowedDeleteException()
         self.data.delete()
 
     @staticmethod

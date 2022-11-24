@@ -388,11 +388,6 @@ class FavoriteGroupNotAllowedDeleteException(BaseException):
     MESSAGE = _("只有公开收藏组可以删除")
 
 
-class FavoriteNotAllowedDeleteException(BaseException):
-    ERROR_CODE = "434"
-    MESSAGE = _("只有收藏创建者才可以删除")
-
-
 # =================================================
 # 导出
 # =================================================
