@@ -206,11 +206,11 @@ class MetaHandler(APIModel):
                 toggle_key: {**toggle_val, **{"current_step": user_meta_conf.conf.get(toggle_key, 0)}}
                 for toggle_key, toggle_val in feature_config.items()
             }
-        # 获取用户功能指引
+        # 获取用户功能指引, 语义为 是否展示, 所以默认值为 True
         user_function_guide, __ = UserMetaConf.objects.get_or_create(
             username=username,
             type=UserMetaConfType.FUNCTION_GUIDE,
-            defaults={"conf": {i: False for i in UserFunctionGuideType.get_keys()}},
+            defaults={"conf": {i: True for i in UserFunctionGuideType.get_keys()}},
         )
         meta_conf["function_guide"] = user_function_guide.conf
         return meta_conf
@@ -227,10 +227,10 @@ class MetaHandler(APIModel):
             user_meta_conf.conf.update(user_guide_dict)
             user_meta_conf.save()
             return
-        # 更新新功能菜单指引, user_guide_dict的key为 function_guide
-        for key in user_guide_dict["function_guide"].keys():
-            if key not in UserFunctionGuideType.get_keys():
-                raise FunctionGuideException()
+        # 更新新功能菜单指引, 和前端达成一致传入的是 {"function_guide": "search_favorite"}
+        update_function_guide = user_guide_dict["function_guide"]
+        if update_function_guide not in UserFunctionGuideType.get_keys():
+            raise FunctionGuideException()
 
         user_function_guide = UserMetaConf.objects.filter(
             username=username,
@@ -238,5 +238,6 @@ class MetaHandler(APIModel):
         ).first()
         if not user_function_guide:
             raise FunctionGuideException()
-        user_function_guide.conf.update(user_guide_dict["function_guide"])
+        # 更新用户功能指引, 语义为 是否展示, 所以更新后的值为 False
+        user_function_guide.conf[update_function_guide] = False
         user_function_guide.save()
