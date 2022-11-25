@@ -91,7 +91,8 @@ class BkLogDelimiterEtlStorage(EtlStorage):
         user_fields = {}
         max_index = 0
         for field in fields:
-            field_index = int(field["field_index"])
+            # 兼容field_index在option中
+            field_index = int(field.get("field_index") or field.get("option", {}).get("field_index"))
             user_fields[str(field_index)] = field
             if field_index > max_index:
                 max_index = field_index
