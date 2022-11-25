@@ -130,6 +130,10 @@ export default {
       type: Object,
       required: true,
     },
+    filterAllOperators: {
+      type: Object,
+      required: true,
+    },
     totalFields: {
       type: Array,
       required: true,
@@ -157,12 +161,9 @@ export default {
       },
       valueList: [{ id: '', name: `-${this.$t('空')}-` }], // 字段可选值列表
       filterPlaceholder: '',
-      filterAllOperators: {}, // 操作对象
-      operatorsKeyList: [], // 请求后的操作键名 用于过滤可选的字段
       isHaveCompared: false, // 是否有大小对比的值
       showFilterPopover: false,
       isShowValue: false,
-      isInit: true,
     };
   },
   computed: {
@@ -210,6 +211,9 @@ export default {
     getOperatorLength() { // 是否是对比的操作 如果是 则值限制只能输入1个
       return this.isHaveCompared ? 1 : -1;
     },
+    operatorsKeyList() {  // 请求后的操作键名 用于过滤可选的字段
+      return Object.keys(this.filterAllOperators);
+    },
   },
   watch: {
     // 每次检索时请求更新
@@ -220,14 +224,6 @@ export default {
     },
   },
   created() {
-    // 请求过滤条件符号
-    this.$http.request('retrieve/getOperators').then((res) => {
-      this.filterAllOperators = res.data || {};
-      this.operatorsKeyList = Object.keys(this.filterAllOperators);
-      const operatorsFirstItem = Object.values(this.filterAllOperators)[0]?.[0];
-      this.handleOperatorChange(operatorsFirstItem?.operator || 'is');
-    })
-      .catch(e => console.warn(e));
     this.setDefaultEditValue();
   },
   mounted() {
@@ -238,15 +234,8 @@ export default {
   },
   methods: {
     handlePopoverShow() {
-      if (this.isAdd && this.isInit) {
-        this.$http.request('retrieve/getOperators').then((res) => {
-          this.filterAllOperators = res.data || {};
-          this.operatorsKeyList = Object.keys(this.filterAllOperators);
-          const operatorsFirstItem = Object.values(this.filterAllOperators)[0]?.[0];
-          this.handleOperatorChange(operatorsFirstItem?.operator || 'is');
-        });
-      }
-      this.isInit = false;
+      const operatorsFirstItem = Object.values(this.filterAllOperators)[0]?.[0];
+      this.handleOperatorChange(operatorsFirstItem?.operator || 'is');
       this.setDefaultEditValue();
       this.showFilterPopover = true;
     },
@@ -267,11 +256,6 @@ export default {
         ...this.editData,
         value: this.editData.value.toString().split(','),
       };
-      this.$http.request('retrieve/getOperators').then((res) => {
-        this.filterAllOperators = res.data || {};
-        this.operatorsKeyList = Object.keys(this.filterAllOperators);
-      })
-        .catch(e => console.warn(e));
       this.handleFieldChange(params.field);
       this.localData = params;
       this.$nextTick(() => {

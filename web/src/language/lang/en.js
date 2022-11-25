@@ -1567,4 +1567,5 @@ export default {
   研发项目: 'Research project',
   PaaS应用: 'PaaS application',
   错误原因: 'Wrong reason',
+  个收藏: 'favorite',
 };

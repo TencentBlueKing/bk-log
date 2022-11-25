@@ -363,7 +363,7 @@ export default {
     justify-content: space-between;
     // align-items: center;
     width: 100%;
-    height: 52px;
+    height: 48px;
     color: #63656e;
     background: #fff;
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .1);
@@ -412,7 +412,7 @@ export default {
           text-align: center;
           font-size: 14px;
           color: #fff;
-          background: #979ba5;
+          background: #699DF4;
           border-radius: 2px;
           cursor: pointer;
 

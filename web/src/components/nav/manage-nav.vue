@@ -130,7 +130,7 @@ export default {
     display: flex;
     align-items: center;
     width: 100%;
-    height: 52px;
+    height: 48px;
     padding: 0 20px;
     line-height: 24px;
     background-color: #fff;

@@ -90,7 +90,7 @@ const settingFields = [ // 设置显示的字段
   },
   {
     id: "is_show_switch",
-    label: window.mainComponent.$t("是否同时显示字段"),
+    label: window.mainComponent.$t("显示字段"),
   },
   {
     id: "updated_by",
@@ -104,12 +104,10 @@ const settingFields = [ // 设置显示的字段
 
 @Component
 export default class GroupDialog extends tsc<IProps> {
-  @Ref("popoverGroup") popoverGroupRef: Popover;
   @Model("change", { type: Boolean, default: false }) value: IProps["value"];
   searchValue = ""; // 搜索字段
   tableLoading = false;
   isShowDeleteDialog = false;
-  showTableList: IFavoriteItem[] = []; // 展示用的表格数据
   tableList: IFavoriteItem[] = []; // 表格数据;
   operateTableList: IFavoriteItem[] = []; // 用户操作操作缓存表格数据;
   submitTableList: IFavoriteItem[] = []; // 修改提交的表格数据;
@@ -125,21 +123,12 @@ export default class GroupDialog extends tsc<IProps> {
   unknownGroupID = 0;
   privateGroupID = 0;
   isCannotValueChange = false; // 用于分组时不进行数据更新
+  maxHeight = 300;
   tippyOption = {
     trigger: "click",
     interactive: true,
     theme: "light",
   };
-  pageNumber = 1;
-  paginationConfig = { // 页数设置对象
-    current: 1,
-    limit: 5,
-    count: 1,
-    align: "right",
-    showLimit: false,
-    limitList: [5, 10, 20, 50],
-  };
-  isShowAddPage = true;
   isShowAddGroup = true;
   cannotComparedData = [ // 不进行对比的字段 （前端操作缓存自加的字段）
     "search_fields_select_list",
@@ -150,7 +139,6 @@ export default class GroupDialog extends tsc<IProps> {
   ];
   sourceFilters = []; // 所属组数组
   updateSourceFilters = []; // 更变人过滤数组
-  pageSizeList = [5, 10, 20, 50]; // 页数
 
   tableKey = random(10);
 
@@ -182,6 +170,10 @@ export default class GroupDialog extends tsc<IProps> {
     return this.selectFavoriteList.length;
   }
 
+  get showFavoriteCount() {
+    return this.searchAfterList.length;
+  }
+
   @Watch("selectFavoriteList", { deep: true })
   watchSelectListLength(list) {
     // 监听选择数据的数量 改变全选的check状态
@@ -206,6 +198,11 @@ export default class GroupDialog extends tsc<IProps> {
     return value;
   }
 
+  mounted() {
+    const initTableHeight = parseInt(`${(document.body.clientHeight * 0.8)  - 240}`);
+    this.maxHeight = initTableHeight > this.maxHeight ? initTableHeight : this.maxHeight;
+  }
+
   async handleValueChange(value) {
     if (value) {
       // 展开
@@ -215,11 +212,11 @@ export default class GroupDialog extends tsc<IProps> {
       // 关闭
       this.tableList = [];
       this.operateTableList = [];
-      this.showTableList = [];
       this.submitTableList = [];
       this.selectFavoriteList = [];
       this.groupList = [];
       this.updateSourceFilters = [];
+      this.searchAfterList = [];
       this.handleShowChange();
     }
   }
@@ -249,15 +246,11 @@ export default class GroupDialog extends tsc<IProps> {
     } else {
       searchList = this.operateTableList;
     }
+    setTimeout(() => {
+      this.tableLoading = false;
     // 赋值搜索过后的列表
     this.searchAfterList = searchList;
-    setTimeout(() => {
-      // 页数最少为1
-      const count = !!searchList.length ? searchList.length : 1;
-      Object.assign(this.paginationConfig, { current: 1, count });
       this.selectFavoriteList = [];
-      this.showTableList = this.getShowTableListByPage(searchList);
-      this.tableLoading = false;
     }, 500);
   }
   /** 全选操作 */
@@ -290,27 +283,15 @@ export default class GroupDialog extends tsc<IProps> {
       });
       const updateSourceFiltersSet = new Set();
       const initList = res.data.map((item) => {
-        const group_option = this.unPrivateList;
-        let group_option_private = []; // 这里存两个分组数组的原因是切换可见范围时 所属组也会切换成对应的可见范围所属组
-        let visible_option;
-        // 初始化表格, 判断当前的收藏是否是个人创建 若不是个人则不显示个人组
-        if (item.created_by === this.userMeta.username) {
-          group_option_private = this.privateList;
-          visible_option = this.allOptionList;
-        } else {
-          visible_option = this.unPrivateOptionList;
-        }
-        // 初始化表单字段
-        const search_fields_select_list = item.search_fields.map((item) => ({
-          name: item,
-        }));
+        const visible_option = item.created_by === this.userMeta.username ? this.allOptionList : this.unPrivateOptionList;
+        const search_fields_select_list = item.search_fields.map((item) => ({name: item})); // 初始化表单字段
         const is_group_disabled = item.visible_type === 'private';
         if (!updateSourceFiltersSet.has(item.updated_by)) updateSourceFiltersSet.add(item.updated_by);
         return {
           ...item,
           search_fields_select_list,
-          group_option,
-          group_option_private,
+          group_option: this.unPrivateList,
+          group_option_private: this.privateList,
           visible_option,
           is_group_disabled,
         };
@@ -322,7 +303,6 @@ export default class GroupDialog extends tsc<IProps> {
       this.tableList = res.data;
       this.operateTableList = initList;
       this.searchAfterList = initList;
-      Object.assign(this.paginationConfig, { count: this.tableList.length });
     } catch (error) {
     } finally {
       this.tableLoading = false;
@@ -330,7 +310,7 @@ export default class GroupDialog extends tsc<IProps> {
     }
   }
   /** 获取组列表 */
-  async getGroupList() {
+  async getGroupList(isAddGroup = false) {
     try {
       const res = await $http.request("favorite/getGroupList", {
         query: {
@@ -352,6 +332,15 @@ export default class GroupDialog extends tsc<IProps> {
       this.privateGroupID = this.groupList[0]?.group_id;
     } catch (error) {
       console.warn(error);
+    } finally {
+      if (isAddGroup) { // 如果是新增组 则刷新操作表格的组列表
+        this.operateTableList = this.operateTableList.map(item=> ({
+          ...item,
+          group_option: this.unPrivateList,
+          group_option_private: this.privateList,
+        }));
+        this.handleSearchFilter();
+      }
     }
   }
   /** 显示字段选择操作 */
@@ -376,14 +365,12 @@ export default class GroupDialog extends tsc<IProps> {
           theme: "success",
           message: this.$t("新增成功"),
         });
-        await this.getGroupList();
-        this.getFavoriteList();
+        this.getGroupList(true);
       }
     } catch (error) {
     } finally {
       this.isShowAddGroup = true;
       this.groupName = "";
-      this.popoverGroupRef.hideHandler();
     }
   }
   /** 获取显示字段下拉框列表 */
@@ -418,7 +405,7 @@ export default class GroupDialog extends tsc<IProps> {
     if (this.isCannotValueChange) return;
 
     // 搜索展示用的列表和操作缓存的列表同时更新数据
-    for (const listName of ["showTableList", "operateTableList"]) {
+    for (const listName of ["searchAfterList", "operateTableList"]) {
       const index = this[listName].findIndex((item) => item.id === row.id);
       if (index >= 0) Object.assign(this[listName][index], row, operateObj);
       if (listName === "operateTableList") this.submitDataCompared(row, index, operateObj);
@@ -453,13 +440,6 @@ export default class GroupDialog extends tsc<IProps> {
   deleteSubmitData(data: object, list: string[]) {
     list.forEach(item=> delete data[item]);
   }
-  /** 分页操作 */
-  getShowTableListByPage(list) {
-    const { current, limit } = this.paginationConfig;
-    const sliceFirstIndex = (current - 1) * limit;
-    const sliceSecondIndex = current * limit;
-    return list.slice(sliceFirstIndex, sliceSecondIndex);
-  }
 
   handleDeleteFavorite(row) {
     this.$bkInfo({
@@ -469,7 +449,7 @@ export default class GroupDialog extends tsc<IProps> {
         this.deleteTableIDList.push(row.id);
         // 删除收藏 把展示的表格, 操作表格, 提交表格, 以及基础表格统一删除
         for (const listName of [
-          "showTableList",
+          "searchAfterList",
           "operateTableList",
           "submitTableList",
           "tableList",
@@ -480,10 +460,6 @@ export default class GroupDialog extends tsc<IProps> {
         // 当前选中选择删除
         const index = this.selectFavoriteList.findIndex((item) => item === row.id);
         if (index >= 0) this.selectFavoriteList.splice(index, 1);
-        this.showTableList = this.getShowTableListByPage(this.searchAfterList);
-        Object.assign(this.paginationConfig, {
-          count: this.operateTableList.length,
-        });
       },
     });
   }
@@ -537,17 +513,6 @@ export default class GroupDialog extends tsc<IProps> {
       });
     } catch (error) {}
   }
-  /** 分页操作 */
-  handlePageChange(current) {
-    Object.assign(this.paginationConfig, { current });
-    this.showTableList = this.getShowTableListByPage(this.searchAfterList);
-  }
-  /** 每页多少数据操作 */
-  handlePageLimitChange(limit: number | string) {
-    if (limit === "") limit = 5;
-    Object.assign(this.paginationConfig, { limit, current: 1 });
-    this.showTableList = this.getShowTableListByPage(this.searchAfterList);
-  }
   /** 所属组和变更人分组操作 */
   sourceFilterMethod(value, row, column) {
     const property = column.property;
@@ -567,15 +532,6 @@ export default class GroupDialog extends tsc<IProps> {
   checkFields(field) {
     return this.tableSetting.selectedFields.some((item) => item.id === field);
   }
-
-  handleCreateNumber() {
-    if(!this.pageSizeList.includes(Number(this.pageNumber))) {
-      this.pageSizeList.push(Number(this.pageNumber));
-      this.paginationConfig.limitList.push(Number(this.pageNumber));
-    }
-    this.isShowAddPage = true;
-    this.pageNumber = 1;
-  };
 
   renderHeader(h) {
     return h(FingerSelectColumn, {
@@ -597,15 +553,14 @@ export default class GroupDialog extends tsc<IProps> {
       class: 'render-header',
     }, [
       h('span', {
-        class: 'icon log-icon icon-info-fill',
+        class: 'header-tips',
         directives: [
           {
             name: 'bk-tooltips',
             value: this.$t('表单模式显示字段文案'),
           },
         ],
-      }),
-      h('span', this.$t("表单模式")),
+      }, this.$t("表单模式")),
     ]);
   }
 
@@ -614,15 +569,14 @@ export default class GroupDialog extends tsc<IProps> {
       class: 'render-header',
     }, [
       h('span', {
-        class: 'icon log-icon icon-info-fill',
+        class: 'header-tips',
         directives: [
           {
             name: 'bk-tooltips',
             value: this.$t('是否同时显示字段文案'),
           },
         ],
-      }),
-      h('span', this.$t("是否同时显示字段")),
+      }, this.$t("显示字段")),
     ]);
   }
 
@@ -771,44 +725,16 @@ export default class GroupDialog extends tsc<IProps> {
         render-directive="if"
         mask-close={false}
         ext-cls="manage-group"
-        width={1050}
+        width={960}
         confirm-fn={this.handleSubmitTableData}
         on-value-change={this.handleValueChange}
       >
         <div class={`top-operate ${!this.selectCount && "is-not-select"}`}>
-          <Popover
-            tippy-options={this.tippyOption}
-            placement="bottom-start"
-            ext-cls="new-group-popover"
-            ref="popoverGroup"
-          >
-            <Button theme="primary" outline>
-              + {this.$t("新建组")}
-            </Button>
-            <div slot="content">
-              <Input
-                clearable
-                placeholder={this.$t("请输入组名")}
-                vModel={this.groupName}
-                maxlength={10}
-              ></Input>
-              <div class="operate-button">
-                <Button
-                  text
-                  title="primary"
-                  onClick={() => this.handleAddGroupName()}
-                >
-                  {this.$t("确定")}
-                </Button>
-                <span onClick={() => {
-                  this.popoverGroupRef.hideHandler();
-                  this.groupName = "";
-                }}>
-                  {this.$t("取消")}
-                </span>
-              </div>
-            </div>
-          </Popover>
+          <div class="favorite-size">
+            {this.$t('共')}&nbsp;
+            <span class="size-weight">{this.showFavoriteCount}</span> 
+            &nbsp;{this.$t('个收藏')}
+          </div>
           <Input
             class="operate-input"
             right-icon="bk-icon icon-search"
@@ -844,14 +770,14 @@ export default class GroupDialog extends tsc<IProps> {
           </div>
         ) : undefined}
         <Table
-          data={this.showTableList}
+          data={this.searchAfterList}
           size="small"
           render-directive="if"
           header-border={true}
           border={true}
           ext-cls={`${!this.selectCount && "is-not-select"}`}
           empty-text={this.$t("暂无数据")}
-          max-height={600}
+          max-height={this.maxHeight}
           v-bkloading={{ isLoading: this.tableLoading }}
         >
           <TableColumn
@@ -864,7 +790,7 @@ export default class GroupDialog extends tsc<IProps> {
           <TableColumn
             label={this.$t("收藏名")}
             key={"column_name"}
-            width="200"
+            width="160"
             prop={"name"}
             class-name="group-input"
             label-class-name="group-title"
@@ -936,10 +862,10 @@ export default class GroupDialog extends tsc<IProps> {
 
           {this.checkFields("is_show_switch") ? (
             <TableColumn
-              label={this.$t("是否同时显示字段")}
+              label={this.$t("显示字段")}
               render-header={this.renderHeaderFields}
               class-name="group-input"
-              max-width="60"
+              max-width="120"
               label-class-name="group-title"
               key={"column_switch"}
               scopedSlots={switchSlot}
@@ -947,7 +873,7 @@ export default class GroupDialog extends tsc<IProps> {
            ) : undefined}
 
           <TableColumn
-            width="1"
+            width="0"
             key={"column_delete"}
             scopedSlots={deleteSlot}
           ></TableColumn>
@@ -962,62 +888,6 @@ export default class GroupDialog extends tsc<IProps> {
             ></TableSettingContent>
           </TableColumn>
         </Table>
-
-        <div class="page-container">
-          <Pagination
-            size="small"
-            current={this.paginationConfig.current}
-            limit={this.paginationConfig.limit}
-            count={this.paginationConfig.count}
-            align={this.paginationConfig.align}
-            show-limit={this.paginationConfig.showLimit}
-            limit-list={this.paginationConfig.limitList}
-            on-change={this.handlePageChange}
-          ></Pagination>
-          <div class="page-limit">
-            <span>{this.$t('共计')}{this.searchAfterList.length}{this.$t('条')} {this.$t('每页')}</span>
-            <Select
-              class="page-select"
-              vModel={this.paginationConfig.limit}
-              behavior={"simplicity"}
-              clearable={false}
-              search-placeholder={" "}
-              popover-min-width={200}
-              ext-popover-cls="add-new-page-container"
-              on-change={this.handlePageLimitChange}
-            >
-              {this.pageSizeList.map((item) => (
-                <Option id={item} key={item} name={item}></Option>
-              ))}
-              <div slot="extension">
-                {this.isShowAddPage ? (
-                  <div class="select-add-new-group" onClick={() => this.isShowAddPage = false}>
-                    <div><i class="bk-icon icon-plus-circle"></i>{this.$t('新增')}</div>
-                  </div>
-                ) : (
-                  <li class="add-new-page-input">
-                    <Input
-                      vModel={this.pageNumber}
-                      min={1}
-                      type={'number'}
-                      behavior={'simplicity'}
-                      show-controls={false}
-                      precision={0}
-                    ></Input>
-                    <div class="operate-button">
-                      <span class='bk-icon icon-check-line' onClick={() => this.handleCreateNumber()}></span>
-                      <span class='bk-icon icon-close-line-2'onClick={() => {
-                        this.isShowAddPage = true;
-                        this.pageNumber = 1;
-                      }}></span>
-                    </div>
-                  </li>
-                )}
-              </div>
-            </Select>
-            <span>{this.$t('条')}</span>
-          </div>
-        </div>
       </Dialog>
     );
   }
