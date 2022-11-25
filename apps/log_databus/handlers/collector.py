@@ -3635,6 +3635,18 @@ class CollectorHandler(object):
                     bcs_cluster_id=bcs_cluster_id,
                     namespace_list=config.get("namespaceSelector", {}).get("matchNames", []),
                 )
+            except AllNamespaceNotAllowedException:
+                return {
+                    "origin_text": yaml_config,
+                    "parse_status": False,
+                    "parse_result": [
+                        {
+                            "start_line_number": 0,
+                            "end_line_number": 0,
+                            "message": _("配置校验失败: namespaceSelector 共享集群下 any 不允许为 true，" "且 matchNames 不允许为空，请检查"),
+                        }
+                    ],
+                }
             except Exception as e:  # noqa
                 return {
                     "origin_text": yaml_config,
