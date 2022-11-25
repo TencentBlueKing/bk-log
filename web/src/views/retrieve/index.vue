@@ -176,6 +176,7 @@
                       :filter-condition="retrieveParams.addition"
                       :total-fields="totalFields"
                       :field-alias-map="fieldAliasMap"
+                      :filter-all-operators="filterAllOperators"
                       :statistical-fields-data="statisticalFieldsData"
                       @addFilterCondition="addFilterCondition"
                       @removeFilterCondition="removeFilterCondition" />
@@ -194,6 +195,7 @@
                       :edit-index="index"
                       :is-add="false"
                       :edit-data="item"
+                      :filter-all-operators="filterAllOperators"
                       :filter-condition="retrieveParams.addition"
                       :total-fields="totalFields"
                       :field-alias-map="fieldAliasMap"
@@ -534,6 +536,7 @@ export default {
         theme: 'light',
         trigger: 'mouseenter',
       },
+      filterAllOperators: {},
       isFavoriteAdd: true,
       addFavoriteData: {}, // 新增收藏所需的参数
       favoriteRequestID: 0, // 参数改变更新收藏
@@ -718,6 +721,7 @@ export default {
       // 有spaceUid且有业务权限时 才去请求索引集列表
       if (!this.authMainPageInfo && this.spaceUid) {
         await this.getFavoriteList(); // 先获取到收藏列表再获取索引集列表
+        this.requestOperateList();
         this.requestIndexSetList();
       } else {
         this.isFirstLoad = false;
@@ -901,6 +905,11 @@ export default {
         this.statementSearchrecords = res.data;
       });
     },
+    requestOperateList() {
+      this.$http.request('retrieve/getOperators').then((res) => {
+        this.filterAllOperators = res.data;
+      });
+    },
     // 切换索引
     handleSelectIndex(val) {
       this.indexId = val;
@@ -1024,7 +1033,7 @@ export default {
       if (this.indexSetList.find(item => item.index_set_id === String(indexSetID))) {
         this.isFavoriteSearch = true;
         this.indexId = String(indexSetID);
-        const {search_fields, ...reset} = params;
+        const { search_fields, ...reset } = params;
         this.retrieveLog(reset);
       } else {
         this.messageError(this.$t('没有找到该记录下相关索引集'));
@@ -1704,7 +1713,7 @@ export default {
         const res = await this.$http.request('favorite/getFavoriteByGroupList', {
           query: {
             space_uid: this.spaceUid,
-            order_type: localStorage.getItem("favoriteSortType"),
+            order_type: localStorage.getItem('favoriteSortType'),
           },
         });
         this.favoriteList = res.data;

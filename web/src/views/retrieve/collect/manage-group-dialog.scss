@@ -8,9 +8,17 @@
     padding: 3px 40px 26px;
   }
   .top-operate {
+    .favorite-size {
+      font-size: 12px;
+      color: #63656E;
+      .size-weight {
+        font-weight: bold;
+      }
+    }
     margin-bottom: -16px;
 
     @include flex-justify(space-between);
+    align-items: center;
 
     .operate-input {
       width: 320px;
@@ -205,8 +213,8 @@
 
   .switch-container {
     height: 42px;
+    margin-left: 20px;
     display: flex;
-    justify-content: center;
     align-items: center;
   }
 
@@ -222,25 +230,9 @@
     }
   }
 
-  .page-container {
-    font-size: 12px;
-    margin-top: 20px;
-    position: relative;
-    .page-limit {
-      position: absolute;
-      left: 4px;
-      top: 0;
-      color: #63656E;
-      @include flex-center;
-      .page-select {
-        width: 70px;
-      }
-    }
-  }
   .render-header {
-    .icon-info-fill {
-      margin-right: 4px;
-      color: #979BA5;
+    .header-tips {
+      border-bottom: 1px dashed #979BA5;
     }
   }
 }
@@ -261,6 +253,9 @@
     > :first-child {
       color: #3a84ff;
       margin-right: 12px;
+    }
+    > :last-child {
+      color: #ea3636;
     }
   }
 }
