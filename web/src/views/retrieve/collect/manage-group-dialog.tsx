@@ -157,9 +157,8 @@ export default class GroupDialog extends tsc<IProps> {
     return this.$store.state.spaceUid;
   }
 
-  get userMeta() {
-    // 当前用户数据
-    return this.$store.state.userMeta;
+  get getUserName() { // 当前用户名称
+    return this.$store.state.userMeta?.username || '';
   }
 
   get selectCount() {
@@ -280,9 +279,7 @@ export default class GroupDialog extends tsc<IProps> {
       });
       const updateSourceFiltersSet = new Set();
       const initList = res.data.map((item) => {
-        const visible_option = item.created_by === this.userMeta.username 
-        ? this.allOptionList 
-        : this.unPrivateOptionList;
+        const visible_option = item.created_by === this.getUserName ? this.allOptionList : this.unPrivateOptionList;
         const search_fields_select_list = item.search_fields.map((item) => ({name: item})); // 初始化表单字段
         const is_group_disabled = item.visible_type === 'private';
         if (!updateSourceFiltersSet.has(item.updated_by)) updateSourceFiltersSet.add(item.updated_by);
