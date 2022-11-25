@@ -21,9 +21,8 @@
  */
 
 import { Component as tsc } from "vue-tsx-support";
-import { Component, Emit, Ref, Watch, Model } from "vue-property-decorator";
+import { Component, Emit, Watch, Model } from "vue-property-decorator";
 import {
-  Button,
   Dialog,
   Switcher,
   Option,
@@ -34,9 +33,7 @@ import {
   Select,
   TableSettingContent,
   DropdownMenu,
-  Popover,
   Tag,
-  Pagination,
 } from "bk-magic-vue";
 import FingerSelectColumn from "../result-table-panel/log-clustering/components/finger-select-column.vue";
 import ManageInput from "./component/manage-input";
@@ -283,7 +280,9 @@ export default class GroupDialog extends tsc<IProps> {
       });
       const updateSourceFiltersSet = new Set();
       const initList = res.data.map((item) => {
-        const visible_option = item.created_by === this.userMeta.username ? this.allOptionList : this.unPrivateOptionList;
+        const visible_option = item.created_by === this.userMeta.username 
+        ? this.allOptionList 
+        : this.unPrivateOptionList;
         const search_fields_select_list = item.search_fields.map((item) => ({name: item})); // 初始化表单字段
         const is_group_disabled = item.visible_type === 'private';
         if (!updateSourceFiltersSet.has(item.updated_by)) updateSourceFiltersSet.add(item.updated_by);
