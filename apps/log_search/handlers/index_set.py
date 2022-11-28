@@ -526,9 +526,6 @@ class IndexSetHandler(APIModel):
         index_set_obj: LogIndexSet = self._get_data()
         index_set_obj.cancel_favorite(get_request_username())
 
-    def is_editable(self):
-        return self.data.is_editable
-
     @staticmethod
     def _get_health(src: list):
         has_red_health_list = [item.get("health", "") == EsHealthStatus.RED.value for item in src]
@@ -938,7 +935,9 @@ class BaseIndexSetHandler(object):
         ]
         for index in to_append_indexes:
             IndexSetHandler(index_set_id=self.index_set_obj.index_set_id).add_index(
-                index["bk_biz_id"], index.get("time_field"), index["result_table_id"],
+                index["bk_biz_id"],
+                index.get("time_field"),
+                index["result_table_id"],
             )
 
         # 更新字段快照
@@ -1030,7 +1029,8 @@ class BkDataIndexSetHandler(BaseIndexSetHandler):
         if unauthorized_result_tables:
             # 如果存在没有权限的RT，要把状态设置为审批中
             LogIndexSetData.objects.filter(
-                index_set_id=index_set.index_set_id, result_table_id__in=unauthorized_result_tables,
+                index_set_id=index_set.index_set_id,
+                result_table_id__in=unauthorized_result_tables,
             ).update(apply_status=LogIndexSetData.Status.PENDING)
 
     def post_create(self, index_set):

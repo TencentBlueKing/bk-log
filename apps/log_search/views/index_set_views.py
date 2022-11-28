@@ -455,8 +455,6 @@ class IndexSetViewSet(ModelViewSet):
         }
         """
         handler = IndexSetHandler(index_set_id=kwargs["index_set_id"])
-        if not handler.is_editable():
-            raise ValidationError(_(f"索引集{handler.data.index_set_name}禁止编辑"))
 
         data = self.validated_data
         if data["scenario_id"] == Scenario.BKDATA or settings.RUN_VER == "tencent":
