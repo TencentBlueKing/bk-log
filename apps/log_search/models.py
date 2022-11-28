@@ -41,6 +41,7 @@ from apps.log_search.exceptions import (
     IndexSetNameDuplicateException,
     ScenarioNotSupportedException,
     CouldNotFindTemplateException,
+    DefaultConfigNotAllowedDelete,
 )
 from apps.models import (
     JsonField,
@@ -72,6 +73,7 @@ from apps.log_search.constants import (
     CustomTypeEnum,
     INDEX_SET_NO_DATA_CHECK_PREFIX,
     INDEX_SET_NO_DATA_CHECK_INTERVAL,
+    DEFAULT_INDEX_SET_FIELDS_CONFIG_NAME,
 )
 from bkm_space.api import AbstractSpaceApi
 from bkm_space.utils import space_uid_to_bk_biz_id
@@ -965,3 +967,69 @@ class SpaceApi(AbstractSpaceApi):
     @classmethod
     def list_spaces(cls):
         return list(Space.objects.all())
+
+
+class IndexSetFieldsConfig(models.Model):
+    """索引集展示字段以及排序配置"""
+
+    id = models.AutoField(_("id"), primary_key=True)
+    name = models.CharField(_("配置名称"), max_length=255)
+    index_set_id = models.IntegerField(_("索引集ID"), db_index=True)
+    display_fields = JsonField(_("字段配置"))
+    sort_list = JsonField(_("排序规则"), null=True, default=None)
+    scope = models.CharField(_("应用范围"), max_length=32, default="default")
+
+    class Meta:
+        verbose_name = _("索引集自定义显示")
+        verbose_name_plural = _("31_搜索-索引集自定义显示")
+        unique_together = [("index_set_id", "name", "scope")]
+
+    @classmethod
+    @atomic
+    def delete_config(cls, config_id: int):
+        """删除配置"""
+        obj = cls.objects.get(pk=config_id)
+        # 默认配置不允许删除
+        if obj.name == DEFAULT_INDEX_SET_FIELDS_CONFIG_NAME:
+            raise DefaultConfigNotAllowedDelete()
+
+        index_set_id = obj.index_set_id
+        scope = obj.scope
+        # 删除配置的时候
+        default_config_id = cls.objects.get(
+            index_set_id=index_set_id, name=DEFAULT_INDEX_SET_FIELDS_CONFIG_NAME, scope=scope
+        ).id
+        UserIndexSetFieldsConfig.objects.filter(config_id=config_id).update(config_id=default_config_id)
+        cls.objects.filter(id=config_id).delete()
+
+
+class UserIndexSetFieldsConfig(models.Model):
+    """用户索引集展示字段以及排序配置"""
+
+    index_set_id = models.IntegerField(_("索引集ID"), db_index=True)
+    config_id = models.IntegerField(_("索引集ID"), db_index=True)
+    username = models.CharField(_("用户名"), max_length=32, default="", db_index=True)
+    scope = models.CharField(_("应用范围"), max_length=32, default="default")
+
+    class Meta:
+        verbose_name = _("用户索引集配置")
+        verbose_name_plural = _("31_搜索-用户索引集配置")
+        unique_together = [("index_set_id", "username", "scope")]
+
+    @classmethod
+    @atomic
+    def get_config(cls, index_set_id: int, username: str, scope: str = "default"):
+        """
+        获取用户索引集配置
+        """
+        try:
+            obj = cls.objects.get(index_set_id=index_set_id, username=username, scope=scope)
+            return IndexSetFieldsConfig.objects.get(pk=obj.config_id)
+        except cls.DoesNotExist:
+            obj = IndexSetFieldsConfig.objects.filter(
+                index_set_id=index_set_id, name=DEFAULT_INDEX_SET_FIELDS_CONFIG_NAME
+            ).first()
+            if obj:
+                cls.objects.create(index_set_id=index_set_id, config_id=obj.id, username=username, scope=scope)
+                return obj
+        return None

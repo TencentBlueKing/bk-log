@@ -26,7 +26,7 @@ from apps.utils.drf import detail_route
 from apps.generic import APIViewSet
 from apps.iam import ActionEnum, ResourceEnum
 from apps.iam.handlers.drf import InstanceActionPermission, ViewBusinessPermission, insert_permission_field
-from apps.log_search.handlers.index_set import IndexSetHandler
+from apps.log_search.handlers.index_set import IndexSetHandler, IndexSetFieldsConfigHandler
 from apps.log_trace.constants import FIELDS_SCOPE_VALUE
 from apps.exceptions import ValidationError
 from apps.log_trace.serializers import (
@@ -34,7 +34,11 @@ from apps.log_trace.serializers import (
     TraceSearchAttrSerializer,
     TraceSearchTraceIdAttrSerializer,
 )
-from apps.log_search.serializers import SearchUserIndexSetConfigSerializer
+from apps.log_search.serializers import (
+    SearchUserIndexSetConfigSerializer,
+    CreateIndexSetFieldsConfigSerializer,
+    UpdateIndexSetFieldsConfigSerializer,
+)
 from apps.log_trace.handlers.trace_handlers import TraceHandler
 from apps.log_trace.handlers.trace_config_handlers import TraceConfigHandlers
 from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler as SearchHandlerEsquery
@@ -52,7 +56,9 @@ class TraceViewSet(APIViewSet):
         return [InstanceActionPermission([ActionEnum.SEARCH_LOG], ResourceEnum.INDICES)]
 
     @insert_permission_field(
-        actions=[ActionEnum.SEARCH_LOG], resource_meta=ResourceEnum.INDICES, id_field=lambda d: d["index_set_id"],
+        actions=[ActionEnum.SEARCH_LOG],
+        resource_meta=ResourceEnum.INDICES,
+        id_field=lambda d: d["index_set_id"],
     )
     def list(self, request, *args, **kwargs):
         """
@@ -565,6 +571,126 @@ class TraceViewSet(APIViewSet):
         if scope not in FIELDS_SCOPE_VALUE:
             raise ValidationError(_("scope取值范围：trace、trace_detail、trace_detail_log"))
         data = self.params_valid(SearchUserIndexSetConfigSerializer)
+        result = IndexSetHandler(index_set_id=index_set_id).config(config_id=data["config_id"], scope=scope)
+        return Response(result)
+
+    @detail_route(methods=["POST"], url_path="create_config")
+    def create_config(self, request, *args, **kwargs):
+        """
+        @api {post} /trace/index_set/$index_set_id/create_config/?scope= 03_Trace-创建索引集显示字段及排序规则配置
+        @apiDescription 创建索引集的字段配置
+        @apiName create_trace_index_set_config
+        @apiGroup 17_Trace
+        @apiParamExample {Json} 请求参数
+        {
+            "name": xxx,
+            "display_fields": ["aaa", "bbb"]
+            "sort_list": [
+                ["aaa", "desc"],
+                ["bbb", "asc"]
+            ]
+        }
+        @apiSuccessExample {json} 成功返回:
+        {
+            "message": "",
+            "code": 0,
+            "data": null,
+            "result": true
+        }
+        """
+        index_set_id = kwargs.get("index_set_id", "")
+        scope = request.GET.get("scope")
+        if scope not in FIELDS_SCOPE_VALUE:
+            raise ValidationError(_("scope取值范围：trace、trace_detail、trace_detail_log"))
+        data = self.params_valid(CreateIndexSetFieldsConfigSerializer)
         SearchHandlerEsquery(index_set_id, {}).verify_sort_list_item(data["sort_list"])
-        result = IndexSetHandler.add_field_config_record(index_set_id, data["display_fields"], data["sort_list"], scope)
+        result = IndexSetFieldsConfigHandler(index_set_id=index_set_id).create_or_update(
+            name=data["name"], display_fields=data["display_fields"], sort_list=data["sort_list"], scope=scope
+        )
+        return Response(result)
+
+    @detail_route(methods=["POST"], url_path="update_config")
+    def update_config(self, request, *args, **kwargs):
+        """
+        @api {post} /trace/index_set/$index_set_id/update_config/?scope=search_context Trace-修改索引集显示字段及排序规则配置
+        @apiDescription 更新某个Trace索引集的字段配置
+        @apiName update_trace_index_set_config
+        @apiGroup 17_Trace
+        @apiParamExample {Json} 请求参数
+        {
+            "name": xxx,
+            "display_fields": ["aaa", "bbb"]
+            "sort_list": [
+                ["aaa", "desc"],
+                ["bbb", "asc"]
+            ]
+        }
+        @apiSuccessExample {json} 成功返回:
+        {
+            "message": "",
+            "code": 0,
+            "data": null,
+            "result": true
+        }
+        """
+        index_set_id = kwargs.get("index_set_id", "")
+        scope = request.GET.get("scope")
+        if scope not in FIELDS_SCOPE_VALUE:
+            raise ValidationError(_("scope取值范围：trace、trace_detail、trace_detail_log"))
+        data = self.params_valid(UpdateIndexSetFieldsConfigSerializer)
+        SearchHandlerEsquery(index_set_id, {}).verify_sort_list_item(data["sort_list"])
+        result = IndexSetFieldsConfigHandler(index_set_id=index_set_id, config_id=data["config_id"]).create_or_update(
+            name=data["name"], display_fields=data["display_fields"], sort_list=data["sort_list"], scope=scope
+        )
+        return Response(result)
+
+    @detail_route(methods=["GET"], url_path="list_config")
+    def list_config(self, request, *args, **kwargs):
+        """
+        @api {get} /trace/index_set/$index_set_id/list_config/?scope=search_context 03_搜索-获取trace索引集配置列表
+        @apiDescription 获取某个trace索引集的字段配置列表
+        @apiName list_trace_index_set_config
+        @apiGroup 11_Search
+        @apiParamExample {Json} 请求参数
+        @apiSuccessExample {json} 成功返回:
+        {
+            "message": "",
+            "code": 0,
+            "data": [
+                {
+                    "id": 1,
+                    "name": "1",
+                    "index_set_id": 1,
+                    "display_fields": [],
+                    "sort_list": []
+                }
+            ],
+            "result": true
+        }
+        """
+        index_set_id = kwargs.get("index_set_id", "")
+        scope = request.GET.get("scope")
+        if scope not in FIELDS_SCOPE_VALUE:
+            raise ValidationError(_("scope取值范围：trace、trace_detail、trace_detail_log"))
+        return Response(IndexSetFieldsConfigHandler(index_set_id=index_set_id).list(scope=scope))
+
+    @detail_route(methods=["POST"], url_path="delete_config")
+    def delete_config(self, request, *args, **kwargs):
+        """
+        @api {post} /trace/index_set/$index_set_id/delete_config/ 03_搜索-删除trace索引集配置
+        @apiDescription 删除某个trace索引集的字段配置
+        @apiName delete_trace_index_set_config
+        @apiGroup 11_Search
+        @apiParamExample {Json} 请求参数
+        @apiSuccessExample {json} 成功返回:
+        {
+            "message": "",
+            "code": 0,
+            "data": null,
+            "result": true
+        }
+        """
+        index_set_id = kwargs.get("index_set_id", "")
+        data = self.params_valid(SearchUserIndexSetConfigSerializer)
+        result = IndexSetFieldsConfigHandler(index_set_id=index_set_id, config_id=data["config_id"]).delete()
         return Response(result)

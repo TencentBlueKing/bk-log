@@ -26,6 +26,7 @@ from collections import defaultdict
 from typing import Dict, List, Any
 
 from django.conf import settings
+from django.db.transaction import atomic
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
@@ -37,6 +38,7 @@ from apps.log_search.constants import (
     FEATURE_ASYNC_EXPORT_COMMON,
     FieldDataTypeEnum,
     DEFAULT_INDEX_OBJECT_FIELDS_PRIORITY,
+    DEFAULT_INDEX_SET_FIELDS_CONFIG_NAME,
 )
 from apps.utils.cache import cache_ten_minute
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
@@ -48,7 +50,13 @@ from apps.log_search.exceptions import (
     IndexSetNotHaveConflictIndex,
     SearchNotTimeFieldType,
 )
-from apps.log_search.models import LogIndexSet, Scenario, UserIndexSetConfig, LogIndexSetData
+from apps.log_search.models import (
+    LogIndexSet,
+    Scenario,
+    LogIndexSetData,
+    IndexSetFieldsConfig,
+    UserIndexSetFieldsConfig,
+)
 from apps.utils.local import get_local_param
 from apps.utils.time_handler import generate_time_range
 
@@ -169,12 +177,8 @@ class MappingHandlers(object):
             )
         return field_list
 
-    def get_all_fields_by_index_id(self, scope="default"):
-        """
-        get_all_fields_by_index_id
-        @param scope:
-        @return:
-        """
+    def get_final_fields(self):
+        """获取最终字段"""
         mapping_list: list = self._get_mapping()
         property_dict: dict = self.find_merged_property(mapping_list)
         fields_result: list = MappingHandlers.get_all_index_fields_by_mapping(property_dict)
@@ -193,20 +197,29 @@ class MappingHandlers(object):
         ]
         fields_list = self.virtual_fields(fields_list)
         fields_list = self._combine_description_field(fields_list)
-        # 处理editable关系
-        final_fields_list: list = self._combine_fields(fields_list)
+        return self._combine_fields(fields_list)
 
-        user_name = get_request_username()
-        user_index_set_config_obj = UserIndexSetConfig.objects.filter(
-            index_set_id=self.index_set_id, created_by=user_name, scope=scope
-        ).first()
-
+    def get_all_fields_by_index_id(self, scope="default"):
+        """
+        get_all_fields_by_index_id
+        @param scope:
+        @return:
+        """
+        username = get_request_username()
+        user_index_set_config_obj = UserIndexSetFieldsConfig.get_config(
+            index_set_id=self.index_set_id, username=username, scope=scope
+        )
         # 用户已手动配置字段
         if user_index_set_config_obj:
             # 检查display_fields每个字段是否存在
+            final_fields_list = self.get_final_fields()
             display_fields = user_index_set_config_obj.display_fields
             final_fields = [i["field_name"].lower() for i in final_fields_list]
             display_fields_list = [_filed_obj for _filed_obj in display_fields if _filed_obj.lower() in final_fields]
+            # 字段不一致更新字段
+            if display_fields != display_fields_list:
+                user_index_set_config_obj.display_fields = display_fields_list
+                user_index_set_config_obj.save()
 
             for final_field in final_fields_list:
                 field_name = final_field["field_name"]
@@ -216,14 +229,45 @@ class MappingHandlers(object):
 
         # search_context情况，默认只显示log字段
         if scope in CONTEXT_SCOPE:
+            final_fields_list = self.get_final_fields()
             return self._get_context_fields(final_fields_list)
 
         # 其它情况
-        return self._get_default_fields(final_fields_list)
+        default_config = self.get_or_create_default_config(scope)
+        return default_config.display_fields
 
-    def _get_default_fields(self, final_fields_list):
-        """默认字段"""
-        display_fields_list = [self._get_time_field()]
+    @atomic
+    def get_or_create_default_config(self, scope="default"):
+        """获取默认配置"""
+        __, display_fields = self.get_default_fields()
+        sort_list = self.get_default_sort_list(
+            index_set_id=self.index_set_id, scenario_id=self.scenario_id, scope=scope
+        )
+        obj, __ = IndexSetFieldsConfig.objects.get_or_create(
+            index_set_id=self.index_set_id,
+            scope=scope,
+            name=DEFAULT_INDEX_SET_FIELDS_CONFIG_NAME,
+            defaults={"display_fields": display_fields, "sort_list": sort_list},
+        )
+        return obj
+
+    @classmethod
+    def get_default_sort_list(cls, index_set_id: int = None, scenario_id: str = None, scope: str = "default"):
+        """默认字段排序规则"""
+        time_field = cls._get_time_field(index_set_id)
+        if scope in ["trace_detail", "trace_scatter"]:
+            return [[time_field, "asc"]]
+        if scenario_id in [Scenario.BKDATA, Scenario.LOG]:
+            if scenario_id == Scenario.BKDATA:
+                return [[time_field, "desc"], ["gseindex", "desc"], ["_iteration_idx", "desc"]]
+            if scenario_id == Scenario.LOG:
+                return [[time_field, "desc"], ["gseIndex", "desc"], ["iterationIndex", "desc"]]
+        return [[time_field, "desc"]]
+
+    def get_default_fields(self):
+        """获取索引集默认字段"""
+        final_fields_list = self.get_final_fields()
+        display_fields_list = [self._get_time_field(self.index_set_id)]
         if self._get_object_field(final_fields_list):
             display_fields_list.append(self._get_object_field(final_fields_list))
         display_fields_list.extend(self._get_text_fields(final_fields_list))
@@ -237,13 +281,14 @@ class MappingHandlers(object):
 
         return final_fields_list, display_fields_list
 
-    def _get_time_field(self):
+    @classmethod
+    def _get_time_field(cls, index_set_id: int):
         """获取索引时间字段"""
-        index_set_obj: LogIndexSet = LogIndexSet.objects.filter(index_set_id=self.index_set_id).first()
+        index_set_obj: LogIndexSet = LogIndexSet.objects.filter(index_set_id=index_set_id).first()
         if index_set_obj.time_field:
             return index_set_obj.time_field
 
-        index_set_obj: LogIndexSetData = LogIndexSetData.objects.filter(index_set_id=self.index_set_id).first()
+        index_set_obj: LogIndexSetData = LogIndexSetData.objects.filter(index_set_id=index_set_id).first()
         if not index_set_obj:
             raise SearchNotTimeFieldType()
 
@@ -688,13 +733,13 @@ class MappingHandlers(object):
         @return:
         """
         username = get_request_username()
-        index_config_obj = UserIndexSetConfig.objects.filter(
-            index_set_id=index_set_id, created_by=username, scope=scope, is_deleted=False
+        index_config_obj = UserIndexSetFieldsConfig.get_config(
+            index_set_id=index_set_id, username=username, scope=scope
         )
-        if not index_config_obj.exists():
+        if not index_config_obj:
             return list()
 
-        sort_list = index_config_obj.first().sort_list
+        sort_list = index_config_obj.sort_list
         return sort_list if isinstance(sort_list, list) else list()
 
     @classmethod

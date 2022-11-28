@@ -1125,3 +1125,6 @@ ERROR_MSG_CHECK_FIELDS_FROM_BKDATA = _(", 请在计算平台清洗中调整")
 ERROR_MSG_CHECK_FIELDS_FROM_LOG = _(", 请联系平台管理员")
 
 DEFAULT_INDEX_OBJECT_FIELDS_PRIORITY = ["__ext.io_kubernetes_pod", "serverIp", "ip"]
+
+# 默认索引集字段配置名称
+DEFAULT_INDEX_SET_FIELDS_CONFIG_NAME = _("default")

@@ -353,6 +353,21 @@ class DateHistogramException(BaseException):
     MESSAGE = _("索引集【{index_set_id}】聚合查询异常：{err}")
 
 
+class IndexSetFieldsConfigNotExistException(BaseException):
+    ERROR_CODE = "433"
+    MESSAGE = _("索引集字段配置不存在")
+
+
+class DefaultConfigNotAllowedDelete(BaseException):
+    ERROR_CODE = "433"
+    MESSAGE = _("默认索引集字段配置不允许删除")
+
+
+class IndexSetFieldsConfigAlreadyExistException(BaseException):
+    ERROR_CODE = "434"
+    MESSAGE = _("索引集字段配置名称已存在")
+
+
 # =================================================
 # 导出
 # =================================================

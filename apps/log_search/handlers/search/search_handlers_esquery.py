@@ -40,6 +40,7 @@ from apps.log_search.models import (
     Scenario,
     UserIndexSetConfig,
     UserIndexSetSearchHistory,
+    UserIndexSetFieldsConfig,
 )
 from apps.log_search.constants import (
     TimeEnum,
@@ -80,7 +81,6 @@ from apps.log_search.handlers.es.indices_optimizer_context_tail import IndicesOp
 from apps.utils.local import get_local_param
 from apps.log_search.handlers.biz import BizHandler
 from apps.log_search.handlers.search.mapping_handlers import MappingHandlers
-from apps.log_search.handlers.search.search_sort_builder import SearchSortBuilder
 from apps.log_search.handlers.search.pre_search_handlers import PreSearchHandlers
 from apps.log_search.constants import TimeFieldTypeEnum, TimeFieldUnitEnum
 from apps.utils.log import logger
@@ -268,6 +268,10 @@ class SearchHandler(object):
             self.clean_config(),
         ]:
             result_dict["config"].append(fields_config)
+        # 将用户当前使用的配置id传递给前端
+        result_dict["config_id"] = UserIndexSetFieldsConfig.get_config(
+            index_set_id=self.index_set_id, username=self.request_username, scope=scope
+        ).id
 
         return result_dict
 
@@ -674,13 +678,13 @@ class SearchHandler(object):
             yield self._deal_query_result(scroll_result)
 
     def _get_sort_list_by_index_id(self, scope="default"):
-        index_config_obj = UserIndexSetConfig.objects.filter(
-            index_set_id=self.index_set_id, created_by=self.request_username, scope=scope, is_deleted=False
+        index_config_obj = UserIndexSetFieldsConfig.get_config(
+            index_set_id=self.index_set_id, username=self.request_username, scope=scope
         )
-        if not index_config_obj.exists():
+        if not index_config_obj:
             return list()
 
-        sort_list = index_config_obj.first().sort_list
+        sort_list = index_config_obj.sort_list
         return sort_list if isinstance(sort_list, list) else list()
 
     @staticmethod
@@ -1066,8 +1070,25 @@ class SearchHandler(object):
             return time_field, TimeFieldTypeEnum.DATE.value, TimeFieldUnitEnum.SECOND.value
 
     def _init_sort(self) -> list:
-        sort_list = SearchSortBuilder.sort_list(**self.search_dict)
-        return sort_list
+        index_set_id = self.search_dict.get("index_set_id")
+        # 获取用户对sort的排序需求
+        sort_list: List = self.search_dict.get("sort_list", [])
+        if sort_list:
+            return sort_list
+        # 用户已设置排序规则
+        username = get_request_username()
+        scope = self.search_dict.get("search_type", "default")
+        config_obj = UserIndexSetFieldsConfig.get_config(index_set_id=index_set_id, username=username, scope=scope)
+        if config_obj:
+            sort_list = config_obj.sort_list
+            if sort_list:
+                return sort_list
+        # 安全措施, 用户未设置排序规则，且未创建默认配置时, 使用默认排序规则
+        from apps.log_search.handlers.search.mapping_handlers import MappingHandlers
+
+        return MappingHandlers.get_default_sort_list(
+            index_set_id=index_set_id, scenario_id=self.scenario_id, scope=scope
+        )
 
     # 过滤filter
     def _init_filter(self):
