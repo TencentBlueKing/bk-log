@@ -396,8 +396,7 @@ class TestIndexSet(TestCase):
     @patch("apps.log_search.tasks.mapping.sync_index_set_mapping_snapshot.delay", return_value=None)
     @patch("apps.utils.bk_data_auth.BkDataAuthHandler.filter_unauthorized_rt_by_user", return_value=[])
     @patch(
-        "apps.utils.bk_data_auth.BkDataAuthHandler.list_authorized_rt_by_token",
-        return_value=["591_xx", "log_xxx"],
+        "apps.utils.bk_data_auth.BkDataAuthHandler.list_authorized_rt_by_token", return_value=["591_xx", "log_xxx"],
     )
     @patch("apps.api.TransferApi.get_cluster_info", return_value=CLUSTER_INFO_WITH_AUTH)
     @patch("apps.api.BkLogApi.mapping", return_value=MAPPING_LIST)
