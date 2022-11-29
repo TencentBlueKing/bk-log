@@ -162,6 +162,7 @@ class CollectorConfig(CollectorBase):
     yaml_config = models.TextField(_("yaml配置内容"), default="")
     rule_id = models.IntegerField(_("bcs规则集id"), default=0)
     is_display = models.BooleanField(_("采集项是否对用户可见"), default=True)
+    log_group_id = models.BigIntegerField(_("自定义日志组ID"), null=True, blank=True)
 
     def get_name(self):
         return self.collector_config_name
