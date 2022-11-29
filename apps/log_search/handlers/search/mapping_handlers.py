@@ -205,9 +205,9 @@ class MappingHandlers(object):
         @param scope:
         @return:
         """
+        final_fields_list = self.get_final_fields()
         # search_context情况，默认只显示log字段
         if scope in CONTEXT_SCOPE:
-            final_fields_list = self.get_final_fields()
             return self._get_context_fields(final_fields_list)
 
         username = get_request_username()
@@ -217,7 +217,6 @@ class MappingHandlers(object):
         # 用户已手动配置字段
         if user_index_set_config_obj:
             # 检查display_fields每个字段是否存在
-            final_fields_list = self.get_final_fields()
             display_fields = user_index_set_config_obj.display_fields
             final_fields = [i["field_name"].lower() for i in final_fields_list]
             display_fields_list = [_filed_obj for _filed_obj in display_fields if _filed_obj.lower() in final_fields]
@@ -234,7 +233,7 @@ class MappingHandlers(object):
 
         # 其它情况
         default_config = self.get_or_create_default_config()
-        return default_config.display_fields
+        return final_fields_list, default_config.display_fields
 
     @atomic
     def get_or_create_default_config(self):
