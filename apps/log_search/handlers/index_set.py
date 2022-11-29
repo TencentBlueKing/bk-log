@@ -1100,7 +1100,11 @@ class IndexSetFieldsConfigHandler(object):
                 raise IndexSetFieldsConfigNotExistException()
 
     def list(self) -> list:
-        return [model_to_dict(i) for i in IndexSetFieldsConfig.objects.filter(index_set_id=self.index_set_id).all()]
+        config_list = [
+            model_to_dict(i) for i in IndexSetFieldsConfig.objects.filter(index_set_id=self.index_set_id).all()
+        ]
+        config_list.sort(key=lambda c: c["name"] == DEFAULT_INDEX_SET_FIELDS_CONFIG_NAME, reverse=True)
+        return config_list
 
     def create_or_update(self, name: str, display_fields: list, sort_list: list):
         username = get_request_username()
