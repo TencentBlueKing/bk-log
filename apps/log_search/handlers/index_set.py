@@ -86,10 +86,10 @@ class IndexSetHandler(APIModel):
     def get_index_set_for_storage(storage_cluster_id):
         return LogIndexSet.objects.filter(storage_cluster_id=storage_cluster_id)
 
-    def config(self, config_id: int, scope: str):
+    def config(self, config_id: int):
         """修改用户当前索引集的配置"""
         username = get_request_username()
-        UserIndexSetFieldsConfig.objects.filter(index_set_id=self.index_set_id, username=username, scope=scope).update(
+        UserIndexSetFieldsConfig.objects.filter(index_set_id=self.index_set_id, username=username).update(
             config_id=config_id
         )
         # add user_operation_record
@@ -105,11 +105,10 @@ class IndexSetHandler(APIModel):
                 "action": UserOperationActionEnum.CONFIG,
                 "params": {
                     "index_set_id": self.index_set_id,
-                    "scope": scope,
                 },
             }
         except LogIndexSet.DoesNotExist:
-            logger.exception(f"LogIndexSet --> {self.index_set_id} 不存在")
+            logger.exception(f"LogIndexSet --> {self.index_set_id} does not exist")
         else:
             user_operation_record.delay(operation_record)
 
@@ -1100,17 +1099,14 @@ class IndexSetFieldsConfigHandler(object):
             except IndexSetFieldsConfig.DoesNotExist:
                 raise IndexSetFieldsConfigNotExistException()
 
-    def list(self, scope: str) -> list:
-        return [
-            model_to_dict(i)
-            for i in IndexSetFieldsConfig.objects.filter(index_set_id=self.index_set_id, scope=scope).all()
-        ]
+    def list(self) -> list:
+        return [model_to_dict(i) for i in IndexSetFieldsConfig.objects.filter(index_set_id=self.index_set_id).all()]
 
-    def create_or_update(self, name: str, display_fields: list, sort_list: list, scope: str):
+    def create_or_update(self, name: str, display_fields: list, sort_list: list):
         username = get_request_username()
         # 校验配置需要修改名称时, 名称是否可用
         if self.data and self.data.name != name or not self.data:
-            if IndexSetFieldsConfig.objects.filter(name=name, index_set_id=self.index_set_id, scope=scope).exists():
+            if IndexSetFieldsConfig.objects.filter(name=name, index_set_id=self.index_set_id).exists():
                 raise IndexSetFieldsConfigAlreadyExistException()
 
         if self.data:
@@ -1127,7 +1123,6 @@ class IndexSetFieldsConfigHandler(object):
                 index_set_id=self.index_set_id,
                 display_fields=display_fields,
                 sort_list=sort_list,
-                scope=scope,
             )
 
         # add user_operation_record
@@ -1145,11 +1140,10 @@ class IndexSetFieldsConfigHandler(object):
                     "index_set_id": self.index_set_id,
                     "display_fields": display_fields,
                     "sort_list": sort_list,
-                    "scope": scope,
                 },
             }
         except LogIndexSet.DoesNotExist:
-            logger.exception(f"LogIndexSet --> {self.index_set_id} 不存在")
+            logger.exception(f"LogIndexSet --> {self.index_set_id} does not exist")
         else:
             user_operation_record.delay(operation_record)
 

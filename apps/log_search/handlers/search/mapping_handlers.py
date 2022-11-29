@@ -205,9 +205,14 @@ class MappingHandlers(object):
         @param scope:
         @return:
         """
+        # search_context情况，默认只显示log字段
+        if scope in CONTEXT_SCOPE:
+            final_fields_list = self.get_final_fields()
+            return self._get_context_fields(final_fields_list)
+
         username = get_request_username()
         user_index_set_config_obj = UserIndexSetFieldsConfig.get_config(
-            index_set_id=self.index_set_id, username=username, scope=scope
+            index_set_id=self.index_set_id, username=username
         )
         # 用户已手动配置字段
         if user_index_set_config_obj:
@@ -227,25 +232,17 @@ class MappingHandlers(object):
                     final_field["is_display"] = True
             return final_fields_list, display_fields_list
 
-        # search_context情况，默认只显示log字段
-        if scope in CONTEXT_SCOPE:
-            final_fields_list = self.get_final_fields()
-            return self._get_context_fields(final_fields_list)
-
         # 其它情况
-        default_config = self.get_or_create_default_config(scope)
+        default_config = self.get_or_create_default_config()
         return default_config.display_fields
 
     @atomic
-    def get_or_create_default_config(self, scope="default"):
+    def get_or_create_default_config(self):
         """获取默认配置"""
         __, display_fields = self.get_default_fields()
-        sort_list = self.get_default_sort_list(
-            index_set_id=self.index_set_id, scenario_id=self.scenario_id, scope=scope
-        )
+        sort_list = self.get_default_sort_list(index_set_id=self.index_set_id, scenario_id=self.scenario_id)
         obj, __ = IndexSetFieldsConfig.objects.get_or_create(
             index_set_id=self.index_set_id,
-            scope=scope,
             name=DEFAULT_INDEX_SET_FIELDS_CONFIG_NAME,
             defaults={"display_fields": display_fields, "sort_list": sort_list},
         )
@@ -725,17 +722,14 @@ class MappingHandlers(object):
         return display_fields
 
     @classmethod
-    def get_sort_list_by_index_id(cls, index_set_id, scope="default"):
+    def get_sort_list_by_index_id(cls, index_set_id):
         """
         get_sort_list_by_index_id
         @param index_set_id:
-        @param scope:
         @return:
         """
         username = get_request_username()
-        index_config_obj = UserIndexSetFieldsConfig.get_config(
-            index_set_id=index_set_id, username=username, scope=scope
-        )
+        index_config_obj = UserIndexSetFieldsConfig.get_config(index_set_id=index_set_id, username=username)
         if not index_config_obj:
             return list()
 

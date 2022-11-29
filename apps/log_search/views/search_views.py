@@ -743,17 +743,14 @@ class SearchViewSet(APIViewSet):
         }
         """
         index_set_id = kwargs.get("index_set_id", "")
-        scope = request.GET.get("scope", "default")
-        if scope is not None and scope not in SEARCH_SCOPE_VALUE:
-            raise ValidationError(_("scope取值范围：default、search_context"))
         data = self.params_valid(SearchUserIndexSetConfigSerializer)
-        result = IndexSetHandler(index_set_id=index_set_id).config(config_id=data["config_id"], scope=scope)
+        result = IndexSetHandler(index_set_id=index_set_id).config(config_id=data["config_id"])
         return Response(result)
 
     @detail_route(methods=["POST"], url_path="create_config")
     def create_config(self, request, *args, **kwargs):
         """
-        @api {post} /search/index_set/$index_set_id/create_config/?scope=search_context 03_搜索-创建索引集配置
+        @api {post} /search/index_set/$index_set_id/create_config/ 03_搜索-创建索引集配置
         @apiDescription 创建索引集的字段配置
         @apiName create_index_set_config
         @apiGroup 11_Search
@@ -775,20 +772,17 @@ class SearchViewSet(APIViewSet):
         }
         """
         index_set_id = kwargs.get("index_set_id", "")
-        scope = request.GET.get("scope", "default")
-        if scope is not None and scope not in SEARCH_SCOPE_VALUE:
-            raise ValidationError(_("scope取值范围：default、search_context"))
         data = self.params_valid(CreateIndexSetFieldsConfigSerializer)
         SearchHandlerEsquery(index_set_id, {}).verify_sort_list_item(data["sort_list"])
         result = IndexSetFieldsConfigHandler(index_set_id=index_set_id).create_or_update(
-            name=data["name"], display_fields=data["display_fields"], sort_list=data["sort_list"], scope=scope
+            name=data["name"], display_fields=data["display_fields"], sort_list=data["sort_list"]
         )
         return Response(result)
 
     @detail_route(methods=["POST"], url_path="update_config")
     def update_config(self, request, *args, **kwargs):
         """
-        @api {post} /search/index_set/$index_set_id/update_config/?scope=search_context 03_搜索-修改索引集配置
+        @api {post} /search/index_set/$index_set_id/update_config/ 03_搜索-修改索引集配置
         @apiDescription 更新某个索引集的字段配置
         @apiName update_index_set_config
         @apiGroup 11_Search
@@ -810,20 +804,17 @@ class SearchViewSet(APIViewSet):
         }
         """
         index_set_id = kwargs.get("index_set_id", "")
-        scope = request.GET.get("scope", "default")
-        if scope is not None and scope not in SEARCH_SCOPE_VALUE:
-            raise ValidationError(_("scope取值范围：default、search_context"))
         data = self.params_valid(UpdateIndexSetFieldsConfigSerializer)
         SearchHandlerEsquery(index_set_id, {}).verify_sort_list_item(data["sort_list"])
         result = IndexSetFieldsConfigHandler(index_set_id=index_set_id, config_id=data["config_id"]).create_or_update(
-            name=data["name"], display_fields=data["display_fields"], sort_list=data["sort_list"], scope=scope
+            name=data["name"], display_fields=data["display_fields"], sort_list=data["sort_list"]
         )
         return Response(result)
 
     @detail_route(methods=["GET"], url_path="list_config")
     def list_config(self, request, *args, **kwargs):
         """
-        @api {get} /search/index_set/$index_set_id/list_config/?scope=search_context 03_搜索-获取索引集配置列表
+        @api {get} /search/index_set/$index_set_id/list_config/ 03_搜索-获取索引集配置列表
         @apiDescription 获取某个索引集的字段配置列表
         @apiName list_index_set_config
         @apiGroup 11_Search
@@ -845,10 +836,7 @@ class SearchViewSet(APIViewSet):
         }
         """
         index_set_id = kwargs.get("index_set_id", "")
-        scope = request.GET.get("scope", "default")
-        if scope is not None and scope not in SEARCH_SCOPE_VALUE:
-            raise ValidationError(_("scope取值范围：default、search_context"))
-        return Response(IndexSetFieldsConfigHandler(index_set_id=index_set_id).list(scope=scope))
+        return Response(IndexSetFieldsConfigHandler(index_set_id=index_set_id).list())
 
     @detail_route(methods=["POST"], url_path="delete_config")
     def delete_config(self, request, *args, **kwargs):

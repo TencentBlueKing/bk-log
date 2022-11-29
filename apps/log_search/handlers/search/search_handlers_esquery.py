@@ -226,8 +226,6 @@ class SearchHandler(object):
         self.request_username = get_request_username()
 
     def fields(self, scope="default"):
-        # field_result, display_fields = self._get_all_fields_by_index_id(scope)
-        # sort_list: list = self._get_sort_list_by_index_id(scope)
         mapping_handlers = MappingHandlers(
             self.indices,
             self.index_set_id,
@@ -238,7 +236,7 @@ class SearchHandler(object):
             end_time=self.end_time,
         )
         field_result, display_fields = mapping_handlers.get_all_fields_by_index_id(scope)
-        sort_list: list = MappingHandlers.get_sort_list_by_index_id(self.index_set_id, scope)
+        sort_list: list = MappingHandlers.get_sort_list_by_index_id(self.index_set_id)
 
         # 校验sort_list字段是否存在
         field_result_list = [i["field_name"] for i in field_result]
@@ -270,7 +268,7 @@ class SearchHandler(object):
             result_dict["config"].append(fields_config)
         # 将用户当前使用的配置id传递给前端
         result_dict["config_id"] = UserIndexSetFieldsConfig.get_config(
-            index_set_id=self.index_set_id, username=self.request_username, scope=scope
+            index_set_id=self.index_set_id, username=self.request_username
         ).id
 
         return result_dict
@@ -677,16 +675,6 @@ class SearchHandler(object):
             result_size += scroll_size
             yield self._deal_query_result(scroll_result)
 
-    def _get_sort_list_by_index_id(self, scope="default"):
-        index_config_obj = UserIndexSetFieldsConfig.get_config(
-            index_set_id=self.index_set_id, username=self.request_username, scope=scope
-        )
-        if not index_config_obj:
-            return list()
-
-        sort_list = index_config_obj.sort_list
-        return sort_list if isinstance(sort_list, list) else list()
-
     @staticmethod
     def get_bcs_manage_url(cluster_id, container_id):
         """
@@ -1078,7 +1066,7 @@ class SearchHandler(object):
         # 用户已设置排序规则
         username = get_request_username()
         scope = self.search_dict.get("search_type", "default")
-        config_obj = UserIndexSetFieldsConfig.get_config(index_set_id=index_set_id, username=username, scope=scope)
+        config_obj = UserIndexSetFieldsConfig.get_config(index_set_id=index_set_id, username=username)
         if config_obj:
             sort_list = config_obj.sort_list
             if sort_list:
