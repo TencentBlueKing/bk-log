@@ -86,7 +86,7 @@ class Business(ResourceMeta):
 
     system_id = "bk_monitorv3"
     id = "space"
-    name = _lazy("项目空间")
+    name = _lazy("空间")
     selection_mode = "instance"
     related_instance_selections = [{"system_id": system_id, "id": "space_list"}]
 

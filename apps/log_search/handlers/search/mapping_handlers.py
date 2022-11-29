@@ -36,6 +36,7 @@ from apps.log_search.constants import (
     LOG_ASYNC_FIELDS,
     FEATURE_ASYNC_EXPORT_COMMON,
     FieldDataTypeEnum,
+    DEFAULT_INDEX_OBJECT_FIELDS_PRIORITY,
 )
 from apps.utils.cache import cache_ten_minute
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
@@ -45,12 +46,9 @@ from apps.log_search.exceptions import (
     SearchGetSchemaException,
     FieldsDateNotExistException,
     IndexSetNotHaveConflictIndex,
+    SearchNotTimeFieldType,
 )
-from apps.log_search.models import (
-    LogIndexSet,
-    Scenario,
-    UserIndexSetConfig,
-)
+from apps.log_search.models import LogIndexSet, Scenario, UserIndexSetConfig, LogIndexSetData
 from apps.utils.local import get_local_param
 from apps.utils.time_handler import generate_time_range
 
@@ -221,23 +219,62 @@ class MappingHandlers(object):
             return self._get_context_fields(final_fields_list)
 
         # 其它情况
-        display_fields_list = []
-        if self.scenario_id == Scenario.ES:
-            produce_fields = OUTER_PRODUCE_FIELDS
-        elif self.scenario_id in [Scenario.BKDATA, Scenario.LOG]:
-            produce_fields = INNER_PRODUCE_FIELDS
-        else:
-            produce_fields = list()
-        range_num = len(final_fields_list) if len(final_fields_list) < 5 else 5
-        for index_n in range(range_num):
-            field_name = final_fields_list[index_n]["field_name"]
-            if field_name not in produce_fields:
-                final_fields_list[index_n]["is_display"] = True
-                display_fields_list.append(field_name)
+        return self._get_default_fields(final_fields_list)
+
+    def _get_default_fields(self, final_fields_list):
+        """默认字段"""
+        display_fields_list = [self._get_time_field()]
+        if self._get_object_field(final_fields_list):
+            display_fields_list.append(self._get_object_field(final_fields_list))
+        display_fields_list.extend(self._get_text_fields(final_fields_list))
+
+        for field_n in range(len(final_fields_list)):
+            field_name = final_fields_list[field_n]["field_name"]
+            if field_name in display_fields_list:
+                final_fields_list[field_n]["is_display"] = True
             else:
-                final_fields_list[index_n]["is_display"] = False
-        display_fields_list = self._sort_display_fields(display_fields_list)
+                final_fields_list[field_n]["is_display"] = False
+
         return final_fields_list, display_fields_list
+
+    def _get_time_field(self):
+        """获取索引时间字段"""
+        index_set_obj: LogIndexSet = LogIndexSet.objects.filter(index_set_id=self.index_set_id).first()
+        if index_set_obj.time_field:
+            return index_set_obj.time_field
+
+        index_set_obj: LogIndexSetData = LogIndexSetData.objects.filter(index_set_id=self.index_set_id).first()
+        if not index_set_obj:
+            raise SearchNotTimeFieldType()
+
+        return index_set_obj.time_field
+
+    def _get_object_field(self, final_fields_list):
+        """获取对象字段"""
+        final_field_name_list = [field["field_name"] for field in final_fields_list]
+        for field in DEFAULT_INDEX_OBJECT_FIELDS_PRIORITY:
+            if field in final_field_name_list:
+                return field
+        return None
+
+    def _get_text_fields(self, final_fields_list: list):
+        """获取text类型字段"""
+        final_field_name_list = [field["field_name"] for field in final_fields_list]
+        if "log" in final_field_name_list:
+            return ["log"]
+        type_text_fields = [
+            field["field_name"]
+            for field in final_fields_list
+            if field["field_type"] == "text" and not field["field_name"].startswith("_")
+        ]
+        if type_text_fields:
+            return type_text_fields[:2]
+        type_keyword_fields = [
+            field["field_name"]
+            for field in final_fields_list
+            if field["field_type"] == "keyword" and not field["field_name"].startswith("_")
+        ]
+        return type_keyword_fields[:2]
 
     def _get_mapping(self):
         return self._get_latest_mapping(index_set_id=self.index_set_id)
