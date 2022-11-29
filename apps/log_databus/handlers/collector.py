@@ -338,8 +338,10 @@ class CollectorHandler(object):
 
         if "result_table_config" in result and "result_table_storage" in result:
             if self.data.table_id in result["result_table_storage"]:
-                # etl_config以META为准
-                self.data.etl_config = EtlStorage.get_etl_config(result["result_table_config"])
+                if not self.data.is_clustering:
+                    # 不打开聚类时，etl_config 以 META 为准
+                    # 打开聚类之后，META 的清洗配置并不代表真正的原始清洗配置，以本地存储为准
+                    self.data.etl_config = EtlStorage.get_etl_config(result["result_table_config"])
                 etl_storage = EtlStorage.get_instance(etl_config=self.data.etl_config)
                 collector_config.update(
                     etl_storage.parse_result_table_config(
@@ -873,8 +875,7 @@ class CollectorHandler(object):
 
     def _pre_check_collector_config_en(self, model_fields: dict, bk_biz_id: int):
         qs = CollectorConfig.objects.filter(
-            collector_config_name_en=model_fields["collector_config_name_en"],
-            bk_biz_id=bk_biz_id,
+            collector_config_name_en=model_fields["collector_config_name_en"], bk_biz_id=bk_biz_id,
         )
         if self.collector_config_id:
             qs = qs.exclude(collector_config_id=self.collector_config_id)
@@ -2072,8 +2073,7 @@ class CollectorHandler(object):
         bk_biz_id = params["bk_biz_id"] if not self.data else self.data.bk_biz_id
         if target_node_type and target_node_type == TargetNodeTypeEnum.INSTANCE.value:
             illegal_ips = self._filter_illegal_ips(
-                bk_biz_id=bk_biz_id,
-                ip_list=[target_node["ip"] for target_node in target_nodes],
+                bk_biz_id=bk_biz_id, ip_list=[target_node["ip"] for target_node in target_nodes],
             )
             if illegal_ips:
                 logger.error("cat illegal IPs: {illegal_ips}".format(illegal_ips=illegal_ips))
@@ -3198,9 +3198,7 @@ class CollectorHandler(object):
             raise RuleCollectorException(RuleCollectorException.MESSAGE.format(rule_id=rule_id))
         for collector in collectors:
             self.deal_self_call(
-                collector_config_id=collector.collector_config_id,
-                collector=collector,
-                func=self.destroy,
+                collector_config_id=collector.collector_config_id, collector=collector, func=self.destroy,
             )
         bcs_rule.delete()
         return {"rule_id": rule_id}
@@ -3637,6 +3635,18 @@ class CollectorHandler(object):
                     bcs_cluster_id=bcs_cluster_id,
                     namespace_list=config.get("namespaceSelector", {}).get("matchNames", []),
                 )
+            except AllNamespaceNotAllowedException:
+                return {
+                    "origin_text": yaml_config,
+                    "parse_status": False,
+                    "parse_result": [
+                        {
+                            "start_line_number": 0,
+                            "end_line_number": 0,
+                            "message": _("配置校验失败: namespaceSelector 共享集群下 any 不允许为 true，" "且 matchNames 不允许为空，请检查"),
+                        }
+                    ],
+                }
             except Exception as e:  # noqa
                 return {
                     "origin_text": yaml_config,

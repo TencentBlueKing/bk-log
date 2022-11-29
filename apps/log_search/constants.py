@@ -1257,3 +1257,5 @@ OPERATORS = {
         OperatorEnum.NOT_EXISTS,
     ],
 }
+
+DEFAULT_INDEX_OBJECT_FIELDS_PRIORITY = ["__ext.io_kubernetes_pod", "serverIp", "ip"]

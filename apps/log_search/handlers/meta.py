@@ -34,6 +34,7 @@ from apps.log_search.models import ProjectInfo, UserMetaConf, Space
 from apps.utils.local import get_request_username
 from apps.log_search import exceptions
 from apps.feature_toggle.handlers import toggle
+from apps.utils.log import logger
 
 
 class MetaHandler(APIModel):
@@ -45,7 +46,11 @@ class MetaHandler(APIModel):
 
         # 获取置顶空间列表
         # 返回格式： space_uid 的列表
-        sticky_spaces = TransferApi.list_sticky_spaces({"username": username})
+        try:
+            sticky_spaces = TransferApi.list_sticky_spaces({"username": username})
+        except Exception as e:
+            logger.error(f"Get sticky space by user({username}), error({e})")
+            sticky_spaces = []
 
         result = []
         for space in spaces:

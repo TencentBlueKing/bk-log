@@ -77,7 +77,7 @@ class BkLogDelimiterEtlStorage(EtlStorage):
         option = {
             "retain_original_text": etl_params.get("retain_original_text", False),
             "separator_node_source": "data",
-            "separator_node_action": "delimiter",
+            "separator_node_action": etl_params.get("separator_node_action", "delimiter"),
             "separator_node_name": self.separator_node_name,
             "separator": etl_params["separator"],
             "etl_flat": etl_params.get("etl_flat", False),
@@ -91,7 +91,8 @@ class BkLogDelimiterEtlStorage(EtlStorage):
         user_fields = {}
         max_index = 0
         for field in fields:
-            field_index = int(field["field_index"])
+            # 兼容field_index在option中
+            field_index = int(field.get("field_index") or field.get("option", {}).get("field_index"))
             user_fields[str(field_index)] = field
             if field_index > max_index:
                 max_index = field_index

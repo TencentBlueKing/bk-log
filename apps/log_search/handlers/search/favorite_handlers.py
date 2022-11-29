@@ -260,7 +260,7 @@ class FavoriteGroupHandler(object):
         space_uid = self.space_uid if self.space_uid else self.data.space_uid
         group_type = FavoriteGroupType.PUBLIC.value
         # 检查name是否可用
-        if self.data and self.data != name or not self.data:
+        if self.data and self.data.name != name or not self.data:
             if FavoriteGroup.objects.filter(name=name, space_uid=space_uid).exists():
                 raise FavoriteGroupAlreadyExistException()
 
