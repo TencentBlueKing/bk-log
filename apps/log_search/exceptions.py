@@ -373,6 +373,11 @@ class CouldNotFindTemplateException(BaseException):
     MESSAGE = _("无法找到{template_name}{language}相关模板")
 
 
+class PreCheckAsyncExportException(BaseException):
+    ERROR_CODE = "504"
+    MESSAGE = _("创建异步导出任务前置检查失败,请检查索引集字段配置")
+
+
 # =================================================
 # JWT
 # =================================================

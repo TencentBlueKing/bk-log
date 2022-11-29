@@ -894,13 +894,11 @@ class MappingHandlers(object):
 
     @classmethod
     def _generate_async_export_reason(cls, scenario_id: str, result: dict):
-        reason_map = {
-            Scenario.BKDATA: _("缺少必备字段: {async_fields} or {async_container_fields}").format(
-                async_fields=", ".join(BKDATA_ASYNC_FIELDS),
-                async_container_fields=", ".join(BKDATA_ASYNC_CONTAINER_FIELDS),
-            ),
-            Scenario.LOG: _("缺少必备字段: {async_fields}").format(async_fields=", ".join(LOG_ASYNC_FIELDS)),
-        }
+        reason = _("检查以下字段是否设置为聚合字段: {}")
+        if scenario_id == Scenario.BKDATA:
+            fields = list(set(BKDATA_ASYNC_FIELDS + BKDATA_ASYNC_CONTAINER_FIELDS))
+        else:
+            fields = LOG_ASYNC_FIELDS
 
-        result["async_export_usable_reason"] = reason_map[scenario_id]
+        result["async_export_usable_reason"] = reason.format(", ".join(fields))
         return result
