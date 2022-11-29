@@ -33,7 +33,7 @@ from django.utils.translation import ugettext_lazy as _
 from rest_framework.exceptions import ErrorDetail, ValidationError
 
 from apps.api import BkDataAccessApi, CCApi, BcsCcApi
-from apps.api import NodeApi, TransferApi
+from apps.api import NodeApi, TransferApi, MonitorApi
 from apps.api.modules.bk_node import BKNodeApi
 from apps.constants import UserOperationActionEnum, UserOperationTypeEnum
 from apps.exceptions import ApiError, ApiRequestError, ApiResultError
@@ -4010,6 +4010,10 @@ class CollectorHandler(object):
             result.append(container_raw_config)
 
         return yaml.safe_dump_all(result)
+
+    @classmethod
+    def get_apm_push_url(cls, bk_biz_id: int) -> dict:
+        return MonitorApi.apm_push_url(bk_biz_id=bk_biz_id)
 
 
 def get_random_public_cluster_id() -> int:

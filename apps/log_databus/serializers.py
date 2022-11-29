@@ -1372,3 +1372,11 @@ class ContainerCollectorConfigToYamlSerializer(serializers.Serializer):
     configs = serializers.ListSerializer(label=_("容器日志配置"), child=ContainerConfigSerializer())
     add_pod_label = serializers.BooleanField(label=_("上报时是否把标签带上"), default=False)
     extra_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=LablesSerializer())
+
+
+class PushUrlRequestSerializer(serializers.Serializer):
+    """
+    APM 上报地址请求序列化
+    """
+
+    bk_biz_id = serializers.IntegerField(label=_("业务ID"))
