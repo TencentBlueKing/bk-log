@@ -89,8 +89,8 @@ class IndexSetHandler(APIModel):
     def config(self, config_id: int):
         """修改用户当前索引集的配置"""
         username = get_request_username()
-        UserIndexSetFieldsConfig.objects.filter(index_set_id=self.index_set_id, username=username).update(
-            config_id=config_id
+        UserIndexSetFieldsConfig.objects.update_or_create(
+            index_set_id=self.index_set_id, username=username, defaults={"config_id": config_id}
         )
         # add user_operation_record
         try:
