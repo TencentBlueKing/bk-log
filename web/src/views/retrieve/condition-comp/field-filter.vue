@@ -176,6 +176,9 @@ export default {
       }
       return count;
     },
+    filedSettingConfigID() { // 当前索引集的显示字段ID
+      return this.$store.state.retrieve.filedSettingConfigID;
+    },
   },
   watch: {
     '$route.params.indexId'() { // 切换索引集重置状态
@@ -241,7 +244,7 @@ export default {
       }
       this.$http.request('retrieve/postFieldsConfig', {
         params: { index_set_id: this.$route.params.indexId },
-        data: { display_fields: displayFieldNames, sort_list: this.sortList },
+        data: { display_fields: displayFieldNames, sort_list: this.sortList, config_id: this.filedSettingConfigID },
       }).catch((e) => {
         console.warn(e);
       });

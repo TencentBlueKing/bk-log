@@ -73,6 +73,7 @@
                 v-if="showFieldsSetting"
                 :field-alias-map="$attrs['field-alias-map']"
                 :retrieve-params="retrieveParams"
+                @setPopperInstance="setPopperInstance"
                 @confirm="confirmModifyFields"
                 @cancel="closeDropdown" />
             </div>
@@ -152,6 +153,11 @@ export default {
     closeDropdown() {
       this.showFieldsSetting = false;
       this.$refs.fieldsSettingPopper.instance.hide();
+    },
+    setPopperInstance(status = true) {
+      this.$refs.fieldsSettingPopper.instance.set({
+        hideOnClick: status,
+      });
     },
   },
 };
