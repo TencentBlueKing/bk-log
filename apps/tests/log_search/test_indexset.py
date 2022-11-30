@@ -166,6 +166,8 @@ NOT_EDITABLE_RETURN = {
     "errors": None,
 }
 
+EDITABLE_SUCCESS = {}
+
 INDEX_SET_LISTS = {
     "total": 1,
     "list": [
