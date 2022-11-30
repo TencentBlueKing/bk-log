@@ -19,7 +19,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-import copy
 
 import arrow
 import json
@@ -165,8 +164,6 @@ NOT_EDITABLE_RETURN = {
     "message": "索引集登陆日志禁止编辑（3600001）",
     "errors": None,
 }
-
-EDITABLE_SUCCESS = {}
 
 INDEX_SET_LISTS = {
     "total": 1,
@@ -398,8 +395,7 @@ class TestIndexSet(TestCase):
     @patch("apps.log_search.tasks.mapping.sync_index_set_mapping_snapshot.delay", return_value=None)
     @patch("apps.utils.bk_data_auth.BkDataAuthHandler.filter_unauthorized_rt_by_user", return_value=[])
     @patch(
-        "apps.utils.bk_data_auth.BkDataAuthHandler.list_authorized_rt_by_token",
-        return_value=["591_xx", "log_xxx"],
+        "apps.utils.bk_data_auth.BkDataAuthHandler.list_authorized_rt_by_token", return_value=["591_xx", "log_xxx"],
     )
     @patch("apps.api.TransferApi.get_cluster_info", return_value=CLUSTER_INFO_WITH_AUTH)
     @patch("apps.api.BkLogApi.mapping", return_value=MAPPING_LIST)
@@ -592,19 +588,12 @@ class TestIndexSet(TestCase):
         self.maxDiff = 1000000
         self.assertEqual(content["data"], UPDATE_INDEX_SET)
 
-        # 测试不可编辑字段 为True下仍可以编辑
+        # 测试不可编辑情况
         index_set.is_editable = False
         index_set.save()
         response = self.client.patch(path=path, data=json.dumps(data), content_type="application/json")
-        content = json.loads(response.content)
-        created_at = content["data"]["created_at"]
-        updated_at = content["data"]["updated_at"]
 
-        check_data = copy.deepcopy(UPDATE_INDEX_SET)
-        self.sync_params(
-            check_data, index_set_id=index_set_id, created_at=created_at, updated_at=updated_at, is_editable=False
-        )
-        self.assertEqual(json.loads(response.content)["data"], check_data)
+        self.assertEqual(json.loads(response.content), NOT_EDITABLE_RETURN)
 
     @override_settings(MIDDLEWARE=(OVERRIDE_MIDDLEWARE,))
     def test_delete_index_set(self, *args):
