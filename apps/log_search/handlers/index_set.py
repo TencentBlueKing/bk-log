@@ -526,9 +526,6 @@ class IndexSetHandler(APIModel):
         index_set_obj: LogIndexSet = self._get_data()
         index_set_obj.cancel_favorite(get_request_username())
 
-    def is_editable(self):
-        return self.data.is_editable
-
     @staticmethod
     def _get_health(src: list):
         has_red_health_list = [item.get("health", "") == EsHealthStatus.RED.value for item in src]
