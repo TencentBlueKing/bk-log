@@ -51,7 +51,7 @@
     </div>
     <div v-show="configItem.isShowEdit" class="config-tab-item" @click="(e) => e.stopPropagation()">
       <bk-input
-        class="config-input"
+        :class="['config-input', { 'input-error': isInputError }]"
         v-model="nameStr"
         :maxlength="10"
         :placeholder="$t('请输入配置名')"></bk-input>
@@ -76,8 +76,9 @@ export default {
   data() {
     return {
       isHoverItem: false,
-      isClickDelete: false,
-      nameStr: '',
+      isClickDelete: false, // 是否点击删除配置
+      nameStr: '', // 编辑
+      isInputError: false, // 名称是否非法
       tippyOptions: {
         placement: 'bottom',
         trigger: 'click',
@@ -86,14 +87,25 @@ export default {
     };
   },
   computed: {
-    isShowEditIcon() {
+    isShowEditIcon() { // 是否展示编辑或删除icon
       return this.isHoverItem && this.configItem.index !== 0;
+    },
+  },
+  watch: {
+    nameStr() {
+      this.isInputError = false;
     },
   },
   methods: {
     /** 用户配置操作 */
     emitOperate(type) {
+      // 赋值名称
       if (type === 'edit') this.nameStr = this.configItem.name;
+      // 更新前判断名称是否合法
+      if (type === 'update' && !this.nameStr) {
+        this.isInputError = true;
+        return;
+      }
       const submitData = deepClone(this.configItem);
       submitData.editStr = this.nameStr;
       this.$emit('operateChange', type, submitData);
@@ -156,6 +168,12 @@ export default {
 
     .icon-close-line-2 {
       color: #d7473f;
+    }
+  }
+
+  .input-error {
+    ::v-deep .bk-form-input {
+      border: 1px solid #d7473f;
     }
   }
 

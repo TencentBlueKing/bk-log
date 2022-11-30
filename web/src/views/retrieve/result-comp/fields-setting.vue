@@ -32,7 +32,10 @@
           </bk-button>
         </div>
         <div v-show="isShowAddInput" class="config-tab-item">
-          <bk-input class="config-input" v-model="newConfigStr"></bk-input>
+          <bk-input
+            :class="['config-input', { 'input-error': isInputError }]"
+            v-model="newConfigStr">
+          </bk-input>
           <div class="panel-operate">
             <i class="bk-icon icon-check-line" @click="handleAddNewConfig"></i>
             <i class="bk-icon icon-close-line-2" @click="handleCancelNewConfig"></i>
@@ -179,6 +182,7 @@ export default {
       activeFieldTab: 'visible',
       activeConfigTab: 'default', // 当前活跃的配置配置名
       isConfirmSubmit: false, // 是否点击保存
+      isInputError: false, // 新建配置名称是否不合法
       fieldTabPanels: [
         { name: 'visible', label: this.$t('retrieve.setVisible') },
         { name: 'sort', label: this.$t('retrieve.setSort') },
@@ -210,6 +214,11 @@ export default {
     },
     currentClickConfigData() { // 当前选中的配置
       return this.configTabPanels.find(item => item.id === this.currentClickConfigID) || this.configTabPanels[0];
+    },
+  },
+  watch: {
+    newConfigStr() {
+      this.isInputError = false;
     },
   },
   created() {
@@ -412,6 +421,10 @@ export default {
     },
     /** 新增配置 */
     handleAddNewConfig() {
+      if (!this.newConfigStr) {
+        this.isInputError = true;
+        return;
+      };
       const configValue = this.configTabPanels[0];
       configValue.editStr = this.newConfigStr;
       this.handleUpdateConfig(configValue, true);
@@ -420,6 +433,7 @@ export default {
     handleCancelNewConfig() {
       this.newConfigStr = '';
       this.isShowAddInput = false;
+      this.isInputError = false;
     },
     /** 取消编辑配置 */
     handleCancelEditConfig(index) {
@@ -550,6 +564,12 @@ export default {
 
           .config-input {
             width: 100px;
+          }
+
+          .input-error {
+            ::v-deep .bk-form-input {
+              border: 1px solid #d7473f;
+            }
           }
 
           .panel-name {
