@@ -472,6 +472,12 @@ export default {
         this.initRequestConfigListShow();
         this.newConfigStr = '';
         this.currentClickConfigID = this.configTabPanels[0].id;
+        if (this.filedSettingConfigID === configID) {
+          // 若删除的元素id与使用当前使用的config_id相同则直接刷新显示字段
+          this.$store.commit('updateClearTableWidth', 1);
+          const { display_fields } = this.configTabPanels[0];
+          this.$emit('modifyFields', display_fields, this.showFieldAlias);
+        }
       }
     },
     /** 初始化显示字段 */
