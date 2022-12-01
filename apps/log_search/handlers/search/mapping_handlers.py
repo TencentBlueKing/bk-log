@@ -865,32 +865,39 @@ class MappingHandlers(object):
         """
         判断是否可以支持大额导出
         """
-        fields = {final_field["field_name"] for final_field in final_fields_list if final_field["es_doc_values"]}
+        fields = {final_field["field_name"] for final_field in final_fields_list}
+        agg_fields = {final_field["field_name"] for final_field in final_fields_list if final_field["es_doc_values"]}
         result = {"async_export_usable": False, "async_export_fields": [], "async_export_usable_reason": ""}
         if not FeatureToggleObject.switch(FEATURE_ASYNC_EXPORT_COMMON):
             result["async_export_usable_reason"] = _("【异步导出功能尚未开放】")
             return result
 
         if scenario_id == Scenario.BKDATA and fields.issuperset(set(BKDATA_ASYNC_FIELDS)):
-            result["async_export_usable"] = True
-            result["async_export_fields"] = BKDATA_ASYNC_FIELDS
-            return result
+            return cls._judge_missing_agg_field(result, agg_fields, BKDATA_ASYNC_FIELDS)
 
         if scenario_id == Scenario.BKDATA and fields.issuperset(set(BKDATA_ASYNC_CONTAINER_FIELDS)):
-            result["async_export_usable"] = True
-            result["async_export_fields"] = BKDATA_ASYNC_CONTAINER_FIELDS
-            return result
+            return cls._judge_missing_agg_field(result, agg_fields, BKDATA_ASYNC_CONTAINER_FIELDS)
 
         if scenario_id == Scenario.LOG and fields.issuperset(set(LOG_ASYNC_FIELDS)):
-            result["async_export_usable"] = True
-            result["async_export_fields"] = LOG_ASYNC_FIELDS
-            return result
+            return cls._judge_missing_agg_field(result, agg_fields, LOG_ASYNC_FIELDS)
 
         if scenario_id == Scenario.ES:
             result["async_export_usable"] = True
             return result
 
         return cls._generate_async_export_reason(scenario_id=scenario_id, result=result)
+
+    @classmethod
+    def _judge_missing_agg_field(cls, result: dict, agg_fields: set, scenario_fields: list) -> dict:
+        """
+        判断聚合字段是否缺失
+        """
+        if agg_fields.issuperset(set(scenario_fields)):
+            result["async_export_fields"] = scenario_fields
+            result["async_export_usable"] = True
+        else:
+            result["async_export_usable_reason"] = "检查{}字段是否为聚合字段".format(",".join(scenario_fields))
+        return result
 
     @classmethod
     def _generate_async_export_reason(cls, scenario_id: str, result: dict):
@@ -901,6 +908,5 @@ class MappingHandlers(object):
             ),
             Scenario.LOG: _("缺少必备字段: {async_fields}").format(async_fields=", ".join(LOG_ASYNC_FIELDS)),
         }
-
         result["async_export_usable_reason"] = reason_map[scenario_id]
         return result
