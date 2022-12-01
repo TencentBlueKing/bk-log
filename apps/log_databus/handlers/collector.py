@@ -1004,15 +1004,6 @@ class CollectorHandler(object):
             etl_storage = EtlStorage.get_instance(self.data.etl_config)
             etl_storage.switch_result_table(collector_config=self.data, is_enable=True)
 
-        # start custom log group
-        if self.data.log_group_id:
-            TransferApi.modify_log_group(
-                {
-                    "log_group_id": self.data.log_group_id,
-                    "is_enable": True,
-                }
-            )
-
         # add user_operation_record
         operation_record = {
             "username": get_request_username(),
@@ -1063,15 +1054,6 @@ class CollectorHandler(object):
             _, table_id = self.data.table_id.split(".")  # pylint: disable=unused-variable
             etl_storage = EtlStorage.get_instance(self.data.etl_config)
             etl_storage.switch_result_table(collector_config=self.data, is_enable=False)
-
-        # stop custom log group
-        if self.data.log_group_id:
-            TransferApi.modify_log_group(
-                {
-                    "log_group_id": self.data.log_group_id,
-                    "is_enable": False,
-                }
-            )
 
         # add user_operation_record
         operation_record = {
@@ -2153,6 +2135,21 @@ class CollectorHandler(object):
             for collector in CollectorConfig.objects.filter(bk_biz_id=bk_biz_id)
         ]
 
+    @classmethod
+    def create_custom_log_group(cls, collector: CollectorConfig):
+        resp = TransferApi.create_log_group(
+            {
+                "bk_data_id": collector.bk_data_id,
+                "bk_biz_id": collector.get_bk_biz_id(),
+                "log_group_name": collector.collector_config_name_en,
+                "label": collector.category_id,
+                "operator": collector.created_by,
+                "log_info_list": [],
+            }
+        )
+        collector.log_group_id = resp["log_group_id"]
+        collector.save(update_fields=["log_group_id"])
+
     def custom_create(
         self,
         bk_biz_id=None,
@@ -2264,18 +2261,7 @@ class CollectorHandler(object):
 
         # create custom Log Group
         if custom_type == CustomTypeEnum.OTLP_LOG.value:
-            resp = TransferApi.create_log_group(
-                {
-                    "bk_data_id": self.data.bk_data_id,
-                    "bk_biz_id": self.data.get_bk_biz_id(),
-                    "log_group_name": self.data.collector_config_name_en,
-                    "label": self.data.category_id,
-                    "operator": self.data.created_by,
-                    "log_info_list": [],
-                }
-            )
-            self.data.log_group_id = resp["log_group_id"]
-            self.data.save()
+            self.create_custom_log_group(self.data)
 
         return {
             "collector_config_id": self.data.collector_config_id,
