@@ -353,6 +353,41 @@ class DateHistogramException(BaseException):
     MESSAGE = _("索引集【{index_set_id}】聚合查询异常：{err}")
 
 
+class FavoriteNotExistException(BaseException):
+    ERROR_CODE = "425"
+    MESSAGE = _("收藏不存在")
+
+
+class FavoriteAlreadyExistException(BaseException):
+    ERROR_CODE = "426"
+    MESSAGE = _("收藏名已存在")
+
+
+class FavoriteVisibleTypeNotAllowedModifyException(BaseException):
+    ERROR_CODE = "426"
+    MESSAGE = _("收藏可见类型不允许修改")
+
+
+class FavoriteGroupNotExistException(BaseException):
+    ERROR_CODE = "430"
+    MESSAGE = _("收藏组不存在")
+
+
+class FavoriteGroupAlreadyExistException(BaseException):
+    ERROR_CODE = "431"
+    MESSAGE = _("收藏组已存在")
+
+
+class FavoriteGroupNotAllowedModifyException(BaseException):
+    ERROR_CODE = "432"
+    MESSAGE = _("个人收藏组不允许修改")
+
+
+class FavoriteGroupNotAllowedDeleteException(BaseException):
+    ERROR_CODE = "433"
+    MESSAGE = _("只有公开收藏组可以删除")
+
+
 # =================================================
 # 导出
 # =================================================
@@ -401,3 +436,8 @@ class BkJwtVerifyFailException(BasePermException):
 class SettingMenuException(BasePermException):
     ERROR_CODE = "1001"
     MESSAGE = _("配置中menu对象异常")
+
+
+class FunctionGuideException(BaseException):
+    ERROR_CODE = "1002"
+    MESSAGE = _("不存在该功能引导")

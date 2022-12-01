@@ -42,7 +42,6 @@ elasticsearch==7.0.0
 elasticsearch5==5.5.6
 elasticsearch6==6.4.2
 elasticsearch_dsl==7.0.0
-luqum==0.11.0
 
 # kafka
 kafka-python==1.4.6
@@ -111,6 +110,9 @@ pymysql==1.0.2
 
 # pika, rabbitmq client
 pika==1.2.1
+
+# luqum, ES Search SQL
+luqum==0.12.0
 
 # 各自环境所需的不同依赖, 通过 sites/${env}/deploy/requirements_env.txt得到
 -r requirements_env.txt
