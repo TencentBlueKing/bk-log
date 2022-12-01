@@ -96,9 +96,20 @@ class DataApiRetryClass(object):
         self.wait_random_min = wait_random_min
         self.wait_random_max = wait_random_max
         self.fail_exceptions = []
+        self.fail_check_functions = []
 
-    def add_exceptions(self, *exceptions):
+    def add_exceptions(self, exceptions: list):
         self.fail_exceptions.extend(exceptions)
+
+    def add_fail_check_functions(self, fail_check_functions: list):
+        """
+        添加检查result是否失败的函数, 参数默认接受result对象
+        函数语义为需不需要重试
+        eg: fail_check_functions=[
+            lambda x: not json.loads(x.text)["result"]
+        ],
+        """
+        self.fail_check_functions.extend(fail_check_functions)
 
     @property
     def retry_on_exception(self):
@@ -110,14 +121,37 @@ class DataApiRetryClass(object):
 
         return wraps
 
+    @property
+    def retry_on_result(self):
+        """result为请求的返回结果"""
+
+        def wraps(result):
+            for fail_check_func in self.fail_check_functions:
+                # 这里和retry_on_exception判断方式保持一致, 函数语义为需不需要重试
+                # 如果函数判断为: True, 需要重试; False, 不需要重试
+                if fail_check_func(result):
+                    return False
+            return True
+
+        return wraps
+
     @staticmethod
-    def create_retry_obj(*exceptions, stop_max_attempt_number=1, wait_random_min=0, wait_random_max=1000):
+    def create_retry_obj(
+        exceptions: list = None,
+        fail_check_functions: list = None,
+        stop_max_attempt_number=1,
+        wait_random_min=0,
+        wait_random_max=1000,
+    ):
         retry_obj = DataApiRetryClass(
             stop_max_attempt_number=stop_max_attempt_number,
             wait_random_min=wait_random_min,
             wait_random_max=wait_random_max,
         )
-        retry_obj.add_exceptions(*exceptions)
+        if exceptions:
+            retry_obj.add_exceptions(exceptions)
+        if fail_check_functions:
+            retry_obj.add_fail_check_functions(fail_check_functions)
         return retry_obj
 
 
@@ -277,6 +311,7 @@ class DataAPI(object):
                         wait_random_min=self.data_api_retry_cls.wait_random_min,
                         wait_random_max=self.data_api_retry_cls.wait_random_max,
                         retry_on_exception=self.data_api_retry_cls.retry_on_exception,
+                        retry_on_result=self.data_api_retry_cls.retry_on_result,
                     ).call(self._send, params, timeout, request_id, request_cookies)
                 else:
                     raw_response = self._send(params, timeout, request_id, request_cookies)
