@@ -302,7 +302,7 @@ export default {
     },
     // 值改变
     handleValueChange(val) {
-      if (this.isHaveCompared) return;
+      if (!val.length) return;
       const newVal = val[val.length - 1];
       if (newVal === '') { // 选择了-空-过滤值
         this.coreData.value = [''];
@@ -312,8 +312,8 @@ export default {
     },
     // 当有对比的操作时 值改变
     handleValueBlur(val) {
-      if (!this.isHaveCompared) return;
-      this.coreData.value = val === '' ? [''] : [val];
+      if (val === '' || !this.isHaveCompared) return;
+      this.coreData.value = [val];
     },
     // 粘贴过滤条件
     pasteFn(pasteValue) {
