@@ -158,7 +158,8 @@ const store = new Vuex.Store({
       state.bkBizId = state.space.bk_biz_id;
     },
     updateMySpaceList(state, spaceList) {
-      state.mySpaceList = [...spaceList];
+      // eslint-disable-next-line max-len
+      state.mySpaceList = spaceList.map(item => ({ ...item, py_text: Vue.prototype.$bkToPinyin(item.space_name, true) }));
     },
     updateIndexId(state, indexId) {
       state.indexId = indexId;

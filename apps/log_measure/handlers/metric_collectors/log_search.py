@@ -61,7 +61,9 @@ class LogSearchMetricCollector(object):
 
         history_objs = (
             UserIndexSetSearchHistory.objects.filter(
-                is_deleted=False, search_type="default", created_at__range=[start_time, end_time],
+                is_deleted=False,
+                search_type="default",
+                created_at__range=[start_time, end_time],
             )
             .order_by("index_set_id", "created_by")
             .values("index_set_id", "created_by")
@@ -87,8 +89,8 @@ class LogSearchMetricCollector(object):
                 metric_value=aggregation_datas[target_biz_id][target_username],
                 dimensions={
                     "target_username": target_username,
-                    "target_biz_id": target_biz_id,
-                    "target_biz_name": MetricUtils.get_instance().get_biz_name(target_biz_id),
+                    "bk_biz_id": target_biz_id,
+                    "bk_biz_name": MetricUtils.get_instance().get_biz_name(target_biz_id),
                     "time_range": timedelta,
                 },
                 timestamp=MetricUtils.get_instance().report_ts,
@@ -114,13 +116,16 @@ class LogSearchMetricCollector(object):
     )
     def favorite_count():
         favorite_objs = (
-            FavoriteSearch.objects.filter(is_deleted=False,)
+            FavoriteSearch.objects.filter(
+                is_deleted=False,
+            )
             .order_by("id")
             .values("id", "search_history_id", "space_uid", "created_at")
         )
         history_objs = (
             UserIndexSetSearchHistory.objects.filter(
-                is_deleted=False, id__in=[i["search_history_id"] for i in favorite_objs],
+                is_deleted=False,
+                id__in=[i["search_history_id"] for i in favorite_objs],
             )
             .order_by("id")
             .values("id", "index_set_id")
@@ -145,8 +150,8 @@ class LogSearchMetricCollector(object):
                 dimensions={
                     "index_set_id": index_set_id,
                     "index_set_name": index_sets[index_set_id]["index_set_name"],
-                    "target_biz_id": bk_biz_id,
-                    "target_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                    "bk_biz_id": bk_biz_id,
+                    "bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
                 },
                 timestamp=MetricUtils.get_instance().report_ts,
             )
@@ -177,7 +182,9 @@ class LogExportMetricCollector(object):
         ).strftime("%Y-%m-%d %H:%M:%S%z")
 
         history_objs = (
-            AsyncTask.objects.filter(created_at__range=[start_time, end_time],)
+            AsyncTask.objects.filter(
+                created_at__range=[start_time, end_time],
+            )
             .values("bk_biz_id", "index_set_id", "export_type", "created_by", "created_at")
             .order_by("bk_biz_id", "index_set_id", "export_type", "created_by")
             .annotate(count=Count("id"))
@@ -196,8 +203,8 @@ class LogExportMetricCollector(object):
                     "index_set_name": index_sets[history_obj["index_set_id"]]["index_set_name"],
                     "target_username": history_obj["created_by"],
                     "export_type": history_obj["export_type"],
-                    "target_biz_id": history_obj["bk_biz_id"],
-                    "target_biz_name": MetricUtils.get_instance().get_biz_name(history_obj["bk_biz_id"]),
+                    "bk_biz_id": history_obj["bk_biz_id"],
+                    "bk_biz_name": MetricUtils.get_instance().get_biz_name(history_obj["bk_biz_id"]),
                 },
                 timestamp=arrow.get(history_obj["created_at"]).float_timestamp,
             )
@@ -236,8 +243,8 @@ class IndexSetMetricCollector(object):
                         metric_name="count",
                         metric_value=group["count"],
                         dimensions={
-                            "target_biz_id": bk_biz_id,
-                            "target_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                            "bk_biz_id": bk_biz_id,
+                            "bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
                             "scenario_id": group["scenario_id"],
                             "is_active": group["is_active"],
                         },
