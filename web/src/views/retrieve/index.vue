@@ -811,8 +811,8 @@ export default {
                   indexId: null,
                 },
                 query: {
-                  bizId: window.localStorage.getItem('bk_biz_id'),
-                  spaceUid: window.localStorage.getItem('space_uid'),
+                  spaceUid: this.$store.state.spaceUid,
+                  bizId: this.$store.state.bkBizId,
                 },
               });
             })
@@ -847,8 +847,8 @@ export default {
               this.retrieveLog();
             } else {
               const queryObj = {
-                spaceUid: window.localStorage.getItem('space_uid'),
-                bizId: window.localStorage.getItem('bk_biz_id'),
+                spaceUid: this.$store.state.spaceUid,
+                bizId: this.$store.state.bkBizId,
               };
               if (this.$route.query.from) {
                 queryObj.from = this.$route.query.from;
@@ -867,8 +867,8 @@ export default {
           this.isRetrieveHome = false;
           this.isNoIndexSet = true;
           const queryObj = {
-            spaceUid: window.localStorage.getItem('space_uid'),
-            bizId: window.localStorage.getItem('bk_biz_id'),
+            spaceUid: this.$store.state.spaceUid,
+            bizId: this.$store.state.bkBizId,
           };
           if (this.$route.query.from) {
             queryObj.from = this.$route.query.from;
@@ -1175,8 +1175,8 @@ export default {
       // 进入检索详情页
       this.isRetrieveHome = false;
       const queryObj = {
-        spaceUid: window.localStorage.getItem('space_uid'),
-        bizId: window.localStorage.getItem('bk_biz_id'),
+        spaceUid: this.$store.state.spaceUid,
+        bizId: this.$store.state.bkBizId,
         ...queryParamsStr,
       };
       if (this.$route.query.from) {

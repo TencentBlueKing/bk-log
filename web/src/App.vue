@@ -200,7 +200,7 @@ export default {
       this.$router.push({
         name: id,
         query: {
-          spaceUid: window.localStorage.getItem('space_uid'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
       if (id === 'default-dashboard') {
@@ -222,7 +222,7 @@ export default {
       const newUrl = this.$router.resolve({
         name: pageName,
         query: {
-          spaceUid: window.localStorage.getItem('space_uid'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
       return newUrl.href;
