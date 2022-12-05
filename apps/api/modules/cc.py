@@ -180,6 +180,13 @@ class _CCApi:
             description="查询拓扑节点下的主机",
             before_request=get_supplier_account_before,
         )
+        self.list_host_total_mainline_topo = DataAPI(
+            method="POST",
+            url=CC_APIGATEWAY_ROOT_V2 + "list_host_total_mainline_topo",
+            module=self.MODULE,
+            description="查询主机及其对应拓扑",
+            before_request=get_supplier_account_before,
+        )
 
     def get_biz_location(self, *args, **kwargs):
         return []

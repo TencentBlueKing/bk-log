@@ -1,0 +1,38 @@
+# -*- coding: utf-8 -*-
+
+from apps.api import CCApi, GseApi
+from bkm_ipchooser.api import AbstractBkApi
+
+
+class BkApi(AbstractBkApi):
+    @staticmethod
+    def search_cloud_area(params: dict = None):
+        return CCApi.search_cloud_area(params)
+
+    @staticmethod
+    def search_business(params: dict = None):
+        return CCApi.get_app_list(params)
+
+    @staticmethod
+    def search_biz_inst_topo(params: dict = None):
+        return CCApi.search_biz_inst_topo(params)
+
+    @staticmethod
+    def get_biz_internal_module(params: dict = None):
+        return CCApi.get_biz_internal_module(params)
+
+    @staticmethod
+    def find_host_topo_relation(params: dict = None):
+        return CCApi.find_host_topo_relation(params)
+
+    @staticmethod
+    def list_biz_hosts(params: dict = None):
+        return CCApi.list_biz_hosts(params)
+
+    @staticmethod
+    def list_host_total_mainline_topo(params: dict = None):
+        return CCApi.list_host_total_mainline_topo(params)
+
+    @staticmethod
+    def get_agent_status(params: dict = None):
+        return GseApi.get_agent_status_raw(params)
