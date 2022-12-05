@@ -22,6 +22,7 @@ the project delivered to anyone in the future.
 import base64
 
 from django.conf import settings
+from django.utils.translation import ugettext
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError as SlzValidationError
@@ -240,9 +241,9 @@ class CustomCreateSerializer(serializers.Serializer):
     data_link_id = serializers.CharField(label=_("数据链路id"), required=False, allow_blank=True, allow_null=True)
     custom_type = serializers.ChoiceField(label=_("日志类型"), choices=CustomTypeEnum.get_choices())
     category_id = serializers.CharField(label=_("分类ID"))
-    storage_cluster_id = serializers.IntegerField(label=_("集群ID"), required=True)
-    retention = serializers.IntegerField(label=_("有效时间"), required=True)
-    allocation_min_days = serializers.IntegerField(label=_("冷热数据生效时间"), required=True)
+    storage_cluster_id = serializers.IntegerField(label=_("集群ID"), required=False)
+    retention = serializers.IntegerField(label=_("有效时间"), required=False)
+    allocation_min_days = serializers.IntegerField(label=_("冷热数据生效时间"), required=False)
     storage_replies = serializers.IntegerField(
         label=_("ES副本数量"), required=False, default=settings.ES_REPLICAS, min_value=0, max_value=3
     )
@@ -252,6 +253,17 @@ class CustomCreateSerializer(serializers.Serializer):
     description = serializers.CharField(
         label=_("备注说明"), max_length=64, required=False, allow_null=True, allow_blank=True
     )
+
+    def validate(self, attrs: dict) -> dict:
+        # 先进行校验
+        attrs = super().validate(attrs)
+        # 在传入集群ID时校验其他参数
+        if attrs.get("storage_cluster_id"):
+            if not attrs.get("retention"):
+                raise serializers.ValidationError(ugettext("有效时间不能为空"))
+            if not attrs.get("allocation_min_days"):
+                raise serializers.ValidationError(ugettext("冷热数据生效时间不能为空"))
+        return attrs
 
 
 class CustomUpdateSerializer(serializers.Serializer):
