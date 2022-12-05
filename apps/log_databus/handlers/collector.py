@@ -2241,21 +2241,25 @@ class CollectorHandler(object):
         async_create_bkdata_data_id.delay(self.data.collector_config_id)
 
         custom_config = get_custom(custom_type)
-        from apps.log_databus.handlers.etl import EtlHandler
 
-        etl_handler = EtlHandler.get_instance(self.data.collector_config_id)
-        etl_params = {
-            "table_id": collector_config_name_en,
-            "storage_cluster_id": storage_cluster_id,
-            "retention": retention,
-            "allocation_min_days": allocation_min_days,
-            "storage_replies": storage_replies,
-            "es_shards": es_shards,
-            "etl_params": custom_config.etl_params,
-            "etl_config": custom_config.etl_config,
-            "fields": custom_config.fields,
-        }
-        self.data.index_set_id = etl_handler.update_or_create(**etl_params)["index_set_id"]
+        # 仅在有集群ID时创建清洗
+        if storage_cluster_id:
+            from apps.log_databus.handlers.etl import EtlHandler
+
+            etl_handler = EtlHandler.get_instance(self.data.collector_config_id)
+            etl_params = {
+                "table_id": collector_config_name_en,
+                "storage_cluster_id": storage_cluster_id,
+                "retention": retention,
+                "allocation_min_days": allocation_min_days,
+                "storage_replies": storage_replies,
+                "es_shards": es_shards,
+                "etl_params": custom_config.etl_params,
+                "etl_config": custom_config.etl_config,
+                "fields": custom_config.fields,
+            }
+            self.data.index_set_id = etl_handler.update_or_create(**etl_params)["index_set_id"]
+
         custom_config.after_hook(self.data)
         custom_config.after_hook(self.data)
 
@@ -2328,21 +2332,24 @@ class CollectorHandler(object):
             etl_config = collector_detail["etl_config"]
             fields = collector_detail["fields"]
 
-        from apps.log_databus.handlers.etl import EtlHandler
+        # 仅在传入集群ID时更新
+        if storage_cluster_id:
+            from apps.log_databus.handlers.etl import EtlHandler
 
-        etl_handler = EtlHandler.get_instance(self.data.collector_config_id)
-        etl_params = {
-            "table_id": self.data.collector_config_name_en,
-            "storage_cluster_id": storage_cluster_id,
-            "retention": retention,
-            "es_shards": es_shards,
-            "allocation_min_days": allocation_min_days,
-            "storage_replies": storage_replies,
-            "etl_params": etl_params,
-            "etl_config": etl_config,
-            "fields": fields,
-        }
-        etl_handler.update_or_create(**etl_params)
+            etl_handler = EtlHandler.get_instance(self.data.collector_config_id)
+            etl_params = {
+                "table_id": self.data.collector_config_name_en,
+                "storage_cluster_id": storage_cluster_id,
+                "retention": retention,
+                "es_shards": es_shards,
+                "allocation_min_days": allocation_min_days,
+                "storage_replies": storage_replies,
+                "etl_params": etl_params,
+                "etl_config": etl_config,
+                "fields": fields,
+            }
+            etl_handler.update_or_create(**etl_params)
+
         custom_config.after_hook(self.data)
 
         # add user_operation_record
