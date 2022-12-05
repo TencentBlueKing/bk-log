@@ -30,6 +30,7 @@ from django.utils.http import urlencode
 
 from apps.log_databus.models import CollectorConfig
 from apps.models import model_to_dict
+from apps.utils.log import logger
 from apps.utils.db import array_chunk
 from apps.utils.local import get_request, get_request_language_code
 from apps.log_search.constants import (
@@ -39,7 +40,7 @@ from apps.log_search.constants import (
     MAX_GET_ATTENTION_SIZE,
     ExportStatus,
 )
-from apps.log_search.exceptions import MissAsyncExportException
+from apps.log_search.exceptions import MissAsyncExportException, PreCheckAsyncExportException
 from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler
 from apps.log_search.models import AsyncTask, LogIndexSet
 from apps.log_search.tasks.async_export import async_export
@@ -63,6 +64,11 @@ class AsyncExportHandlers(object):
         fields = self._pre_check_fields()
         # 判断result是否符合要求
         result = self.search_handler.pre_get_result(sorted_fields=fields["async_export_fields"], size=ASYNC_COUNT_SIZE)
+        # 判断是否成功
+        if result["_shards"]["total"] != result["_shards"]["successful"]:
+            logger.error("can not create async_export task, reason: {}".format(result["_shards"]["failures"]))
+            raise PreCheckAsyncExportException()
+
         # 判断是否超过支持异步的最大次数
         if result["hits"]["total"] > MAX_ASYNC_COUNT:
             self.search_handler.size = MAX_ASYNC_COUNT

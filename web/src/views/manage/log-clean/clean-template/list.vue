@@ -147,7 +147,7 @@ export default {
       this.$router.push({
         name: 'clean-template-create',
         query: {
-          spaceUid: window.localStorage.getItem('space_uid'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
     },
@@ -209,7 +209,7 @@ export default {
             templateId: row.clean_template_id,
           },
           query: {
-            spaceUid: window.localStorage.getItem('space_uid'),
+            spaceUid: this.$store.state.spaceUid,
           },
         });
         return;
