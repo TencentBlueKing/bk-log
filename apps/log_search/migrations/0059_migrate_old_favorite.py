@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import time
 from django.db import migrations
+from django.utils.crypto import get_random_string
 
 from apps.log_search.constants import FavoriteVisibleType
 from apps.log_search.models import Favorite, FavoriteGroup
@@ -10,12 +10,12 @@ from apps.log_search.models import Favorite, FavoriteGroup
 def forwards_func(apps, schema_editor):
     old_favorite_model = apps.get_model("log_search", "FavoriteSearch")
     search_history_model = apps.get_model("log_search", "UserIndexSetSearchHistory")
-
-    old_favorite_cnt = old_favorite_model.objects.all().count()
+    old_favorite_qs = old_favorite_model.objects.filter(is_deleted=False)
+    old_favorite_cnt = old_favorite_qs.count()
     success_migrate_cnt = 0
     failed_migrate_cnt = 0
 
-    for old_favorite_obj in old_favorite_model.objects.all():
+    for old_favorite_obj in old_favorite_qs.all():
         try:
             name = old_favorite_obj.description
             search_history_id = old_favorite_obj.search_history_id
@@ -25,11 +25,11 @@ def forwards_func(apps, schema_editor):
             params = search_history.params
 
             if Favorite.objects.filter(name=name, space_uid=space_uid).exists():
-                random_suffix = str(int(time.time()))
+                random_suffix = get_random_string()
                 if len(name) + len(str(index_set_id)) + len(random_suffix) > Favorite.name.field.max_length:
                     name = name[: Favorite.name.field.max_length - len(str(index_set_id)) - len(random_suffix)]
                 name = f"{index_set_id}_{name}_{random_suffix}"
-
+            # 检索字段置为空
             params["search_fields"] = []
             group_id = FavoriteGroup.get_or_create_ungrouped_group(space_uid=space_uid).id
             favorite_obj = Favorite.objects.create(
