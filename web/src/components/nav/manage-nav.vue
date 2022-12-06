@@ -68,7 +68,7 @@ export default {
         this.$router.push({
           name: id,
           query: {
-            spaceUid: window.localStorage.getItem('space_uid'),
+            spaceUid: this.$store.state.spaceUid,
           },
         });
       }
@@ -79,7 +79,7 @@ export default {
         this.$router.push({
           name: !!backRoute ? backRoute : this.$route.meta.backName,
           query: {
-            spaceUid: window.localStorage.getItem('space_uid'),
+            spaceUid: this.$store.state.spaceUid,
           },
         });
       }

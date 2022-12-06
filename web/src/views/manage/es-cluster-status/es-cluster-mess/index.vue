@@ -502,7 +502,7 @@ export default {
       this.$router.push({
         name: 'es-index-set-create',
         query: {
-          spaceUid: window.localStorage.getItem('space_uid'),
+          spaceUid: this.$store.state.spaceUid,
           cluster: row.cluster_config.cluster_id,
         },
       });

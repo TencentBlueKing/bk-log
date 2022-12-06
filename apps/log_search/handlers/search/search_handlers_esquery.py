@@ -51,6 +51,10 @@ from apps.log_search.constants import (
     MAX_EXPORT_REQUEST_RETRY,
     ERROR_MSG_CHECK_FIELDS_FROM_BKDATA,
     ERROR_MSG_CHECK_FIELDS_FROM_LOG,
+    TimeFieldTypeEnum,
+    TimeFieldUnitEnum,
+    OperatorEnum,
+    REAL_OPERATORS_MAP,
 )
 from apps.log_search.exceptions import (
     BaseSearchIndexSetException,
@@ -81,7 +85,6 @@ from apps.log_search.handlers.biz import BizHandler
 from apps.log_search.handlers.search.mapping_handlers import MappingHandlers
 from apps.log_search.handlers.search.search_sort_builder import SearchSortBuilder
 from apps.log_search.handlers.search.pre_search_handlers import PreSearchHandlers
-from apps.log_search.constants import TimeFieldTypeEnum, TimeFieldUnitEnum, OperatorEnum
 from apps.utils.log import logger
 from apps.utils.lucene import generate_query_string
 
@@ -563,7 +566,7 @@ class SearchHandler(object):
                     "collapse": self.collapse,
                 },
                 data_api_retry_cls=DataApiRetryClass.create_retry_obj(
-                    BaseException,
+                    exceptions=[BaseException],
                     stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY,
                 ),
             )
@@ -595,7 +598,7 @@ class SearchHandler(object):
                 "collapse": self.collapse,
             },
             data_api_retry_cls=DataApiRetryClass.create_retry_obj(
-                BaseException, stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
+                exceptions=[BaseException], stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
             ),
         )
         return result
@@ -639,7 +642,7 @@ class SearchHandler(object):
                     "search_after": search_after,
                 },
                 data_api_retry_cls=DataApiRetryClass.create_retry_obj(
-                    BaseException, stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
+                    exceptions=[BaseException], stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
                 ),
             )
 
@@ -666,7 +669,7 @@ class SearchHandler(object):
                     "scroll_id": _scroll_id,
                 },
                 data_api_retry_cls=DataApiRetryClass.create_retry_obj(
-                    BaseException, stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
+                    exceptions=[BaseException], stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
                 ),
             )
             scroll_size = len(scroll_result["hits"]["hits"])
@@ -1047,6 +1050,9 @@ class SearchHandler(object):
             value = item.get("value")
             operator: str = item.get("method") if item.get("method") else item.get("operator")
             condition: str = item.get("condition", "and")
+            if operator in REAL_OPERATORS_MAP.keys():
+                operator = REAL_OPERATORS_MAP[operator]
+
             if operator in ["exists", "does not exists"]:
                 new_filter_list.append(
                     {"field": field, "value": "0", "operator": operator, "condition": condition, "type": _type}

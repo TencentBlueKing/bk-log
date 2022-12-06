@@ -1190,8 +1190,8 @@ FULL_TEXT_SEARCH_FIELD_NAME = _("全文检索")
 class OperatorEnum:
     """操作符枚举"""
 
-    EQ = {"operator": "is one of", "label": "=", "placeholder": _("请选择或直接输入，逗号分隔")}
-    NE = {"operator": "is not one of", "label": "!=", "placeholder": _("请选择或直接输入，逗号分隔")}
+    EQ = {"operator": "=", "label": "=", "placeholder": _("请选择或直接输入，逗号分隔")}
+    NE = {"operator": "!=", "label": "!=", "placeholder": _("请选择或直接输入，逗号分隔")}
     LT = {"operator": "<", "label": "<", "placeholder": _("请选择或直接输入")}
     LE = {"operator": "<=", "label": "<=", "placeholder": _("请选择或直接输入")}
     GE = {"operator": ">", "label": ">", "placeholder": _("请选择或直接输入")}
@@ -1257,5 +1257,8 @@ OPERATORS = {
         OperatorEnum.NOT_EXISTS,
     ],
 }
+
+# 实际操作符映射
+REAL_OPERATORS_MAP = {OperatorEnum.EQ["operator"]: "is one of", OperatorEnum.NE["operator"]: "is not one of"}
 
 DEFAULT_INDEX_OBJECT_FIELDS_PRIORITY = ["__ext.io_kubernetes_pod", "serverIp", "ip"]

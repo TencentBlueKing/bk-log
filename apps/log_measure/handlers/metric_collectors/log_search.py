@@ -30,7 +30,7 @@ from django.utils.translation import ugettext as _
 from django.conf import settings
 
 from apps.utils.db import array_group
-from apps.log_search.models import LogIndexSet, FavoriteSearch, UserIndexSetSearchHistory, AsyncTask
+from apps.log_search.models import LogIndexSet, UserIndexSetSearchHistory, AsyncTask, Favorite
 from apps.log_measure.constants import TIME_RANGE
 from apps.log_measure.utils.metric import MetricUtils
 from bk_monitor.constants import TimeFilterEnum
@@ -115,48 +115,38 @@ class LogSearchMetricCollector(object):
         "log_search_favorite", description=_("检索收藏"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5
     )
     def favorite_count():
-        favorite_objs = (
-            FavoriteSearch.objects.filter(
-                is_deleted=False,
+        favorite_objs = Favorite.objects.all().order_by("id").values("id", "space_uid", "index_set_id")
+        # 获取索引集列表
+        index_set_list = [favorite_obj["index_set_id"] for favorite_obj in favorite_objs]
+        # 获取索引集 index_set_id -> index_set_name
+        index_sets = {
+            index_set["index_set_id"]: index_set["index_set_name"]
+            for index_set in list(
+                LogIndexSet.objects.filter(index_set_id__in=index_set_list)
+                .values("index_set_id", "index_set_name")
+                .distinct()
             )
-            .order_by("id")
-            .values("id", "search_history_id", "space_uid", "created_at")
-        )
-        history_objs = (
-            UserIndexSetSearchHistory.objects.filter(
-                is_deleted=False,
-                id__in=[i["search_history_id"] for i in favorite_objs],
-            )
-            .order_by("id")
-            .values("id", "index_set_id")
-        )
-        index_set_list = [history_obj["index_set_id"] for history_obj in history_objs]
-        index_sets = array_group(
-            LogIndexSet.get_index_set(index_set_ids=index_set_list, show_indices=False), "index_set_id", group=True
-        )
+        }
         aggregation_datas = defaultdict(lambda: defaultdict(int))
-        for index_set_id in index_set_list:
-            # 可能检索的索引集已经不在了
-            if not index_sets.get(index_set_id):
+        for favorite_obj in favorite_objs:
+            if favorite_obj["index_set_id"] not in index_sets:
                 continue
-            bk_biz_id = index_sets[index_set_id]["bk_biz_id"]
-            aggregation_datas[bk_biz_id][index_set_id] += 1
-
+            aggregation_datas[favorite_obj["space_uid"]][favorite_obj["index_set_id"]] += 1
         # 收藏带标签数据
         metrics = [
             Metric(
                 metric_name="count",
-                metric_value=aggregation_datas[bk_biz_id][index_set_id],
+                metric_value=aggregation_datas[space_uid][index_set_id],
                 dimensions={
                     "index_set_id": index_set_id,
-                    "index_set_name": index_sets[index_set_id]["index_set_name"],
-                    "bk_biz_id": bk_biz_id,
-                    "bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                    "index_set_name": index_sets[index_set_id],
+                    "bk_biz_id": MetricUtils.get_instance().space_info[space_uid].bk_biz_id,
+                    "bk_biz_name": MetricUtils.get_instance().space_info[space_uid].space_name,
                 },
                 timestamp=MetricUtils.get_instance().report_ts,
             )
-            for bk_biz_id in aggregation_datas
-            for index_set_id in aggregation_datas[bk_biz_id]
+            for space_uid in aggregation_datas
+            for index_set_id in aggregation_datas[space_uid]
         ]
         # 收藏总数
         metrics.append(
