@@ -28,7 +28,7 @@ from multiprocessing.pool import ThreadPool
 from urllib import parse
 
 from requests import Response
-from retrying import Retrying
+from retrying import Retrying, RetryError
 
 import requests
 from django.conf import settings
@@ -330,6 +330,8 @@ class DataAPI(object):
                     raw_response = self._send(params, timeout, request_id, request_cookies)
             except ReadTimeout as e:
                 raise DataAPIException(self, self.get_error_message(str(e)))
+            except RetryError as e:
+                raw_response = e.last_attempt.value
             except Exception as e:  # pylint: disable=W0703
                 raise DataAPIException(self, self.get_error_message(str(e)))
 
