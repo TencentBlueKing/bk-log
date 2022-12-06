@@ -325,7 +325,7 @@ export default {
         name: routeName,
         params,
         query: {
-          spaceUid: window.localStorage.getItem('space_uid'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
     },
