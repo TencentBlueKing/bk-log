@@ -332,7 +332,7 @@ export default {
     handleClickDetail() {
       const { extra: { collector_config_id: collectorID, collector_scenario_id: scenarioID } } = this.cleanConfig;
       if (!collectorID) return;
-      const spaceUid = window.localStorage.getItem('space_uid');
+      const spaceUid = this.$store.state.spaceUid;
       const jumpUrl = scenarioID === 'custom'
         ? `/#/manage/custom-report/detail/${collectorID}?spaceUid=${spaceUid}`
         : `/#/manage/log-collection/collection-item/manage/${collectorID}?spaceUid=${spaceUid}`;

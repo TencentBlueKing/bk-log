@@ -260,7 +260,7 @@ export default {
       this.$router.push({
         name: 'clean-create',
         query: {
-          spaceUid: window.localStorage.getItem('space_uid'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
     },
@@ -319,7 +319,7 @@ export default {
       const query = {};
       if (operateType === 'edit') {
         routeName = 'clean-edit';
-        query.spaceUid = window.localStorage.getItem('space_uid');
+        query.spaceUid = this.$store.state.spaceUid;
         params.collectorId = row.collector_config_id;
       } else if (operateType === 'search') {
         routeName = 'retrieve';

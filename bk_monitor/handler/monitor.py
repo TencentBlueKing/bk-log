@@ -2,6 +2,7 @@
 import logging
 import json
 from typing import List, Optional
+import time
 import arrow
 from django.utils.translation import ugettext_lazy as _
 
@@ -204,25 +205,30 @@ class CustomReporter(object):
         MetricCollector(collector_import_paths=collector_import_paths)
         metric_ids = self.metric_id_filter()
         for metric_id in metric_ids:
-            aggregation_data_name_datas = []
-            data_name, namespace, prefix = get_metric_id_info(metric_id)
-            metric_id_datas = json.loads(MetricDataHistory.objects.filter(metric_id=metric_id).first().metric_data)
-            for i in metric_id_datas:
-                aggregation_data_name_datas.append(
-                    Metric(
-                        metric_name=i["metric_name"],
-                        metric_value=i["metric_value"],
-                        dimensions=i["dimensions"],
-                        timestamp=MetricUtils.get_instance().report_ts,
-                    ).to_bkmonitor_report(prefix=prefix, namespace=namespace)
-                )
+            stime = time.time()
+            try:
+                aggregation_data_name_datas = []
+                data_name, namespace, prefix = get_metric_id_info(metric_id)
+                metric_id_datas = json.loads(MetricDataHistory.objects.filter(metric_id=metric_id).first().metric_data)
+                for i in metric_id_datas:
+                    aggregation_data_name_datas.append(
+                        Metric(
+                            metric_name=i["metric_name"],
+                            metric_value=i["metric_value"],
+                            dimensions=i["dimensions"],
+                            timestamp=MetricUtils.get_instance().report_ts,
+                        ).to_bkmonitor_report(prefix=prefix, namespace=namespace)
+                    )
 
-                if len(aggregation_data_name_datas) >= BATCH_SIZE:
+                    if len(aggregation_data_name_datas) >= BATCH_SIZE:
+                        self.batch_report(data_name=data_name, data=aggregation_data_name_datas)
+                        aggregation_data_name_datas = []
+
+                if aggregation_data_name_datas:
                     self.batch_report(data_name=data_name, data=aggregation_data_name_datas)
-                    aggregation_data_name_datas = []
-
-            if aggregation_data_name_datas:
-                self.batch_report(data_name=data_name, data=aggregation_data_name_datas)
+                logger.info(f"report metric_id[{metric_id}] successfully, cost: {int(time.time() - stime)}s")
+            except Exception as e:
+                logger.error(f"report metric_id[{metric_id}] failed, cost: {int(time.time() - stime)}s, msg: {e}")
 
     def batch_report(self, data_name: str, data: list):
         try:

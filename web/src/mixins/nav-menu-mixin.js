@@ -126,8 +126,7 @@ export default {
             this.checkSpaceChange(matchProject ? matchProject.space_uid : firstRealSpaceUid);
           } else {
             const storageSpaceUid = window.localStorage.getItem('space_uid');
-            const hasSpace = storageSpaceUid
-              ? spaceList.some(item => item.space_uid === storageSpaceUid) : false;
+            const hasSpace = storageSpaceUid ? spaceList.some(item => item.space_uid === storageSpaceUid) : false;
             this.checkSpaceChange(hasSpace ? storageSpaceUid : firstRealSpaceUid);
           }
         }
