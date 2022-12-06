@@ -106,12 +106,12 @@ class DataApiRetryClass(object):
     def add_fail_check_functions(self, fail_check_functions: list):
         """
         添加检查result是否失败的函数, 参数默认接受result对象
-        函数语义为需不需要重试
+        函数语义为函数结果是否为True, 为False则重试
         eg: fail_check_functions=[
-            lambda x: not json.loads(x.text)["result"]
+            lambda x: x.json()["result"]
         ],
-        可以使用 base_retry_on_result_func 这个默认函数
-        eg: fail_check_functions=[base_retry_on_result_func]
+        可以使用 check_result_is_true 这个默认函数
+        eg: fail_check_functions=[check_result_is_true]
         """
         self.fail_check_functions.extend(fail_check_functions)
 
@@ -132,8 +132,8 @@ class DataApiRetryClass(object):
 
         def wraps(result):
             for fail_check_func in self.fail_check_functions:
-                # 如果函数判断为: True, 需要重试; False, 不需要重试
-                if fail_check_func(result):
+                # 如果函数判断为: False, 需要重试; True, 不需要重试
+                if not fail_check_func(result):
                     return True
             # retry_on_result 默认 Retrying.never_reject=False
             return False
@@ -160,14 +160,12 @@ class DataApiRetryClass(object):
         return retry_obj
 
 
-def base_retry_on_result_func(result: Response) -> bool:
+def check_result_is_true(result: Response) -> bool:
     """通用的根据result结果重试判断函数"""
     try:
-        result = json.loads(result.json())
+        return result.json()["result"]
     except Exception:
-        result = json.loads(result.text)
-    finally:
-        return not result["result"]
+        return False
 
 
 class DataAPI(object):
