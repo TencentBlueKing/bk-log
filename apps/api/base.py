@@ -26,6 +26,8 @@ import time
 from copy import deepcopy
 from multiprocessing.pool import ThreadPool
 from urllib import parse
+
+from requests import Response
 from retrying import Retrying
 
 import requests
@@ -108,6 +110,8 @@ class DataApiRetryClass(object):
         eg: fail_check_functions=[
             lambda x: not json.loads(x.text)["result"]
         ],
+        可以使用 base_retry_on_result_func 这个默认函数
+        eg: fail_check_functions=[base_retry_on_result_func]
         """
         self.fail_check_functions.extend(fail_check_functions)
 
@@ -117,6 +121,7 @@ class DataApiRetryClass(object):
             for fail_exception in self.fail_exceptions:
                 if isinstance(exception, fail_exception):
                     return False
+            # retry_on_exception 默认 Retrying.always_reject=True
             return True
 
         return wraps
@@ -127,11 +132,11 @@ class DataApiRetryClass(object):
 
         def wraps(result):
             for fail_check_func in self.fail_check_functions:
-                # 这里和retry_on_exception判断方式保持一致, 函数语义为需不需要重试
                 # 如果函数判断为: True, 需要重试; False, 不需要重试
                 if fail_check_func(result):
-                    return False
-            return True
+                    return True
+            # retry_on_result 默认 Retrying.never_reject=False
+            return False
 
         return wraps
 
@@ -153,6 +158,16 @@ class DataApiRetryClass(object):
         if fail_check_functions:
             retry_obj.add_fail_check_functions(fail_check_functions)
         return retry_obj
+
+
+def base_retry_on_result_func(result: Response) -> bool:
+    """通用的根据result结果重试判断函数"""
+    try:
+        result = json.loads(result.json())
+    except Exception:
+        result = json.loads(result.text)
+    finally:
+        return not result["result"]
 
 
 class DataAPI(object):
