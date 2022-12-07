@@ -331,7 +331,7 @@ class DataAPI(object):
             except ReadTimeout as e:
                 raise DataAPIException(self, self.get_error_message(str(e)))
             except RetryError as e:
-                if e.last_attempt.has_exception():
+                if e.last_attempt.has_exception:
                     raise DataAPIException(self, self.get_error_message(str(e)))
                 raw_response = e.last_attempt.value
             except Exception as e:  # pylint: disable=W0703
