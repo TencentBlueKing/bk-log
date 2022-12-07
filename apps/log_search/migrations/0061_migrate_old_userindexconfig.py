@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from django.db import migrations
-from django.utils.translation import ugettext_lazy as _
 
 from apps.log_search.models import UserIndexSetConfig, IndexSetFieldsConfig, UserIndexSetFieldsConfig
 
@@ -21,7 +20,7 @@ def forwards_func(apps, schema_editor):
         username = old_config_obj.created_by
         display_fields = old_config_obj.display_fields
         sort_list = old_config_obj.sort_list
-        config_name = username + _("的配置")
+        config_name = f"{username}的配置"
         try:
             # 先创建配置
             new_config_obj = IndexSetFieldsConfig.objects.create(
