@@ -38,7 +38,6 @@ from apps.log_search.models import (
     LogIndexSet,
     LogIndexSetData,
     Scenario,
-    UserIndexSetConfig,
     UserIndexSetSearchHistory,
     UserIndexSetFieldsConfig,
 )
@@ -1535,14 +1534,10 @@ class SearchHandler(object):
             return ERROR_MSG_CHECK_FIELDS_FROM_LOG
 
     def _get_user_sorted_list(self, sorted_fields):
-        user_sort_list = (
-            UserIndexSetConfig.objects.filter(index_set_id=self.index_set_id, created_by=self.request_username)
-            .values("sort_list")
-            .first()
-        )
-        if not user_sort_list:
+        config = UserIndexSetFieldsConfig.get_config(index_set_id=self.index_set_id, username=self.request_username)
+        if not config:
             return [[sorted_field, ASYNC_SORTED] for sorted_field in sorted_fields]
-        user_sort_list = user_sort_list["sort_list"]
+        user_sort_list = config.sort_list
         user_sort_fields = [i[0] for i in user_sort_list]
         for sorted_field in sorted_fields:
             if sorted_field in user_sort_fields:
