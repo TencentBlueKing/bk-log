@@ -29,7 +29,11 @@ from jinja2 import Environment, FileSystemLoader
 from retrying import retry
 
 from apps.log_search.models import LogIndexSet
+from apps.log_search.constants import MAX_EXPORT_REQUEST_RETRY
+
 from apps.api import BkDataDataFlowApi, BkDataAIOPSApi, BkDataMetaApi, BkDataDatabusApi
+from apps.api.base import DataApiRetryClass, base_retry_on_result_func
+
 from apps.log_clustering.constants import DEFAULT_NEW_CLS_HOURS, AGGS_FIELD_PREFIX, PatternEnum, NOT_NEED_EDIT_NODES
 from apps.log_clustering.exceptions import (
     ClusteringConfigNotExistException,
@@ -733,7 +737,10 @@ class DataFlowHandler(BaseAiopsHandler):
         @return:
         """
         return BkDataDataFlowApi.get_latest_deploy_data(
-            params={"flow_id": flow_id, "bk_username": self.conf.get("bk_username")}
+            params={"flow_id": flow_id, "bk_username": self.conf.get("bk_username")},
+            data_api_retry_cls=DataApiRetryClass.create_retry_obj(
+                fail_check_functions=[base_retry_on_result_func], stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
+            ),
         )
 
     def get_serving_data_processing_id_config(self, result_table_id):
