@@ -25,7 +25,7 @@ def forwards_func(apps, schema_editor):
             params = search_history.params
 
             if Favorite.objects.filter(name=name, space_uid=space_uid).exists():
-                random_suffix = get_random_string()
+                random_suffix = get_random_string(length=10)
                 if len(name) + len(str(index_set_id)) + len(random_suffix) > Favorite.name.field.max_length:
                     name = name[: Favorite.name.field.max_length - len(str(index_set_id)) - len(random_suffix)]
                 name = f"{index_set_id}_{name}_{random_suffix}"
