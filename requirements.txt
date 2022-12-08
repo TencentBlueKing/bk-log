@@ -74,6 +74,7 @@ protobuf==3.19.5
 opentelemetry-api==1.7.1
 opentelemetry-sdk==1.7.1
 opentelemetry-exporter-otlp-proto-http==1.7.1
+opentelemetry-exporter-otlp-proto-grpc==1.7.1
 opentelemetry-semantic-conventions==0.26b1
 opentelemetry-instrumentation-django==0.26b1
 opentelemetry-instrumentation-elasticsearch==0.26b1

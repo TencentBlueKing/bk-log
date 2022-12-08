@@ -67,16 +67,10 @@ class OTLPLogHandler(OTLPHandler):
         from opentelemetry.sdk._logs import LogEmitterProvider, set_log_emitter_provider
         from opentelemetry.sdk._logs.export import BatchLogProcessor
         from opentelemetry.sdk.resources import Resource
-        from apps.feature_toggle.handlers.toggle import FeatureToggleObject
-        toggle = FeatureToggleObject.toggle("bk_log_trace")
-        feature_config = toggle.feature_config
 
         service_name = settings.SERVICE_NAME or settings.APP_CODE
         otlp_grpc_host = settings.OTLP_GRPC_HOST
-        otlp_bk_log_token = ""
-        if feature_config:
-            otlp_grpc_host = feature_config.get("otlp_grpc_host", otlp_grpc_host)
-            otlp_bk_log_token = feature_config.get("otlp_bk_log_token", otlp_bk_log_token)
+        otlp_bk_log_token = settings.OTLP_BK_LOG_TOKEN
 
         log_emitter_provider = LogEmitterProvider(
             resource=Resource.create(
@@ -91,12 +85,10 @@ class OTLPLogHandler(OTLPHandler):
         # init exporter
         exporter = OTLPLogExporter(endpoint=otlp_grpc_host)
         log_emitter_provider.add_log_processor(BatchLogProcessor(exporter))
-        OTLPHandler.__int__(
-            self,
+        super(OTLPLogHandler, self).__init__(
             level=level,
             log_emitter=log_emitter_provider.get_log_emitter(service_name)
         )
-
 
 
 # ===============================================================================

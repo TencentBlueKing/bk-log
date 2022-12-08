@@ -245,7 +245,15 @@ if IS_K8S_DEPLOY_MODE:
                     "%(funcName)s %(process)d %(thread)d %(message)s "
                     "$(otelTraceID)s $(otelSpanID)s %(otelServiceName)s"
                 ),
-            }
+            },
+            "verbose": {
+                "format": (
+                    "%(levelname)s [%(asctime)s] %(pathname)s "
+                    "%(lineno)d %(funcName)s %(process)d %(thread)d "
+                    "\n \t %(message)s \n"
+                ),
+                "datefmt": "%Y-%m-%d %H:%M:%S",
+            },
         },
         "handlers": {
             "stdout": {
@@ -298,10 +306,21 @@ if IS_K8S_DEPLOY_MODE:
             "bk_monitor": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
         },
     }
+    #
+    # 可选，开启OT日志上报
+    if os.getenv("BKAPP_OTLP_LOG", "off") == "on":
+        LOGGING["handlers"]["otlp"] = {
+            "formatter": "verbose",
+            "class": "apps.utils.log.OTLPLogHandler",
+        }
+        for v in LOGGING["loggers"].values():
+            v["handlers"].append("otlp")
 
 OTLP_TRACE = os.getenv("BKAPP_OTLP_TRACE", "off") == "on"
 OTLP_GRPC_HOST = os.getenv("BKAPP_OTLP_GRPC_HOST", "http://localhost:4317")
 OTLP_BK_DATA_ID = int(os.getenv("BKAPP_OTLP_BK_DATA_ID", -1))
+OTLP_BK_DATA_TOKEN = os.getenv("BKAPP_OTLP_BK_DATA_TOKEN", "log_token")
+OTLP_BK_LOG_TOKEN = os.getenv("BKAPP_OTLP_BK_LOG_TOKEN", "log_token")
 # ===============================================================================
 # 项目配置
 # ===============================================================================
