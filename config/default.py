@@ -170,6 +170,14 @@ if SENTRY_DSN:
 # 不使用时，请修改为 False，并删除项目目录下的 Procfile 文件中 celery 配置
 IS_USE_CELERY = True
 
+IS_CELERY = False
+IS_CELERY_BEAT = False
+if "celery" in sys.argv:
+    IS_CELERY = True
+    if "beat" in sys.argv:
+        IS_CELERY_BEAT = True
+
+
 # CELERY 并发数，默认为 2，可以通过环境变量或者 Procfile 设置
 CELERYD_CONCURRENCY = os.getenv("BK_CELERYD_CONCURRENCY", 2)
 
@@ -196,6 +204,17 @@ CELERY_IMPORTS = (
     "apps.log_clustering.tasks.sync_pattern",
     "apps.log_extract.tasks.extract",
 )
+
+
+# OTLP Service Name
+SERVICE_NAME = APP_CODE
+if BKAPP_IS_BKLOG_API:
+    SERVICE_NAME = APP_CODE + "_api"
+elif IS_CELERY:
+    SERVICE_NAME = APP_CODE + "_worker"
+elif IS_CELERY_BEAT:
+    SERVICE_NAME = APP_CODE + "_beat"
+
 
 # load logging settings
 if RUN_VER != "open":
@@ -1005,12 +1024,6 @@ SERVICE_LISTENING_DOMAIN = os.environ.get("SERVICE_LISTENING_DOMAIN", "")
 """
 以下为框架代码 请勿修改
 """
-IS_CELERY = False
-IS_CELERY_BEAT = False
-if "celery" in sys.argv:
-    IS_CELERY = True
-    if "beat" in sys.argv:
-        IS_CELERY_BEAT = True
 
 # celery settings
 if IS_USE_CELERY:
