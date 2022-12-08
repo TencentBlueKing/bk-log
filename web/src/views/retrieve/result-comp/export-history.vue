@@ -355,7 +355,7 @@ export default {
       return formatDate(time);
     },
     handleRetrieve($row) {
-      const spaceUid = window.localStorage.getItem('space_uid');
+      const spaceUid = this.$store.state.spaceUid;
       const { log_index_set_id: indexSetID, search_dict: dict } = $row;
       const params = encodeURIComponent(JSON.stringify({ ...dict }));
       const jumpUrl = `${window.SITE_URL}#/retrieve/${indexSetID}?spaceUid=${spaceUid}&bizId=${dict.bk_biz_id}&retrieveParams=${params}`;

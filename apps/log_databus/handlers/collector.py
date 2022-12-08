@@ -338,10 +338,9 @@ class CollectorHandler(object):
 
         if "result_table_config" in result and "result_table_storage" in result:
             if self.data.table_id in result["result_table_storage"]:
-                if not self.data.is_clustering:
-                    # 不打开聚类时，etl_config 以 META 为准
-                    # 打开聚类之后，META 的清洗配置并不代表真正的原始清洗配置，以本地存储为准
-                    self.data.etl_config = EtlStorage.get_etl_config(result["result_table_config"])
+                self.data.etl_config = EtlStorage.get_etl_config(
+                    result["result_table_config"], default=self.data.etl_config
+                )
                 etl_storage = EtlStorage.get_instance(etl_config=self.data.etl_config)
                 collector_config.update(
                     etl_storage.parse_result_table_config(

@@ -233,8 +233,7 @@ export default {
   @import '../../../scss/mixins/scroller.scss';
 
   .result-scroll-container {
-    margin-top: 52px;
-    height: calc(100% - 52px);
+    height: 100%;
     overflow: auto;
 
     @include scroller;

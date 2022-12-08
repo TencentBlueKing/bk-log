@@ -24,7 +24,6 @@ import arrow
 from django.test import TestCase
 from unittest.mock import patch
 
-
 from apps.log_search.constants import LOG_ASYNC_FIELDS
 from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler
 
@@ -72,6 +71,10 @@ class TestSearchHandler(TestCase):
     @patch(
         "apps.log_search.handlers.search.mapping_handlers.MappingHandlers.is_nested_field",
         lambda _, __: False,
+    )
+    @patch(
+        "apps.log_search.handlers.search.mapping_handlers.MappingHandlers.get_all_fields_by_index_id",
+        lambda _: ([], []),
     )
     @patch(
         "apps.log_search.handlers.search.search_handlers_esquery.SearchHandler._init_indices_str",

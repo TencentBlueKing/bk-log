@@ -301,7 +301,7 @@ export default {
           this.$router.push({
             name: 'extract-link-list',
             query: {
-              spaceUid: window.localStorage.getItem('space_uid'),
+              spaceUid: this.$store.state.spaceUid,
             },
           });
         }
@@ -371,7 +371,7 @@ export default {
         this.$router.push({
           name: 'extract-link-list',
           query: {
-            spaceUid: window.localStorage.getItem('space_uid'),
+            spaceUid: this.$store.state.spaceUid,
           },
         });
       } catch (e) {
