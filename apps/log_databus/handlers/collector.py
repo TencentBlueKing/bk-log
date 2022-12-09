@@ -2143,7 +2143,6 @@ class CollectorHandler(object):
                 "log_group_name": collector.collector_config_name_en,
                 "label": collector.category_id,
                 "operator": collector.created_by,
-                "log_info_list": [],
             }
         )
         collector.log_group_id = resp["log_group_id"]
