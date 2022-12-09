@@ -1102,7 +1102,7 @@ class CollectorHandler(object):
                     {
                         "data": data_items[0]["data"],
                         "log": data_items[0]["data"],
-                        "iterationindex": data_items[0].get("iterationindex", ""),
+                        "iterationindex": data_items[0]["iterationindex"],
                         "batch": [_item["data"] for _item in data_items],
                     }
                 )
