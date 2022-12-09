@@ -280,4 +280,4 @@ def create_custom_log_group():
             CollectorHandler.create_custom_log_group(log)
         except Exception as err:
             msg = traceback.format_exc()
-            logger.error("[Create Custom Log Group Failed] Error => %s ; Detail => %s", str(err), msg)
+            logger.error("[CreateCustomLogGroupFailed] Error => %s ; Detail => %s", str(err), msg)
