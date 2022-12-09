@@ -2260,7 +2260,6 @@ class CollectorHandler(object):
             self.data.index_set_id = etl_handler.update_or_create(**etl_params)["index_set_id"]
 
         custom_config.after_hook(self.data)
-        custom_config.after_hook(self.data)
 
         # create custom Log Group
         if custom_type == CustomTypeEnum.OTLP_LOG.value:
