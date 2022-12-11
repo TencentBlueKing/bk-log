@@ -31,11 +31,31 @@ class AbstractBkApi(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @staticmethod
+    def list_biz_hosts_topo(params: dict = None):
+        raise NotImplementedError
+
+    @staticmethod
     def list_host_total_mainline_topo(params: dict = None):
         raise NotImplementedError
 
     @staticmethod
     def get_agent_status(params: dict = None):
+        raise NotImplementedError
+
+    @staticmethod
+    def list_service_template(params: dict = None):
+        raise NotImplementedError
+
+    @staticmethod
+    def list_set_template(params: dict = None):
+        raise NotImplementedError
+
+    @staticmethod
+    def search_set(params: dict = None):
+        raise NotImplementedError
+
+    @staticmethod
+    def search_module(params: dict = None):
         raise NotImplementedError
 
 
