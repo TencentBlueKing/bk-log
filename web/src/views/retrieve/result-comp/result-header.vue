@@ -348,10 +348,17 @@ export default {
       })
         .then(() => {
           this.showCollectIntroGuide = false;
+          this.updateUserGuide();
         })
         .catch((e) => {
           console.warn(e);
         });
+    },
+    /** 更新用户指引 */
+    updateUserGuide() {
+      this.$http.request('meta/getUserGuide').then((res) => {
+        this.$store.commit('setUserGuideData', res.data);
+      });
     },
   },
 };
@@ -412,7 +419,7 @@ export default {
           text-align: center;
           font-size: 14px;
           color: #fff;
-          background: #699DF4;
+          background: #699df4;
           border-radius: 2px;
           cursor: pointer;
 

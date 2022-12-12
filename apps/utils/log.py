@@ -23,6 +23,8 @@ from logging.handlers import DatagramHandler
 import logging  # noqa
 from opentelemetry import trace
 from opentelemetry.trace import format_trace_id
+from opentelemetry.sdk._logs import OTLPHandler
+
 
 """
 Usage:
@@ -52,6 +54,41 @@ class UdpHandler(DatagramHandler):
             self.send(msg.encode())
         except Exception:  # pylint:disable=broad-except
             self.handleError(record)
+
+
+class OTLPLogHandler(OTLPHandler):
+    """A handler class which writes logging records, in OTLP format, to
+    a network destination or file.
+    """
+
+    def __init__(self, level=logging.NOTSET) -> None:
+        from django.conf import settings
+        from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
+        from opentelemetry.sdk._logs import LogEmitterProvider, set_log_emitter_provider
+        from opentelemetry.sdk._logs.export import BatchLogProcessor
+        from opentelemetry.sdk.resources import Resource
+
+        service_name = settings.SERVICE_NAME or settings.APP_CODE
+        otlp_grpc_host = settings.OTLP_GRPC_HOST
+        otlp_bk_log_token = settings.OTLP_BK_LOG_TOKEN
+
+        log_emitter_provider = LogEmitterProvider(
+            resource=Resource.create(
+                {
+                    "service.name": service_name,
+                    "bk.data.token": otlp_bk_log_token
+                }
+            )
+        )
+        set_log_emitter_provider(log_emitter_provider)
+
+        # init exporter
+        exporter = OTLPLogExporter(endpoint=otlp_grpc_host)
+        log_emitter_provider.add_log_processor(BatchLogProcessor(exporter))
+        super(OTLPLogHandler, self).__init__(
+            level=level,
+            log_emitter=log_emitter_provider.get_log_emitter(service_name)
+        )
 
 
 # ===============================================================================

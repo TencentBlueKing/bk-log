@@ -1193,9 +1193,9 @@ class OperatorEnum:
     EQ = {"operator": "=", "label": "=", "placeholder": _("请选择或直接输入，逗号分隔")}
     NE = {"operator": "!=", "label": "!=", "placeholder": _("请选择或直接输入，逗号分隔")}
     LT = {"operator": "<", "label": "<", "placeholder": _("请选择或直接输入")}
-    LE = {"operator": "<=", "label": "<=", "placeholder": _("请选择或直接输入")}
-    GE = {"operator": ">", "label": ">", "placeholder": _("请选择或直接输入")}
-    GT = {"operator": ">=", "label": ">=", "placeholder": _("请选择或直接输入")}
+    GT = {"operator": ">", "label": ">", "placeholder": _("请选择或直接输入")}
+    LTE = {"operator": "<=", "label": "<=", "placeholder": _("请选择或直接输入")}
+    GTE = {"operator": ">=", "label": ">=", "placeholder": _("请选择或直接输入")}
     EXISTS = {"operator": "exists", "label": _("exists"), "placeholder": _("确认字段已存在")}
     NOT_EXISTS = {"operator": "does not exists", "label": _("does not exists"), "placeholder": _("确认字段不存在")}
     IS_TRUE = {"operator": "is true", "label": "is true", "placeholder": _("字段为true")}
@@ -1209,9 +1209,9 @@ OPERATORS = {
         OperatorEnum.EQ,
         OperatorEnum.NE,
         OperatorEnum.LT,
-        OperatorEnum.LE,
-        OperatorEnum.GE,
+        OperatorEnum.LTE,
         OperatorEnum.GT,
+        OperatorEnum.GTE,
         OperatorEnum.EXISTS,
         OperatorEnum.NOT_EXISTS,
     ],
@@ -1219,9 +1219,9 @@ OPERATORS = {
         OperatorEnum.EQ,
         OperatorEnum.NE,
         OperatorEnum.LT,
-        OperatorEnum.LE,
-        OperatorEnum.GE,
+        OperatorEnum.LTE,
         OperatorEnum.GT,
+        OperatorEnum.GTE,
         OperatorEnum.EXISTS,
         OperatorEnum.NOT_EXISTS,
     ],
@@ -1229,9 +1229,9 @@ OPERATORS = {
         OperatorEnum.EQ,
         OperatorEnum.NE,
         OperatorEnum.LT,
-        OperatorEnum.LE,
-        OperatorEnum.GE,
+        OperatorEnum.LTE,
         OperatorEnum.GT,
+        OperatorEnum.GTE,
         OperatorEnum.EXISTS,
         OperatorEnum.NOT_EXISTS,
     ],
@@ -1239,9 +1239,9 @@ OPERATORS = {
         OperatorEnum.EQ,
         OperatorEnum.NE,
         OperatorEnum.LT,
-        OperatorEnum.LE,
-        OperatorEnum.GE,
+        OperatorEnum.LTE,
         OperatorEnum.GT,
+        OperatorEnum.GTE,
         OperatorEnum.EXISTS,
         OperatorEnum.NOT_EXISTS,
     ],
@@ -1250,15 +1250,22 @@ OPERATORS = {
         OperatorEnum.EQ,
         OperatorEnum.NE,
         OperatorEnum.LT,
-        OperatorEnum.LE,
-        OperatorEnum.GE,
+        OperatorEnum.LTE,
         OperatorEnum.GT,
+        OperatorEnum.GTE,
         OperatorEnum.EXISTS,
         OperatorEnum.NOT_EXISTS,
     ],
 }
 
 # 实际操作符映射
-REAL_OPERATORS_MAP = {OperatorEnum.EQ["operator"]: "is one of", OperatorEnum.NE["operator"]: "is not one of"}
+REAL_OPERATORS_MAP = {
+    OperatorEnum.EQ["operator"]: "is one of",
+    OperatorEnum.NE["operator"]: "is not one of",
+    OperatorEnum.LT["operator"]: "lt",
+    OperatorEnum.GT["operator"]: "gt",
+    OperatorEnum.LTE["operator"]: "lte",
+    OperatorEnum.GTE["operator"]: "gte",
+}
 
 DEFAULT_INDEX_OBJECT_FIELDS_PRIORITY = ["__ext.io_kubernetes_pod", "serverIp", "ip"]
