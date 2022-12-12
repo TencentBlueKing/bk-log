@@ -27,7 +27,7 @@ class BkApi(AbstractBkApi):
 
     @staticmethod
     def list_biz_hosts(params: dict = None):
-        return CCApi.list_biz_hosts.bulk_request(params)
+        return CCApi.list_biz_hosts(params)
 
     @staticmethod
     def list_biz_hosts_topo(params: dict = None):
