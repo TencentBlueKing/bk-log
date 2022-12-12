@@ -16,3 +16,7 @@ HostInfo = typing.Dict[str, typing.Any]
 FormatHostInfo = typing.Dict[str, typing.Any]
 
 Condition = typing.Dict[str, typing.Union[int, str, typing.Iterable]]
+
+Template = typing.Dict[str, typing.Any]
+
+TemplateNode = typing.Dict[str, typing.Any]

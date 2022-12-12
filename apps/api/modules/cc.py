@@ -152,6 +152,20 @@ class _CCApi:
             description="获取集群模板列表",
             before_request=get_supplier_account_before,
         )
+        self.find_host_by_set_template = DataAPI(
+            method="POST",
+            url=CC_APIGATEWAY_ROOT_V2 + "find_host_by_set_template",
+            module=self.MODULE,
+            description="查询集群模板下的主机",
+            before_request=get_supplier_account_before,
+        )
+        self.find_host_by_service_template = DataAPI(
+            method="POST",
+            url=CC_APIGATEWAY_ROOT_V2 + "find_host_by_service_template",
+            module=self.MODULE,
+            description="查询服务模板下的主机",
+            before_request=get_supplier_account_before,
+        )
         self.find_module_with_relation = DataAPI(
             method="POST",
             url=CC_APIGATEWAY_ROOT_V2 + "find_module_with_relation",

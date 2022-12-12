@@ -27,7 +27,11 @@ class BkApi(AbstractBkApi):
 
     @staticmethod
     def list_biz_hosts(params: dict = None):
-        return CCApi.list_biz_hosts(params)
+        return CCApi.list_biz_hosts.bulk_request(params)
+
+    @staticmethod
+    def list_biz_hosts_topo(params: dict = None):
+        return CCApi.list_biz_hosts_topo.bulk_request(params)
 
     @staticmethod
     def list_host_total_mainline_topo(params: dict = None):
@@ -36,3 +40,19 @@ class BkApi(AbstractBkApi):
     @staticmethod
     def get_agent_status(params: dict = None):
         return GseApi.get_agent_status_raw(params)
+
+    @staticmethod
+    def list_service_template(params: dict = None):
+        return CCApi.list_service_template.bulk_request(params)
+
+    @staticmethod
+    def list_set_template(params: dict = None):
+        return CCApi.list_set_template.bulk_request(params)
+
+    @staticmethod
+    def search_set(params: dict = None):
+        return CCApi.search_set.bulk_request(params)
+
+    @staticmethod
+    def search_module(params: dict = None):
+        return CCApi.search_module.bulk_request(params)

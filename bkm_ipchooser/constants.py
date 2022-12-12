@@ -90,6 +90,16 @@ class CommonEnum(EnhanceEnum):
         "bk_cpu_module",
         "operator",
     ]
+    DEFAULT_SET_FIELDS = [
+        "bk_set_id",
+        "bk_set_name",
+        "set_template_id",
+    ]
+    DEFAULT_MODULE_FIELDS = [
+        "bk_module_id",
+        "bk_module_name",
+        "service_template_id",
+    ]
 
     @classmethod
     def _get_member__alias_map(cls) -> Dict[Enum, str]:
@@ -98,6 +108,8 @@ class CommonEnum(EnhanceEnum):
             cls.PAGE_RETURN_ALL_FLAG: _("全量返回标志"),
             cls.DEFAULT_HOST_FUZZY_SEARCH_FIELDS: _("默认模糊查询字段"),
             cls.DEFAULT_HOST_FIELDS: _("主机列表默认返回字段"),
+            cls.DEFAULT_SET_FIELDS: _("集群列表默认返回字段"),
+            cls.DEFAULT_MODULE_FIELDS: _("模块列表默认返回字段"),
         }
 
 
@@ -132,6 +144,17 @@ class AgentStatusType(EnhanceEnum):
     @classmethod
     def _get_member__alias_map(cls) -> Dict[Enum, str]:
         return {cls.ALIVE: _("存活"), cls.NO_ALIVE: _("未存活")}
+
+
+class TemplateType(EnhanceEnum):
+    """模板类型"""
+
+    SERVICE_TEMPLATE = "SERVICE_TEMPLATE"
+    SET_TEMPLATE = "SET_TEMPLATE"
+
+    @classmethod
+    def _get_member__alias_map(cls) -> Dict[Enum, str]:
+        return {cls.SERVICE_TEMPLATE: _("服务模版"), cls.SET_TEMPLATE: _("集群模版")}
 
 
 PROC_STATE_TUPLE = ("RUNNING", "UNKNOWN", "TERMINATED", "NOT_INSTALLED", "UNREGISTER", "REMOVED", "MANUAL_STOP")

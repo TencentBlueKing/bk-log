@@ -6,8 +6,8 @@ from rest_framework.authentication import SessionAuthentication, BasicAuthentica
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
-from bkm_ipchooser.handlers import host_handler, topo_handler
-from bkm_ipchooser.serializers import host_sers, topo_sers
+from bkm_ipchooser.handlers import host_handler, topo_handler, template_handler
+from bkm_ipchooser.serializers import host_sers, topo_sers, template_sers
 
 try:
     from rest_framework.decorators import list_route, detail_route
@@ -157,4 +157,42 @@ class IpChooserHostViewSet(CommonViewSet):
             host_handler.HostHandler.details(
                 scope_list=self.validated_data["scope_list"], host_list=self.validated_data["host_list"]
             )
+        )
+
+
+class IpChooserTemplateViewSet(CommonViewSet):
+    URL_BASE_NAME = "ipchooser_template"
+    pagination_class = None
+
+    @swagger_auto_schema(
+        operation_summary=_("拉取模板列表"),
+        tags=IP_CHOOSER_VIEW_TAGS,
+        request_body=template_sers.ListTemplateSer(),
+        responses={status.HTTP_200_OK: template_sers.ListTemplateResponseSer()},
+    )
+    @list_route(methods=["POST"], serializer_class=template_sers.ListTemplateSer)
+    def templates(self, request, *args, **kwargs):
+        return Response(
+            template_handler.TemplateHandler(
+                scope_list=self.validated_data["scope_list"],
+                template_type=self.validated_data["template_type"],
+            ).list_templates()
+        )
+
+    @list_route(methods=["POST"], serializer_class=template_sers.ListNodeSer)
+    def nodes(self, request, *args, **kwargs):
+        return Response(
+            template_handler.TemplateHandler(
+                scope_list=self.validated_data["scope_list"],
+                template_type=self.validated_data["template_type"],
+            ).list_nodes(template_ids=self.validated_data["template_ids"])
+        )
+
+    @list_route(methods=["POST"], serializer_class=template_sers.ListAgentStatusSer)
+    def agent(self, request, *args, **kwargs):
+        return Response(
+            template_handler.TemplateHandler(
+                scope_list=self.validated_data["scope_list"],
+                template_type=self.validated_data["template_type"],
+            ).list_agent_status(template_ids=self.validated_data["template_ids"])
         )
