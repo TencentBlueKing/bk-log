@@ -246,14 +246,6 @@ if IS_K8S_DEPLOY_MODE:
                     "$(otelTraceID)s $(otelSpanID)s %(otelServiceName)s"
                 ),
             },
-            "verbose": {
-                "format": (
-                    "%(levelname)s [%(asctime)s] %(pathname)s "
-                    "%(lineno)d %(funcName)s %(process)d %(thread)d "
-                    "\n \t %(message)s \n"
-                ),
-                "datefmt": "%Y-%m-%d %H:%M:%S",
-            },
         },
         "handlers": {
             "stdout": {
@@ -310,7 +302,6 @@ if IS_K8S_DEPLOY_MODE:
     # 可选，开启OT日志上报
     if os.getenv("BKAPP_OTLP_LOG", "off") == "on":
         LOGGING["handlers"]["otlp"] = {
-            "formatter": "verbose",
             "class": "apps.utils.log.OTLPLogHandler",
         }
         for v in LOGGING["loggers"].values():
