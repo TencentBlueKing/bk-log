@@ -270,13 +270,14 @@ export default {
      * @param { string } field
      */
     getRelationMonitorField(field) {
-      switch (field) {
+      const key = field.toLowerCase();
+      switch (key) {
         // trace检索
         case 'trace_id':
-        case 'traceID':
+        case 'traceid':
           return this.$t('retrieve.traceRetrieve');
         // 主机监控
-        case 'serverIp':
+        case 'serverip':
         case 'ip':
           return this.$t('retrieve.host');
         // 容器

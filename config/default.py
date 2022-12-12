@@ -171,6 +171,14 @@ if SENTRY_DSN:
 # 不使用时，请修改为 False，并删除项目目录下的 Procfile 文件中 celery 配置
 IS_USE_CELERY = True
 
+IS_CELERY = False
+IS_CELERY_BEAT = False
+if "celery" in sys.argv:
+    IS_CELERY = True
+    if "beat" in sys.argv:
+        IS_CELERY_BEAT = True
+
+
 # CELERY 并发数，默认为 2，可以通过环境变量或者 Procfile 设置
 CELERYD_CONCURRENCY = os.getenv("BK_CELERYD_CONCURRENCY", 2)
 
@@ -197,6 +205,17 @@ CELERY_IMPORTS = (
     "apps.log_clustering.tasks.sync_pattern",
     "apps.log_extract.tasks.extract",
 )
+
+
+# OTLP Service Name
+SERVICE_NAME = APP_CODE
+if BKAPP_IS_BKLOG_API:
+    SERVICE_NAME = APP_CODE + "_api"
+if IS_CELERY:
+    SERVICE_NAME = APP_CODE + "_worker"
+if IS_CELERY_BEAT:
+    SERVICE_NAME = APP_CODE + "_beat"
+
 
 # load logging settings
 if RUN_VER != "open":
@@ -227,7 +246,7 @@ if IS_K8S_DEPLOY_MODE:
                     "%(funcName)s %(process)d %(thread)d %(message)s "
                     "$(otelTraceID)s $(otelSpanID)s %(otelServiceName)s"
                 ),
-            }
+            },
         },
         "handlers": {"stdout": {"class": "logging.StreamHandler", "formatter": "json", "stream": sys.stdout,},},
         "loggers": {
@@ -250,10 +269,20 @@ if IS_K8S_DEPLOY_MODE:
             "bk_monitor": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
         },
     }
+    #
+    # 可选，开启OT日志上报
+    if os.getenv("BKAPP_OTLP_LOG", "off") == "on":
+        LOGGING["handlers"]["otlp"] = {
+            "class": "apps.utils.log.OTLPLogHandler",
+        }
+        for v in LOGGING["loggers"].values():
+            v["handlers"].append("otlp")
 
 OTLP_TRACE = os.getenv("BKAPP_OTLP_TRACE", "off") == "on"
 OTLP_GRPC_HOST = os.getenv("BKAPP_OTLP_GRPC_HOST", "http://localhost:4317")
 OTLP_BK_DATA_ID = int(os.getenv("BKAPP_OTLP_BK_DATA_ID", -1))
+OTLP_BK_DATA_TOKEN = os.getenv("BKAPP_OTLP_BK_DATA_TOKEN", "")
+OTLP_BK_LOG_TOKEN = os.getenv("BKAPP_OTLP_BK_LOG_TOKEN", "")
 # ===============================================================================
 # 项目配置
 # ===============================================================================
@@ -956,12 +985,6 @@ SERVICE_LISTENING_DOMAIN = os.environ.get("SERVICE_LISTENING_DOMAIN", "")
 """
 以下为框架代码 请勿修改
 """
-IS_CELERY = False
-IS_CELERY_BEAT = False
-if "celery" in sys.argv:
-    IS_CELERY = True
-    if "beat" in sys.argv:
-        IS_CELERY_BEAT = True
 
 # celery settings
 if IS_USE_CELERY:
