@@ -310,8 +310,8 @@ if IS_K8S_DEPLOY_MODE:
 OTLP_TRACE = os.getenv("BKAPP_OTLP_TRACE", "off") == "on"
 OTLP_GRPC_HOST = os.getenv("BKAPP_OTLP_GRPC_HOST", "http://localhost:4317")
 OTLP_BK_DATA_ID = int(os.getenv("BKAPP_OTLP_BK_DATA_ID", -1))
-OTLP_BK_DATA_TOKEN = os.getenv("BKAPP_OTLP_BK_DATA_TOKEN", "log_token")
-OTLP_BK_LOG_TOKEN = os.getenv("BKAPP_OTLP_BK_LOG_TOKEN", "log_token")
+OTLP_BK_DATA_TOKEN = os.getenv("BKAPP_OTLP_BK_DATA_TOKEN", "")
+OTLP_BK_LOG_TOKEN = os.getenv("BKAPP_OTLP_BK_LOG_TOKEN", "")
 # ===============================================================================
 # 项目配置
 # ===============================================================================
