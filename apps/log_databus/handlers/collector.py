@@ -338,10 +338,9 @@ class CollectorHandler(object):
 
         if "result_table_config" in result and "result_table_storage" in result:
             if self.data.table_id in result["result_table_storage"]:
-                if not self.data.is_clustering:
-                    # 不打开聚类时，etl_config 以 META 为准
-                    # 打开聚类之后，META 的清洗配置并不代表真正的原始清洗配置，以本地存储为准
-                    self.data.etl_config = EtlStorage.get_etl_config(result["result_table_config"])
+                self.data.etl_config = EtlStorage.get_etl_config(
+                    result["result_table_config"], default=self.data.etl_config
+                )
                 etl_storage = EtlStorage.get_instance(etl_config=self.data.etl_config)
                 collector_config.update(
                     etl_storage.parse_result_table_config(
@@ -3635,6 +3634,18 @@ class CollectorHandler(object):
                     bcs_cluster_id=bcs_cluster_id,
                     namespace_list=config.get("namespaceSelector", {}).get("matchNames", []),
                 )
+            except AllNamespaceNotAllowedException:
+                return {
+                    "origin_text": yaml_config,
+                    "parse_status": False,
+                    "parse_result": [
+                        {
+                            "start_line_number": 0,
+                            "end_line_number": 0,
+                            "message": _("配置校验失败: namespaceSelector 共享集群下 any 不允许为 true，" "且 matchNames 不允许为空，请检查"),
+                        }
+                    ],
+                }
             except Exception as e:  # noqa
                 return {
                     "origin_text": yaml_config,

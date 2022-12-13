@@ -194,7 +194,7 @@ class CollectorConfig(CollectorBase):
         result = multi_execute_func.run()
         from apps.log_databus.handlers.etl_storage import EtlStorage
 
-        self.etl_config = EtlStorage.get_etl_config(result["result_table_config"])
+        self.etl_config = EtlStorage.get_etl_config(result["result_table_config"], default=self.etl_config)
         etl_storage = EtlStorage.get_instance(etl_config=self.etl_config)
         etl_config = etl_storage.parse_result_table_config(
             result_table_config=result["result_table_config"],

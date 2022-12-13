@@ -107,8 +107,8 @@ export default {
   data() {
     return {
       toolMenuList: [
-        { id: 'is', icon: 'bk-icon icon-close-circle' },
-        { id: 'not', icon: 'bk-icon icon-minus-circle' },
+        { id: 'is', icon: 'bk-icon icon-enlarge-line search' },
+        { id: 'not', icon: 'bk-icon icon-narrow-line search' },
         { id: 'display', icon: 'bk-icon icon-arrows-up-circle' },
         // { id: 'chart', icon: 'log-icon icon-chart' },
         { id: 'copy', icon: 'log-icon icon-copy' },
@@ -270,13 +270,14 @@ export default {
      * @param { string } field
      */
     getRelationMonitorField(field) {
-      switch (field) {
+      const key = field.toLowerCase();
+      switch (key) {
         // trace检索
         case 'trace_id':
-        case 'traceID':
+        case 'traceid':
           return this.$t('retrieve.traceRetrieve');
         // 主机监控
-        case 'serverIp':
+        case 'serverip':
         case 'ip':
           return this.$t('retrieve.host');
         // 容器
@@ -347,7 +348,11 @@ export default {
           }
         }
 
-        .bk-icon {
+        .search {
+          font-size: 16px;
+        }
+
+        .icon-arrows-up-circle {
           transform: rotate(45deg);
         }
 

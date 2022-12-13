@@ -191,7 +191,7 @@ export default {
       this.$router.push({
         name: 'retrieve',
         query: {
-          spaceUid: window.localStorage.getItem('space_uid'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
       setTimeout(() => {
@@ -204,7 +204,7 @@ export default {
           this.$router.push({
             name: menu.id,
             query: {
-              spaceUid: window.localStorage.getItem('space_uid'),
+              spaceUid: this.$store.state.spaceUid,
             },
           });
           this.$emit('reloadRouter');
@@ -214,7 +214,7 @@ export default {
             this.$router.push({
               name: 'extract',
               query: {
-                spaceUid: window.localStorage.getItem('space_uid'),
+                spaceUid: this.$store.state.spaceUid,
               },
             });
           } else {
@@ -226,7 +226,7 @@ export default {
             this.$router.push({
               name: 'trace-list',
               query: {
-                spaceUid: window.localStorage.getItem('space_uid'),
+                spaceUid: this.$store.state.spaceUid,
               },
             });
           } else {
@@ -247,7 +247,7 @@ export default {
           this.$router.push({
             name: menu.id,
             query: {
-              spaceUid: window.localStorage.getItem('space_uid'),
+              spaceUid: this.$store.state.spaceUid,
             },
           });
           this.$emit('reloadRouter');
@@ -257,7 +257,7 @@ export default {
             this.$router.push({
               name: 'manage',
               query: {
-                spaceUid: window.localStorage.getItem('space_uid'),
+                spaceUid: this.$store.state.spaceUid,
               },
             });
           } else {
@@ -274,14 +274,14 @@ export default {
         this.$router.push({
           name: 'trace-list',
           query: {
-            spaceUid: window.localStorage.getItem('space_uid'),
+            spaceUid: this.$store.state.spaceUid,
           },
         });
       } else {
         this.$router.push({
           name: menu.id,
           query: {
-            spaceUid: window.localStorage.getItem('space_uid'),
+            spaceUid: this.$store.state.spaceUid,
           },
         });
       }

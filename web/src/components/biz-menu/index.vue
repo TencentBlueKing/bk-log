@@ -387,6 +387,7 @@ export default {
         overflow: auto;
         border-radius: 2px;
         box-shadow: 0px 2px 6px 0px rgba(0,0,0,.20);
+        z-index: 2000;
 
         .biz-list {
           display: flex;
@@ -576,8 +577,17 @@ export default {
     padding: 0;
 
     .menu-select {
-      background: #f0f1f5;
       border: 0;
+
+      .menu-select-name {
+        color: #313238;
+        font-size: 14px;
+      }
+
+      .select-icon {
+        /* stylelint-disable-next-line declaration-no-important */
+        right: 2px !important;
+      }
 
       &-list {
         top: 106px;

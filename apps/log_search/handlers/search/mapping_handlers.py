@@ -36,6 +36,7 @@ from apps.log_search.constants import (
     LOG_ASYNC_FIELDS,
     FEATURE_ASYNC_EXPORT_COMMON,
     FieldDataTypeEnum,
+    DEFAULT_INDEX_OBJECT_FIELDS_PRIORITY,
 )
 from apps.utils.cache import cache_ten_minute
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
@@ -45,12 +46,9 @@ from apps.log_search.exceptions import (
     SearchGetSchemaException,
     FieldsDateNotExistException,
     IndexSetNotHaveConflictIndex,
+    SearchNotTimeFieldType,
 )
-from apps.log_search.models import (
-    LogIndexSet,
-    Scenario,
-    UserIndexSetConfig,
-)
+from apps.log_search.models import LogIndexSet, Scenario, UserIndexSetConfig, LogIndexSetData
 from apps.utils.local import get_local_param
 from apps.utils.time_handler import generate_time_range
 
@@ -221,23 +219,62 @@ class MappingHandlers(object):
             return self._get_context_fields(final_fields_list)
 
         # 其它情况
-        display_fields_list = []
-        if self.scenario_id == Scenario.ES:
-            produce_fields = OUTER_PRODUCE_FIELDS
-        elif self.scenario_id in [Scenario.BKDATA, Scenario.LOG]:
-            produce_fields = INNER_PRODUCE_FIELDS
-        else:
-            produce_fields = list()
-        range_num = len(final_fields_list) if len(final_fields_list) < 5 else 5
-        for index_n in range(range_num):
-            field_name = final_fields_list[index_n]["field_name"]
-            if field_name not in produce_fields:
-                final_fields_list[index_n]["is_display"] = True
-                display_fields_list.append(field_name)
+        return self._get_default_fields(final_fields_list)
+
+    def _get_default_fields(self, final_fields_list):
+        """默认字段"""
+        display_fields_list = [self._get_time_field()]
+        if self._get_object_field(final_fields_list):
+            display_fields_list.append(self._get_object_field(final_fields_list))
+        display_fields_list.extend(self._get_text_fields(final_fields_list))
+
+        for field_n in range(len(final_fields_list)):
+            field_name = final_fields_list[field_n]["field_name"]
+            if field_name in display_fields_list:
+                final_fields_list[field_n]["is_display"] = True
             else:
-                final_fields_list[index_n]["is_display"] = False
-        display_fields_list = self._sort_display_fields(display_fields_list)
+                final_fields_list[field_n]["is_display"] = False
+
         return final_fields_list, display_fields_list
+
+    def _get_time_field(self):
+        """获取索引时间字段"""
+        index_set_obj: LogIndexSet = LogIndexSet.objects.filter(index_set_id=self.index_set_id).first()
+        if index_set_obj.time_field:
+            return index_set_obj.time_field
+
+        index_set_obj: LogIndexSetData = LogIndexSetData.objects.filter(index_set_id=self.index_set_id).first()
+        if not index_set_obj:
+            raise SearchNotTimeFieldType()
+
+        return index_set_obj.time_field
+
+    def _get_object_field(self, final_fields_list):
+        """获取对象字段"""
+        final_field_name_list = [field["field_name"] for field in final_fields_list]
+        for field in DEFAULT_INDEX_OBJECT_FIELDS_PRIORITY:
+            if field in final_field_name_list:
+                return field
+        return None
+
+    def _get_text_fields(self, final_fields_list: list):
+        """获取text类型字段"""
+        final_field_name_list = [field["field_name"] for field in final_fields_list]
+        if "log" in final_field_name_list:
+            return ["log"]
+        type_text_fields = [
+            field["field_name"]
+            for field in final_fields_list
+            if field["field_type"] == "text" and not field["field_name"].startswith("_")
+        ]
+        if type_text_fields:
+            return type_text_fields[:2]
+        type_keyword_fields = [
+            field["field_name"]
+            for field in final_fields_list
+            if field["field_type"] == "keyword" and not field["field_name"].startswith("_")
+        ]
+        return type_keyword_fields[:2]
 
     def _get_mapping(self):
         return self._get_latest_mapping(index_set_id=self.index_set_id)
@@ -828,32 +865,39 @@ class MappingHandlers(object):
         """
         判断是否可以支持大额导出
         """
-        fields = {final_field["field_name"] for final_field in final_fields_list if final_field["es_doc_values"]}
+        fields = {final_field["field_name"] for final_field in final_fields_list}
+        agg_fields = {final_field["field_name"] for final_field in final_fields_list if final_field["es_doc_values"]}
         result = {"async_export_usable": False, "async_export_fields": [], "async_export_usable_reason": ""}
         if not FeatureToggleObject.switch(FEATURE_ASYNC_EXPORT_COMMON):
             result["async_export_usable_reason"] = _("【异步导出功能尚未开放】")
             return result
 
         if scenario_id == Scenario.BKDATA and fields.issuperset(set(BKDATA_ASYNC_FIELDS)):
-            result["async_export_usable"] = True
-            result["async_export_fields"] = BKDATA_ASYNC_FIELDS
-            return result
+            return cls._judge_missing_agg_field(result, agg_fields, BKDATA_ASYNC_FIELDS)
 
         if scenario_id == Scenario.BKDATA and fields.issuperset(set(BKDATA_ASYNC_CONTAINER_FIELDS)):
-            result["async_export_usable"] = True
-            result["async_export_fields"] = BKDATA_ASYNC_CONTAINER_FIELDS
-            return result
+            return cls._judge_missing_agg_field(result, agg_fields, BKDATA_ASYNC_CONTAINER_FIELDS)
 
         if scenario_id == Scenario.LOG and fields.issuperset(set(LOG_ASYNC_FIELDS)):
-            result["async_export_usable"] = True
-            result["async_export_fields"] = LOG_ASYNC_FIELDS
-            return result
+            return cls._judge_missing_agg_field(result, agg_fields, LOG_ASYNC_FIELDS)
 
         if scenario_id == Scenario.ES:
             result["async_export_usable"] = True
             return result
 
         return cls._generate_async_export_reason(scenario_id=scenario_id, result=result)
+
+    @classmethod
+    def _judge_missing_agg_field(cls, result: dict, agg_fields: set, scenario_fields: list) -> dict:
+        """
+        判断聚合字段是否缺失
+        """
+        if agg_fields.issuperset(set(scenario_fields)):
+            result["async_export_fields"] = scenario_fields
+            result["async_export_usable"] = True
+        else:
+            result["async_export_usable_reason"] = "检查{}字段是否为聚合字段".format(",".join(scenario_fields))
+        return result
 
     @classmethod
     def _generate_async_export_reason(cls, scenario_id: str, result: dict):
@@ -864,6 +908,5 @@ class MappingHandlers(object):
             ),
             Scenario.LOG: _("缺少必备字段: {async_fields}").format(async_fields=", ".join(LOG_ASYNC_FIELDS)),
         }
-
         result["async_export_usable_reason"] = reason_map[scenario_id]
         return result
