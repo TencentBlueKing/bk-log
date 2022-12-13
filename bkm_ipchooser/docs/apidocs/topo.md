@@ -95,6 +95,65 @@ HTTP 请求方式: `POST`, `application/json`
 
 <hr>
 
+## [API] query_path (查询多个节点拓扑路径)
+
+路径: /api/v1/ipchooser/topo/query_path/
+
+HTTP 请求方式: `POST`, `application/json`
+
+### 请求参数
+
+| 字段       | 类型 | 是否必选 | 描述                                           |
+| ---------- | ---- |------| ---------------------------------------------- |
+| all_scope  | Bool | No   | 是否获取所有资源范围的拓扑结构，默认为 `false` |
+| scope_list | List | Yes  | 要获取拓扑结构的资源范围数组                   |
+| node_list | List | No       | 节点列表 |
+
+**node**
+| 字段 | 类型 | 是否必选 | 描述 |
+|-----------|------------|--------|-------------------------|
+| object_id | String | No | 节点类型 ID |
+| instance_id | String | No | 节点实例 ID |
+| scope | | | 参考公共参数 scope |
+
+
+### 请求参数示例
+
+```json
+{
+  "node_list": {
+    "node_list": [
+      {
+        "meta": { "scope_type": "biz", "scope_id": 2, "bk_biz_id": 2 },
+        "object_id": "set",
+        "instance_id": "144"
+      }
+    ]
+  },
+  "start": 0,
+  "page_size": 20
+}
+```
+
+### 返回示例
+
+```json
+{
+    "success": True,
+    "code": 0,
+    "error_msg": "成功",
+    "data": [
+        [
+            {"meta": {"scope_type": "biz", "scope_id": 2, "bk_biz_id": 2}, "instance_id": 2, "instance_name": "蓝鲸", "objectId": "biz", "object_name": "业务"},
+            {"meta": {"scope_type": "biz", "scope_id": 2, "bk_biz_id": 2}, "instance_id": 3, "instance_name": "测试", "object_id": "set", "object_name": "集群"},
+        ]
+    ],
+    "request_id": "c13b9418f45d3af0",
+}
+```
+
+<hr>
+
 ## [API] query_hosts (根据多个拓扑节点与搜索条件批量分页查询所包含的主机信息)
 
 路径: /api/v1/ipchooser/topo/query_hosts/
