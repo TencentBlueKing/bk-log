@@ -47,3 +47,8 @@ class QueryHostIdInfosRequestSer(QueryHostsRequestSer):
 class QueryHostIdInfosResponseSer(serializers.Serializer):
     class Meta:
         swagger_schema_fields = {"example": mock_data.API_TOPO_QUERY_HOST_ID_INFOS_RESPONSE}
+
+
+class AgentStatisticsRequestSer(QueryHostsRequestSer):
+    class Meta:
+        swagger_schema_fields = {"example": mock_data.API_TOPO_QUERY_HOST_ID_INFOS_REQUEST}

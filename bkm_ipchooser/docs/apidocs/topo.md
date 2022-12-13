@@ -274,3 +274,57 @@ HTTP 请求方式: `POST`, `application/json`
     "request_id": "b96a0c97063469d8ac8ddceef64e73bc",
 }
 ```
+
+## [API] agent_statistics (获取多个拓扑节点的主机Agent状态统计信息)
+
+路径: /api/v1/ipchooser/topo/agent_statistics/
+
+HTTP 请求方式: `POST`, `application/json`
+
+### 请求参数
+
+| 字段      | 类型 | 是否必选 | 描述     |
+| --------- | ---- | -------- | -------- |
+| node_list | List | No       | 节点列表 |
+
+**node**
+| 字段 | 类型 | 是否必选 | 描述 |
+|-----------|------------|--------|-------------------------|
+| object_id | String | No | 节点类型 ID |
+| instance_id | String | No | 节点实例 ID |
+| scope | | | 参考公共参数 scope |
+
+### 请求参数示例
+
+```json
+{
+  "node_list": {
+    "node_list": [
+      {
+        "meta": { "scope_type": "biz", "scope_id": 2, "bk_biz_id": 2 },
+        "object_id": "set",
+        "instance_id": "144"
+      }
+    ]
+  },
+  "start": 0,
+  "page_size": 20
+}
+```
+
+### 返回示例
+
+```json
+{
+    "success": True,
+    "code": 0,
+    "error_msg": "成功",
+    "data": [
+        {
+            "node": {"meta": { "scope_type": "biz", "scope_id": 2, "bk_biz_id": 2 }, "instance_id": 2, "object_id": "biz"},
+            "agent_statistics": {"alive_count": 100, "no_alive_count": 200, "total_count": 300},
+        }
+    ],
+    "request_id": "c17ae1b76dc47a86",
+}
+```

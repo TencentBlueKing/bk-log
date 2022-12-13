@@ -133,6 +133,10 @@ class IpChooserTopoViewSet(CommonViewSet):
             )
         )
 
+    @list_route(methods=["POST"], serializer_class=topo_sers.AgentStatisticsRequestSer)
+    def agent_statistics(self, request, *args, **kwargs):
+        return Response(topo_handler.TopoHandler.agent_statistics(node_list=self.validated_data["node_list"]))
+
 
 class IpChooserHostViewSet(CommonViewSet):
     URL_BASE_NAME = "ipchooser_host"

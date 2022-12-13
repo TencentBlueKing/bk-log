@@ -310,3 +310,66 @@ class TopoHandler:
             cls.fill_agent_status(resp["info"])
 
         return resp
+
+    @classmethod
+    def agent_statistics(cls, node_list: typing.List[types.ReadableTreeNode]) -> typing.List[typing.Dict]:
+        """
+        获取多个拓扑节点的主机 Agent 状态统计信息
+        :param node_list: 节点信息列表
+        :return:
+        """
+        return [cls.node_agent_statistics(node) for node in node_list]
+
+
+    @classmethod
+    def node_agent_statistics(cls, node: types.ReadableTreeNode) -> typing.Dict:
+        """
+        获取单个拓扑节点的主机 Agent 状态统计信息
+        :param node: 节点信息
+        :return:
+        """
+        result = {
+            "node": node,
+            "agent_statistics": {
+                "total_count": 0,
+                "alive_count": 0,
+                "no_alive_count": 0,
+            }
+        }
+        object_id = node["object_id"]
+        params = {
+            "bk_biz_id": node["meta"]["bk_biz_id"],
+            "fields": constants.CommonEnum.SIMPLE_HOST_FIELDS.value,
+        }
+        if object_id == constants.ObjectType.SET.value:
+            params["set_property_filter"] = {
+                "condition": "AND",
+                "rules": [{"field": "bk_set_id", "operator": "equal", "value": node["instance_id"]}],
+            }
+        if object == constants.ObjectType.MODULE.value:
+            params["module_property_filter"] = {
+                "condition": "AND",
+                "rules": [{"field": "bk_module_id", "operator": "in", "value": node["instance_id"]}],
+            },
+        hosts_with_topo = BkApi.list_biz_hosts_topo(params)
+        if not hosts_with_topo:
+            return result
+
+        params = {
+            "hosts": [
+                {
+                    "ip": host["host"].get("bk_host_innerip"),
+                    "bk_cloud_id": host["host"].get("bk_cloud_id"),
+                }
+                for host in hosts_with_topo
+            ]
+        }
+        agent_status_result = BkApi.get_agent_status(params)
+        for host_status in agent_status_result.values():
+            result["agent_statistics"]["total_count"] += 1
+            if host_status.get("bk_agent_alive") == constants.AgentStatusType.ALIVE.value:
+                result["agent_statistics"]["alive_count"] += 1
+            else:
+                result["agent_statistics"]["no_alive_count"] += 1
+
+        return result
