@@ -1572,4 +1572,6 @@ export default {
   PaaS应用: 'PaaS application',
   错误原因: 'Wrong reason',
   个收藏: 'favorite',
+  容器集群: 'Container cluster',
+  段日志参数: 'Section log value',
 };
