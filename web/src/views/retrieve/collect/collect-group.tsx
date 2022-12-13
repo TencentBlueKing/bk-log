@@ -20,11 +20,11 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
  */
 
-import { Component as tsc } from "vue-tsx-support";
-import { Component, Prop, Inject, Watch } from "vue-property-decorator";
-import GroupDropdown from "./component/group-dropdown";
-import { IGroupItem, IFavoriteItem } from "./collect-index";
-import "./collect-group.scss";
+import { Component as tsc } from 'vue-tsx-support';
+import { Component, Prop, Inject } from 'vue-property-decorator';
+import GroupDropdown from './component/group-dropdown';
+import { IGroupItem, IFavoriteItem } from './collect-index';
+import './collect-group.scss';
 
 interface ICollectProps {
   collectItem: IGroupItem;
@@ -41,17 +41,17 @@ export default class CollectGroup extends tsc<ICollectProps> {
   @Prop({ type: Boolean, default: true }) isShowGroupTitle: boolean;
   @Prop({ type: Boolean, default: false }) isSearchFilter: boolean;
   @Prop({ type: Array, default: () => [] }) groupList: IGroupItem[];
-  @Inject("handleUserOperate") handleUserOperate;
+  @Inject('handleUserOperate') handleUserOperate;
   isShow = false;
   isHoverTitle = false;
   clickDrop = false;
 
   get isCannotChange() {
-    return ["private", "unknown"].includes(this.collectItem.group_type);
+    return ['private', 'unknown'].includes(this.collectItem.group_type);
   }
 
   get isShowTitleIcon() {
-    return this.collectItem.group_type !== "unknown";
+    return this.collectItem.group_type !== 'unknown';
   }
   handleClickCollect(item: IFavoriteItem) {
     setTimeout(() => {
@@ -59,7 +59,7 @@ export default class CollectGroup extends tsc<ICollectProps> {
     }, 100);
     if (this.clickDrop) return;
     this.clickDrop = false;
-    this.handleUserOperate("click-favorite", item);
+    this.handleUserOperate('click-favorite', item);
   }
 
   render() {
@@ -71,10 +71,10 @@ export default class CollectGroup extends tsc<ICollectProps> {
           is-hover-title={this.isHoverTitle} />
       ) : <span class="title-number">{this.collectItem.favorites.length}</span>;
     };
-    const collectDropdownSlot = (item) => (
+    const collectDropdownSlot = item => (
       <div onClick={() => (this.clickDrop = true)}>
         <GroupDropdown
-          drop-type={"collect"}
+          drop-type={'collect'}
           data={item}
           group-list={this.groupList} />
       </div>
@@ -84,39 +84,39 @@ export default class CollectGroup extends tsc<ICollectProps> {
         {this.isShowGroupTitle ? (
           <div
             class={[
-              "group-title fl-jcsb",
+              'group-title fl-jcsb',
               {
-                "is-active": !this.isShow,
-                "is-move-cur": !this.isSearchFilter && !this.isCannotChange,
-              }
+                'is-active': !this.isShow,
+                'is-move-cur': !this.isSearchFilter && !this.isCannotChange,
+              },
             ]}
             onMouseenter={() => (this.isHoverTitle = true)}
             onMouseleave={() => (this.isHoverTitle = false)}
           >
             <span class="group-cur" onClick={() => (this.isShow = !this.isShow)}>
-              <span class={["bk-icon icon-play-shape", { "is-active": !this.isShow }]}></span>
+              <span class={['bk-icon icon-play-shape', { 'is-active': !this.isShow }]}></span>
               <span>{this.collectItem.group_name}</span>
             </span>
             {groupDropdownSlot()}
           </div>
         ) : undefined}
-        <div class={["group-list", { "list-hidden": this.isShow }]}>
+        <div class={['group-list', { 'list-hidden': this.isShow }]}>
           {this.collectItem.favorites.map((item, index) => (
             <div
               key={index}
-              class={["group-item",{ active: item.id === this.activeFavoriteID }]}
+              class={['group-item', { active: item.id === this.activeFavoriteID }]}
               onClick={() => this.handleClickCollect(item)}>
               <div class="group-item-left">
                 <div>
                   <p>
-                    <span class={{"active-name": item.id === this.activeFavoriteID}}>{item.name}</span>
+                    <span class={{ 'active-name': item.id === this.activeFavoriteID }}>{item.name}</span>
                     {!item.is_active ? (
-                       <span v-bk-tooltips={{content: this.$t('数据源不存在'), placement: 'right'}}>
+                       <span v-bk-tooltips={{ content: this.$t('数据源不存在'), placement: 'right' }}>
                           <span class="bk-icon log-icon icon-shixiao"></span>
                        </span>
                     ) : undefined}
                   </p>
-                  <p class="creator">{item.created_by || "--"}</p>
+                  <p class="creator">{item.created_by || '--'}</p>
                 </div>
                 {collectDropdownSlot(item)}
               </div>
