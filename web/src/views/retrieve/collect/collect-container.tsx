@@ -20,18 +20,18 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
  */
 
-import { Component as tsc } from "vue-tsx-support";
+import { Component as tsc } from 'vue-tsx-support';
 import {
   Component,
   Emit,
   Provide,
   Prop,
   Watch,
-} from "vue-property-decorator";
-import { IGroupItem } from "./collect-index";
-import CollectGroup from "./collect-group";
-import VueDraggable from "vuedraggable";
-import "./collect-container.scss";
+} from 'vue-property-decorator';
+import { IGroupItem } from './collect-index';
+import CollectGroup from './collect-group';
+import VueDraggable from 'vuedraggable';
+import './collect-container.scss';
 
 interface IProps {
   dataList: IGroupItem[];
@@ -53,17 +53,17 @@ export default class CollectContainer extends tsc<IProps> {
 
   dragList: IGroupItem[] = []; // 可拖拽的收藏列表
 
-  @Watch("dataList", { deep: true, immediate: true })
+  @Watch('dataList', { deep: true, immediate: true })
   private handleWatchDataList() {
     this.dragList = JSON.parse(JSON.stringify(this.dataList));
   }
 
-  @Provide("handleUserOperate")
+  @Provide('handleUserOperate')
   handleUserOperate(type: string, value?: any) {
     this.handleValueChange(type, value);
   }
 
-  @Emit("change")
+  @Emit('change')
   handleValueChange(type: string, value: any) {
     return {
       type,
@@ -72,14 +72,14 @@ export default class CollectContainer extends tsc<IProps> {
   }
 
   handleMoveEnd() {
-    const dragIDList = this.dragList.map((item) => item.group_id);
-    this.handleValueChange("drag-move-end", dragIDList);
+    const dragIDList = this.dragList.map(item => item.group_id);
+    this.handleValueChange('drag-move-end', dragIDList);
   }
   handleMoveIng(e) {
-    if (e.draggedContext.element.group_type === "private") return false;
-    if (e.draggedContext.element.group_type === "unknown") return false;
-    if (e.relatedContext.element.group_type === "private") return false;
-    if (e.relatedContext.element.group_type === "unknown") return false;
+    if (e.draggedContext.element.group_type === 'private') return false;
+    if (e.draggedContext.element.group_type === 'unknown') return false;
+    if (e.relatedContext.element.group_type === 'private') return false;
+    if (e.relatedContext.element.group_type === 'unknown') return false;
     return true;
   }
   render() {
@@ -100,7 +100,7 @@ export default class CollectContainer extends tsc<IProps> {
               disabled={this.isSearchFilter}
             >
               <transition-group>
-                {this.dragList.map((item) => (
+                {this.dragList.map(item => (
                   <div key={item.group_id}>
                     <CollectGroup
                       collectItem={item}
@@ -117,7 +117,7 @@ export default class CollectContainer extends tsc<IProps> {
             <div class="data-empty">
               <div class="empty-box">
                 <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-                <span>{this.$t("暂无数据")}</span>
+                <span>{this.$t('暂无数据')}</span>
               </div>
             </div>
           )}

@@ -69,7 +69,7 @@ export default class TimeRange extends tsc<IProps, IEvents> {
       return map;
     }, new Map());
   }
-  
+
   mounted() {
     this.$store.commit('retrieve/updateCachePickerValue', this.value);
   }
@@ -103,7 +103,7 @@ export default class TimeRange extends tsc<IProps, IEvents> {
     this.handleTransformTime(this.timestamp);
     const value = this.isPanelTimeRange ? this.timestamp : this.formatTime(this.localValue);
     this.$store.commit('retrieve/updateCachePickerValue', value);
-    return value
+    return value;
   }
 
   /** 格式化绝对时间点 */
@@ -186,7 +186,7 @@ export default class TimeRange extends tsc<IProps, IEvents> {
               onShow: () => {
                 /** 防止代码自动格式化 */
                 this.handleTransformTime();
-              }
+              },
             }}
             theme="light time-range-tips">
             <div
