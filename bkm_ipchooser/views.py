@@ -90,6 +90,16 @@ class IpChooserTopoViewSet(CommonViewSet):
         return Response(topo_handler.TopoHandler.trees(scope_list=self.validated_data["scope_list"]))
 
     @swagger_auto_schema(
+        operation_summary=_("查询多个节点拓扑路径"),
+        tags=IP_CHOOSER_VIEW_TAGS,
+        request_body=topo_sers.QueryPathRequestSer(),
+        responses={status.HTTP_200_OK: topo_sers.QueryPathResponseSer()},
+    )
+    @list_route(methods=["POST"], detail=False, serializer_class=topo_sers.QueryPathRequestSer)
+    def query_path(self, request, *args, **kwargs):
+        return Response(topo_handler.TopoHandler.query_path(node_list=self.validated_data["node_list"]))
+
+    @swagger_auto_schema(
         operation_summary=_("根据多个拓扑节点与搜索条件批量分页查询所包含的主机信息"),
         tags=IP_CHOOSER_VIEW_TAGS,
         request_body=topo_sers.QueryHostsRequestSer(),
@@ -122,6 +132,10 @@ class IpChooserTopoViewSet(CommonViewSet):
                 page_size=self.validated_data["page_size"],
             )
         )
+
+    @list_route(methods=["POST"], serializer_class=topo_sers.AgentStatisticsRequestSer)
+    def agent_statistics(self, request, *args, **kwargs):
+        return Response(topo_handler.TopoHandler.agent_statistics(node_list=self.validated_data["node_list"]))
 
 
 class IpChooserHostViewSet(CommonViewSet):

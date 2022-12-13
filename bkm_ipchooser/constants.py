@@ -100,6 +100,12 @@ class CommonEnum(EnhanceEnum):
         "bk_module_name",
         "service_template_id",
     ]
+    SIMPLE_HOST_FIELDS = [
+        "bk_host_id",
+        "bk_cloud_id",
+        "bk_host_innerip",
+        "bk_host_innerip_v6"
+    ]
 
     @classmethod
     def _get_member__alias_map(cls) -> Dict[Enum, str]:

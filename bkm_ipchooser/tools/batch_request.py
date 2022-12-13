@@ -3,10 +3,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from copy import deepcopy
 from multiprocessing.pool import ThreadPool
 
-from django.conf import settings
 from django.utils.translation import get_language
 
 from bkm_ipchooser.tools import translation
+from apps.constants import DEFAULT_MAX_WORKERS
 
 QUERY_CMDB_LIMIT = 500
 WRITE_CMDB_LIMIT = 500
@@ -131,7 +131,7 @@ def request_multi_thread(func, params_list, get_data=lambda x: []):
     :return: 请求结果累计
     """
     result = []
-    with ThreadPoolExecutor(max_workers=settings.CONCURRENT_NUMBER) as ex:
+    with ThreadPoolExecutor(max_workers=DEFAULT_MAX_WORKERS) as ex:
         tasks = [
             ex.submit(translation.RespectsLanguage(language=get_language())(func), **params) for params in params_list
         ]

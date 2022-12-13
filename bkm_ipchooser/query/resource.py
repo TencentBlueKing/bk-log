@@ -31,7 +31,7 @@ class ResourceQueryHelper:
 
     @staticmethod
     def get_topo_tree(bk_biz_id: int, return_all=False) -> types.TreeNode:
-        internal_set_info: typing.Dict = BkApi.get_biz_internal_module({"bk_biz_id": bk_biz_id})
+        internal_set_info: typing.Dict = BkApi.get_biz_internal_module({"bk_biz_id": bk_biz_id, "no_request": True})
         internal_topo: typing.Dict = {
             "bk_obj_name": constants.ObjectType.get_member_value__alias_map().get(constants.ObjectType.SET.value, ""),
             "bk_obj_id": constants.ObjectType.SET.value,
