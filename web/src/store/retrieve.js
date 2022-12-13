@@ -29,6 +29,7 @@ export default {
     cacheDatePickerValue: [],
     cacheTimeRange: '',
     displayRetrieve: false,
+    filedSettingConfigID: 1,
   },
   mutations: {
     updateChartKey(state) {
@@ -42,6 +43,9 @@ export default {
     },
     updateDisplayRetrieve(state, display) {
       state.displayRetrieve = display;
+    },
+    updateFiledSettingConfigID(state, payload) {
+      state.filedSettingConfigID = payload;
     },
   },
   actions: {},

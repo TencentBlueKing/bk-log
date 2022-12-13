@@ -1262,6 +1262,7 @@ export default {
           display_fields: displayFields,
           time_field: timeField,
           sort_list: sortList,
+          config_id,
         } = data;
         const localConfig = {};
         config.forEach((item) => {
@@ -1321,6 +1322,7 @@ export default {
         });
         this.fieldAliasMap = fieldAliasMap;
         this.isThollteField = false;
+        this.$store.commit('retrieve/updateFiledSettingConfigID', config_id); // 当前配置ID
       } catch (e) {
         this.ipTopoSwitch = true;
         this.bkmonitorUrl = false;

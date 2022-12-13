@@ -139,6 +139,11 @@ export default {
       },
     };
   },
+  computed: {
+    filedSettingConfigID() { // 当前索引集的显示字段ID
+      return this.$store.state.retrieve.filedSettingConfigID;
+    },
+  },
   created() {
     this.deepClone(this.logParams);
   },
@@ -296,7 +301,7 @@ export default {
         await this.$http.request('retrieve/postFieldsConfig', {
           params: { index_set_id: this.$route.params.indexId },
           query: { scope: 'search_context' },
-          data: { display_fields: list, sort_list: [] },
+          data: { display_fields: list, sort_list: [], config_id: this.filedSettingConfigID },
         });
         const res = await this.requestFields();
         if (res) {
