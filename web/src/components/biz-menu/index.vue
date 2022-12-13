@@ -401,7 +401,7 @@ export default {
           flex-direction: column;
           max-height: 240px;
           overflow: auto;
-          width: 350px;
+          width: 380px;
           padding: 6px 0;
 
           .group-title {
@@ -415,7 +415,7 @@ export default {
           %list-empty {
             height: 32px;
             flex: 0 0 32px;
-            padding: 0 16px;
+            padding: 0 9px 0 12px;
             color: #c3d0e7;
             font-size: 12px;
 
