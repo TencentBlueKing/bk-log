@@ -247,7 +247,7 @@ class BizHandler(APIModel):
     def get_host_instance_by_ip_list(self, ip_list):
         """
         根据ip获取主机实例
-        :param ip_list: [ip, bk_cloud_id]
+        :param ip_list: [ip]
         :return:
         """
 
@@ -256,17 +256,7 @@ class BizHandler(APIModel):
         # 若有bk_cloud_id,过滤掉host_list中不满足的主机
         filtered_host_list = []
         for ip in ip_list:
-            if "bk_cloud_id" in ip.keys():
-                # todo if语句要改
-                filtered_host_list.extend(
-                    [
-                        item
-                        for item in host_info_list
-                        if item["bk_cloud_id"] == ip["bk_cloud_id"] and item["bk_host_innerip"] == ip["ip"]
-                    ]
-                )
-            else:
-                filtered_host_list.extend([item for item in host_info_list if item["bk_host_innerip"] == ip["ip"]])
+            filtered_host_list.extend([item for item in host_info_list if item["bk_host_innerip"] == ip["ip"]])
 
         biz_to_host = defaultdict(list)
         for host in filtered_host_list:
