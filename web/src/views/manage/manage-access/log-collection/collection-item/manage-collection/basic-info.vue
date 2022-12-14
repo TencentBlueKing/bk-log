@@ -29,6 +29,11 @@
           <span>{{ $t('dataSource.dataId') }}</span>
           <span>{{ collectorData.bk_data_id || '-' }}</span>
         </div>
+        <!-- otlp_log Token -->
+        <div v-if="collectorData.custom_type === 'otlp_log'">
+          <span>Token</span>
+          <span>{{ collectorData.bk_data_token || '-' }}</span>
+        </div>
         <!-- 名称 -->
         <div>
           <span>{{ $t('configDetails.name') }}</span>
