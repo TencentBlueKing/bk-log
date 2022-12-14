@@ -13,6 +13,8 @@
 
 ## [API] check (检查节点)
 
+用法: 用于全局根据host_id获取主机信息
+
 路径: /api/v1/ipchooser/host/check/
 
 HTTP请求方式: `POST`, `application/json`
@@ -71,6 +73,8 @@ HTTP请求方式: `POST`, `application/json`
 <hr>
 
 ## [API] details (根据主机关键信息获取机器详情信息)
+
+用法: 获取静态拓扑根据主机host_id获取主机详情
 
 路径: /api/v1/ipchooser/host/details/
 
