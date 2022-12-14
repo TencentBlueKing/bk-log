@@ -13,7 +13,7 @@
 
 ## [API] trees (批量获取含各节点主机数量的拓扑树)
 
-用法: 动态拓扑/静态拓扑
+用法: 动态拓扑/静态拓扑(fetchTopologyHostCount)
 
 路径: /api/v1/ipchooser/topo/trees/
 
@@ -99,7 +99,7 @@ HTTP 请求方式: `POST`, `application/json`
 
 ## [API] query_path (查询多个节点拓扑路径)
 
-用法: 动态拓扑获取节点
+用法: 动态拓扑获取节点(fetchNodesQueryPath)
 
 路径: /api/v1/ipchooser/topo/query_path/
 
@@ -160,7 +160,7 @@ HTTP 请求方式: `POST`, `application/json`
 
 ## [API] query_hosts (根据多个拓扑节点与搜索条件批量分页查询所包含的主机信息)
 
-用法: 静态拓扑获取主机
+用法: 静态拓扑获取主机(fetchTopologyHostsNodes)
 
 路径: /api/v1/ipchooser/topo/query_hosts/
 
@@ -231,6 +231,8 @@ HTTP 请求方式: `POST`, `application/json`
 
 ## [API] query_host_id_infos (根据多个拓扑节点与搜索条件批量分页查询所包含的主机ID信息)
 
+用法: 全选, 跨页查询(fetchTopologyHostIdsNodes)
+
 路径: /api/v1/ipchooser/topo/query_host_id_infos/
 
 HTTP 请求方式: `POST`, `application/json`
@@ -283,7 +285,7 @@ HTTP 请求方式: `POST`, `application/json`
 
 ## [API] agent_statistics (获取多个拓扑节点的主机Agent状态统计信息)
 
-用法: 动态拓扑/静态拓扑/服务模板/集群模板 均可用, 获取节点Agent状态
+用法: 动态拓扑/静态拓扑/服务模板/集群模板 均可用, 获取节点Agent状态(fetchHostAgentStatisticsNodes)
 
 路径: /api/v1/ipchooser/topo/agent_statistics/
 
