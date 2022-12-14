@@ -123,10 +123,11 @@ class ScopeType(EnhanceEnum):
     """作用域类型"""
 
     BIZ = "biz"
+    SPACE = "space"
 
     @classmethod
     def _get_member__alias_map(cls) -> Dict[Enum, str]:
-        return {cls.BIZ: _("业务")}
+        return {cls.BIZ: _("业务"), cls.SPACE: _("空间")}
 
 
 class ObjectType(EnhanceEnum):
