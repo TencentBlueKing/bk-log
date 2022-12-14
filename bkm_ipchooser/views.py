@@ -75,6 +75,16 @@ class CommonViewSet(GenericViewSet):
         serializer = self.serializer_class or self.get_serializer_class()
         return self.params_valid(serializer, data)
 
+    def finalize_response(self, request, response, *args, **kwargs):
+        # 目前仅对 Restful Response 进行处理
+        if isinstance(response, Response):
+            response.data = {"result": True, "data": response.data, "code": 0, "message": ""}
+            response.status_code = status.HTTP_200_OK
+
+        # 返回响应头禁用浏览器的类型猜测行为
+        response.headers["x-content-type-options"] = ("X-Content-Type-Options", "nosniff")
+        return super(CommonViewSet, self).finalize_response(request, response, *args, **kwargs)
+
 
 class IpChooserTopoViewSet(CommonViewSet):
     URL_BASE_NAME = "ipchooser_topo"
