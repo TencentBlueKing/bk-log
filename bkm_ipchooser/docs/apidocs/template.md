@@ -13,6 +13,8 @@
 
 ## [API] templates (拉取模板列表)
 
+用法: 获取服务模板/集群模板列表
+
 路径: /api/v1/ipchooser/template/templates/
 
 HTTP 请求方式: `POST`, `application/json`
@@ -60,6 +62,8 @@ HTTP 请求方式: `POST`, `application/json`
 <hr>
 
 ## [API] nodes (获取模板下各个节点)
+
+用法: 获取服务模板/集群模板 节点信息
 
 路径: /api/v1/ipchooser/template/nodes/
 
@@ -110,6 +114,8 @@ HTTP 请求方式: `POST`, `application/json`
 <hr>
 
 ## [API] agent (获取模板下各个节点的Agent状态)
+
+用法: 获取服务模板/集群模板 节点Ggent状态信息
 
 路径: /api/v1/ipchooser/template/agent/
 

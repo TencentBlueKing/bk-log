@@ -4,6 +4,7 @@ from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 
 from bkm_ipchooser import constants, exceptions
+from bkm_space.utils import space_uid_to_bk_biz_id
 
 
 class PaginationSer(serializers.Serializer):
@@ -24,7 +25,10 @@ class ScopeSer(serializers.Serializer):
     bk_biz_id = serializers.IntegerField(help_text=_("业务 ID"), required=False)
 
     def validate(self, attrs):
-        attrs["bk_biz_id"] = int(attrs["scope_id"])
+        if attrs["scope_type"] == constants.ScopeType.SPACE.value:
+            attrs["bk_biz_id"] = space_uid_to_bk_biz_id(attrs["scope_id"])
+        else:
+            attrs["bk_biz_id"] = int(attrs["scope_id"])
         return attrs
 
 
