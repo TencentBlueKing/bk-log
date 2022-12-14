@@ -90,14 +90,6 @@ class _MonitorApi(object):
             default_return_value=None,
             before_request=add_esb_info_before_request,
         )
-        self.apm_push_url = DataAPI(
-            method="GET",
-            url=MONITOR_APIGATEWAY_ROOT + "apm_push_url/",
-            module=self.MODULE,
-            description="获取数据上报地址",
-            default_return_value=None,
-            before_request=add_esb_info_before_request,
-        )
 
 
 MonitorApi = _MonitorApi()

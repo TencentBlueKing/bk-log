@@ -4001,10 +4001,6 @@ class CollectorHandler(object):
 
         return yaml.safe_dump_all(result)
 
-    @classmethod
-    def get_apm_push_url(cls, bk_biz_id: int) -> dict:
-        return MonitorApi.apm_push_url(bk_biz_id=bk_biz_id)
-
 
 def get_random_public_cluster_id() -> int:
     clusters = TransferApi.get_cluster_info({"cluster_type": STORAGE_CLUSTER_TYPE, "no_request": True})

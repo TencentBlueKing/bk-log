@@ -58,7 +58,6 @@ from apps.log_databus.serializers import (
     ListCollectorSerlalizer,
     ListCollectorsByHostSerializer,
     PreCheckSerializer,
-    PushUrlRequestSerializer,
     RetrySerializer,
     RunSubscriptionSerializer,
     TaskDetailSerializer,
@@ -2258,8 +2257,3 @@ class CollectorViewSet(ModelViewSet):
                 ).encode("utf-8")
             )
         )
-
-    @list_route(methods=["GET"], url_path="push_url")
-    def push_url(self, request):
-        data = self.params_valid(PushUrlRequestSerializer)
-        return Response(CollectorHandler.get_apm_push_url(**data))
