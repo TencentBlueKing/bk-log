@@ -293,7 +293,7 @@ class HostIpListSerializer(serializers.Serializer):
     """
 
     ip = serializers.CharField(label=_("主机IP"), max_length=15)
-    bk_cloud_id = serializers.IntegerField(label=_("云区域ID"), required=False, default=0)
+    bk_cloud_id = serializers.IntegerField(label=_("云区域ID"), required=False)
 
 
 class HostInstanceByIpListSerializer(serializers.Serializer):
