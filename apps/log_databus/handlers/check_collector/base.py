@@ -1,20 +1,24 @@
 # -*- coding: utf-8 -*-
 import os
-from enum import Enum
 from typing import Union
 
 from dataclasses import dataclass, asdict, fields
 from django.core.cache import cache
 
-from apps.log_databus.constants import CHECK_COLLECTOR_CACHE_KEY_PREFIX, CHECK_COLLECTOR_ITEM_CACHE_TIMEOUT, GSE_PATH, \
-    IPC_PATH, CheckStatusEnum
+from apps.log_databus.constants import (
+    CHECK_COLLECTOR_CACHE_KEY_PREFIX,
+    CHECK_COLLECTOR_ITEM_CACHE_TIMEOUT,
+    GSE_PATH,
+    IPC_PATH,
+    CheckStatusEnum,
+)
 from apps.log_databus.models import CollectorConfig
 
 
 @dataclass
 class CheckResult:
     status: str
-    info: list
+    infos: list
 
     to_dict = asdict
 
@@ -44,22 +48,23 @@ class CheckCollectorRecord:
         if cache_result:
             return CheckResult.from_dict(cache_result)
         else:
-            None
+            return None
 
     def __init__(self, collector_config_id: int, hosts: str):
         self.collector_config_id = collector_config_id
         self.hosts = hosts
 
-        self.check_result_cache_key = self.generate_check_result_cache_key(collector_config_id=self.collector_config_id,
-                                                                           hosts=self.hosts)
+        self.check_result_cache_key = self.generate_check_result_cache_key(
+            collector_config_id=self.collector_config_id, hosts=self.hosts
+        )
 
         self.check_record = self.get_check_result(self.check_result_cache_key)
 
-    def is_exist(self):
-        return self.check_record is None
+    def is_exist(self) -> bool:
+        return self.check_record is not None
 
     def new_record(self):
-        record = CheckResult(status=CheckStatusEnum.WAIT.value, info=[])
+        record = CheckResult(status=CheckStatusEnum.WAIT.value, infos=[])
         self.check_record = record
         self.save_check_record()
 
@@ -69,15 +74,20 @@ class CheckCollectorRecord:
 
         cache.set(self.check_result_cache_key, self.check_record.to_dict(), CHECK_COLLECTOR_ITEM_CACHE_TIMEOUT)
 
+    def get_infos(self) -> str:
+        if not self.is_exist():
+            return ""
+        return "\n".join(self.check_record.infos)
+
     def append_info(self, info: str):
         if not self.is_exist():
             return
 
-        self.check_record.info.append(info)
+        self.check_record.infos.append(info)
         self.save_check_record()
 
     def append_normal_info(self, info: str, prefix: str):
-        info = f"[normal][{prefix}]{info}"
+        info = f"[info][{prefix}]{info}"
         self.append_info(info)
 
     def append_warning_info(self, info: str, prefix: str):
@@ -94,6 +104,8 @@ class CheckCollectorRecord:
 
 
 class CheckCollectorHandler:
+    HANDLER_NAME = "启动入口"
+
     def __init__(self, collector_config_id: int, hosts: str, gse_path=None, ipc_path=None):
         self.collector_config_id = collector_config_id
         self.hosts = hosts
@@ -122,7 +134,7 @@ class CheckCollectorHandler:
         try:
             self.collector_config = CollectorConfig.objects.get(collector_config_id=self.collector_config_id)
         except CollectorConfig.DoesNotExist:
-            self.record.append_error_info("采集项ID查找失败")
+            self.record.append_error_info("采集项ID查找失败", "pre-run")
             self.record.change_status(CheckStatusEnum.FINISH.value)
             return
 
@@ -133,3 +145,10 @@ class CheckCollectorHandler:
         self.bk_data_name = self.collector_config.bk_data_name
         self.table_id = self.collector_config.table_id
         self.subscription_id = self.collector_config.subscription_id
+
+    def run(self):
+        self.record.new_record()
+        self.record.append_normal_info("started", self.HANDLER_NAME)
+
+    def get_record_infos(self) -> str:
+        return self.record.get_infos()
