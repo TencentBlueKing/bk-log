@@ -278,6 +278,17 @@ def create_custom_log_group():
     for log in otlp_logs:
         try:
             CollectorHandler.create_custom_log_group(log)
+            log.refresh_from_db(fields=["log_group_id"])
+            logger.info(
+                "[CreateCustomLogGroupSuccess] Collector => %s; LogGroupID => %s",
+                log.collector_config_id,
+                log.log_group_id
+            )
         except Exception as err:
             msg = traceback.format_exc()
-            logger.error("[CreateCustomLogGroupFailed] Error => %s ; Detail => %s", str(err), msg)
+            logger.error(
+                "[CreateCustomLogGroupFailed] Collector => %s; Error => %s ; Detail => %s",
+                log.collector_config_id,
+                str(err),
+                msg
+            )
