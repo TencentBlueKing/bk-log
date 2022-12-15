@@ -1380,4 +1380,4 @@ class CheckCollectorSerializer(serializers.Serializer):
 
 
 class GetCollectorCheckResultSerializer(serializers.Serializer):
-    task_id = serializers.CharField(label=_("采集项检查唯一标识"))
+    check_record_id = serializers.CharField(label=_("采集项检查唯一标识"))

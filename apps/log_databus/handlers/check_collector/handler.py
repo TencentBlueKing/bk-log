@@ -12,7 +12,7 @@ from apps.log_databus.models import CollectorConfig
 class CheckCollectorHandler:
     HANDLER_NAME = "启动入口"
 
-    def __init__(self, collector_config_id: int, hosts: str, gse_path=None, ipc_path=None):
+    def __init__(self, collector_config_id: int, hosts: str = None, gse_path=None, ipc_path=None):
         self.collector_config_id = collector_config_id
         self.hosts = hosts
 
@@ -30,7 +30,7 @@ class CheckCollectorHandler:
         self.story_report = []
         self.kafka = []
         self.latest_log = []
-        cache_key = CheckCollectorRecord.generate_check_result_cache_key(collector_config_id, hosts)
+        cache_key = CheckCollectorRecord.generate_check_record_id(collector_config_id, hosts)
 
         self.record = CheckCollectorRecord(cache_key)
 

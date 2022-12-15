@@ -28,27 +28,30 @@ class CheckResult:
 
 class CheckCollectorRecord:
     @staticmethod
-    def generate_check_result_cache_key(collector_config_id: int, hosts: str) -> str:
+    def generate_check_record_id(collector_config_id: int, hosts: str = None) -> str:
         """
         生成检查结果的缓存key
         :param collector_config_id: 采集项ID
         :param hosts: host字符串 example "{bk_cloud_id}:{ip},{bk_cloud_id}:{ip},{bk_cloud_id}:{ip}"
         :return: 检查结果的缓存key
         """
-        return f"{CHECK_COLLECTOR_CACHE_KEY_PREFIX}_{collector_config_id}_{hosts}"
+        generate_key_list = [CHECK_COLLECTOR_CACHE_KEY_PREFIX, collector_config_id]
+        if hosts:
+            generate_key_list.append(hosts)
+        return "_".join(generate_key_list)
 
     @classmethod
-    def get_check_result(cls, cache_key: str) -> Union[CheckResult, None]:
-        cache_result = cache.get(cache_key, None)
+    def get_check_result(cls, check_record_id: str) -> Union[CheckResult, None]:
+        cache_result = cache.get(check_record_id, None)
 
         if cache_result:
             return CheckResult.from_dict(cache_result)
         else:
             return None
 
-    def __init__(self, cache_key: str):
-        self.cache_key = cache_key
-        self.check_record = self.get_check_result(self.cache_key)
+    def __init__(self, check_record_id: str):
+        self.check_record_id = check_record_id
+        self.check_record = self.get_check_result(self.check_record_id)
 
     def is_exist(self) -> bool:
         return self.check_record is not None
@@ -62,7 +65,7 @@ class CheckCollectorRecord:
         if not self.is_exist():
             return
 
-        cache.set(self.cache_key, self.check_record.to_dict(), CHECK_COLLECTOR_ITEM_CACHE_TIMEOUT)
+        cache.set(self.check_record_id, self.check_record.to_dict(), CHECK_COLLECTOR_ITEM_CACHE_TIMEOUT)
 
     def get_check_status(self) -> Union[str, None]:
         if not self.is_exist():
