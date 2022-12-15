@@ -446,7 +446,7 @@ API 频率限制 5w/s
     try:
         from opentelemetry.sdk._logs import LoggingHandler
     except ImportError:
-        from opentelemetry.sdk._logs import OTLPHandler
+        from opentelemetry.sdk._logs import OTLPHandler as LoggingHandler
     
     # init settings
     service_name = "${{service_name}}"
