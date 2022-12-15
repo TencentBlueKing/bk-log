@@ -32,8 +32,10 @@
           <span class="bk-icon icon-minus-line"></span>
         </div>
       </div>
-      <!-- eslint-disable-next-line vue/no-v-html -->
-      <div v-html="customTypeIntro"></div>
+      <div class="html-container">
+        <!-- eslint-disable-next-line vue/no-v-html -->
+        <div v-html="customTypeIntro"></div>
+      </div>
     </div>
   </div>
 </template>
@@ -99,11 +101,17 @@ export default {
       border: 1px solid #dcdee5;
       position: fixed;
       right: -400px;
-      top: 103px;
+      top: 99px;
       z-index: 9999;
       color: #63656e;
       transition: right .5s;
-      padding: 16px 24px 0;
+      padding: 16px 0 0 24px;
+
+      .html-container {
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+        padding-right: 24px;
+      }
 
       .top-title {
         height: 48px;
