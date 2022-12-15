@@ -35,7 +35,7 @@ class CheckCollectorRecord:
         :param hosts: host字符串 example "{bk_cloud_id}:{ip},{bk_cloud_id}:{ip},{bk_cloud_id}:{ip}"
         :return: 检查结果的缓存key
         """
-        generate_key_list = [CHECK_COLLECTOR_CACHE_KEY_PREFIX, collector_config_id]
+        generate_key_list = [CHECK_COLLECTOR_CACHE_KEY_PREFIX, str(collector_config_id)]
         if hosts:
             generate_key_list.append(hosts)
         return "_".join(generate_key_list)
