@@ -557,13 +557,13 @@ export function bigNumberToString(value) {
 }
 
 export function formatBigNumListValue(value) {
-  if (typeof value === 'object' && value !== null && !value._isBigNumber) {
+  if (Object.prototype.toString.call(value) === '[object Object]' && value !== null && !value._isBigNumber) {
     const obj = {};
     if (value instanceof Array) {
       return obj[value] = parseBigNumberList(value);
     }
     Object.keys(value).forEach((opt) => {
-      obj[opt] = typeof obj[opt] === 'object' && obj[opt] !== null && !obj[opt]._isBigNumber
+      obj[opt] = Object.prototype.toString.call(obj[opt]) === '[object Object]' && obj[opt] !== null && !obj[opt]._isBigNumber
         ? formatBigNumListValue(obj[opt]) : bigNumberToString(value[opt] || '');
     });
     return obj;

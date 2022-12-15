@@ -388,6 +388,21 @@ class FavoriteGroupNotAllowedDeleteException(BaseException):
     MESSAGE = _("只有公开收藏组可以删除")
 
 
+class IndexSetFieldsConfigNotExistException(BaseException):
+    ERROR_CODE = "434"
+    MESSAGE = _("索引集字段配置不存在")
+
+
+class DefaultConfigNotAllowedDelete(BaseException):
+    ERROR_CODE = "435"
+    MESSAGE = _("默认索引集字段配置不允许删除")
+
+
+class IndexSetFieldsConfigAlreadyExistException(BaseException):
+    ERROR_CODE = "436"
+    MESSAGE = _("索引集字段配置名称已存在")
+
+
 # =================================================
 # 导出
 # =================================================

@@ -1502,6 +1502,10 @@ export default {
   不可删除: 'not deleted',
   自动转换成正确的英文名格式: 'Automatically convert to the correct English name format',
   自动转换: 'Automatically convert',
+  新建配置: 'Add new config',
+  确定要删除当前字段配置: 'Make sure to delete the current field configuration',
+  应用: 'Apply',
+  请输入配置名: 'Please enter a config name',
   收藏查询: 'Favorite query',
   请输入组名: 'Please enter a group name',
   新增收藏: 'Add Favorites',
@@ -1568,4 +1572,6 @@ export default {
   PaaS应用: 'PaaS application',
   错误原因: 'Wrong reason',
   个收藏: 'favorite',
+  容器集群: 'Container cluster',
+  段日志参数: 'Section log value',
 };
