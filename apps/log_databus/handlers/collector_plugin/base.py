@@ -35,6 +35,7 @@ from apps.log_databus.exceptions import (
 )
 from apps.log_databus.handlers.collector import CollectorHandler
 from apps.log_databus.models import CollectorConfig, CollectorPlugin, DataLinkConfig
+from apps.log_search.constants import CustomTypeEnum
 from apps.models import model_to_dict
 from apps.utils.local import get_request_username
 
@@ -203,6 +204,24 @@ class CollectorPluginHandler:
                         self.collector_plugin.data_link_id = data_links.first().data_link_id
                 # 创建 DATA ID
                 self.collector_plugin.bk_data_id = self._create_data_id(self.collector_plugin)
+
+            # 创建虚拟采集项
+            CollectorConfig.objects.create(
+                bk_biz_id=bk_biz_id,
+                collector_config_name=f"(插件){self.collector_plugin.collector_plugin_name}",
+                collector_config_name_en=f"plugin_{self.collector_plugin.collector_plugin_name_en}",
+                collector_plugin_id=self.collector_plugin.collector_plugin_id,
+                collector_scenario_id=self.collector_plugin.collector_scenario_id,
+                custom_type=CustomTypeEnum.LOG.value,
+                category_id=self.collector_plugin.category_id,
+                data_link_id=self.collector_plugin.data_link_id,
+                bk_data_id=self.collector_plugin.bk_data_id,
+                table_id=self.collector_plugin.table_id,
+                bkbase_table_id=self.collector_plugin.bkbase_table_id,
+                processing_id=self.collector_plugin.processing_id,
+                etl_processor=self.collector_plugin.etl_processor,
+                is_display=False,
+            )
 
             is_create = True
 
