@@ -274,7 +274,7 @@ def create_custom_log_group():
     将存量的 Otlp Log 创建 Log Group
     """
 
-    otlp_logs = CollectorConfig.objects.filter(custom_type=CustomTypeEnum.OTLP_LOG.value, log_group_id__is_null=True)
+    otlp_logs = CollectorConfig.objects.filter(custom_type=CustomTypeEnum.OTLP_LOG.value, log_group_id__isnull=True)
     for log in otlp_logs:
         try:
             CollectorHandler.create_custom_log_group(log)
