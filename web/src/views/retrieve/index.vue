@@ -330,13 +330,19 @@
     </div>
 
     <!-- 目标选择器 -->
-    <ip-selector-dialog
+    <log-ip-selector
+      mode="dialog"
+      :height="670"
+      :show-dialog="showIpSelectorDialog"
+      :value="{}"
+    />
+    <!-- <ip-selector-dialog
       :show-dialog.sync="showIpSelectorDialog"
       :show-dynamic-group="true"
       :target-nodes="retrieveParams.host_scopes.target_nodes"
       :target-node-type="retrieveParams.host_scopes.target_node_type"
       @target-change="handleSaveIpQuick">
-    </ip-selector-dialog>
+    </ip-selector-dialog> -->
 
     <setting-modal
       :index-set-item="indexSetItem"
@@ -370,7 +376,8 @@ import RetrieveDetailInput from './condition-comp/retrieve-detail-input';
 import QueryStatement from './condition-comp/query-statement';
 import FilterConditionItem from './condition-comp/filter-condition-item';
 import IpQuick from './condition-comp/ip-quick';
-import IpSelectorDialog from '@/components/collection-access/ip-selector-dialog';
+import LogIpSelector from '@/components/log-ip-selector/log-ip-selector';
+// import IpSelectorDialog from '@/components/collection-access/ip-selector-dialog';
 import FieldFilter from './condition-comp/field-filter';
 import FavoritePopper from './condition-comp/favorite-popper';
 import ResultHeader from './result-comp/result-header';
@@ -398,7 +405,8 @@ export default {
     QueryStatement,
     FilterConditionItem,
     IpQuick,
-    IpSelectorDialog,
+    LogIpSelector,
+    // IpSelectorDialog,
     FieldFilter,
     FavoritePopper,
     ResultHeader,
