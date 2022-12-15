@@ -414,12 +414,17 @@ class CollectorHandler(object):
             collector_config = getattr(self, process, lambda x, y: x)(collector_config, context)
             logger.info(f"[databus retrieve] process => [{process}] collector_config => [{collector_config}]")
 
-        # 补充Token信息
-        if self.data.log_group_id:
-            log_group = TransferApi.get_log_group(log_group_id=self.data.log_group_id)
-            collector_config["bk_data_token"] = log_group.get("bk_data_token", "")
-
         return collector_config
+
+    def get_report_token(self):
+        """
+        获取上报Token
+        """
+        data = {"bk_data_token": ""}
+        if self.data.custom_type == CustomTypeEnum.OTLP_LOG.value and self.data.log_group_id:
+            log_group = TransferApi.get_log_group(log_group_id=self.data.log_group_id)
+            data["bk_data_token"] = log_group.get("bk_data_token", "")
+        return data
 
     def _get_ids(self, node_type: str, nodes: list):
         return [node["bk_inst_id"] for node in nodes if node["bk_obj_id"] == node_type]
