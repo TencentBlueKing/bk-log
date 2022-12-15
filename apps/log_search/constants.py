@@ -446,13 +446,13 @@ except ImportError:
     from opentelemetry.sdk._logs import OTLPHandler
 
 # init settings
-service_name = "${service_name}"
-bk_data_token = "${bk_data_token}"
-endpoint = "${endpoint}"
+service_name = "${{service_name}}"
+bk_data_token = "${{bk_data_token}}"
+endpoint = "${{endpoint}}"
 
 # init log emitter
 log_emitter_provider = LogEmitterProvider(
-    resource=Resource.create({"service.name": service_name, "bk.data.token": bk_data_token})
+    resource=Resource.create({{"service.name": service_name, "bk.data.token": bk_data_token}})
 )
 set_log_emitter_provider(log_emitter_provider)
 
@@ -472,7 +472,7 @@ logger = logging.getLogger("root")
 logger.setLevel(logging.INFO)
 
 # report log
-logger.info(msg="msg content", extra={"attribute.a": "a", "attribute.b": "b"})
+logger.info(msg="msg content", extra={{"attribute.a": "a", "attribute.b": "b"}})
 
 # 防止未上报进程结束
 time.sleep(3)
