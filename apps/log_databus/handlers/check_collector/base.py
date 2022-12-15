@@ -46,15 +46,9 @@ class CheckCollectorRecord:
         else:
             return None
 
-    def __init__(self, collector_config_id: int, hosts: str):
-        self.collector_config_id = collector_config_id
-        self.hosts = hosts
-
-        self.check_result_cache_key = self.generate_check_result_cache_key(
-            collector_config_id=self.collector_config_id, hosts=self.hosts
-        )
-
-        self.check_record = self.get_check_result(self.check_result_cache_key)
+    def __init__(self, cache_key: str):
+        self.cache_key = cache_key
+        self.check_record = self.get_check_result(self.cache_key)
 
     def is_exist(self) -> bool:
         return self.check_record is not None
@@ -68,7 +62,7 @@ class CheckCollectorRecord:
         if not self.is_exist():
             return
 
-        cache.set(self.check_result_cache_key, self.check_record.to_dict(), CHECK_COLLECTOR_ITEM_CACHE_TIMEOUT)
+        cache.set(self.cache_key, self.check_record.to_dict(), CHECK_COLLECTOR_ITEM_CACHE_TIMEOUT)
 
     def get_check_status(self) -> Union[str, None]:
         if not self.is_exist():

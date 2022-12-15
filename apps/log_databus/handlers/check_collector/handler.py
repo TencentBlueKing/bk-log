@@ -3,7 +3,7 @@ import os
 
 from celery.task import task
 
-from apps.log_databus.constants import GSE_PATH, IPC_PATH
+from apps.log_databus.constants import GSE_PATH, IPC_PATH, CheckStatusEnum
 from apps.log_databus.handlers.check_collector.base import CheckCollectorRecord
 from apps.log_databus.handlers.check_collector.checker.agent_checker import AgentChecker
 from apps.log_databus.models import CollectorConfig
@@ -30,8 +30,9 @@ class CheckCollectorHandler:
         self.story_report = []
         self.kafka = []
         self.latest_log = []
+        cache_key = CheckCollectorRecord.generate_check_result_cache_key(collector_config_id, hosts)
 
-        self.record = CheckCollectorRecord(collector_config_id=self.collector_config_id, hosts=self.hosts)
+        self.record = CheckCollectorRecord(cache_key)
 
         if not self.record.is_exist():
             self.record.new_record()
@@ -55,7 +56,6 @@ class CheckCollectorHandler:
         self.pre_run()
         self.execute_check()
 
-    @task
     def execute_check(self):
         AgentChecker(
             bk_biz_id=self.bk_biz_id,
@@ -68,3 +68,12 @@ class CheckCollectorHandler:
 
     def get_record_infos(self) -> str:
         return self.record.get_infos()
+
+
+@task
+def async_run_check(collector_config_id: int, hosts: str):
+    handler = CheckCollectorHandler(collector_config_id, hosts)
+    handler.record.append_normal_info("check start", handler.HANDLER_NAME)
+    handler.run()
+    if handler.record.get_check_status() != CheckStatusEnum.FINISH.value:
+        handler.record.append_normal_info("check finish", handler.HANDLER_NAME)

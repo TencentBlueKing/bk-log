@@ -1376,4 +1376,8 @@ class ContainerCollectorConfigToYamlSerializer(serializers.Serializer):
 
 class CheckCollectorSerializer(serializers.Serializer):
     collector_config_id = serializers.IntegerField(label=_("采集项ID"))
-    hosts = serializers.CharField(label=_("指定检查某些主机"))
+    hosts = serializers.CharField(label=_("指定检查某些主机"), required=False)
+
+
+class GetCollectorCheckResultSerializer(serializers.Serializer):
+    task_id = serializers.CharField(label=_("采集项检查唯一标识"))
