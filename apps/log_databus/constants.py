@@ -421,3 +421,24 @@ class LabelSelectorOperator(object):
 
 # 容器采集配置项转yaml时需要排除的字段
 CONTAINER_CONFIGS_TO_YAML_EXCLUDE_FIELDS = ("container", "label_selector")
+
+
+class CheckStatusEnum(ChoicesEnum):
+    WAIT: str = "wait"
+    STARTED: str = "started"
+    FINISH: str = "finish"
+
+    _choices_labels = (
+        (WAIT, _("等待")),
+        (STARTED, _("开始")),
+        (FINISH, _("完成")),
+    )
+
+
+CHECK_COLLECTOR_CACHE_KEY_PREFIX = "check_collector"
+
+CHECK_COLLECTOR_ITEM_CACHE_TIMEOUT = 3600
+
+# gse agent
+IPC_PATH = "/var/run/ipc.state.report"
+GSE_PATH = "/usr/local/gse/"
