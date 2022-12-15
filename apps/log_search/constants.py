@@ -414,6 +414,16 @@ python
             """
 # 注意事项
 
+API 频率限制 5w/s
+
+# 上报地址
+
+{otlp_report_config}
+
+# 使用方法
+
+## 安装依赖
+
     $ pip install "opentelemetry-api>=1.7.1,<1.13.0" "opentelemetry-sdk>=1.7.1,<1.13.0" "opentelemetry-exporter-otlp>=1.7.1,<1.13.0"
     
     # 依赖版本
@@ -422,13 +432,8 @@ python
     # opentelemetry-api                      1.11.1
     # opentelemetry-sdk                      1.11.1
     # opentelemetry-exporter-otlp            1.11.1
-
-# 上报地址
-
-{otlp_report_config}
-
-
-# 使用方法
+    
+## 上报日志
 
     import logging
     import time
