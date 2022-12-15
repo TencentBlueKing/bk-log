@@ -3,13 +3,12 @@ from rest_framework import serializers
 from rest_framework.response import Response
 
 from apps.generic import APIViewSet
-from apps.log_databus.handlers.check_collector.base import CheckCollectorHandler
+from apps.log_databus.handlers.check_collector.handler import CheckCollectorHandler
 from apps.log_databus.serializers import CheckCollectorSerializer
 from apps.utils.drf import list_route
 
 
 class CheckCollectorViewSet(APIViewSet):
-    lookup_field = "collector_id"
     serializer_class = serializers.Serializer
 
     @list_route(methods=["POST"], url_path="get_check_collector_infos")

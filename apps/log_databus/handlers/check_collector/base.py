@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import os
 from typing import Union
 
 from dataclasses import dataclass, asdict, fields
@@ -8,11 +7,8 @@ from django.core.cache import cache
 from apps.log_databus.constants import (
     CHECK_COLLECTOR_CACHE_KEY_PREFIX,
     CHECK_COLLECTOR_ITEM_CACHE_TIMEOUT,
-    GSE_PATH,
-    IPC_PATH,
     CheckStatusEnum,
 )
-from apps.log_databus.models import CollectorConfig
 
 
 @dataclass
@@ -74,6 +70,11 @@ class CheckCollectorRecord:
 
         cache.set(self.check_result_cache_key, self.check_record.to_dict(), CHECK_COLLECTOR_ITEM_CACHE_TIMEOUT)
 
+    def get_check_status(self) -> Union[str, None]:
+        if not self.is_exist():
+            return None
+        return self.check_record.status
+
     def get_infos(self) -> str:
         if not self.is_exist():
             return ""
@@ -95,60 +96,10 @@ class CheckCollectorRecord:
         self.append_info(info)
 
     def append_error_info(self, info: str, prefix: str):
+        self.change_status(CheckStatusEnum.FINISH.value)
         info = f"[error][{prefix}]{info}"
         self.append_info(info)
 
     def change_status(self, status):
         self.check_record.status = status
         self.save_check_record()
-
-
-class CheckCollectorHandler:
-    HANDLER_NAME = "启动入口"
-
-    def __init__(self, collector_config_id: int, hosts: str, gse_path=None, ipc_path=None):
-        self.collector_config_id = collector_config_id
-        self.hosts = hosts
-
-        # 先定义字段
-        self.subscription_id = None
-        self.table_id = None
-        self.bk_data_name = None
-        self.bk_data_id = None
-        self.bk_biz_id = None
-        self.target_server = None
-        self.collector_config = None
-        self.gse_path = gse_path or os.environ.get("GSE_ROOT_PATH", GSE_PATH)
-        self.ipc_path = ipc_path or os.environ.get("GSE_IPC_PATH", IPC_PATH)
-
-        self.story_report = []
-        self.kafka = []
-        self.latest_log = []
-
-        self.record = CheckCollectorRecord(collector_config_id=self.collector_config_id, hosts=self.hosts)
-
-        if not self.record.is_exist():
-            self.record.new_record()
-
-    def pre_run(self):
-        try:
-            self.collector_config = CollectorConfig.objects.get(collector_config_id=self.collector_config_id)
-        except CollectorConfig.DoesNotExist:
-            self.record.append_error_info("采集项ID查找失败", "pre-run")
-            self.record.change_status(CheckStatusEnum.FINISH.value)
-            return
-
-        # 快速脚本执行的参数target_server
-        self.target_server = {}
-        self.bk_biz_id = self.collector_config.bk_biz_id
-        self.bk_data_id = self.collector_config.bk_data_id
-        self.bk_data_name = self.collector_config.bk_data_name
-        self.table_id = self.collector_config.table_id
-        self.subscription_id = self.collector_config.subscription_id
-
-    def run(self):
-        self.record.new_record()
-        self.record.append_normal_info("started", self.HANDLER_NAME)
-
-    def get_record_infos(self) -> str:
-        return self.record.get_infos()

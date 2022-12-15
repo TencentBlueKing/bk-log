@@ -442,3 +442,43 @@ CHECK_COLLECTOR_ITEM_CACHE_TIMEOUT = 3600
 # gse agent
 IPC_PATH = "/var/run/ipc.state.report"
 GSE_PATH = "/usr/local/gse/"
+
+DEFAULT_BK_USERNAME = "admin"
+DEFAULT_EXECUTE_SCRIPT_ACCOUNT = "root"
+
+JOB_SUCCESS_STATUS = 9
+JOB_FAILED_AGENT_EXCEPTION = 310
+JOB_STATUS = {
+    JOB_SUCCESS_STATUS: _("成功"),
+    JOB_FAILED_AGENT_EXCEPTION: _("Agent异常"),
+}
+
+RETRY_TIMES = 5
+WAIT_FOR_RETRY = 20
+INDEX_WRITE_PREFIX = "write_"
+
+
+class ScriptType(ChoicesEnum):
+    SHELL = 1
+    BAT = 2
+    PERL = 3
+    PYTHON = 4
+    POWERSHELL = 5
+
+    _choices_labels = (
+        (SHELL, _("shell")),
+        (BAT, _("bat")),
+        (PERL, _("perl")),
+        (PYTHON, _("python")),
+        (POWERSHELL, _("powershell")),
+    )
+
+
+CHECK_AGENT_STEP = {
+    "bin_file": _("检查二进制文件是否存在"),
+    "process": _("检查进程是否存在"),
+    "config": _("检查配置是否正确"),
+    "hosted": _("检查采集插件是否被gse_agent托管"),
+    "socket": _("检查socket文件是否存在"),
+    "healthz": _("执行healthz自检查查看结果"),
+}
