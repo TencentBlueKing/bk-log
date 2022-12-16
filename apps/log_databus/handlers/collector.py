@@ -133,6 +133,7 @@ from apps.log_search.handlers.index_set import IndexSetHandler
 from apps.models import model_to_dict
 from apps.utils.bcs import Bcs
 from apps.utils.cache import caches_one_hour
+from apps.utils.custom_report import BK_CUSTOM_REPORT, CONFIG_OTLP_FIELD
 from apps.utils.db import array_chunk
 from apps.utils.function import map_if
 from apps.utils.local import get_local_param, get_request_username
@@ -424,6 +425,17 @@ class CollectorHandler(object):
         if self.data.custom_type == CustomTypeEnum.OTLP_LOG.value and self.data.log_group_id:
             log_group = TransferApi.get_log_group(log_group_id=self.data.log_group_id)
             data["bk_data_token"] = log_group.get("bk_data_token", "")
+        return data
+
+    def get_report_host(self):
+        """
+        获取上报Host
+        """
+
+        data = {}
+        bk_custom_report = FeatureToggleObject.toggle(BK_CUSTOM_REPORT)
+        if bk_custom_report:
+            data = bk_custom_report.feature_config.get(CONFIG_OTLP_FIELD, {})
         return data
 
     def _get_ids(self, node_type: str, nodes: list):

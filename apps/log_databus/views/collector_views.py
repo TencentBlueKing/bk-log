@@ -2262,3 +2262,7 @@ class CollectorViewSet(ModelViewSet):
     @detail_route(methods=["GET"], url_path="report_token")
     def report_token(self, request, collector_config_id=None):
         return Response(CollectorHandler(collector_config_id).get_report_token())
+
+    @list_route(methods=["GET"], url_path="report_host")
+    def report_host(self, request):
+        return Response(CollectorHandler().get_report_host())
