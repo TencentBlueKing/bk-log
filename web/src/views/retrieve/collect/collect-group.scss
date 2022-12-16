@@ -22,7 +22,7 @@
 
   .group-title {
     height: 24px;
-    background: #EFF1F5;
+    background: #eff1f5;
     padding: 0 16px;
     margin-bottom: 8px;
 
@@ -31,6 +31,7 @@
     }
 
     &.is-active {
+      /* stylelint-disable-next-line declaration-no-important */
       margin-bottom: 0 !important;
     }
 
@@ -61,7 +62,7 @@
       border-bottom: none;
 
       &:hover {
-        background: #F0F1F5;
+        background: #f0f1f5;
       }
 
       .more-box {
@@ -83,19 +84,20 @@
         align-items: center;
         padding-bottom: 8px;
         border-bottom: 1px solid #eaebf0;
+
         .creator {
           color: #979ba5;
         }
 
         .active-name {
-          color: #3A84FF;
+          color: #3a84ff;
         }
 
         .icon-shixiao {
           display: inline-block;
           font-size: 12px;
           margin-left: 4px;
-          color: #FF9C01;
+          color: #ff9c01;
           transform: translateY(-1px);
         }
       }

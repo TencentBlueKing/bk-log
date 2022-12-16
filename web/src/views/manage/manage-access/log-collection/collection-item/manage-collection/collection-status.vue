@@ -111,8 +111,8 @@
               <bk-table-column :label="$t('monitors.detail')">
                 <template slot-scope="props">
                   <div class="text-style">
-                    <span></span>
                     <span @click.stop="viewDetail(props.row)">{{ $t('部署详情') }}</span>
+                    <span @click.stop="viewReport(props.row)">{{ $t('一键检测') }}</span>
                   </div>
                 </template>
               </bk-table-column>
@@ -149,16 +149,22 @@
         </bk-sideslider>
       </div>
     </template>
+    <collection-report-view
+      v-model="reportDetailShow"
+      @closeReport="() => reportDetailShow = false"
+    />
   </div>
 </template>
 
 <script>
 import { projectManages } from '@/common/util';
 import containerStatus from './components/container-status.vue';
+import CollectionReportView from '../../../components/collection-report-view';
 
 export default {
   components: {
     containerStatus,
+    CollectionReportView,
   },
   props: {
     collectorData: {
@@ -233,6 +239,7 @@ export default {
       dataFal: {},
       dataPen: {},
       dataAll: {},
+      reportDetailShow: false,
     };
   },
   computed: {
@@ -487,6 +494,10 @@ export default {
       //   },
       // });
     },
+    viewReport(data) {
+      console.log(data);
+      this.reportDetailShow = true;
+    },
   },
 };
 </script>
@@ -563,14 +574,8 @@ export default {
     .text-style {
       display: flex;
 
-      :nth-child(1) {
-        display: inline-block;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      :nth-child(2) {
+      span {
+        margin-right: 12px;
         color: #3a84ff;
         cursor: pointer;
       }
