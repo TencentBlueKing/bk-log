@@ -121,6 +121,20 @@
               </p>
             </div>
           </div>
+          <!-- 段日志 -->
+          <template v-if="collectorData.collector_scenario_id === 'section'">
+            <div class="content-style">
+              <span>{{ $t('段日志参数') }}</span>
+              <div class="section-box">
+                <p>{{$t('行首正则')}}: <span>{{collectorData.params.multiline_pattern}}</span></p> <br>
+                <p>
+                  {{$t('最多匹配')}}<span>{{collectorData.params.multiline_max_lines}}</span>
+                  {{$t('行，最大耗时')}}<span>{{collectorData.params.multiline_timeout}}</span>
+                  {{$t('秒')}}
+                </p>
+              </div>
+            </div>
+          </template>
           <div
             class="content-style"
             v-else-if="collectorData.params.conditions &&
@@ -325,7 +339,7 @@ export default {
         name: routeName,
         params,
         query: {
-          spaceUid: window.localStorage.getItem('space_uid'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
     },
@@ -400,6 +414,17 @@ export default {
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+    }
+
+    .section-box {
+      > :last-child {
+        margin-top: 4px;
+      }
+
+      span {
+        /* stylelint-disable-next-line declaration-no-important */
+        display: inline !important;
+      }
     }
 
     > div {

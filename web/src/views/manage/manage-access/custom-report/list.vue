@@ -314,7 +314,7 @@ export default {
         params,
         query: {
           ...query,
-          spaceUid: window.localStorage.getItem('space_uid'),
+          spaceUid: this.$store.state.spaceUid,
           backRoute,
         },
       });

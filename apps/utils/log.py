@@ -22,7 +22,9 @@ the project delivered to anyone in the future.
 from logging.handlers import DatagramHandler
 import logging  # noqa
 from opentelemetry import trace
+from opentelemetry.sdk._logs.export import BatchLogProcessor
 from opentelemetry.trace import format_trace_id
+from opentelemetry.sdk._logs import OTLPHandler
 
 """
 Usage:
@@ -52,6 +54,65 @@ class UdpHandler(DatagramHandler):
             self.send(msg.encode())
         except Exception:  # pylint:disable=broad-except
             self.handleError(record)
+
+
+class LazyBatchLogProcessor(BatchLogProcessor):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # shutdown
+        self._shutdown = True
+        with self._condition:
+            self._condition.notify_all()
+        self._worker_thread.join()
+        # clean worker thread
+        self._shutdown = False
+        self._worker_thread = None
+
+    def emit(self, log_data) -> None:
+        # re init work thread
+        if self._worker_thread is None:
+            self._at_fork_reinit()
+        # emit
+        super().emit(log_data)
+
+    def shutdown(self) -> None:
+        # shutdown
+        self._shutdown = True
+        with self._condition:
+            self._condition.notify_all()
+        # work thread exist
+        if self._worker_thread:
+            self._worker_thread.join()
+        # shutdown exporter
+        self._exporter.shutdown()
+
+
+class OTLPLogHandler(OTLPHandler):
+    """A handler class which writes logging records, in OTLP format, to
+    a network destination or file.
+    """
+
+    def __init__(self, level=logging.NOTSET) -> None:
+        from django.conf import settings
+        from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
+        from opentelemetry.sdk._logs import LogEmitterProvider, set_log_emitter_provider
+        from opentelemetry.sdk.resources import Resource
+
+        service_name = settings.SERVICE_NAME or settings.APP_CODE
+        otlp_grpc_host = settings.OTLP_GRPC_HOST
+        otlp_bk_log_token = settings.OTLP_BK_LOG_TOKEN
+
+        log_emitter_provider = LogEmitterProvider(
+            resource=Resource.create({"service.name": service_name, "bk.data.token": otlp_bk_log_token})
+        )
+        set_log_emitter_provider(log_emitter_provider)
+
+        # init exporter
+        exporter = OTLPLogExporter(endpoint=otlp_grpc_host)
+        log_emitter_provider.add_log_processor(LazyBatchLogProcessor(exporter))
+        super(OTLPLogHandler, self).__init__(
+            level=level, log_emitter=log_emitter_provider.get_log_emitter(service_name)
+        )
 
 
 # ===============================================================================

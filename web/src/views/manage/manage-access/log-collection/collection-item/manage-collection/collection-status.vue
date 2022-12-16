@@ -490,7 +490,7 @@ export default {
       //     collectorId: this.config_id,
       //   },
       //   query: {
-      //     spaceUid: window.localStorage.getItem('space_uid'),
+      //     spaceUid: this.$store.state.spaceUid,
       //   },
       // });
     },

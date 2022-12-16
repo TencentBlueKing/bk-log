@@ -31,8 +31,8 @@ from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 
 from apps.exceptions import ValidationError
-from apps.log_search.constants import InstanceTypeEnum, TemplateType
-from apps.log_search.models import ProjectInfo, Scenario, UserIndexSetConfig
+from apps.log_search.constants import InstanceTypeEnum, TemplateType, FavoriteListOrderType, FavoriteVisibleType
+from apps.log_search.models import ProjectInfo, Scenario
 from apps.utils.local import get_local_param
 from bkm_space.serializers import SpaceUIDField
 
@@ -198,7 +198,8 @@ class SearchIndexSetScopeSerializer(serializers.Serializer):
     space_uid = SpaceUIDField(label=_("空间唯一标识"), required=True)
 
 
-class SearchUserIndexSetConfigSerializer(serializers.Serializer):
+class CreateIndexSetFieldsConfigSerializer(serializers.Serializer):
+    name = serializers.CharField(label=_("字段名称"), required=True)
     display_fields = serializers.ListField(allow_empty=False)
     sort_list = serializers.ListField(label=_("排序规则"), allow_empty=True, child=serializers.ListField())
 
@@ -211,9 +212,25 @@ class SearchUserIndexSetConfigSerializer(serializers.Serializer):
                 raise ValidationError(_("排序规则只支持升序asc或降序desc"))
         return value
 
-    class Meta:
-        model = UserIndexSetConfig
-        fields = ["display_fields"]
+
+class UpdateIndexSetFieldsConfigSerializer(serializers.Serializer):
+    config_id = serializers.IntegerField(label=_("配置ID"), required=True)
+    name = serializers.CharField(label=_("字段名称"), required=True)
+    display_fields = serializers.ListField(allow_empty=False)
+    sort_list = serializers.ListField(label=_("排序规则"), allow_empty=True, child=serializers.ListField())
+
+    def validate_sort_list(self, value):
+        for _item in value:
+            if len(_item) != 2:
+                raise ValidationError(_("sort_list参数格式有误"))
+
+            if _item[1].lower() not in ["desc", "asc"]:
+                raise ValidationError(_("排序规则只支持升序asc或降序desc"))
+        return value
+
+
+class SearchUserIndexSetConfigSerializer(serializers.Serializer):
+    config_id = serializers.IntegerField(label=_("配置ID"), required=True)
 
 
 class SearchExportSerializer(serializers.Serializer):
@@ -283,7 +300,7 @@ class HostIpListSerializer(serializers.Serializer):
     """
 
     ip = serializers.CharField(label=_("主机IP"), max_length=15)
-    bk_cloud_id = serializers.IntegerField(label=_("云区域ID"), required=False, default=0)
+    bk_cloud_id = serializers.IntegerField(label=_("云区域ID"), required=False)
 
 
 class HostInstanceByIpListSerializer(serializers.Serializer):
@@ -322,22 +339,139 @@ class NodeListSerializer(serializers.Serializer):
     node_list = NodeListParamSerializer(many=True)
 
 
-class FavoriteSearchSerializer(serializers.Serializer):
+class CreateFavoriteSerializer(serializers.Serializer):
     """
-    检索收藏序列化
+    创建收藏序列化
     """
 
     space_uid = SpaceUIDField(label=_("空间唯一标识"), required=True)
+    name = serializers.CharField(label=_("收藏组名"), max_length=256, required=True)
     index_set_id = serializers.IntegerField(label=_("索引集ID"), required=True)
-    description = serializers.CharField(label=_("收藏描述"), max_length=50)
+    group_id = serializers.IntegerField(label=_("收藏组ID"), required=False)
+    visible_type = serializers.ChoiceField(choices=FavoriteVisibleType.get_choices(), required=True)
     host_scopes = serializers.DictField(default={}, required=False)
     addition = serializers.ListField(allow_empty=True, required=False, default="")
     keyword = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    search_fields = serializers.ListField(required=False, child=serializers.CharField(), default=[])
+    is_enable_display_fields = serializers.BooleanField(required=False, default=False)
+    display_fields = serializers.ListField(required=False, child=serializers.CharField(), default=[])
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        if attrs["is_enable_display_fields"] and not attrs["display_fields"]:
+            raise serializers.ValidationError(_("同时显示字段开启时, 显示字段不能为空"))
+        return attrs
 
 
-class FavoriteSearchListSerializer(serializers.Serializer):
+class UpdateFavoriteSerializer(serializers.Serializer):
     """
-    获取收藏所属项目
+    修改收藏序列化
+    """
+
+    name = serializers.CharField(label=_("收藏组名"), max_length=256, required=False)
+    group_id = serializers.IntegerField(label=_("收藏组ID"), required=False, default=0)
+    visible_type = serializers.ChoiceField(choices=FavoriteVisibleType.get_choices(), required=False)
+    host_scopes = serializers.DictField(default={}, required=False)
+    addition = serializers.ListField(allow_empty=True, required=False, default="")
+    keyword = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    search_fields = serializers.ListField(required=False, child=serializers.CharField(), default=[])
+    is_enable_display_fields = serializers.BooleanField(required=False, default=False)
+    display_fields = serializers.ListField(required=False, child=serializers.CharField(), default=[])
+
+
+class BatchUpdateFavoriteChildSerializer(UpdateFavoriteSerializer):
+    id = serializers.IntegerField(label=_("收藏ID"), required=True)
+
+
+class BatchUpdateFavoriteSerializer(serializers.Serializer):
+    """
+    批量修改收藏序列化
+    """
+
+    params = serializers.ListField(required=True, child=BatchUpdateFavoriteChildSerializer())
+
+
+class BatchDeleteFavoriteSerializer(serializers.Serializer):
+    """
+    批量删除收藏序列化
+    """
+
+    id_list = serializers.ListField(required=True, child=serializers.IntegerField())
+
+
+class FavoriteListSerializer(serializers.Serializer):
+    """
+    获取收藏
+    """
+
+    space_uid = SpaceUIDField(label=_("空间唯一标识"), required=True)
+    order_type = serializers.ChoiceField(
+        label=_("排序方式"),
+        choices=FavoriteListOrderType.get_choices(),
+        required=False,
+        default=FavoriteListOrderType.UPDATED_AT_DESC.value,
+    )
+
+
+class CreateFavoriteGroupSerializer(serializers.Serializer):
+    """
+    创建组名序列化
+    """
+
+    space_uid = SpaceUIDField(label=_("空间唯一标识"), required=True)
+    name = serializers.CharField(label=_("收藏组名"), max_length=256)
+
+
+class UpdateFavoriteGroupSerializer(serializers.Serializer):
+    """
+    修改组名序列化
+    """
+
+    name = serializers.CharField(label=_("收藏组名"), max_length=256)
+
+
+class UpdateFavoriteGroupOrderSerializer(serializers.Serializer):
+    """
+    修改组名序列化
+    """
+
+    space_uid = SpaceUIDField(label=_("空间唯一标识"), required=True)
+    group_order = serializers.ListField(label=_("收藏组顺序"), child=serializers.IntegerField())
+
+
+class GetSearchFieldsSerializer(serializers.Serializer):
+    """
+    获取Query中查询字段序列化
+    """
+
+    keyword = serializers.CharField(label=_("检索关键词"), required=True, allow_null=True, allow_blank=True)
+
+
+class GenerateQueryParam(serializers.Serializer):
+    value = serializers.CharField(label=_("替换的值"), required=True)
+    pos = serializers.IntegerField(label=_("字段坐标"), required=True)
+
+
+class GenerateQuerySerializer(serializers.Serializer):
+    """
+    生成Query中查询字段序列化
+    """
+
+    keyword = serializers.CharField(label=_("检索关键词"), required=True)
+    params = serializers.ListField(required=False, default=[], label=_("替换Query请求参数"), child=GenerateQueryParam())
+
+
+class InspectSerializer(serializers.Serializer):
+    """
+    语法检查以及转换序列化
+    """
+
+    keyword = serializers.CharField(label=_("检索关键词"), required=True)
+
+
+class FavoriteGroupListSerializer(serializers.Serializer):
+    """
+    获取收藏组
     """
 
     space_uid = SpaceUIDField(label=_("空间唯一标识"), required=True)
