@@ -7,6 +7,7 @@
     }
 
     > :not(:first-child) {
+      /* stylelint-disable-next-line declaration-no-important */
       margin-top: 12px !important;
     }
   }
@@ -23,6 +24,7 @@
   }
 
   .collect-radio {
+    /* stylelint-disable-next-line declaration-no-important */
     margin-top: 0 !important;
 
     .bk-form-control {
@@ -38,7 +40,10 @@
 
   .bk-form-item {
     padding: 0 16px;
-    .bk-label, .bk-radio-text, .bk-checkbox-text {
+
+    .bk-label,
+    .bk-radio-text,
+    .bk-checkbox-text {
       font-size: 12px;
     }
   }
@@ -84,6 +89,7 @@
 
     .operate-button {
       margin-top: 4px;
+
       .bk-button-text {
         font-size: 12px;
       }

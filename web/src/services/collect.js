@@ -190,6 +190,18 @@ const createWeWork = {
   method: 'post',
 };
 
+// 采集项一键检测 - 开启检测
+const runCheck = {
+  url: '/databus/check_collector/run_check_collector/',
+  method: 'post',
+};
+
+// 采集项一键检测 - 获取检测信息
+const getCheckInfos = {
+  url: '/databus/check_collector/get_check_collector_infos/',
+  method: 'post',
+};
+
 export {
   getStorage,
   globals,
@@ -224,4 +236,6 @@ export {
   getDynamicGroup,
   getPreCheck,
   createWeWork,
+  runCheck,
+  getCheckInfos,
 };
