@@ -232,7 +232,7 @@ class IpChooserConfigViewSet(CommonViewSet):
 
     @list_route(methods=["POST"], serializer_class=config_sers.UpdateSer)
     def update_config(self, request, *args, **kwargs):
-        return Response(config_handler.ConfigHandler().update(self.validated_data["settingsMap"]))
+        return Response(config_handler.ConfigHandler().update(self.validated_data["settings_map"]))
 
     @list_route(methods=["POST"], serializer_class=config_sers.BatchDeleteSer)
     def batch_delete(self, request, *args, **kwargs):

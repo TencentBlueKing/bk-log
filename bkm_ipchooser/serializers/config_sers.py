@@ -8,7 +8,7 @@ class BatchGetSer(serializers.Serializer):
 
 
 class UpdateSer(serializers.Serializer):
-    settingsMap = serializers.JSONField(label=_("配置"))
+    settings_map = serializers.JSONField(label=_("配置"))
 
 
 class BatchDeleteSer(serializers.Serializer):
