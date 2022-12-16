@@ -228,12 +228,24 @@ class IpChooserConfigViewSet(CommonViewSet):
 
     @list_route(methods=["POST"], serializer_class=config_sers.BatchGetSer)
     def batch_get(self, request, *args, **kwargs):
-        return Response(config_handler.ConfigHandler().batch_get(self.validated_data["module_list"]))
+        return Response(
+            config_handler.ConfigHandler(username=request.user.username).batch_get(
+                module_list=self.validated_data["module_list"]
+            )
+        )
 
     @list_route(methods=["POST"], serializer_class=config_sers.UpdateSer)
     def update_config(self, request, *args, **kwargs):
-        return Response(config_handler.ConfigHandler().update(self.validated_data["settings_map"]))
+        return Response(
+            config_handler.ConfigHandler(username=request.user.username).update(
+                config=self.validated_data["settings_map"]
+            )
+        )
 
     @list_route(methods=["POST"], serializer_class=config_sers.BatchDeleteSer)
     def batch_delete(self, request, *args, **kwargs):
-        return Response(config_handler.ConfigHandler().batch_delete(self.validated_data["module_list"]))
+        return Response(
+            config_handler.ConfigHandler(username=request.user.username).batch_delete(
+                module_list=self.validated_data["module_list"]
+            )
+        )
