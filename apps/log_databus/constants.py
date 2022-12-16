@@ -482,3 +482,33 @@ CHECK_AGENT_STEP = {
     "socket": _("检查socket文件是否存在"),
     "healthz": _("执行healthz自检查查看结果"),
 }
+
+# kafka ssl配置项
+KAFKA_SSL_USERNAME = "sasl_username"
+KAFKA_SSL_PASSWORD = "sasl_passwd"
+KAFKA_SSL_MECHANISM = "sasl_mechanisms"
+KAFKA_SSL_PROTOCOL = "security_protocol"
+
+KAFKA_SSL_CONFIG_ITEMS = {KAFKA_SSL_USERNAME, KAFKA_SSL_PASSWORD, KAFKA_SSL_MECHANISM, KAFKA_SSL_PROTOCOL}
+
+KAFKA_TEST_GROUP = "kafka_test_group"
+DEFAULT_KAFKA_SECURITY_PROTOCOL = "PLAINTEXT"
+DEFAULT_KAFKA_SASL_MECHANISM = "PLAIN"
+
+TABLE_TRANSFER = "pushgateway_transfer_metircs.base"
+
+# 调用GSE的'接收端配置接口'以及'路由接口'时使用
+DEFAULT_GSE_API_PLAT_NAME = "bkmonitor"  # GSE分配给监控的平台名称，不随APP_CODE变更，请不要修改
+
+# transfer metrics
+TRANSFER_METRICS = [
+    "transfer_pipeline_backend_handled_total",
+    "transfer_pipeline_frontend_handled_total",
+    "transfer_pipeline_processor_handled_total",
+    "transfer_pipeline_backend_dropped_total",
+    "transfer_pipeline_frontend_dropped_total",
+    "transfer_pipeline_processor_dropped_total",
+    "transfer_kafka_request_latency_milliseconds_bucket",
+    "transfer_kafka_request_latency_milliseconds_sum",
+    "transfer_kafka_request_latency_milliseconds_count",
+]

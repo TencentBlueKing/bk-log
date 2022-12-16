@@ -8,6 +8,7 @@ from apps.log_measure.exceptions import EsConnectFailException
 
 
 class EsChecker(Checker):
+
     CHECKER_NAME = "es checker"
 
     def __init__(self, table_id, bk_data_name, *args, **kwargs):
@@ -32,7 +33,7 @@ class EsChecker(Checker):
         except Exception as e:
             self.append_error_info(f"[TransferApi] [get_result_table_storage] 失败, err: {e}")
 
-    def run(self):
+    def _run(self):
         pass
 
     def get_indices(self):

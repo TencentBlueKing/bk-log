@@ -6,6 +6,10 @@ from celery.task import task
 from apps.log_databus.constants import GSE_PATH, IPC_PATH, CheckStatusEnum, TargetNodeTypeEnum
 from apps.log_databus.handlers.check_collector.base import CheckCollectorRecord
 from apps.log_databus.handlers.check_collector.checker.agent_checker import AgentChecker
+from apps.log_databus.handlers.check_collector.checker.es_checker import EsChecker
+from apps.log_databus.handlers.check_collector.checker.kafka_checker import KafkaChecker
+from apps.log_databus.handlers.check_collector.checker.route_checker import RouteChecker
+from apps.log_databus.handlers.check_collector.checker.transfer_checker import TransferChecker
 from apps.log_databus.models import CollectorConfig
 
 
@@ -87,14 +91,32 @@ class CheckCollectorHandler:
         self.execute_check()
 
     def execute_check(self):
-        AgentChecker(
+        agent_checker = AgentChecker(
             bk_biz_id=self.bk_biz_id,
             target_server=self.target_server,
             subscription_id=self.subscription_id,
             gse_path=self.gse_path,
             ipc_path=self.ipc_path,
             check_collector_record=self.record,
-        ).run()
+        )
+
+        agent_checker.run()
+
+        router_checker = RouteChecker(self.bk_data_id, check_collector_record=self.record)
+        router_checker.run()
+        self.kafka = router_checker.kafka
+
+        kafka_checker = KafkaChecker(self.kafka, check_collector_record=self.record)
+        kafka_checker.run()
+        self.latest_log = kafka_checker.latest_log
+
+        transfer_checker = TransferChecker(
+            collector_config=self.collector_config, latest_log=self.latest_log, check_collector_record=self.record
+        )
+        transfer_checker.run()
+
+        es_checker = EsChecker(self.table_id, self.bk_data_name, check_collector_record=self.record)
+        es_checker.run()
 
     def get_record_infos(self) -> str:
         return self.record.get_infos()
