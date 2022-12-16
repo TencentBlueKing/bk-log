@@ -6,8 +6,8 @@ from rest_framework.authentication import SessionAuthentication, BasicAuthentica
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
-from bkm_ipchooser.handlers import host_handler, topo_handler, template_handler
-from bkm_ipchooser.serializers import host_sers, topo_sers, template_sers
+from bkm_ipchooser.handlers import config_handler, host_handler, topo_handler, template_handler
+from bkm_ipchooser.serializers import host_sers, topo_sers, template_sers, config_sers
 
 try:
     from rest_framework.decorators import list_route, detail_route
@@ -220,3 +220,20 @@ class IpChooserTemplateViewSet(CommonViewSet):
                 template_type=self.validated_data["template_type"],
             ).list_agent_status(template_ids=self.validated_data["template_ids"])
         )
+
+
+class IpChooserConfigViewSet(CommonViewSet):
+    URL_BASE_NAME = "ipchooser_config"
+    pagination_class = None
+
+    @list_route(methods=["POST"], serializer_class=config_sers.BatchGetSer)
+    def batch_get(self, request, *args, **kwargs):
+        return Response(config_handler.ConfigHandler().batch_get(self.validated_data["module_list"]))
+
+    @list_route(methods=["POST"], serializer_class=config_sers.UpdateSer)
+    def update_config(self, request, *args, **kwargs):
+        return Response(config_handler.ConfigHandler().update(self.validated_data["settingsMap"]))
+
+    @list_route(methods=["POST"], serializer_class=config_sers.BatchDeleteSer)
+    def batch_delete(self, request, *args, **kwargs):
+        return Response(config_handler.ConfigHandler().batch_delete(self.validated_data["module_list"]))
