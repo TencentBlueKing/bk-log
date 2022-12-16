@@ -112,7 +112,11 @@
                 <template slot-scope="props">
                   <div class="text-style">
                     <span @click.stop="viewDetail(props.row)">{{ $t('部署详情') }}</span>
-                    <span @click.stop="viewReport(props.row)">{{ $t('一键检测') }}</span>
+                    <span
+                      v-if="enableCheckCollector"
+                      @click.stop="viewReport(props.row)">
+                      {{ $t('一键检测') }}
+                    </span>
                   </div>
                 </template>
               </bk-table-column>
@@ -151,6 +155,7 @@
     </template>
     <collection-report-view
       v-model="reportDetailShow"
+      :check-record-id="checkRecordId"
       @closeReport="() => reportDetailShow = false"
     />
   </div>
@@ -239,7 +244,12 @@ export default {
       dataFal: {},
       dataPen: {},
       dataAll: {},
+      // 是否支持一键检测
+      enableCheckCollector: window.ENABLE_CHECK_COLLECTOR,
+      // 一键检测弹窗配置
       reportDetailShow: false,
+      // 一键检测采集项标识
+      checkRecordId: '',
     };
   },
   computed: {
@@ -494,9 +504,18 @@ export default {
       //   },
       // });
     },
-    viewReport(data) {
-      console.log(data);
-      this.reportDetailShow = true;
+    viewReport(row) {
+      this.$http.request('collect/runCheck', {
+        data: {
+          collector_config_id: this.$route.params.collectorId,
+          hosts: `${row.bk_cloud_id}:${row.ip}`,
+        },
+      }).then((res) => {
+        if (res.data?.check_record_id) {
+          this.reportDetailShow = true;
+          this.checkRecordId = res.data.check_record_id;
+        }
+      });
     },
   },
 };

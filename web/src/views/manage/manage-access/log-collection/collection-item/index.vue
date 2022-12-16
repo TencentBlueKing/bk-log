@@ -381,7 +381,7 @@
                     }"
                     @click.stop="operateHandler(props.row, 'clone')">{{ $t('克隆') }}</a>
                 </li>
-                <li>
+                <li v-if="enableCheckCollector">
                   <a href="javascript:;" @click.stop="handleShowReport(props.row)">
                     {{ $t('一键检测') }}
                   </a>
@@ -402,6 +402,7 @@
     </section>
     <collection-report-view
       v-model="reportDetailShow"
+      :check-record-id="checkRecordId"
       @closeReport="() => reportDetailShow = false"
     />
   </section>
@@ -509,8 +510,12 @@ export default {
         fields: settingFields,
         selectedFields: settingFields.slice(1, 8),
       },
+      // 是否支持一键检测
+      enableCheckCollector: window.ENABLE_CHECK_COLLECTOR,
       // 一键检测弹窗配置
       reportDetailShow: false,
+      // 一键检测采集项标识
+      checkRecordId: '',
     };
   },
   computed: {
@@ -820,9 +825,21 @@ export default {
         });
       });
     },
-    handleShowReport(data) {
-      console.log(data);
-      this.reportDetailShow = true;
+    handleShowReport(row) {
+      const hosts = row.target_nodes.reduce((pre, cur, index) => {
+        return pre += `${cur.bk_cloud_id}:${cur.ip}${index === (row.target_nodes.length - 1) ? '' : ','}`;
+      }, '');
+      this.$http.request('collect/runCheck', {
+        data: {
+          collector_config_id: row.collector_config_id,
+          hosts,
+        },
+      }).then((res) => {
+        if (res.data?.check_record_id) {
+          this.reportDetailShow = true;
+          this.checkRecordId = res.data.check_record_id;
+        }
+      });
     },
   },
 };

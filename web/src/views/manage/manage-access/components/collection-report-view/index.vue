@@ -9,7 +9,9 @@
     @animation-end="closeReportSlider"
   >
     <div slot="header">{{ $t('一键检测') }}</div>
-    <div slot="content">123</div>
+    <div slot="content">
+      <div class="check-info">{{ checkInfo }}</div>
+    </div>
   </bk-sideslider>
 </template>
 
@@ -20,10 +22,16 @@ export default {
       type: Boolean,
       default: false,
     },
+    // 检测任务id
+    checkRecordId: {
+      type: String,
+      required: true,
+    },
   },
   data() {
     return {
       isShow: false,
+      checkInfo: '',
     };
   },
   watch: {
@@ -33,11 +41,27 @@ export default {
         this.handleCollectorCheck();
       } else {
         this.isShow = false;
+        this.checkInfo = '';
       }
     },
   },
   methods: {
+    /** 获取检测信息 */
     async handleCollectorCheck() {
+      const res = await this.$http.request('collect/getCheckInfos', {
+        data: {
+          check_record_id: this.checkRecordId,
+        },
+      });
+      if (res.data) {
+        this.checkInfo = res.data.infos || '';
+
+        if (!res.data.finished && this.isShow) { // 未完成检测 且 弹窗未关闭则继续请求
+          setTimeout(() => {
+            this.handleCollectorCheck();
+          }, 100);
+        }
+      }
     },
     closeReportSlider() {
       this.$emit('closeReport');
@@ -60,6 +84,11 @@ export default {
       height: 100%;
       background-color: #313238;
       color: #c4c6cc;
+
+      .check-info {
+        padding: 20px;
+        white-space: pre-wrap;
+      }
     }
   }
 }
