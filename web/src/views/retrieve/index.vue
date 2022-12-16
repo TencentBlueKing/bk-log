@@ -333,7 +333,7 @@
     <log-ip-selector
       mode="dialog"
       :height="670"
-      :show-dialog="showIpSelectorDialog"
+      :show-dialog.sync="showIpSelectorDialog"
       :value="{}"
     />
     <!-- <ip-selector-dialog

@@ -36,7 +36,42 @@ const queryHosts = {
   method: 'post',
 };
 
+// 查询多个节点拓扑路径
+const queryPath = {
+  url: '/ipchooser/topo/query_path/',
+  method: 'post',
+};
+
+// 获取多个拓扑节点的主机Agent状态统计信息
+const agentStatistics = {
+  url: '/ipchooser/topo/agent_statistics/',
+  method: 'post',
+};
+
+// 根据多个拓扑节点与搜索条件批量分页查询所包含的主机ID信息
+const queryHostIdInfos = {
+  url: '/ipchooser/topo/query_host_id_infos/',
+  method: 'post',
+};
+
+// 根据主机关键信息获取机器详情信息
+const details = {
+  url: '/ipchooser/host/details/',
+  method: 'post',
+};
+
+// 检查节点
+const check = {
+  url: '/ipchooser/host/check/',
+  method: 'post',
+};
+
 export {
   trees,
   queryHosts,
+  queryPath,
+  agentStatistics,
+  queryHostIdInfos,
+  details,
+  check,
 };

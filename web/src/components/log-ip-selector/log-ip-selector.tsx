@@ -287,46 +287,62 @@ export default class MonitorIpSelector extends tsc<IMonitorIpSelectorProps> {
   async fetchTopologyHostsNodes(params: IQuery) {
     const { search_content, ...p } = params;
     const res = await $http.request('ipChooser/queryHosts', { data: search_content ? params : p });
-    console.log(res?.data);
     return res?.data || [];
   }
 
-  fetchTopologyHostIdsNodes(params: IQuery) {
-    // const { search_content, ...p } = params;
-    // return queryHostIdInfosIpChooserTopo(search_content ? params : p);
+  async fetchTopologyHostIdsNodes(params: IQuery) {
+    const { search_content, ...p } = params;
+    const res = await $http.request('ipChooser/queryHostIdInfos', { data: search_content ? params : p });
+    return res?.data || [];
   }
 
   // 动态拓扑 - 勾选节点(查询多个节点拓扑路径)
   async fetchNodesQueryPath(node: IFetchNode): Promise<Array<INode>[]> {
-    console.info(node, '--------');
-    return [];
-    // return IpChooserTopo.queryPath({ action: this.action, node_list: node.node_list }, {
-    //   cancelPrevious: false
-    // });
+    const data = {
+      scope_list: [{
+        scope_type: 'space',
+        scope_id: this.$store.state.spaceUid,
+      }],
+      node_list: node.node_list,
+    };
+    const res = await $http.request('ipChooser/queryPath', { data });
+    return res?.data || [];
   }
   // 动态拓扑 - 勾选节点(获取多个拓扑节点的主机 Agent 状态统计信息)
   async fetchHostAgentStatisticsNodes(node: IFetchNode): Promise<{ agent_statistics: IStatistics, node: INode }[]> {
-    console.info(node, '--------');
-    return [];
-    // return IpChooserTopo.agentStatistics({ action: this.action, node_list: node.node_list });
+    const data = {
+      node_list: node.node_list,
+    };
+    const res = await $http.request('ipChooser/agentStatistics', { data });
+    return res?.data || [];
   }
-  fetchHostsDetails(node) {
-    // return detailsIpChooserHost({
-    //   all_scope: true,
-    //   ...node,
-    // });
+  async fetchHostsDetails(node) {
+    const data = {
+      scope_list: [{
+        scope_type: 'space',
+        scope_id: this.$store.state.spaceUid,
+      }],
+      host_list: node.host_list,
+    };
+    const res = await $http.request('ipChooser/details', { data });
+    return res?.data || [];
   }
   // 手动输入
-  fetchHostCheck(node: IFetchNode) {
-    // const params = { ...node, all_scope: true, saveScope: true };
-    // return checkIpChooserHost(params);
+  async fetchHostCheck(node: IFetchNode) {
+    const data = {
+      scope_list: [{
+        scope_type: 'space',
+        scope_id: this.$store.state.spaceUid,
+      }],
+      ...node,
+    };
+    const res = await $http.request('ipChooser/check', { data });
+    return res?.data || [];
   }
   async fetchCustomSettings(params: CommomParams) {
-    // console.info('fetchCustomSettings : ', params);
     return [];
   }
   async updateCustomSettings(params: CommomParams) {
-    console.info('updateCustomSettings : ', params);
     return [];
   }
   async fetchConfig() {
@@ -338,7 +354,11 @@ export default class MonitorIpSelector extends tsc<IMonitorIpSelectorProps> {
     };
   }
   change(value: Record<string, INode[]>) {
+    console.log(value, 'change------');
     this.$emit('change', value);
+  }
+  closeDialog() {
+    this.$emit('update:showDialog', false);
   }
   render() {
     return <BkIpSelector
@@ -355,6 +375,8 @@ export default class MonitorIpSelector extends tsc<IMonitorIpSelectorProps> {
       height={this.height ?? '100%'}
       service={this.ipSelectorServices}
       config={this.ipSelectorConfig}
+      on-change={this.change}
+      on-close-dialog={this.closeDialog}
     />;
   }
 }
