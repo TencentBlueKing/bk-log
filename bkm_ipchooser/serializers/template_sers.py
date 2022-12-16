@@ -22,7 +22,7 @@ class TemplateSer(serializers.Serializer):
     template_type = serializers.ChoiceField(
         help_text=_("模板类型"), required=True, choices=constants.TemplateType.list_choices()
     )
-    meta = base.MetaSer(help_text=_("模板元数据"))
+    meta = base.ScopeSer(help_text=_("模板元数据"))
 
 
 ListTemplateSer = BaseTemplateSer

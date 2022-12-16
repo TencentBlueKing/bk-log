@@ -32,17 +32,10 @@ class ScopeSer(serializers.Serializer):
         return attrs
 
 
-class MetaSer(ScopeSer):
-    bk_biz_id = serializers.IntegerField(help_text=_("业务 ID"))
-
-    def validate(self, attrs):
-        return attrs
-
-
 class TreeNodeSer(serializers.Serializer):
     object_id = serializers.CharField(help_text=_("节点类型ID"))
     instance_id = serializers.IntegerField(help_text=_("节点实例ID"))
-    meta = MetaSer()
+    meta = ScopeSer()
 
 
 class HostSearchConditionSer(serializers.Serializer):
@@ -79,14 +72,15 @@ class QueryHostsBaseSer(PaginationSer):
             "content": "query",
         }
 
-        search_condition: typing.Dict[str, str] = attrs.get("search_condition", {})
-        if "search_content" in attrs:
-            search_condition["content"] = attrs["search_content"]
-
         conditions = []
+        search_condition: typing.Dict[str, str] = attrs.get("search_condition", {})
+        # k-v 查找上线前临时兼容的模糊查询字段
+        if "search_content" in attrs:
+            for fuzzy_field in constants.CommonEnum.DEFAULT_HOST_FUZZY_SEARCH_FIELDS.value:
+                conditions.append({"field": fuzzy_field, "operator": "contains", "value": attrs["search_content"]})
+
         for key, val in search_condition.items():
             cond_key: str = search_cond_map[key]
-
             if key == "cloud_name":
                 # 云区域名暂时只支持模糊搜索
                 conditions.append({"key": cond_key, "value": val, "fuzzy_search_fields": ["bk_cloud_id"]})
@@ -116,7 +110,7 @@ class QueryHostsBaseSer(PaginationSer):
 
 
 class HostInfoWithMetaSer(serializers.Serializer):
-    meta = MetaSer()
+    meta = ScopeSer()
     cloud_id = serializers.IntegerField(help_text=_("云区域 ID"), required=False)
     ip = serializers.IPAddressField(help_text=_("IPv4 协议下的主机IP"), required=False, protocol="ipv4")
     host_id = serializers.IntegerField(help_text=_("主机 ID，优先取 `host_id`，否则取 `ip` + `cloud_id`"), required=False)

@@ -5,7 +5,7 @@
 **scope**
 | 字段 | 类型 | 是否必选 | 描述 |
 |-----------|------------|--------|-------------------------|
-| scope_type | String | Yes | 资源范围类型, 枚举, 目前只有 biz |
+| scope_type | String | Yes | 资源范围类型, 枚举, [biz|space] |
 | scope_id | String | Yes | 资源范围 ID |
 | bk_biz_id | Int | Yes | 业务 ID, 最后只会使用这个 |
 

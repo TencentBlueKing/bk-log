@@ -73,7 +73,7 @@ class EnhanceEnum(Enum):
 class CommonEnum(EnhanceEnum):
     SEP = ":"
     PAGE_RETURN_ALL_FLAG = -1
-    DEFAULT_HOST_FUZZY_SEARCH_FIELDS = ["bk_host_innerip", "bk_host_innerip_v6", "bk_host_name"]
+    DEFAULT_HOST_FUZZY_SEARCH_FIELDS = ["bk_host_innerip", "bk_host_innerip_v6", "bk_host_name", "os_type"]
     DEFAULT_HOST_FIELDS = [
         "bk_host_id",
         "bk_cloud_id",
