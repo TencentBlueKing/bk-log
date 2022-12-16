@@ -3,7 +3,7 @@ import os
 
 from celery.task import task
 
-from apps.log_databus.constants import GSE_PATH, IPC_PATH, CheckStatusEnum
+from apps.log_databus.constants import GSE_PATH, IPC_PATH, CheckStatusEnum, TargetNodeTypeEnum
 from apps.log_databus.handlers.check_collector.base import CheckCollectorRecord
 from apps.log_databus.handlers.check_collector.checker.agent_checker import AgentChecker
 from apps.log_databus.models import CollectorConfig
@@ -34,7 +34,7 @@ class CheckCollectorHandler:
 
         self.record = CheckCollectorRecord(cache_key)
 
-        if not self.record.is_exist():
+        if not self.record.is_exist() or self.record.get_check_status() == CheckStatusEnum.FINISH.value:
             self.record.new_record()
 
     def pre_run(self):
@@ -51,6 +51,36 @@ class CheckCollectorHandler:
         self.bk_data_name = self.collector_config.bk_data_name
         self.table_id = self.collector_config.table_id
         self.subscription_id = self.collector_config.subscription_id
+
+        # 如果有输入host, 则覆盖, 否则使用collector_config.target_nodes
+        if self.hosts:
+            try:
+                # "0:ip1,0:ip2,1:ip3"
+                ip_list = []
+                hosts = self.hosts.split(",")
+                for host in hosts:
+                    ip_list.append({"bk_cloud_id": int(host.split(":")[0]), "ip": host.split(":")[1]})
+                self.target_server = {"ip_list": ip_list}
+            except Exception as e:  # pylint: disable=broad-except
+                self.record.append_error_info(f"输入合法的hosts, err: {e}, 参考: 0:ip1,0:ip2,1:ip3", self.HANDLER_NAME)
+                return
+        else:
+            # 不同的target_node_type
+            target_node_type = self.collector_config.target_node_type
+            if target_node_type == TargetNodeTypeEnum.TOPO.value:
+                self.target_server = {
+                    "topo_node_list": [
+                        {"id": i["bk_inst_id"], "node_type": i["bk_obj_id"]} for i in self.collector_config.target_nodes
+                    ]
+                }
+            elif target_node_type == TargetNodeTypeEnum.INSTANCE.value:
+                self.target_server = {"ip_list": self.collector_config.target_nodes}
+            elif target_node_type == TargetNodeTypeEnum.DYNAMIC_GROUP.value:
+                self.target_server = {"dynamic_group_list": self.collector_config.target_nodes}
+            else:
+                self.record.append_error_info(f"暂不支持该target_node_type: {target_node_type}", self.HANDLER_NAME)
+        if not self.story_report:
+            self.record.append_normal_info("初始化检查成功", self.HANDLER_NAME)
 
     def run(self):
         self.pre_run()
@@ -70,10 +100,12 @@ class CheckCollectorHandler:
         return self.record.get_infos()
 
 
-@task
-def async_run_check(collector_config_id: int, hosts: str):
+@task(ignore_result=True)
+def async_run_check(collector_config_id: int, hosts: str = None):
     handler = CheckCollectorHandler(collector_config_id, hosts)
     handler.record.append_normal_info("check start", handler.HANDLER_NAME)
+    handler.record.change_status(CheckStatusEnum.STARTED.value)
     handler.run()
     if handler.record.get_check_status() != CheckStatusEnum.FINISH.value:
         handler.record.append_normal_info("check finish", handler.HANDLER_NAME)
+        handler.record.change_status(CheckStatusEnum.FINISH.value)

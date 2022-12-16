@@ -15,12 +15,13 @@ class CheckCollectorViewSet(APIViewSet):
     @list_route(methods=["POST"], url_path="get_check_collector_infos")
     def get_check_collector_infos(self, request, *args, **kwargs):
         data = self.params_valid(GetCollectorCheckResultSerializer)
-        result = {"infos": CheckCollectorRecord(**data).get_infos()}
+        record = CheckCollectorRecord(**data)
+        result = {"infos": record.get_infos(), "finished": record.finished}
         return Response(result)
 
     @list_route(methods=["POST"], url_path="run_check_collector")
     def run_check_collector(self, request, *args, **kwargs):
         data = self.params_valid(CheckCollectorSerializer)
         key = CheckCollectorRecord.generate_check_record_id(**data)
-        async_run_check.delay(**data)
+        async_run_check(**data)
         return Response({"check_record_id": key})

@@ -97,6 +97,12 @@ class CheckCollectorRecord:
         info = f"[error][{prefix}]{info}"
         self.append_info(info)
 
-    def change_status(self, status):
+    def change_status(self, status: str):
         self.check_record.status = status
         self.save_check_record()
+
+    @property
+    def finished(self) -> bool:
+        if self.is_exist():
+            return self.check_record.status == CheckStatusEnum.FINISH.value
+        return False
