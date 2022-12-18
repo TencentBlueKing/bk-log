@@ -6,8 +6,8 @@ from rest_framework.authentication import SessionAuthentication, BasicAuthentica
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
-from bkm_ipchooser.handlers import config_handler, host_handler, topo_handler, template_handler
-from bkm_ipchooser.serializers import host_sers, topo_sers, template_sers, config_sers
+from bkm_ipchooser.handlers import config_handler, host_handler, topo_handler, template_handler, dynamic_group_handler
+from bkm_ipchooser.serializers import host_sers, topo_sers, template_sers, config_sers, dynamic_group_sers
 
 try:
     from rest_framework.decorators import list_route, detail_route
@@ -247,5 +247,24 @@ class IpChooserConfigViewSet(CommonViewSet):
         return Response(
             config_handler.ConfigHandler(username=request.user.username).batch_delete(
                 module_list=self.validated_data["module_list"]
+            )
+        )
+
+
+class IpChooserDynamicGroupViewSet(CommonViewSet):
+    URL_BASE_NAME = "ipchooser_dynamic_group"
+    pagination_class = None
+
+    @list_route(methods=["POST"], serializer_class=dynamic_group_sers.ListDynamicGroupSer)
+    def dynamic_groups(self, request, *args, **kwargs):
+        return Response(dynamic_group_handler.DynamicGroupHandler(scope_list=self.validated_data["scope_list"]).list())
+
+    @list_route(methods=["POST"], serializer_class=dynamic_group_sers.ExecuteDynamicGroupSer)
+    def execute_dynamic_group(self, request, *args, **kwargs):
+        return Response(
+            dynamic_group_handler.DynamicGroupHandler(scope_list=self.validated_data["scope_list"]).execute(
+                dynamic_group_id=self.validated_data["dynamic_group_id"],
+                start=self.validated_data["start"],
+                page_size=self.validated_data["page_size"],
             )
         )

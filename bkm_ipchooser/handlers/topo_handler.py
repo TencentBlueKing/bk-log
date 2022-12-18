@@ -101,7 +101,6 @@ class TopoHandler:
             )
         return node_paths_list
 
-
     @classmethod
     def query_hosts(
         cls,
@@ -169,7 +168,7 @@ class TopoHandler:
 
     @classmethod
     def fill_agent_status(cls, cc_hosts):
-
+        # TODO: get_agent_status接口暂只支持 bk_cloud_id:bk_host_innerip 格式
         if not cc_hosts:
             return
 
@@ -320,7 +319,6 @@ class TopoHandler:
         """
         return [cls.node_agent_statistics(node) for node in node_list]
 
-
     @classmethod
     def node_agent_statistics(cls, node: types.ReadableTreeNode) -> typing.Dict:
         """
@@ -334,7 +332,7 @@ class TopoHandler:
                 "total_count": 0,
                 "alive_count": 0,
                 "no_alive_count": 0,
-            }
+            },
         }
         object_id = node["object_id"]
         params = {
@@ -347,10 +345,12 @@ class TopoHandler:
                 "rules": [{"field": "bk_set_id", "operator": "equal", "value": node["instance_id"]}],
             }
         if object == constants.ObjectType.MODULE.value:
-            params["module_property_filter"] = {
-                "condition": "AND",
-                "rules": [{"field": "bk_module_id", "operator": "in", "value": node["instance_id"]}],
-            },
+            params["module_property_filter"] = (
+                {
+                    "condition": "AND",
+                    "rules": [{"field": "bk_module_id", "operator": "in", "value": node["instance_id"]}],
+                },
+            )
         hosts_with_topo = BkApi.list_biz_hosts_topo(params)
         if not hosts_with_topo:
             return result

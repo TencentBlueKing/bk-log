@@ -104,7 +104,17 @@ class CommonEnum(EnhanceEnum):
         "bk_host_id",
         "bk_cloud_id",
         "bk_host_innerip",
-        "bk_host_innerip_v6"
+        "bk_host_innerip_v6",
+    ]
+    EXECUTE_DYNAMIC_GROUP_FIELDS = [
+        "bk_host_id",
+        "bk_host_name",
+        "bk_cloud_id",
+        "bk_host_innerip",
+        "bk_host_innerip_v6",
+        "os_type",
+        "bk_set_id",
+        "bk_set_name",
     ]
 
     @classmethod
@@ -162,6 +172,26 @@ class TemplateType(EnhanceEnum):
     @classmethod
     def _get_member__alias_map(cls) -> Dict[Enum, str]:
         return {cls.SERVICE_TEMPLATE: _("服务模版"), cls.SET_TEMPLATE: _("集群模版")}
+
+
+class TimeEnum(EnhanceEnum):
+    """时间枚举"""
+
+    SECOND = 1
+    MINUTE = SECOND * 60
+    HOUR = MINUTE * 60
+    DAY = HOUR * 24
+    WEEK = DAY * 7
+
+    @classmethod
+    def _get_member__alias_map(cls) -> Dict[Enum, str]:
+        return {
+            cls.SECOND: _("秒"),
+            cls.MINUTE: _("分钟"),
+            cls.HOUR: _("小时"),
+            cls.DAY: _("天"),
+            cls.WEEK: _("周"),
+        }
 
 
 PROC_STATE_TUPLE = ("RUNNING", "UNKNOWN", "TERMINATED", "NOT_INSTALLED", "UNREGISTER", "REMOVED", "MANUAL_STOP")
