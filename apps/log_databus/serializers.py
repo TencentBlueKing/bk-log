@@ -253,6 +253,7 @@ class CustomCreateSerializer(serializers.Serializer):
     description = serializers.CharField(
         label=_("备注说明"), max_length=64, required=False, allow_null=True, allow_blank=True
     )
+    is_display = serializers.BooleanField(label=_("是否展示"), default=True, required=False)
 
     def validate(self, attrs: dict) -> dict:
         # 先进行校验
@@ -281,6 +282,7 @@ class CustomUpdateSerializer(serializers.Serializer):
     es_shards = serializers.IntegerField(
         label=_("ES分片数量"), required=False, default=settings.ES_SHARDS, min_value=1, max_value=64
     )
+    is_display = serializers.BooleanField(label=_("是否展示"), default=True, required=False)
 
 
 class CollectorCreateSerializer(serializers.Serializer):
