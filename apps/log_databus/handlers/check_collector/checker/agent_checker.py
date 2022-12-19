@@ -159,26 +159,19 @@ class AgentChecker(Checker):
                         continue
                     try:
                         log_content = json.loads(log_content)
-                        report_message = []
                         if not log_content["status"]:
-                            report_message.append(f"[{host}] 失败, 查看详情")
+                            self.append_error_info(f"[{host}] 失败, 查看详情")
                         else:
-                            report_message.append(f"[{host}] 成功")
+                            self.append_normal_info(f"[{host}] 成功")
 
                         for step in log_content["data"]:
                             module = step["module"]
                             item = CHECK_AGENT_STEP[step["item"]]
                             message = step["message"]
                             if step["status"]:
-                                report_message.append(f"[{module}] [{item}] [成功] {message}")
+                                self.append_normal_info(f"[{module}] [{item}] [成功] {message}")
                             else:
-                                report_message.append(f"[{module}] [{item}] [失败] {message}")
-                        # 增加个换行, 方便阅读
-                        report_message.append("")
-                        if not log_content["status"]:
-                            self.append_error_info("\n".join(report_message))
-                        else:
-                            self.append_normal_info("\n".join(report_message))
+                                self.append_error_info(f"[{module}] [{item}] [失败] {message}")
 
                     except Exception as e:  # pylint: disable=broad-except
                         self.append_error_info(f"[获取作业执行结果] [{host}] 获取脚本执行结果失败, 报错为: {str(e)}")
