@@ -59,7 +59,7 @@ export default {
         if (!res.data.finished && this.isShow) { // 未完成检测 且 弹窗未关闭则继续请求
           setTimeout(() => {
             this.handleCollectorCheck();
-          }, 100);
+          }, 1000);
         }
       }
     },
