@@ -826,13 +826,9 @@ export default {
       });
     },
     handleShowReport(row) {
-      const hosts = row.target_nodes.reduce((pre, cur, index) => {
-        return pre += `${cur.bk_cloud_id}:${cur.ip}${index === (row.target_nodes.length - 1) ? '' : ','}`;
-      }, '');
       this.$http.request('collect/runCheck', {
         data: {
           collector_config_id: row.collector_config_id,
-          hosts,
         },
       }).then((res) => {
         if (res.data?.check_record_id) {
