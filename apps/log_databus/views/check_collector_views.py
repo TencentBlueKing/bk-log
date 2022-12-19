@@ -23,5 +23,5 @@ class CheckCollectorViewSet(APIViewSet):
     def run_check_collector(self, request, *args, **kwargs):
         data = self.params_valid(CheckCollectorSerializer)
         key = CheckCollectorRecord.generate_check_record_id(**data)
-        async_run_check(**data)
+        async_run_check.delay(**data)
         return Response({"check_record_id": key})
