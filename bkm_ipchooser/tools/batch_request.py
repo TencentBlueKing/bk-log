@@ -136,5 +136,9 @@ def request_multi_thread(func, params_list, get_data=lambda x: []):
             ex.submit(translation.RespectsLanguage(language=get_language())(func), **params) for params in params_list
         ]
     for future in as_completed(tasks):
-        result.extend(get_data(future.result()))
+        _result = get_data(future.result())
+        if isinstance(_result, list):
+            result.extend(_result)
+        else:
+            result.append(_result)
     return result

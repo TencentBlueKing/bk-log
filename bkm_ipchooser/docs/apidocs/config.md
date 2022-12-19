@@ -1,5 +1,28 @@
 # [分组] 配置相关接口
 
+## [API] global (全局配置)
+
+用法: 获取全局配置列表
+
+路径: /api/v1/ipchooser/config/global/
+
+HTTP 请求方式: `GET`
+
+### 返回示例
+
+```json
+{
+    "result": true,
+    "data": {
+        "CC_ROOT_URL": "http://cmdb.xxx.com"
+    },
+    "code": 0,
+    "message": ""
+}
+```
+
+<hr>
+
 ## [API] batch_get (拉取配置)
 
 用法: 获取当前用户配置列表
