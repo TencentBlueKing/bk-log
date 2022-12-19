@@ -128,6 +128,5 @@ def async_run_check(collector_config_id: int, hosts: str = None):
     handler.record.append_normal_info("check start", handler.HANDLER_NAME)
     handler.record.change_status(CheckStatusEnum.STARTED.value)
     handler.run()
-    if handler.record.get_check_status() != CheckStatusEnum.FINISH.value:
-        handler.record.append_normal_info("check finish", handler.HANDLER_NAME)
-        handler.record.change_status(CheckStatusEnum.FINISH.value)
+    handler.record.append_normal_info("check finish", handler.HANDLER_NAME)
+    handler.record.change_status(CheckStatusEnum.FINISH.value)
