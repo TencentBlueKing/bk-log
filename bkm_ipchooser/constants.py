@@ -87,6 +87,7 @@ class CommonEnum(EnhanceEnum):
         "bk_host_innerip_v6",
         "bk_host_name",
         "bk_os_type",
+        "bk_os_name",
         "bk_agent_id",
         "bk_cloud_vendor",
         "bk_mem",
@@ -114,17 +115,6 @@ class CommonEnum(EnhanceEnum):
         "bk_host_name",
         "bk_os_type",
         "bk_os_name",
-    ]
-    EXECUTE_DYNAMIC_GROUP_FIELDS = [
-        "bk_host_id",
-        "bk_host_name",
-        "bk_cloud_id",
-        "bk_host_innerip",
-        "bk_host_innerip_v6",
-        "bk_os_type",
-        "bk_os_name",
-        "bk_set_id",
-        "bk_set_name",
     ]
 
     @classmethod
