@@ -78,14 +78,12 @@ class Template:
         for node in nodes:
             node_id = node["instance_id"]
             hosts = node_agent_status.get(node_id, [])
-            node["agent_count"] = len(hosts)
-            node["agent_error_count"] = len(
+            node["total_count"] = len(hosts)
+            node["not_alive_count"] = len(
                 [host for host in hosts if host["status"] != constants.AgentStatusType.ALIVE.value]
             )
-        return {
-            "count": len(nodes),
-            "nodes": nodes,
-        }
+            node["alive_count"] = node["total_count"] - node["not_alive_count"]
+        return nodes
 
     def node_agent_status(self, return_all: bool = False) -> List[Dict]:
         result = defaultdict(list)
@@ -113,10 +111,7 @@ class Template:
         nodes = self.query_template_nodes()
         nodes = [node for node in nodes if self.template_id == node.get(self.TEMPLATE_ID_KEY_MAP[self.template_type])]
         hosts = self.node_agent_status(return_all=True)
-        return {
-            "count": len(hosts),
-            "hosts": hosts,
-        }
+        return hosts
 
     def query_cc_templates(self) -> List[Dict]:
         """子类实现查询CC API接口获取模板列表"""
@@ -265,9 +260,11 @@ class TemplateHandler:
             constants.TemplateType.SERVICE_TEMPLATE.value: ServiceTemplate,
         }.get(self.template_type)(scope_list=self.scope_list, template_id=self.template_id)
 
-    def list_templates(self) -> List[types.Template]:
+    def list_templates(self, template_id_list: List[int] = None) -> List[types.Template]:
         handler = self.get_instance()
         templates = handler.query_cc_templates()
+        if template_id_list:
+            templates = [template for template in templates if template["id"] in template_id_list]
         return handler.format_templates(templates)
 
     def list_nodes(self) -> List[types.TemplateNode]:

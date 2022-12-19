@@ -200,7 +200,7 @@ class IpChooserTemplateViewSet(CommonViewSet):
             template_handler.TemplateHandler(
                 scope_list=self.validated_data["scope_list"],
                 template_type=self.validated_data["template_type"],
-            ).list_templates()
+            ).list_templates(template_id_list=self.validated_data["template_id_list"])
         )
 
     @list_route(methods=["POST"], serializer_class=template_sers.ListNodeSer)
@@ -263,14 +263,26 @@ class IpChooserDynamicGroupViewSet(CommonViewSet):
 
     @list_route(methods=["POST"], url_path="groups", serializer_class=dynamic_group_sers.ListDynamicGroupSer)
     def dynamic_groups(self, request, *args, **kwargs):
-        return Response(dynamic_group_handler.DynamicGroupHandler(scope_list=self.validated_data["scope_list"]).list())
+        return Response(
+            dynamic_group_handler.DynamicGroupHandler(scope_list=self.validated_data["scope_list"]).list(
+                dynamic_group_list=self.validated_data["dynamic_group_list"]
+            )
+        )
 
     @list_route(methods=["POST"], url_path="execute", serializer_class=dynamic_group_sers.ExecuteDynamicGroupSer)
     def execute_dynamic_group(self, request, *args, **kwargs):
         return Response(
             dynamic_group_handler.DynamicGroupHandler(scope_list=self.validated_data["scope_list"]).execute(
-                dynamic_group_id=self.validated_data["dynamic_group_id"],
+                dynamic_group_id=self.validated_data["id"],
                 start=self.validated_data["start"],
                 page_size=self.validated_data["page_size"],
+            )
+        )
+
+    @list_route(methods=["POST"], serializer_class=dynamic_group_sers.AgentStatistiscSer)
+    def agent_statistics(self, request, *args, **kwargs):
+        return Response(
+            dynamic_group_handler.DynamicGroupHandler(scope_list=self.validated_data["scope_list"]).agent_statistics(
+                dynamic_group_list=self.validated_data["dynamic_group_list"],
             )
         )

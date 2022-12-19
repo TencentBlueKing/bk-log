@@ -108,8 +108,9 @@ HTTP 请求方式: `POST`, `application/json`
                     "bk_biz_id": 2
                 },
                 "node_path": "A/B/C",
-                "agent_count": 1,
-                "agent_error_count": 0
+                "total_count": 1,
+                "not_alive_count": 0,
+                "alive_count": 1
             }
         ]
     },

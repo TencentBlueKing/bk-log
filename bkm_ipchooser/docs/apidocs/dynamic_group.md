@@ -24,12 +24,22 @@ HTTP 请求方式: `POST`, `application/json`
 | ---------- | ---- | -------- | ---------------------------------------------- |
 | all_scope  | Bool | NO       | 是否获取所有资源范围的拓扑结构，默认为 `false` |
 | scope_list | List | Yes      | 要获取拓扑结构的资源范围数组                   |
+| dynamic_group_list | List | No | 指定动态分组列表, 不填返回所有 |
 
 ### 请求参数示例
 
 ```json
 {
   "scope_list": [{ "scope_type": "biz", "scope_id": "2" }],
+  "dynamic_group_list": [
+    {
+        "meta": {
+            "scope_type": "biz",
+            "scope_id": "2"
+        },
+        "id": "aaaaaaaaaaaa"
+      }
+  ]
 }
 ```
 
@@ -38,37 +48,21 @@ HTTP 请求方式: `POST`, `application/json`
 ```json
 {
     "result": true,
-    "data": {
-        "count": 2,
-        "groups": [
-            {
-                "id": "aaaaaaaaaaaa",
-                "name": "test1",
-                "meta": {
-                    "scope_type": "biz",
-                    "scope_id": "2",
-                    "bk_biz_id": 2
-                },
-                "count": 27,
-                "is_latest": false,
-                "object_id": "host",
-                "object_name": "主机"
+    "data": [
+        {
+            "id": "aaaaaaaaaaaa",
+            "name": "test1",
+            "meta": {
+                "scope_type": "biz",
+                "scope_id": "2",
+                "bk_biz_id": 2
             },
-            {
-                "id": "bbbbbbbbbbb",
-                "name": "test2",
-                "meta": {
-                    "scope_type": "biz",
-                    "scope_id": "2",
-                    "bk_biz_id": 2
-                },
-                "count": 29,
-                "is_latest": false,
-                "object_id": "host",
-                "object_name": "主机"
-            }
-        ]
-    },
+            "count": 27,
+            "is_latest": false,
+            "object_id": "host",
+            "object_name": "主机"
+        }
+    ]
     "code": 0,
     "message": ""
 }
@@ -105,6 +99,10 @@ HTTP 请求方式: `POST`, `application/json`
         }
     ],
     "dynamic_group_id": "aaaaaaaaaaa",
+    "meta": {
+        "scope_type": "biz",
+        "scope_id": "2"
+    },
     "start": 0,
     "page_size": 20
 }
@@ -118,16 +116,19 @@ HTTP 请求方式: `POST`, `application/json`
     "data": {
         "start": 0,
         "page_size": 1,
-        "count": 29,
-        "child": [
+        "total": 29,
+        "data": [
             {
-                "bk_cloud_id": 0,
-                "bk_host_id": 1,
-                "bk_host_innerip": "bk_host_innerip",
-                "bk_host_name": "bk_host_name",
-                "bk_os_name": "linux centos",
-                "bk_os_type": "1",
-                "status": 1
+                "meta": {
+                    "scope_type": "biz",
+                    "scope_id": "2"
+                },
+                "cloud_id": 0,
+                "host_id": 1,
+                "ip": "bk_host_innerip",
+                "host_name": "bk_host_name",
+                "os_name": "linux centos",
+                "alive": 1
             }
         ]
     },
@@ -138,11 +139,11 @@ HTTP 请求方式: `POST`, `application/json`
 
 <hr>
 
-## [API] hosts (获取模板下各个主机)
+## [API] agent_statistics (获取动态分组下所有主机的Agent状态)
 
-用法: 获取服务模板/集群模板 主机
+用法: 执行动态分组, 获取对应主机Agent状态
 
-路径: /api/v1/ipchooser/template/hosts/
+路径: /ipchooser/dynamic_group/agent_statistics/
 
 HTTP 请求方式: `POST`, `application/json`
 
@@ -152,16 +153,27 @@ HTTP 请求方式: `POST`, `application/json`
 | ---------- | ---- | -------- | ---------------------------------------------- |
 | all_scope  | Bool | NO       | 是否获取所有资源范围的拓扑结构，默认为 `false` |
 | scope_list | List | Yes      | 要获取拓扑结构的资源范围数组                   |
-| template_type | String | Yes | 模板类型, 服务模板(SET_TEMPLATE), 集群模板(SERVICE_TEMPLATE) |
-| template_id | Int | Yes | 模板ID |
+| dynamic_group_list | List | No | 动态分组列表 |
 
 ### 请求参数示例
 
 ```json
 {
-  "scope_list": [{ "scope_type": "biz", "scope_id": "2" }],
-  "template_type": "SET_TEMPLATE",
-  "template_id": 1
+    "scope_list": [
+        {
+            "scope_type": "biz",
+            "scope_id": "2"
+        }
+    ],
+    "dynamic_group_list": [
+        {
+            "meta": {
+                "scope_type": "biz",
+                "scope_id": "2"
+            },
+            "id": "aaaaaaa"
+        }
+    ]
 }
 ```
 
@@ -170,21 +182,28 @@ HTTP 请求方式: `POST`, `application/json`
 ```json
 {
     "result": true,
-    "data": {
-        "count": 1,
-        "hosts": [
-            {
-                "bk_cloud_id": 0,
-                "bk_host_id": 1,
-                "bk_host_innerip": "bk_host_innerip",
-                "bk_host_name": "bk_host_name",
-                "node_id": 160,
-                "node_name": "node_name",
-                "status": 1
+    "data": [
+        {
+            "dynamic_group": {
+                "id": "aaaaaaa",
+                "name": "aaaaaaa",
+                "meta": {
+                    "scope_type": "biz",
+                    "scope_id": "2",
+                    "bk_biz_id": 2
+                }
+            },
+            "agent_statistics": {
+                "total_count": 29,
+                "alive_count": 16,
+                "not_alive_count": 13
             }
-        ]
-    },
+        }
+    ],
     "code": 0,
     "message": ""
 }
 ```
+
+<hr>
+
