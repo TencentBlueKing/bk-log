@@ -209,22 +209,28 @@ class IpChooserTemplateViewSet(CommonViewSet):
             template_handler.TemplateHandler(
                 scope_list=self.validated_data["scope_list"],
                 template_type=self.validated_data["template_type"],
-            ).list_nodes(template_ids=self.validated_data["template_ids"])
+                template_id=self.validated_data["template_id"],
+            ).list_nodes()
         )
 
-    @list_route(methods=["POST"], serializer_class=template_sers.ListAgentStatusSer)
-    def agent(self, request, *args, **kwargs):
+    @list_route(methods=["POST"], serializer_class=template_sers.ListHostSer)
+    def hosts(self, request, *args, **kwargs):
         return Response(
             template_handler.TemplateHandler(
                 scope_list=self.validated_data["scope_list"],
                 template_type=self.validated_data["template_type"],
-            ).list_agent_status(template_ids=self.validated_data["template_ids"])
+                template_id=self.validated_data["template_id"],
+            ).list_hosts()
         )
 
 
 class IpChooserConfigViewSet(CommonViewSet):
     URL_BASE_NAME = "ipchooser_config"
     pagination_class = None
+
+    @list_route(methods=["GET"], url_path="global")
+    def global_config(self, request, *args, **kwargs):
+        return Response(config_handler.ConfigHandler().get_global_settings())
 
     @list_route(methods=["POST"], serializer_class=config_sers.BatchGetSer)
     def batch_get(self, request, *args, **kwargs):
@@ -255,11 +261,11 @@ class IpChooserDynamicGroupViewSet(CommonViewSet):
     URL_BASE_NAME = "ipchooser_dynamic_group"
     pagination_class = None
 
-    @list_route(methods=["POST"], serializer_class=dynamic_group_sers.ListDynamicGroupSer)
+    @list_route(methods=["POST"], url_path="groups", serializer_class=dynamic_group_sers.ListDynamicGroupSer)
     def dynamic_groups(self, request, *args, **kwargs):
         return Response(dynamic_group_handler.DynamicGroupHandler(scope_list=self.validated_data["scope_list"]).list())
 
-    @list_route(methods=["POST"], serializer_class=dynamic_group_sers.ExecuteDynamicGroupSer)
+    @list_route(methods=["POST"], url_path="execute", serializer_class=dynamic_group_sers.ExecuteDynamicGroupSer)
     def execute_dynamic_group(self, request, *args, **kwargs):
         return Response(
             dynamic_group_handler.DynamicGroupHandler(scope_list=self.validated_data["scope_list"]).execute(

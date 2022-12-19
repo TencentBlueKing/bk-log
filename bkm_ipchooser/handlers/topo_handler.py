@@ -168,7 +168,7 @@ class TopoHandler:
 
     @classmethod
     def fill_agent_status(cls, cc_hosts):
-        # TODO: get_agent_status接口暂只支持 bk_cloud_id:bk_host_innerip 格式
+        # TODO: get_agent_status暂只支持 bk_cloud_id:bk_host_innerip 格式
         if not cc_hosts:
             return
 

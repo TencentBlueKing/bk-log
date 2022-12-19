@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import time
 import logging
 from typing import List, Dict
 
@@ -22,33 +21,11 @@ class DynamicGroupHandler:
 
     def list(self) -> List[types.DynamicGroup]:
         """获取动态分组列表"""
-        now_time = time.time()
         groups = BkApi.search_dynamic_group({"bk_biz_id": self.bk_biz_id})
         if not groups:
             return groups
-        # 先根据是否为最近更新分组，再按照名称排序
-        latest_groups = []
-        other_groups = []
-        for group in groups:
-            _group = {
-                "id": group["id"],
-                "name": group["name"],
-                "is_latest": False,
-                "meta": self.meta,
-            }
-            last_time = group["last_time"]
-            last_time_unix = time.mktime(time.strptime(last_time, "%Y-%m-%dT%H:%M:%S.%fZ"))
-            if last_time_unix >= now_time - constants.TimeEnum.DAY.value:
-                _group["is_latest"] = True
-                latest_groups.append(_group)
-            else:
-                other_groups.append(_group)
-        # 按照名称排序
-        latest_groups.sort(key=lambda g: g["name"])
-        other_groups.sort(key=lambda g: g["name"])
-
-        groups = latest_groups + other_groups
-
+        # 排序并添加是否最近更新标签
+        BaseHandler.add_latest_label_and_sort(groups)
         multi_get_dynamic_group_host_count_result = request_multi_thread(
             func=self._get_dynamic_group_host_count,
             params_list=[{"group_id": group["id"]} for group in groups],
@@ -58,9 +35,29 @@ class DynamicGroupHandler:
             _result["id"]: _result["count"] for _result in multi_get_dynamic_group_host_count_result
         }
         for group in groups:
+            group["meta"] = self.meta
             group["count"] = host_count_by_group_id.get(group["id"], 0)
 
-        return groups
+        return self._format_dynamic_groups(groups)
+
+    def _format_dynamic_groups(cls, groups: List[Dict]) -> List[Dict]:
+        """格式化获取动态分组列表的返回"""
+        groups = [
+            {
+                "id": group["id"],
+                "name": group["name"],
+                "meta": cls.meta,
+                "count": group["count"],
+                "is_latest": group["is_latest"],
+                "object_id": group["bk_obj_id"],
+                "object_name": constants.ObjectType.get_member_value__alias_map().get(group["bk_obj_id"]),
+            }
+            for group in groups
+            # 仅返回主机动态分组
+            # TODO: 当需要支持动态分组为集群时, 去掉这个过滤
+            if group["bk_obj_id"] == constants.ObjectType.HOST.value
+        ]
+        return {"count": len(groups), "groups": groups}
 
     def _get_dynamic_group_host_count(self, group_id: str) -> Dict:
         """获取动态分组主机数量"""

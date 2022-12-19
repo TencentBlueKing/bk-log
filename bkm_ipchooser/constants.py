@@ -73,7 +73,13 @@ class EnhanceEnum(Enum):
 class CommonEnum(EnhanceEnum):
     SEP = ":"
     PAGE_RETURN_ALL_FLAG = -1
-    DEFAULT_HOST_FUZZY_SEARCH_FIELDS = ["bk_host_innerip", "bk_host_innerip_v6", "bk_host_name", "os_type"]
+    DEFAULT_HOST_FUZZY_SEARCH_FIELDS = [
+        "bk_host_innerip",
+        "bk_host_innerip_v6",
+        "bk_host_name",
+        "bk_os_type",
+        "bk_os_name",
+    ]
     DEFAULT_HOST_FIELDS = [
         "bk_host_id",
         "bk_cloud_id",
@@ -105,6 +111,9 @@ class CommonEnum(EnhanceEnum):
         "bk_cloud_id",
         "bk_host_innerip",
         "bk_host_innerip_v6",
+        "bk_host_name",
+        "bk_os_type",
+        "bk_os_name",
     ]
     EXECUTE_DYNAMIC_GROUP_FIELDS = [
         "bk_host_id",
@@ -112,7 +121,8 @@ class CommonEnum(EnhanceEnum):
         "bk_cloud_id",
         "bk_host_innerip",
         "bk_host_innerip_v6",
-        "os_type",
+        "bk_os_type",
+        "bk_os_name",
         "bk_set_id",
         "bk_set_name",
     ]
@@ -146,10 +156,11 @@ class ObjectType(EnhanceEnum):
     BIZ = "biz"
     SET = "set"
     MODULE = "module"
+    HOST = "host"
 
     @classmethod
     def _get_member__alias_map(cls) -> Dict[Enum, str]:
-        return {cls.BIZ: _("业务"), cls.SET: _("集群"), cls.MODULE: _("模块")}
+        return {cls.BIZ: _("业务"), cls.SET: _("集群"), cls.MODULE: _("模块"), cls.HOST: _("主机")}
 
 
 class AgentStatusType(EnhanceEnum):

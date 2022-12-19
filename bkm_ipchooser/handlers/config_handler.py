@@ -4,6 +4,7 @@ from typing import List
 
 from django.db.transaction import atomic
 
+from bkm_ipchooser.config import IP_CHOOSER_CC_ROOT_URL
 from bkm_ipchooser.models import IPChooserConfig
 
 logger = logging.getLogger("bkm_ipchooser")
@@ -12,8 +13,12 @@ logger = logging.getLogger("bkm_ipchooser")
 class ConfigHandler:
     """用户配置处理器"""
 
-    def __init__(self, username: str) -> None:
+    def __init__(self, username: str = None) -> None:
         self.username = username
+
+    @staticmethod
+    def get_global_settings() -> dict:
+        return {"CC_ROOT_URL": IP_CHOOSER_CC_ROOT_URL}
 
     def batch_get(self, module_list: List[str] = None) -> dict:
         """批量获取用户配置"""
