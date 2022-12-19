@@ -92,16 +92,13 @@ class AgentChecker(Checker):
             time.sleep(WAIT_FOR_RETRY)
             try:
                 result = JobApi.get_job_instance_status_v3(params=params, request_cookies=False)
-                if not result.get("finished"):
-                    continue
-                step_instance_status = result.get("step_instance_list", [])
-                if not step_instance_status:
-                    error_msg = f"[获取作业执行状态] 作业: {self.job_instance_id}, 执行状态为空"
-                for step in step_instance_status:
-                    if step["step_instance_id"] == self.step_instance_id:
-                        self.ip_status = step.get("step_ip_result_list", [])
-                break
-
+                if result.get("finished"):
+                    step_instance_status = result.get("step_instance_list", [])
+                    if not step_instance_status:
+                        error_msg = f"[获取作业执行状态] 作业: {self.job_instance_id}, 执行状态为空"
+                    for step in step_instance_status:
+                        if step["step_instance_id"] == self.step_instance_id:
+                            self.ip_status = step.get("step_ip_result_list", [])
             except Exception as e:  # pylint: disable=broad-except
                 error_msg = f"[获取作业执行状态] 作业: {self.job_instance_id}] 报错为: {e}"
 

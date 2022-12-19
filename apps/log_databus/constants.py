@@ -435,6 +435,24 @@ class CheckStatusEnum(ChoicesEnum):
     )
 
 
+class InfoTypeEnum(ChoicesEnum):
+    INFO: str = "info"
+    WARNING: str = "warning"
+    ERROR: str = "error"
+
+    _choices_labels = (
+        (INFO, _("信息")),
+        (WARNING, _("告警")),
+        (ERROR, _("错误")),
+    )
+
+
+INFO_TYPE_PREFIX_MAPPING = {
+    InfoTypeEnum.INFO.value: "+",
+    InfoTypeEnum.WARNING.value: "!",
+    InfoTypeEnum.ERROR.value: "-",
+}
+
 CHECK_COLLECTOR_CACHE_KEY_PREFIX = "check_collector"
 
 CHECK_COLLECTOR_ITEM_CACHE_TIMEOUT = 3600

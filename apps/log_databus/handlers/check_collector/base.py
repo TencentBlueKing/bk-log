@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import re
 from typing import Union
 
 from dataclasses import dataclass, asdict, fields
@@ -8,6 +9,8 @@ from apps.log_databus.constants import (
     CHECK_COLLECTOR_CACHE_KEY_PREFIX,
     CHECK_COLLECTOR_ITEM_CACHE_TIMEOUT,
     CheckStatusEnum,
+    InfoTypeEnum,
+    INFO_TYPE_PREFIX_MAPPING,
 )
 
 
@@ -75,7 +78,20 @@ class CheckCollectorRecord:
     def get_infos(self) -> str:
         if not self.is_exist():
             return ""
-        return "\n".join(self.check_record.infos)
+        last_info_prefix = ""
+        result_infos = []
+        for info in self.check_record.infos:
+            match_list = re.findall(r"\[(.*?)]", info)
+            info_type, info_prefix = match_list[0], match_list[1]
+            if info_prefix != last_info_prefix:
+                result_infos.append(f'\n{"-" * 5}{info_prefix}{"-" * 5}\n')
+                last_info_prefix = info_prefix
+
+            info = f"{INFO_TYPE_PREFIX_MAPPING[info_type]} {info}"
+
+            result_infos.append(info)
+
+        return "\n".join(result_infos)
 
     def append_info(self, info: str):
         if not self.is_exist():
@@ -84,18 +100,18 @@ class CheckCollectorRecord:
         self.check_record.infos.append(info)
         self.save_check_record()
 
-    def append_normal_info(self, info: str, prefix: str):
-        info = f"[info][{prefix}]{info}"
+    def append_base_info(self, info_type: str, info: str, prefix: str):
+        info = f"[{info_type}][{prefix}]{info}"
         self.append_info(info)
+
+    def append_normal_info(self, info: str, prefix: str):
+        self.append_base_info(InfoTypeEnum.INFO.value, info, prefix)
 
     def append_warning_info(self, info: str, prefix: str):
-        info = f"[warning][{prefix}]{info}"
-        self.append_info(info)
+        self.append_base_info(InfoTypeEnum.WARNING.value, info, prefix)
 
     def append_error_info(self, info: str, prefix: str):
-        self.change_status(CheckStatusEnum.FINISH.value)
-        info = f"[error][{prefix}]{info}"
-        self.append_info(info)
+        self.append_base_info(InfoTypeEnum.ERROR.value, info, prefix)
 
     def change_status(self, status: str):
         self.check_record.status = status
