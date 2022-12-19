@@ -33,7 +33,7 @@ from django.utils.translation import ugettext_lazy as _
 from rest_framework.exceptions import ErrorDetail, ValidationError
 
 from apps.api import BkDataAccessApi, CCApi, BcsCcApi
-from apps.api import NodeApi, TransferApi, MonitorApi
+from apps.api import NodeApi, TransferApi
 from apps.api.modules.bk_node import BKNodeApi
 from apps.constants import UserOperationActionEnum, UserOperationTypeEnum
 from apps.exceptions import ApiError, ApiRequestError, ApiResultError
@@ -2181,6 +2181,7 @@ class CollectorHandler(object):
         es_shards=settings.ES_SHARDS,
         bk_app_code=settings.APP_CODE,
         bkdata_biz_id=None,
+        is_display=True,
     ):
         collector_config_params = {
             "bk_biz_id": bk_biz_id,
@@ -2193,6 +2194,7 @@ class CollectorHandler(object):
             "data_link_id": int(data_link_id) if data_link_id else 0,
             "bk_app_code": bk_app_code,
             "bkdata_biz_id": bkdata_biz_id,
+            "is_display": is_display
         }
         bkdata_biz_id = bkdata_biz_id or bk_biz_id
         # 判断是否已存在同英文名collector
@@ -2297,12 +2299,14 @@ class CollectorHandler(object):
         allocation_min_days=0,
         storage_replies=1,
         es_shards=settings.ES_SHARDS,
+        is_display=True,
     ):
 
         collector_config_update = {
             "collector_config_name": collector_config_name,
             "category_id": category_id,
             "description": description or collector_config_name,
+            "is_display": is_display
         }
 
         bk_data_name = build_bk_data_name(
