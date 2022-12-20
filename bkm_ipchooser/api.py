@@ -58,6 +58,18 @@ class AbstractBkApi(metaclass=abc.ABCMeta):
     def search_module(params: dict = None):
         raise NotImplementedError
 
+    @staticmethod
+    def search_dynamic_group(params: dict = None):
+        raise NotImplementedError
+
+    @staticmethod
+    def execute_dynamic_group(params: dict = None):
+        raise NotImplementedError
+
+    @staticmethod
+    def bulk_execute_dynamic_group(params: dict = None):
+        raise NotImplementedError
+
 
 class BkApiProxy:
     def __init__(self):

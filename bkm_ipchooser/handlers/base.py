@@ -92,3 +92,9 @@ class BaseHandler:
             )
 
         return formatted_hosts
+
+    @classmethod
+    def sort_by_name(cls, datas: typing.List[typing.Dict]):
+        # 按照名称排序
+        # 用在 动态拓扑, 服务模板, 集群模板
+        datas.sort(key=lambda g: g["name"])

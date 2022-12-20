@@ -267,7 +267,6 @@ class BizHandler(APIModel):
                 )
             else:
                 filtered_host_list.extend([item for item in host_info_list if item["bk_host_innerip"] == ip["ip"]])
-
         biz_to_host = defaultdict(list)
         for host in filtered_host_list:
             biz_to_host[self.bk_biz_id].append(host)

@@ -5,13 +5,15 @@
 **scope**
 | 字段 | 类型 | 是否必选 | 描述  |
 |-----------|------------|--------|-------------------------|
-| scope_type | String | Yes | 资源范围类型, 枚举, 目前只有biz |
+| scope_type | String | Yes | 资源范围类型, 枚举, [biz|space] |
 | scope_id | String | Yes | 资源范围ID |
-| bk_biz_id | Int | Yes | 业务ID, 最后只会使用这个 |
+| bk_biz_id | Int | No | 业务ID, 最后只会使用这个 |
 
 <hr>
 
 ## [API] check (检查节点)
+
+用法: 用于全局根据host_id获取主机信息(fetchHostCheck)
 
 路径: /api/v1/ipchooser/host/check/
 
@@ -71,6 +73,8 @@ HTTP请求方式: `POST`, `application/json`
 <hr>
 
 ## [API] details (根据主机关键信息获取机器详情信息)
+
+用法: 获取静态拓扑根据主机host_id获取主机详情(fetchHostsDetails)
 
 路径: /api/v1/ipchooser/host/details/
 
