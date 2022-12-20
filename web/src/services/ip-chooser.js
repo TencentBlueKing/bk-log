@@ -66,6 +66,60 @@ const check = {
   method: 'post',
 };
 
+// 全局配置列表
+const globalConfig = {
+  url: '/ipchooser/config/global/',
+  method: 'get',
+};
+
+// 拉取配置
+const getConfig = {
+  url: '/ipchooser/config/batch_get/',
+  method: 'post',
+};
+
+// 更新配置
+const updateConfig = {
+  url: '/ipchooser/config/update_config/',
+  method: 'post',
+};
+
+// 拉取动态分组列表
+const dynamicGroups = {
+  url: '/ipchooser/dynamic_group/groups/',
+  method: 'post',
+};
+
+// 获取动态分组下节点
+const executeDynamicGroup = {
+  url: '/ipchooser/dynamic_group/execute/',
+  method: 'post',
+};
+
+// 获取动态分组下所有主机的Agent状态
+const groupAgentStatistics = {
+  url: '/ipchooser/dynamic_group/agent_statistics/',
+  method: 'post',
+};
+
+// 拉取模板列表
+const templates = {
+  url: '/ipchooser/template/templates/',
+  method: 'post',
+};
+
+// 获取模板下各个节点
+const templateNodes = {
+  url: '/ipchooser/template/nodes/',
+  method: 'post',
+};
+
+// 获取模板下各个主机
+const templateHosts = {
+  url: '/ipchooser/template/hosts/',
+  method: 'post',
+};
+
 export {
   trees,
   queryHosts,
@@ -74,4 +128,13 @@ export {
   queryHostIdInfos,
   details,
   check,
+  globalConfig,
+  getConfig,
+  updateConfig,
+  dynamicGroups,
+  executeDynamicGroup,
+  groupAgentStatistics,
+  templates,
+  templateNodes,
+  templateHosts,
 };

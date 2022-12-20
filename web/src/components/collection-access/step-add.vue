@@ -183,13 +183,22 @@
             <span class="font-blue">{{ formData.target_nodes.length }}</span>
             <span>{{ collectTargetTarget[formData.target_node_type + '2'] }}</span>
           </div>
-          <ip-selector-dialog
+          <!-- 目标选择器 -->
+          <log-ip-selector
+            mode="dialog"
+            :height="670"
+            :show-dialog.sync="showIpSelectorDialog"
+            :value="selectorNodes"
+            :panel-list="['staticTopo','dynamicTopo','manualInput']"
+            @change="handleTargetChange"
+          />
+          <!-- <ip-selector-dialog
             :show-dialog.sync="showIpSelectorDialog"
             :target-object-type="formData.target_object_type"
             :target-node-type="formData.target_node_type"
             :target-nodes="formData.target_nodes"
             @target-change="targetChange">
-          </ip-selector-dialog>
+          </ip-selector-dialog> -->
         </div>
         <!-- 物理环境 配置项 -->
         <config-log-set-item
@@ -508,7 +517,8 @@ import LinuxSvg from '@/images/container-icons/Linux.svg';
 import NodeSvg from '@/images/container-icons/Node.svg';
 import StdoutSvg from '@/images/container-icons/Stdout.svg';
 import WindowsSvg from '@/images/container-icons/Windows.svg';
-import ipSelectorDialog from './ip-selector-dialog';
+import LogIpSelector, { toCollectorNode, toSelectorNode } from '@/components/log-ip-selector/log-ip-selector';
+// import ipSelectorDialog from './ip-selector-dialog';
 import configLogSetItem from './components/step-add/config-log-set-item';
 import labelTargetDialog from './components/step-add/label-target-dialog';
 import containerTargetDialog from './components/step-add/container-target-dialog';
@@ -519,7 +529,8 @@ import { deepClone } from '../monitor-echarts/utils';
 
 export default {
   components: {
-    ipSelectorDialog,
+    LogIpSelector,
+    // ipSelectorDialog,
     labelTargetDialog,
     configLogSetItem,
     containerTargetDialog,
@@ -809,6 +820,14 @@ export default {
     localClusterList() {
       return this.clusterList.filter(val => (this.isNode ? !val.is_shared : true));
     },
+    // ip选择器选中节点
+    selectorNodes() {
+      const { target_node_type: type, target_nodes: nodes } = this.formData;
+      return {
+        host_list: type === 'INSTANCE' ? toSelectorNode(nodes, type) : [],
+        node_list: type === 'TOPO' ? toSelectorNode(nodes, type) : [],
+      };
+    },
   },
   watch: {
     currentEnvironment(nVal, oVal) {
@@ -986,7 +1005,7 @@ export default {
     },
     /**
      * @desc: 提交表格时验证是否通过
-     * @returns { Boolean } // 是否可以提交
+     * @return { Boolean } 是否可以提交
      */
     async submitDataValidate() {
       try { // 基础信息表格验证
@@ -1274,6 +1293,27 @@ export default {
       this.formData.target_node_type = params.target_node_type;
       this.formData.target_nodes = params.target_nodes;
       this.showIpSelectorDialog = false;
+      // 触发 bk-form 的表单验证
+      this.$refs.formItemTarget.validate('change');
+    },
+    // 采集目标选择内容变更
+    handleTargetChange(value) {
+      console.log(value, 1111);
+      const { host_list: hostList, node_list: nodeList } = value;
+      let type = '';
+      let nodes = [];
+      if (nodeList?.length) {
+        type = 'TOPO';
+        nodes = nodeList;
+      }
+      if (hostList?.length) {
+        type = 'INSTANCE';
+        nodes = hostList;
+      }
+      if (!type) return;
+
+      this.formData.target_node_type = type;
+      this.formData.target_nodes = toCollectorNode(nodes, type);
       // 触发 bk-form 的表单验证
       this.$refs.formItemTarget.validate('change');
     },
