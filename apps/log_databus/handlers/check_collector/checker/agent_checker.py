@@ -89,6 +89,7 @@ class AgentChecker(Checker):
             "return_ip_result": True,
         }
         for i in range(RETRY_TIMES):
+            self.append_normal_info(f"[获取作业执行状态] 作业: {self.job_instance_id}, 执行次数: {i + 1}")
             time.sleep(WAIT_FOR_RETRY)
             try:
                 result = JobApi.get_job_instance_status_v3(params=params, request_cookies=False)

@@ -449,7 +449,7 @@ class InfoTypeEnum(ChoicesEnum):
 
 INFO_TYPE_PREFIX_MAPPING = {
     InfoTypeEnum.INFO.value: "+",
-    InfoTypeEnum.WARNING.value: "!",
+    InfoTypeEnum.WARNING.value: "-",
     InfoTypeEnum.ERROR.value: "-",
 }
 

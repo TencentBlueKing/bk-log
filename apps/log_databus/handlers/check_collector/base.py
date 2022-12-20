@@ -87,7 +87,7 @@ class CheckCollectorRecord:
                 result_infos.append(f'\n{"-" * 5}{info_prefix}{"-" * 5}\n')
                 last_info_prefix = info_prefix
 
-            info = f"{INFO_TYPE_PREFIX_MAPPING[info_type]} {info}"
+            info = f"[{INFO_TYPE_PREFIX_MAPPING[info_type]}] {info}"
 
             result_infos.append(info)
 

@@ -34,7 +34,10 @@ class EsChecker(Checker):
             self.append_error_info(f"[TransferApi] [get_result_table_storage] 失败, err: {e}")
 
     def _run(self):
-        pass
+        self.pre_run()
+        self.get_es_client()
+        self.get_indices()
+        self.get_index_alias()
 
     def get_indices(self):
         """

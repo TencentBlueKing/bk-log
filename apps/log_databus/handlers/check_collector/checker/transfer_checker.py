@@ -3,6 +3,8 @@ import logging
 
 from django.conf import settings
 
+from apps.feature_toggle.handlers.toggle import FeatureToggleObject
+from apps.feature_toggle.plugins.constants import CHECK_COLLECTOR_TRANSFER_URL
 from apps.log_databus.constants import EtlConfig, TRANSFER_METRICS, TABLE_TRANSFER
 from config.domains import MONITOR_APIGATEWAY_ROOT
 from apps.log_databus.handlers.check_collector.checker.base_checker import Checker
@@ -54,10 +56,15 @@ class TransferChecker(Checker):
             self.get_transfer_metric(metric_name)
 
     def get_transfer_metric(self, metric_name: str):
+        monitor_host = MONITOR_APIGATEWAY_ROOT
+
+        if FeatureToggleObject.switch(CHECK_COLLECTOR_TRANSFER_URL):
+            monitor_host = FeatureToggleObject.toggle(CHECK_COLLECTOR_TRANSFER_URL).feature_config or monitor_host
+
         bk_monitor_client = Client(
             bk_app_code=settings.APP_CODE,
             bk_app_secret=settings.SECRET_KEY,
-            monitor_host=MONITOR_APIGATEWAY_ROOT,
+            monitor_host=monitor_host,
             report_host=f"{settings.BKMONITOR_CUSTOM_PROXY_IP}/",
             bk_username="admin",
         )

@@ -515,6 +515,8 @@ FEATURE_TOGGLE = {
     # 自定义指标上报
     "monitor_report": os.environ.get("BKAPP_MONITOR_REPORT", "on"),
     "bklog_es_config": "on",
+    # 一键检测工具transfer监控网关url
+    "check_collector_transfer_url": "off",
 }
 
 SAAS_MONITOR = "bk_monitorv3"
