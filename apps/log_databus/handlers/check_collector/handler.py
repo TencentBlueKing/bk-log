@@ -88,7 +88,8 @@ class CheckCollectorHandler:
 
     def run(self):
         self.pre_run()
-        self.execute_check()
+        if not self.record.have_error:
+            self.execute_check()
 
     def execute_check(self):
         agent_checker = AgentChecker(

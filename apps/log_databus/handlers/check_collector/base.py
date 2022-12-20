@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
+import socket
+from hashlib import md5
 from typing import Union
 
 from dataclasses import dataclass, asdict, fields
@@ -38,23 +40,42 @@ class CheckCollectorRecord:
         :param hosts: host字符串 example "{bk_cloud_id}:{ip},{bk_cloud_id}:{ip},{bk_cloud_id}:{ip}"
         :return: 检查结果的缓存key
         """
-        generate_key_list = [CHECK_COLLECTOR_CACHE_KEY_PREFIX, str(collector_config_id)]
+        generate_key_list = [str(collector_config_id)]
+
         if hosts:
-            generate_key_list.append(hosts)
-        return "_".join(generate_key_list)
+            hosts_mapping = {}
+            sorted_hosts = []
+            hosts = hosts.split(",")
+            for host in hosts:
+                bk_cloud_id, ip = host.split(":")
+                hosts_mapping.setdefault(bk_cloud_id, []).append(ip)
+
+            for bk_cloud_id in sorted(list(hosts_mapping.keys())):
+                sorted_ips = sorted(hosts_mapping[bk_cloud_id], key=socket.inet_aton)
+                sorted_hosts.extend([f"{bk_cloud_id}:{ip}" for ip in sorted_ips])
+
+            generate_key_list.extend(sorted_hosts)
+
+        raw_record_id = "_".join(generate_key_list)
+        new_md5 = md5()
+        new_md5.update(raw_record_id.encode(encoding="utf-8"))
+        return f"{CHECK_COLLECTOR_CACHE_KEY_PREFIX}_{new_md5.hexdigest()}"
 
     @classmethod
     def get_check_result(cls, check_record_id: str) -> Union[CheckResult, None]:
         cache_result = cache.get(check_record_id, None)
 
+        result = None
+
         if cache_result:
-            return CheckResult.from_dict(cache_result)
-        else:
-            return None
+            result = CheckResult.from_dict(cache_result)
+
+        return result
 
     def __init__(self, check_record_id: str):
         self.check_record_id = check_record_id
         self.check_record = self.get_check_result(self.check_record_id)
+        self.have_error = False
 
     def is_exist(self) -> bool:
         return self.check_record is not None
@@ -63,6 +84,7 @@ class CheckCollectorRecord:
         record = CheckResult(status=CheckStatusEnum.WAIT.value, infos=[])
         self.check_record = record
         self.save_check_record()
+        self.have_error = False
 
     def save_check_record(self):
         if not self.is_exist():
@@ -111,6 +133,7 @@ class CheckCollectorRecord:
         self.append_base_info(InfoTypeEnum.WARNING.value, info, prefix)
 
     def append_error_info(self, info: str, prefix: str):
+        self.have_error = True
         self.append_base_info(InfoTypeEnum.ERROR.value, info, prefix)
 
     def change_status(self, status: str):
