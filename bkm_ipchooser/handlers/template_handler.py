@@ -34,14 +34,14 @@ class Template:
 
     def format_templates(self, templates: List[Dict]) -> List[types.Template]:
         """格式化CC API接口获取到的模板列表"""
-        BaseHandler.add_latest_label_and_sort(templates)
+        BaseHandler.sort_by_name(templates)
         self.add_node_count(templates)
         return [
             {
                 "id": template.get("id"),
                 "name": template.get("name"),
                 "template_type": self.template_type,
-                "is_latest": template.get("is_latest"),
+                "last_time": template.get("last_time"),
                 "count": template.get("count", 0),
                 "meta": self.meta,
             }

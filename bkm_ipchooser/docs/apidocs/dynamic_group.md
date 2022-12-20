@@ -58,7 +58,7 @@ HTTP 请求方式: `POST`, `application/json`
                 "bk_biz_id": 2
             },
             "count": 27,
-            "is_latest": false,
+            "last_time": "2021-12-07T03:45:17.589Z",
             "object_id": "host",
             "object_name": "主机"
         }
@@ -99,10 +99,6 @@ HTTP 请求方式: `POST`, `application/json`
         }
     ],
     "dynamic_group_id": "aaaaaaaaaaa",
-    "meta": {
-        "scope_type": "biz",
-        "scope_id": "2"
-    },
     "start": 0,
     "page_size": 20
 }

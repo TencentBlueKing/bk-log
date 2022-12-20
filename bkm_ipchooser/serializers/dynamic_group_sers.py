@@ -5,7 +5,6 @@ from rest_framework import serializers
 
 
 class ExecuteDynamicGroupSer(base.ScopeSelectorBaseSer, base.PaginationSer):
-    meta = base.ScopeSer()
     id = serializers.CharField(label=_("动态分组ID"), required=True)
 
 

@@ -28,7 +28,7 @@ class DynamicGroupHandler:
         if dynamic_group_ids:
             groups = [group for group in groups if group["id"] in dynamic_group_ids]
         # 排序并添加是否最近更新标签
-        BaseHandler.add_latest_label_and_sort(groups)
+        BaseHandler.sort_by_name(groups)
         multi_get_dynamic_group_host_count_result = request_multi_thread(
             func=self._get_dynamic_group_host_count,
             params_list=[{"group_id": group["id"]} for group in groups],
@@ -51,7 +51,7 @@ class DynamicGroupHandler:
                 "name": group["name"],
                 "meta": cls.meta,
                 "count": group["count"],
-                "is_latest": group["is_latest"],
+                "last_time": group["last_time"],
                 # TODO: 当需要支持动态分组为集群时, 去掉这个注释
                 # "object_id": group["bk_obj_id"],
                 # "object_name": constants.ObjectType.get_member_value__alias_map().get(group["bk_obj_id"]),
