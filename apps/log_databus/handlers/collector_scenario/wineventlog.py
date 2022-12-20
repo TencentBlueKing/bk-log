@@ -51,12 +51,7 @@ class WinEventLogScenario(CollectorScenario):
                     "plugin_version": self.PLUGIN_VERSION,
                     "config_templates": [{"name": f"{self.CONFIG_NAME}.conf", "version": "latest"}],
                 },
-                "params": {
-                    "context": {
-                        "dataid": data_id,
-                        "local": [local_params],
-                    }
-                },
+                "params": {"context": {"dataid": data_id, "local": [local_params]}},
             },
         ]
         if FeatureToggleObject.switch(IS_AUTO_DEPLOY_PLUGIN):
@@ -330,6 +325,15 @@ class WinEventLogScenario(CollectorScenario):
                     "tag": "dimension",
                     "alias_name": "iterationindex",
                     "description": "迭代ID",
+                    "option": build_es_option_type("integer", es_version),
+                    "flat_field": True,
+                },
+                {
+                    "field_name": "hostId",
+                    "field_type": "float",
+                    "tag": "dimension",
+                    "alias_name": "hostid",
+                    "description": "主机ID",
                     "option": build_es_option_type("integer", es_version),
                     "flat_field": True,
                 },

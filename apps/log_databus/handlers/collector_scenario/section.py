@@ -77,12 +77,7 @@ class SectionCollectorScenario(CollectorScenario):
                     "plugin_version": self.PLUGIN_VERSION,
                     "config_templates": [{"name": f"{self.PLUGIN_NAME}.conf", "version": "latest"}],
                 },
-                "params": {
-                    "context": {
-                        "dataid": data_id,
-                        "local": [local_params],
-                    }
-                },
+                "params": {"context": {"dataid": data_id, "local": [local_params]}},
             },
         ]
 
@@ -234,6 +229,16 @@ class SectionCollectorScenario(CollectorScenario):
                     "option": {"es_type": "object", "es_include_in_all": False}
                     if es_version.startswith("5.")
                     else {"es_type": "object"},
+                },
+                {
+                    "field_name": "hostId",
+                    "field_type": "float",
+                    "tag": "dimension",
+                    "alias_name": "hostid",
+                    "description": "主机ID",
+                    "option": {"es_type": "integer", "es_include_in_all": False}
+                    if es_version.startswith("5.")
+                    else {"es_type": "integer"},
                 },
                 {
                     "field_name": "cloudId",

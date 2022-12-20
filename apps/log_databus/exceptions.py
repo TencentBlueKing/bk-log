@@ -106,7 +106,7 @@ class CollectorCreateBkdataIdException(BaseCollectorConfigException):
 
 class CollectorIllegalIPException(BaseCollectorConfigException):
     ERROR_CODE = "111"
-    MESSAGE = _("采集项包含非该业务【{bk_biz_id}】IP，异常IP列表为: {illegal_ips}")
+    MESSAGE = _("采集项包含非该业务【{bk_biz_id}】IP或主机ID，异常列表为: {illegal_ips}")
 
 
 class CollectorConfigNameENDuplicateException(BaseCollectorConfigException):
