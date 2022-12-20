@@ -48,16 +48,6 @@ class CustomCollectorScenario(CollectorScenario):
                     else {"es_type": "object"},
                 },
                 {
-                    "field_name": "hostId",
-                    "field_type": "float",
-                    "tag": "dimension",
-                    "alias_name": "hostid",
-                    "description": "主机ID",
-                    "option": {"es_type": "integer", "es_include_in_all": False}
-                    if es_version.startswith("5.")
-                    else {"es_type": "integer"},
-                },
-                {
                     "field_name": "cloudId",
                     "field_type": "float",
                     "tag": "dimension",

@@ -329,15 +329,6 @@ class WinEventLogScenario(CollectorScenario):
                     "flat_field": True,
                 },
                 {
-                    "field_name": "hostId",
-                    "field_type": "float",
-                    "tag": "dimension",
-                    "alias_name": "hostid",
-                    "description": "主机ID",
-                    "option": build_es_option_type("integer", es_version),
-                    "flat_field": True,
-                },
-                {
                     "field_name": "cloudId",
                     "field_type": "float",
                     "tag": "dimension",
