@@ -94,17 +94,18 @@ export default {
   @import '@/scss/mixins/scroller';
 
   .intro-panel {
+    width: 100%;
+    height: 100%;
+    position: relative;
+
     .right-window {
-      width: 400px;
-      height: 100vh;
+      width: 100%;
+      height: 100%;
       background: #fff;
       border: 1px solid #dcdee5;
-      position: fixed;
-      right: -400px;
-      top: 99px;
-      z-index: 9999;
+      position: absolute;
+      z-index: 99;
       color: #63656e;
-      transition: right .5s;
       padding: 16px 0 0 24px;
 
       .html-container {
