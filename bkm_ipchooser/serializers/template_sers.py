@@ -62,4 +62,7 @@ class ListNodeSer(BaseTemplateSer):
     template_id = serializers.IntegerField(help_text=_("模板ID"), required=True)
 
 
-ListHostSer = ListNodeSer
+class ListHostSer(BaseTemplateSer, base.PaginationSer):
+    """获取模板主机列表"""
+
+    id = serializers.IntegerField(help_text=_("模板ID"), required=True)

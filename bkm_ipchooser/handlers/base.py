@@ -98,3 +98,8 @@ class BaseHandler:
         # 按照名称排序
         # 用在 动态拓扑, 服务模板, 集群模板
         datas.sort(key=lambda g: g["name"])
+
+    @classmethod
+    def fill_meta(self, datas: typing.List[typing.Dict], meta: dict):
+        for data in datas:
+            data["meta"] = meta

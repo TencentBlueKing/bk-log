@@ -51,6 +51,9 @@ class Template:
     def query_template_nodes(self):
         raise NotImplementedError
 
+    def query_template_hosts(self, start: int, page_size: int):
+        raise NotImplementedError
+
     def add_node_count(self, templates: List[types.Template]):
         template_node_map = defaultdict(int)
         nodes = self.query_template_nodes()
@@ -106,12 +109,19 @@ class Template:
             hosts.extend(hosts)
         return hosts
 
-    def list_template_hosts(self) -> List[types.TemplateNode]:
+    def list_template_hosts(self, start: int, page_size: int) -> List[types.TemplateNode]:
         """获取主机列表"""
-        nodes = self.query_template_nodes()
-        nodes = [node for node in nodes if self.template_id == node.get(self.TEMPLATE_ID_KEY_MAP[self.template_type])]
-        hosts = self.node_agent_status(return_all=True)
-        return hosts
+        result = {"start": start, "page_size": page_size, "total": 0, "data": []}
+        hosts = self.query_template_hosts(start=start, page_size=page_size)
+        if not hosts or not hosts["info"]:
+            return result
+        result["total"] = hosts["count"]
+        hosts = hosts["info"]
+        TopoHandler.fill_agent_status(hosts)
+        BaseHandler.fill_meta(hosts, self.meta)
+        result["data"] = hosts
+
+        return result
 
     def query_cc_templates(self) -> List[Dict]:
         """子类实现查询CC API接口获取模板列表"""
@@ -161,6 +171,18 @@ class SetTemplate(Template):
         """调用CC接口获取集群模板"""
         return BkApi.list_set_template({"bk_biz_id": self.bk_biz_id})
 
+    def query_template_hosts(self, start: int, page_size: int) -> List[types.FormatHostInfo]:
+        params = {
+            "bk_biz_id": self.bk_biz_id,
+            "bk_set_template_ids": [self.template_id],
+            "fields": constants.CommonEnum.SIMPLE_HOST_FIELDS.value,
+            "page": {
+                "start": start,
+                "limit": page_size,
+            },
+        }
+        return BkApi.find_host_by_set_template(params)
+
     def format_template_node(self, node: Dict, bk_biz_name: str, template_name: str) -> types.TemplateNode:
         """格式化节点"""
         return dict(
@@ -209,6 +231,18 @@ class ServiceTemplate(Template):
 
     def query_template_nodes(self):
         return self.query_cc_modules()
+
+    def query_template_hosts(self, start: int, page_size: int) -> List[types.FormatHostInfo]:
+        params = {
+            "bk_biz_id": self.bk_biz_id,
+            "bk_service_template_ids": [self.template_id],
+            "fields": constants.CommonEnum.SIMPLE_HOST_FIELDS.value,
+            "page": {
+                "start": start,
+                "limit": page_size,
+            },
+        }
+        return BkApi.find_host_by_service_template(params)
 
     def format_template_node(self, node: Dict, bk_biz_name: str, template_name: str) -> types.TemplateNode:
         """格式化节点"""
@@ -270,5 +304,5 @@ class TemplateHandler:
     def list_nodes(self) -> List[types.TemplateNode]:
         return self.get_instance().list_template_nodes()
 
-    def list_hosts(self) -> List[types.HostInfo]:
-        return self.get_instance().list_template_hosts()
+    def list_hosts(self, start: int, page_size: int) -> List[types.HostInfo]:
+        return self.get_instance().list_template_hosts(start=start, page_size=page_size)

@@ -70,6 +70,22 @@ class AbstractBkApi(metaclass=abc.ABCMeta):
     def bulk_execute_dynamic_group(params: dict = None):
         raise NotImplementedError
 
+    @staticmethod
+    def find_host_by_service_template(params: dict = None):
+        raise NotImplementedError
+
+    @staticmethod
+    def bulk_find_host_by_service_template(params: dict = None):
+        raise NotImplementedError
+
+    @staticmethod
+    def find_host_by_set_template(params: dict = None):
+        raise NotImplementedError
+
+    @staticmethod
+    def bulk_find_host_by_set_template(params: dict = None):
+        raise NotImplementedError
+
 
 class BkApiProxy:
     def __init__(self):

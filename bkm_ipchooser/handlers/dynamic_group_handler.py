@@ -124,14 +124,7 @@ class DynamicGroupHandler:
         return [self._get_dynamic_group_agent_statistic(group) for group in groups]
 
     def _get_dynamic_group_agent_statistic(self, dynamic_group: dict):
-        result = {
-            "dynamic_group": dynamic_group,
-            "agent_statistics": {
-                "total_count": 0,
-                "alive_count": 0,
-                "not_alive_count": 0,
-            },
-        }
+        result = {"dynamic_group": dynamic_group}
         hosts = BkApi.bulk_execute_dynamic_group(
             {
                 "bk_biz_id": self.bk_biz_id,
@@ -142,11 +135,7 @@ class DynamicGroupHandler:
         if not hosts:
             return result
 
-        result["agent_statistics"]["total_count"] = len(hosts)
         TopoHandler.fill_agent_status(hosts)
-        for host in hosts:
-            if host["status"]:
-                result["agent_statistics"]["alive_count"] += 1
-            else:
-                result["agent_statistics"]["not_alive_count"] += 1
+        agent_statistics = TopoHandler.count_agent_status(hosts)
+        result.update(agent_statistics)
         return result

@@ -68,3 +68,18 @@ class BkApi(AbstractBkApi):
     @staticmethod
     def bulk_execute_dynamic_group(params: dict = None):
         return CCApi.execute_dynamic_group.bulk_request(params)
+
+    @staticmethod
+    def find_host_by_set_template(params: dict = None):
+        return CCApi.find_host_by_set_template(params)
+
+    def bulk_find_host_by_set_template(self, params: dict = None):
+        return CCApi.find_host_by_set_template.bulk_request(params)
+
+    @staticmethod
+    def find_host_by_service_template(params: dict = None):
+        return CCApi.find_host_by_service_template(params)
+
+    @staticmethod
+    def bulk_find_host_by_service_template(params: dict = None):
+        return CCApi.find_host_by_service_template.bulk_request(params)
