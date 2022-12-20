@@ -22,10 +22,30 @@ class TemplateSer(serializers.Serializer):
     template_type = serializers.ChoiceField(
         help_text=_("模板类型"), required=True, choices=constants.TemplateType.list_choices()
     )
-    meta = base.MetaSer(help_text=_("模板元数据"))
+    meta = base.ScopeSer(help_text=_("模板元数据"))
 
 
-ListTemplateSer = BaseTemplateSer
+class ListTemplateRequestSer(serializers.Serializer):
+    """模板列表请求"""
+
+    id = serializers.IntegerField(help_text=_("模板ID"), required=True)
+    meta = base.ScopeSer(help_text=_("模板元数据"))
+
+
+class ListTemplateSer(BaseTemplateSer):
+    """模板列表"""
+
+    service_template_list = serializers.ListField(child=ListTemplateRequestSer(), required=False, default=[])
+    set_template_list = serializers.ListField(child=ListTemplateRequestSer(), required=False, default=[])
+    template_id_list = serializers.ListField(child=serializers.IntegerField(), required=False, default=[])
+
+    def validate(self, attrs):
+        super().validate(attrs)
+        if attrs["template_type"] == constants.TemplateType.SERVICE_TEMPLATE.value:
+            attrs["template_id_list"] = [a["id"] for a in attrs["service_template_list"]]
+        if attrs["template_type"] == constants.TemplateType.SET_TEMPLATE.value:
+            attrs["template_id_list"] = [a["id"] for a in attrs["set_template_list"]]
+        return attrs
 
 
 class ListTemplateResponseSer(serializers.ListSerializer):
@@ -39,16 +59,7 @@ class ListNodeSer(BaseTemplateSer):
     获取模板节点列表
     """
 
-    template_ids = serializers.ListField(
-        help_text=_("模板ID列表"), required=False, default=[], child=serializers.IntegerField()
-    )
+    template_id = serializers.IntegerField(help_text=_("模板ID"), required=True)
 
 
-class ListAgentStatusSer(BaseTemplateSer):
-    """
-    获取模板Agent状态
-    """
-
-    template_ids = serializers.ListField(
-        help_text=_("模板ID列表"), required=False, default=[], child=serializers.IntegerField()
-    )
+ListHostSer = ListNodeSer

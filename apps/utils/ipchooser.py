@@ -56,3 +56,15 @@ class BkApi(AbstractBkApi):
     @staticmethod
     def search_module(params: dict = None):
         return CCApi.search_module.bulk_request(params)
+
+    @staticmethod
+    def search_dynamic_group(params: dict = None):
+        return CCApi.search_dynamic_group.bulk_request(params)
+
+    @staticmethod
+    def execute_dynamic_group(params: dict = None):
+        return CCApi.execute_dynamic_group(params)
+
+    @staticmethod
+    def bulk_execute_dynamic_group(params: dict = None):
+        return CCApi.execute_dynamic_group.bulk_request(params)

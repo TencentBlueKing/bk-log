@@ -6,8 +6,8 @@ from rest_framework.authentication import SessionAuthentication, BasicAuthentica
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
-from bkm_ipchooser.handlers import host_handler, topo_handler, template_handler
-from bkm_ipchooser.serializers import host_sers, topo_sers, template_sers
+from bkm_ipchooser.handlers import config_handler, host_handler, topo_handler, template_handler, dynamic_group_handler
+from bkm_ipchooser.serializers import host_sers, topo_sers, template_sers, config_sers, dynamic_group_sers
 
 try:
     from rest_framework.decorators import list_route, detail_route
@@ -74,6 +74,16 @@ class CommonViewSet(GenericViewSet):
 
         serializer = self.serializer_class or self.get_serializer_class()
         return self.params_valid(serializer, data)
+
+    def finalize_response(self, request, response, *args, **kwargs):
+        # 目前仅对 Restful Response 进行处理
+        if isinstance(response, Response):
+            response.data = {"result": True, "data": response.data, "code": 0, "message": ""}
+            response.status_code = status.HTTP_200_OK
+
+        # 返回响应头禁用浏览器的类型猜测行为
+        response.headers["x-content-type-options"] = ("X-Content-Type-Options", "nosniff")
+        return super(CommonViewSet, self).finalize_response(request, response, *args, **kwargs)
 
 
 class IpChooserTopoViewSet(CommonViewSet):
@@ -190,7 +200,7 @@ class IpChooserTemplateViewSet(CommonViewSet):
             template_handler.TemplateHandler(
                 scope_list=self.validated_data["scope_list"],
                 template_type=self.validated_data["template_type"],
-            ).list_templates()
+            ).list_templates(template_id_list=self.validated_data["template_id_list"])
         )
 
     @list_route(methods=["POST"], serializer_class=template_sers.ListNodeSer)
@@ -199,14 +209,80 @@ class IpChooserTemplateViewSet(CommonViewSet):
             template_handler.TemplateHandler(
                 scope_list=self.validated_data["scope_list"],
                 template_type=self.validated_data["template_type"],
-            ).list_nodes(template_ids=self.validated_data["template_ids"])
+                template_id=self.validated_data["template_id"],
+            ).list_nodes()
         )
 
-    @list_route(methods=["POST"], serializer_class=template_sers.ListAgentStatusSer)
-    def agent(self, request, *args, **kwargs):
+    @list_route(methods=["POST"], serializer_class=template_sers.ListHostSer)
+    def hosts(self, request, *args, **kwargs):
         return Response(
             template_handler.TemplateHandler(
                 scope_list=self.validated_data["scope_list"],
                 template_type=self.validated_data["template_type"],
-            ).list_agent_status(template_ids=self.validated_data["template_ids"])
+                template_id=self.validated_data["template_id"],
+            ).list_hosts()
+        )
+
+
+class IpChooserConfigViewSet(CommonViewSet):
+    URL_BASE_NAME = "ipchooser_config"
+    pagination_class = None
+
+    @list_route(methods=["GET"], url_path="global")
+    def global_config(self, request, *args, **kwargs):
+        return Response(config_handler.ConfigHandler().get_global_settings())
+
+    @list_route(methods=["POST"], serializer_class=config_sers.BatchGetSer)
+    def batch_get(self, request, *args, **kwargs):
+        return Response(
+            config_handler.ConfigHandler(username=request.user.username).batch_get(
+                module_list=self.validated_data["module_list"]
+            )
+        )
+
+    @list_route(methods=["POST"], serializer_class=config_sers.UpdateSer)
+    def update_config(self, request, *args, **kwargs):
+        return Response(
+            config_handler.ConfigHandler(username=request.user.username).update(
+                config=self.validated_data["settings_map"]
+            )
+        )
+
+    @list_route(methods=["POST"], serializer_class=config_sers.BatchDeleteSer)
+    def batch_delete(self, request, *args, **kwargs):
+        return Response(
+            config_handler.ConfigHandler(username=request.user.username).batch_delete(
+                module_list=self.validated_data["module_list"]
+            )
+        )
+
+
+class IpChooserDynamicGroupViewSet(CommonViewSet):
+    URL_BASE_NAME = "ipchooser_dynamic_group"
+    pagination_class = None
+
+    @list_route(methods=["POST"], url_path="groups", serializer_class=dynamic_group_sers.ListDynamicGroupSer)
+    def dynamic_groups(self, request, *args, **kwargs):
+        return Response(
+            dynamic_group_handler.DynamicGroupHandler(scope_list=self.validated_data["scope_list"]).list(
+                dynamic_group_list=self.validated_data["dynamic_group_list"]
+            )
+        )
+
+    @list_route(methods=["POST"], url_path="execute", serializer_class=dynamic_group_sers.ExecuteDynamicGroupSer)
+    def execute_dynamic_group(self, request, *args, **kwargs):
+        return Response(
+            dynamic_group_handler.DynamicGroupHandler(scope_list=self.validated_data["scope_list"]).execute(
+                dynamic_group_id=self.validated_data["id"],
+                start=self.validated_data["start"],
+                page_size=self.validated_data["page_size"],
+            )
+        )
+
+    @list_route(methods=["POST"], serializer_class=dynamic_group_sers.AgentStatistiscSer)
+    def agent_statistics(self, request, *args, **kwargs):
+        return Response(
+            dynamic_group_handler.DynamicGroupHandler(scope_list=self.validated_data["scope_list"]).agent_statistics(
+                dynamic_group_list=self.validated_data["dynamic_group_list"],
+            )
         )

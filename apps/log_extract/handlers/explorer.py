@@ -460,19 +460,24 @@ class ExplorerHandler(object):
 
     @classmethod
     def _get_topo_filter_rule(cls, ip_list):
-        return {
+        condition = {
             "condition": "OR",
-            "rules": [
-                {
-                    "condition": "AND",
-                    "rules": [
-                        {"field": "bk_host_innerip", "operator": "equal", "value": ip["ip"]},
-                        {"field": "bk_cloud_id", "operator": "equal", "value": ip["bk_cloud_id"]},
-                    ],
-                }
-                for ip in ip_list
-            ],
+            "rules": [],
         }
+
+        for ip in ip_list:
+            if ip.get("bk_host_id"):
+                rules = [
+                    {"field": "bk_host_id", "operator": "equal", "value": ip["bk_host_id"]},
+                ]
+            else:
+                rules = [
+                    {"field": "bk_host_innerip", "operator": "equal", "value": ip["ip"]},
+                    {"field": "bk_cloud_id", "operator": "equal", "value": ip["bk_cloud_id"]},
+                ]
+            condition["rules"].append({"condition": "AND", "rules": rules})
+
+        return condition
 
     @classmethod
     def get_module_by_ip(cls, bk_biz_id, ip_list):

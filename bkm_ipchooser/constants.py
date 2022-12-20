@@ -73,7 +73,13 @@ class EnhanceEnum(Enum):
 class CommonEnum(EnhanceEnum):
     SEP = ":"
     PAGE_RETURN_ALL_FLAG = -1
-    DEFAULT_HOST_FUZZY_SEARCH_FIELDS = ["bk_host_innerip", "bk_host_innerip_v6", "bk_host_name"]
+    DEFAULT_HOST_FUZZY_SEARCH_FIELDS = [
+        "bk_host_innerip",
+        "bk_host_innerip_v6",
+        "bk_host_name",
+        "bk_os_type",
+        "bk_os_name",
+    ]
     DEFAULT_HOST_FIELDS = [
         "bk_host_id",
         "bk_cloud_id",
@@ -81,6 +87,7 @@ class CommonEnum(EnhanceEnum):
         "bk_host_innerip_v6",
         "bk_host_name",
         "bk_os_type",
+        "bk_os_name",
         "bk_agent_id",
         "bk_cloud_vendor",
         "bk_mem",
@@ -104,7 +111,10 @@ class CommonEnum(EnhanceEnum):
         "bk_host_id",
         "bk_cloud_id",
         "bk_host_innerip",
-        "bk_host_innerip_v6"
+        "bk_host_innerip_v6",
+        "bk_host_name",
+        "bk_os_type",
+        "bk_os_name",
     ]
 
     @classmethod
@@ -123,10 +133,11 @@ class ScopeType(EnhanceEnum):
     """作用域类型"""
 
     BIZ = "biz"
+    SPACE = "space"
 
     @classmethod
     def _get_member__alias_map(cls) -> Dict[Enum, str]:
-        return {cls.BIZ: _("业务")}
+        return {cls.BIZ: _("业务"), cls.SPACE: _("空间")}
 
 
 class ObjectType(EnhanceEnum):
@@ -135,10 +146,11 @@ class ObjectType(EnhanceEnum):
     BIZ = "biz"
     SET = "set"
     MODULE = "module"
+    HOST = "host"
 
     @classmethod
     def _get_member__alias_map(cls) -> Dict[Enum, str]:
-        return {cls.BIZ: _("业务"), cls.SET: _("集群"), cls.MODULE: _("模块")}
+        return {cls.BIZ: _("业务"), cls.SET: _("集群"), cls.MODULE: _("模块"), cls.HOST: _("主机")}
 
 
 class AgentStatusType(EnhanceEnum):
@@ -161,6 +173,26 @@ class TemplateType(EnhanceEnum):
     @classmethod
     def _get_member__alias_map(cls) -> Dict[Enum, str]:
         return {cls.SERVICE_TEMPLATE: _("服务模版"), cls.SET_TEMPLATE: _("集群模版")}
+
+
+class TimeEnum(EnhanceEnum):
+    """时间枚举"""
+
+    SECOND = 1
+    MINUTE = SECOND * 60
+    HOUR = MINUTE * 60
+    DAY = HOUR * 24
+    WEEK = DAY * 7
+
+    @classmethod
+    def _get_member__alias_map(cls) -> Dict[Enum, str]:
+        return {
+            cls.SECOND: _("秒"),
+            cls.MINUTE: _("分钟"),
+            cls.HOUR: _("小时"),
+            cls.DAY: _("天"),
+            cls.WEEK: _("周"),
+        }
 
 
 PROC_STATE_TUPLE = ("RUNNING", "UNKNOWN", "TERMINATED", "NOT_INSTALLED", "UNREGISTER", "REMOVED", "MANUAL_STOP")
