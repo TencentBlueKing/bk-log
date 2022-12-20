@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import typing
-import time
 
 from bkm_ipchooser import constants, types
 from bkm_ipchooser.api import BkApi
@@ -95,21 +94,7 @@ class BaseHandler:
         return formatted_hosts
 
     @classmethod
-    def add_latest_label_and_sort(cls, datas: typing.List[typing.Dict]):
-        # 添加最近使用标签, 并按照名称排序
-        # 用在 动态拓扑, 服务模板, 集群模板
-        now_time_unix = time.time()
-        # 先根据是否为最近更新分组，再按照名称排序
-        latest_groups = []
-        other_groups = []
-        for data in datas:
-            data["is_latest"] = False
-            last_time = data["last_time"]
-            last_time_unix = time.mktime(time.strptime(last_time, "%Y-%m-%dT%H:%M:%S.%fZ"))
-            if last_time_unix >= now_time_unix - constants.TimeEnum.DAY.value:
-                data["is_latest"] = True
-            other_groups.append(data)
+    def sort_by_name(cls, datas: typing.List[typing.Dict]):
         # 按照名称排序
-        latest_groups.sort(key=lambda g: g["name"])
-        other_groups.sort(key=lambda g: g["name"])
-        datas = latest_groups + other_groups
+        # 用在 动态拓扑, 服务模板, 集群模板
+        datas.sort(key=lambda g: g["name"])

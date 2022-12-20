@@ -48,6 +48,7 @@ HTTP 请求方式: `POST`, `application/json`
         "id": 41,
         "name": "TEMPLATE_1",
         "template_type": "SET_TEMPLATE",
+        "last_time": "2021-09-07T04:51:51.51Z",
         "meta": {
             "scope_type": "biz",
             "scope_id": "2",
