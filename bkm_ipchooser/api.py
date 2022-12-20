@@ -86,6 +86,14 @@ class AbstractBkApi(metaclass=abc.ABCMeta):
     def bulk_find_host_by_set_template(params: dict = None):
         raise NotImplementedError
 
+    @staticmethod
+    def find_module_with_relation(params: dict = None):
+        raise NotImplementedError
+
+    @staticmethod
+    def bulk_find_module_with_relation(params: dict = None):
+        raise NotImplementedError
+
 
 class BkApiProxy:
     def __init__(self):

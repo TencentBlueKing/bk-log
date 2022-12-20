@@ -209,8 +209,8 @@ class IpChooserTemplateViewSet(CommonViewSet):
             template_handler.TemplateHandler(
                 scope_list=self.validated_data["scope_list"],
                 template_type=self.validated_data["template_type"],
-                template_id=self.validated_data["template_id"],
-            ).list_nodes()
+                template_id=self.validated_data["id"],
+            ).list_nodes(start=self.validated_data["start"], page_size=self.validated_data["page_size"])
         )
 
     @list_route(methods=["POST"], serializer_class=template_sers.ListHostSer)

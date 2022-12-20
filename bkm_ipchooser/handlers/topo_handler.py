@@ -366,12 +366,10 @@ class TopoHandler:
                 "rules": [{"field": "bk_set_id", "operator": "equal", "value": node["instance_id"]}],
             }
         if object_id == constants.ObjectType.MODULE.value:
-            params["module_property_filter"] = (
-                {
-                    "condition": "AND",
-                    "rules": [{"field": "bk_module_id", "operator": "in", "value": node["instance_id"]}],
-                },
-            )
+            params["module_property_filter"] = {
+                "condition": "AND",
+                "rules": [{"field": "bk_module_id", "operator": "equal", "value": node["instance_id"]}],
+            }
         hosts_with_topo = BkApi.list_biz_hosts_topo(params)
         if not hosts_with_topo:
             return result

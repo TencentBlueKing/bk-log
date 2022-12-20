@@ -54,12 +54,10 @@ class ListTemplateResponseSer(serializers.ListSerializer):
     child = TemplateSer()
 
 
-class ListNodeSer(BaseTemplateSer):
-    """
-    获取模板节点列表
-    """
+class ListNodeSer(BaseTemplateSer, base.PaginationSer):
+    """获取模板节点列表"""
 
-    template_id = serializers.IntegerField(help_text=_("模板ID"), required=True)
+    id = serializers.IntegerField(help_text=_("模板ID"), required=True)
 
 
 class ListHostSer(BaseTemplateSer, base.PaginationSer):
