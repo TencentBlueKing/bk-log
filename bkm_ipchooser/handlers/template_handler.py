@@ -200,7 +200,7 @@ class ServiceTemplate(Template):
 
     def __init__(self, scope_list: types.ScopeList, template_id: int = None):
         super().__init__(
-            scope_list=scope_list, template_id=template_id, template_type=constants.TemplateType.SET_TEMPLATE.value
+            scope_list=scope_list, template_id=template_id, template_type=constants.TemplateType.SERVICE_TEMPLATE.value
         )
 
     def query_cc_templates(self):
@@ -208,7 +208,7 @@ class ServiceTemplate(Template):
         return BkApi.list_service_template({"bk_biz_id": self.bk_biz_id})
 
     def query_template_nodes(self):
-        return self.query_cc_sets()
+        return self.query_cc_modules()
 
     def format_template_node(self, node: Dict, bk_biz_name: str, template_name: str) -> types.TemplateNode:
         """格式化节点"""

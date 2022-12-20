@@ -120,9 +120,16 @@ class TasksHandler(object):
             )
 
         # step 3：创建任务并启动pipeline
+        formatted_ip_list = []
+        for ip in ip_list:
+            if ip.get("bk_host_id"):
+                formatted_ip_list.append(str(ip["bk_host_id"]))
+            else:
+                formatted_ip_list.append(f"{ip['bk_cloud_id']}:{ip['ip']}")
+
         params = {
             "bk_biz_id": bk_biz_id,
-            "ip_list": [f"{ip['bk_cloud_id']}:{ip['ip']}" for ip in ip_list],
+            "ip_list": formatted_ip_list,
             "file_path": request_file_list,
             "filter_type": filter_type,
             "filter_content": {} if not filter_type else filter_content,
@@ -305,12 +312,15 @@ class TasksHandler(object):
     @staticmethod
     def get_ip_and_bk_cloud_id(task_list):
         for task in task_list:
-            if ":" not in "".join(task["ip_list"]):
-                continue
-            task["ip_list"] = [
-                {"ip": ip.split(":")[TASK_IP_INDEX], "bk_cloud_id": int(ip.split(":")[TASK_BK_CLOUD_ID_INDEX])}
-                for ip in task["ip_list"]
-            ]
+            ip_list = []
+            for ip in task["ip_list"]:
+                if ":" not in ip:
+                    ip_list.append({"bk_host_id": ip})
+                else:
+                    ip_list.append(
+                        {"ip": ip.split(":")[TASK_IP_INDEX], "bk_cloud_id": int(ip.split(":")[TASK_BK_CLOUD_ID_INDEX])}
+                    )
+            task["ip_list"] = ip_list
         return task_list
 
     @classmethod

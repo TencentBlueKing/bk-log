@@ -25,6 +25,7 @@ import re
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 from rest_framework.fields import ListField
 
 from apps.log_search.constants import InstanceTypeEnum
@@ -54,8 +55,14 @@ def is_file_path_legal(file_path):
 
 
 class BkIpSerializer(serializers.Serializer):
-    ip = serializers.IPAddressField(label=_("业务机器ip"))
-    bk_cloud_id = serializers.IntegerField(label=_("业务机器云区域id"))
+    bk_host_id = serializers.IntegerField(label=_("主机ID"), required=False)
+    ip = serializers.IPAddressField(label=_("业务机器ip"), required=False)
+    bk_cloud_id = serializers.IntegerField(label=_("业务机器云区域id"), required=False)
+
+    def validate(self, attrs):
+        if "bk_host_id" in attrs or ("ip" in attrs and "bk_cloud_id" in attrs):
+            return attrs
+        raise ValidationError(_("bk_host_id 和 ip+bk_cloud_id 至少提供一项"))
 
 
 class ExplorerListSerializer(serializers.Serializer):
