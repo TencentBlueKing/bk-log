@@ -89,7 +89,7 @@ class TopoHandler:
     ) -> typing.Dict:
         """
         查询主机
-        :param bk_biz_id: 业务 ID
+        :param scope_list
         :param readable_node_list: 拓扑节点
         :param conditions: 查询条件，TODO: 暂不支持
         :param fields: 字段
@@ -139,6 +139,7 @@ class TopoHandler:
 
         # 获取主机信息
         resp = cls.query_cc_hosts(
+            bk_biz_id,
             readable_node_list,
             conditions,
             start,
@@ -284,7 +285,8 @@ class TopoHandler:
         :param return_status: 返回agent状态
         :return:
         """
-
+        if not readable_node_list:
+            return {"count": 0, "info": []}
         # 查询主机
         tree_node: types.TreeNode = cls.format2tree_node(bk_biz_id, readable_node_list[0])
 

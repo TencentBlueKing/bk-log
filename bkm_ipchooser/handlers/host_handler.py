@@ -4,6 +4,7 @@ import typing
 from bkm_ipchooser import constants, types
 from bkm_ipchooser.api import BkApi
 from bkm_ipchooser.handlers.base import BaseHandler
+
 from bkm_ipchooser.handlers.topo_handler import TopoHandler
 
 
