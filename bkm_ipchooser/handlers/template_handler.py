@@ -32,9 +32,7 @@ class Template:
         self.meta = BaseHandler.get_meta_data(self.bk_biz_id)
 
     def list_templates(self, template_id_list: List[int] = None) -> List[types.Template]:
-        templates = self.query_cc_templates()
-        if template_id_list:
-            templates = [template for template in templates if template["id"] in template_id_list]
+        templates = self.query_cc_templates(template_id_list)
         return self.format_templates(templates)
 
     def format_templates(self, templates: List[Dict]) -> List[types.Template]:
@@ -115,7 +113,7 @@ class Template:
 
         return result
 
-    def query_cc_templates(self) -> List[Dict]:
+    def query_cc_templates(self, template_id_list: List[int] = None) -> List[Dict]:
         """子类实现查询CC API接口获取模板列表"""
         raise NotImplementedError
 
@@ -164,9 +162,12 @@ class SetTemplate(Template):
         }
         return BkApi.search_set(params)
 
-    def query_cc_templates(self):
+    def query_cc_templates(self, template_id_list: List[int] = None):
         """调用CC接口获取集群模板"""
-        return BkApi.list_set_template({"bk_biz_id": self.bk_biz_id})
+        params = {"bk_biz_id": self.bk_biz_id}
+        if template_id_list:
+            params["set_template_ids"] = template_id_list
+        return BkApi.list_set_template(params)
 
     def query_template_hosts(self, start: int, page_size: int) -> List[types.FormatHostInfo]:
         params = {
@@ -254,9 +255,12 @@ class ServiceTemplate(Template):
             scope_list=scope_list, template_id=template_id, template_type=constants.TemplateType.SERVICE_TEMPLATE.value
         )
 
-    def query_cc_templates(self):
+    def query_cc_templates(self, template_id_list: List[int] = None):
         """调用CC接口获取服务模板"""
-        return BkApi.list_service_template({"bk_biz_id": self.bk_biz_id})
+        params = {"bk_biz_id": self.bk_biz_id}
+        if template_id_list:
+            params["service_template_ids"] = template_id_list
+        return BkApi.list_service_template(params)
 
     def query_template_nodes(self, start: int, page_size: int) -> List[types.TemplateNode]:
         params = {
