@@ -20,28 +20,24 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import logging
+
 from apps.api import GseApi
-from home_application.constants import (
-    DEFAULT_BK_USERNAME,
-    CHECK_STORY_2,
-    KAFKA_SSL_CONFIG_ITEMS,
-    DEFAULT_GSE_API_PLAT_NAME,
-)
-from home_application.handlers.collector_checker.base import BaseStory
+from apps.log_databus.constants import DEFAULT_BK_USERNAME, DEFAULT_GSE_API_PLAT_NAME, KAFKA_SSL_CONFIG_ITEMS
+from apps.log_databus.handlers.check_collector.checker.base_checker import Checker
 
 logger = logging.getLogger()
 
 
-class CheckRouteStory(BaseStory):
-    name = CHECK_STORY_2
+class RouteChecker(Checker):
+    CHECKER_NAME = "route checker"
 
-    def __init__(self, bk_data_id: int):
-        super().__init__()
+    def __init__(self, bk_data_id: int, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.bk_data_id = bk_data_id
         self.route = []
         self.kafka = []
 
-    def check(self):
+    def _run(self):
         self.get_route()
 
     def get_route(self):
@@ -49,9 +45,9 @@ class CheckRouteStory(BaseStory):
         for r in self.route:
             self.query_stream_to(r)
         if not self.kafka:
-            self.report.add_error(f"bk_data_id[{self.bk_data_id}]对应的route为空")
+            self.append_error_info(f"bk_data_id[{self.bk_data_id}]对应的route为空")
         for r in self.kafka:
-            self.report.add_info(
+            self.append_normal_info(
                 "route_name: {}, stream_name: {}, topic_name: {}, ip: {}, port: {}".format(
                     r["route_name"], r["stream_name"], r["kafka_topic_name"], r["ip"], r["port"]
                 )
@@ -69,7 +65,7 @@ class CheckRouteStory(BaseStory):
         except Exception as e:
             message = f"[请求GseAPI] [query_route] 获取route[bk_data_id: {self.bk_data_id}]失败, err: {e}"
             logger.error(message)
-            self.report.add_error(message)
+            self.append_error_info(message)
 
     def query_stream_to(self, route_info):
         stream_id = route_info["stream_to"]["stream_to_id"]
@@ -103,4 +99,4 @@ class CheckRouteStory(BaseStory):
         except Exception as e:
             message = f"[请求GseAPI] [query_stream_to] 获取stream[{stream_id}]失败, err: {e}"
             logger.error(message)
-            self.report.add_error(message)
+            self.append_error_info(message)

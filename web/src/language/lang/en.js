@@ -1502,6 +1502,7 @@ export default {
   不可删除: 'not deleted',
   自动转换成正确的英文名格式: 'Automatically convert to the correct English name format',
   自动转换: 'Automatically convert',
+  一键检测: 'One key detection',
   新建配置: 'Add new config',
   确定要删除当前字段配置: 'Make sure to delete the current field configuration',
   应用: 'Apply',

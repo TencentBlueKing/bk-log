@@ -39,8 +39,11 @@
     min-width: 170px;
     max-height: 300px;
     overflow-y: auto;
+
+    /* stylelint-disable-next-line declaration-no-important */
     padding-bottom: 0 !important;
 
+    /* stylelint-disable-next-line scss/at-extend-no-missing-placeholder */
     @extend .dropdown-list;
 
     .add-new-group {
@@ -81,7 +84,9 @@
   .eye-catching {
     // margin: 0 6px;
     border-top: 1px solid #dcdee5;
-    color: #F56350 !important;
+
+    /* stylelint-disable-next-line declaration-no-important */
+    color: #f56350 !important;
     // padding: 6px 6px !important;
   }
 

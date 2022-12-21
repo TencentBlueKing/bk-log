@@ -19,26 +19,20 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-import logging
-
-from apps.log_esquery.utils.es_client import get_es_client
-
-# from elasticsearch import Elasticsearch
-
 from apps.api import TransferApi
+from apps.log_databus.constants import RETRY_TIMES, INDEX_WRITE_PREFIX
+from apps.log_databus.handlers.check_collector.checker.base_checker import Checker
 from apps.log_databus.handlers.storage import StorageHandler
+from apps.log_esquery.utils.es_client import get_es_client
 from apps.log_measure.exceptions import EsConnectFailException
-from home_application.constants import CHECK_STORY_5, INDEX_WRITE_PREFIX, RETRY_TIMES
-from home_application.handlers.collector_checker.base import BaseStory
-
-logger = logging.getLogger()
 
 
-class CheckESStory(BaseStory):
-    name = CHECK_STORY_5
+class EsChecker(Checker):
 
-    def __init__(self, table_id, bk_data_name):
-        super().__init__()
+    CHECKER_NAME = "es checker"
+
+    def __init__(self, table_id, bk_data_name, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.table_id = table_id
         self.bk_data_name = bk_data_name
         self.result_table = {}
@@ -57,9 +51,9 @@ class CheckESStory(BaseStory):
             self.cluster_config = self.result_table.get("cluster_config", {})
             self.cluster_id = self.cluster_config.get("cluster_id", 0)
         except Exception as e:
-            self.report.add_error(f"[TransferApi] [get_result_table_storage] 失败, err: {e}")
+            self.append_error_info(f"[TransferApi] [get_result_table_storage] 失败, err: {e}")
 
-    def check(self):
+    def _run(self):
         self.pre_run()
         self.get_es_client()
         self.get_indices()
@@ -77,18 +71,18 @@ class CheckESStory(BaseStory):
                 if indices is not None:
                     break
             except Exception as e:  # disable
-                self.report.add_warning(f"获取物理索引失败第{i+1}次, err: {e}")
+                self.append_warning_info(f"获取物理索引失败第{i + 1}次, err: {e}")
         if not indices:
-            self.report.add_error("获取物理索引为空")
+            self.append_error_info("获取物理索引为空")
             return
         for i in indices:
             if i["index_pattern"] == self.bk_data_name:
                 self.indices = i["indices"]
         if not self.indices:
-            self.report.add_error("获取物理索引为空")
+            self.append_error_info("获取物理索引为空")
             return
         for i in self.indices:
-            self.report.add_info("物理索引: {}, 健康: {}, 状态: {}".format(i["index"], i["health"], i["status"]))
+            self.append_normal_info("物理索引: {}, 健康: {}, 状态: {}".format(i["index"], i["health"], i["status"]))
 
     def get_es_client(self):
         es_client = None
@@ -110,10 +104,10 @@ class CheckESStory(BaseStory):
                 if es_client is not None:
                     break
             except Exception as e:
-                self.report.add_warning(f"创建es_client失败第{i + 1}次, err: {e}")
+                self.append_warning_info(f"创建es_client失败第{i + 1}次, err: {e}")
 
         if es_client and not es_client.ping(params={"request_timeout": 10}):
-            self.report.add_error(EsConnectFailException().message)
+            self.append_error_info(EsConnectFailException().message)
             return
 
         self.es_client = es_client
@@ -121,18 +115,18 @@ class CheckESStory(BaseStory):
     def get_index_alias(self):
         """获取物理索引的alias情况"""
         if not self.es_client:
-            self.report.add_error("es_client不存在, 跳过检查index_alias")
+            self.append_error_info("es_client不存在, 跳过检查index_alias")
             return
         index_alias_info_dict = self.es_client.indices.get_alias(index=[i["index"] for i in self.indices])
         for i in self.indices:
             # index 物理索引名
             physical_index = i["index"]
             if not index_alias_info_dict.get(physical_index):
-                self.report.add_error(f"物理索引: {physical_index} 不存在alias别名")
+                self.append_error_info(f"物理索引: {physical_index} 不存在alias别名")
                 continue
 
             if physical_index.startswith(INDEX_WRITE_PREFIX):
-                self.report.add_warning(f"集群存在 write_ 开头的索引: \n{physical_index}")
+                self.append_warning_info(f"集群存在 write_ 开头的索引: \n{physical_index}")
                 return
 
-            self.report.add_info(f"物理索引: {physical_index} alias别名正常")
+            self.append_normal_info(f"物理索引: {physical_index} alias别名正常")

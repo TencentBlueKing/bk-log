@@ -1386,3 +1386,12 @@ class ContainerCollectorConfigToYamlSerializer(serializers.Serializer):
     configs = serializers.ListSerializer(label=_("容器日志配置"), child=ContainerConfigSerializer())
     add_pod_label = serializers.BooleanField(label=_("上报时是否把标签带上"), default=False)
     extra_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=LablesSerializer())
+
+
+class CheckCollectorSerializer(serializers.Serializer):
+    collector_config_id = serializers.IntegerField(label=_("采集项ID"))
+    hosts = serializers.CharField(label=_("指定检查某些主机"), required=False)
+
+
+class GetCollectorCheckResultSerializer(serializers.Serializer):
+    check_record_id = serializers.CharField(label=_("采集项检查唯一标识"))

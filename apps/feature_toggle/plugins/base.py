@@ -175,3 +175,14 @@ class EsConfig(FeatureToggleBase):
 
     def action(self):
         pass
+
+
+@register
+class CheckCollectorTransferUrl(FeatureToggleBase):
+    target = "check_collector_transfer_url"
+
+    def set_status(self, param: dict) -> dict:
+        return param
+
+    def action(self):
+        pass

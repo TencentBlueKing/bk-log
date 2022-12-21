@@ -19,45 +19,29 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-import json
+from rest_framework import serializers
+from rest_framework.response import Response
+
+from apps.generic import APIViewSet
+from apps.log_databus.handlers.check_collector.base import CheckCollectorRecord
+from apps.log_databus.handlers.check_collector.handler import async_run_check
+from apps.log_databus.serializers import CheckCollectorSerializer, GetCollectorCheckResultSerializer
+from apps.utils.drf import list_route
 
 
-class Report(object):
-    def __init__(self, name, info: list = None, warning: list = None, error: list = None):
-        self.name = name
-        self.info = info if info else []
-        self.warning = warning if warning else []
-        self.error = error if error else []
+class CheckCollectorViewSet(APIViewSet):
+    serializer_class = serializers.Serializer
 
-    def has_problem(self):
-        return self.error != []
+    @list_route(methods=["POST"], url_path="get_check_collector_infos")
+    def get_check_collector_infos(self, request, *args, **kwargs):
+        data = self.params_valid(GetCollectorCheckResultSerializer)
+        record = CheckCollectorRecord(**data)
+        result = {"infos": record.get_infos(), "finished": record.finished}
+        return Response(result)
 
-    def add_info(self, message: str):
-        self.info.append(message)
-
-    def add_warning(self, message: str):
-        self.warning.append(message)
-
-    def add_error(self, message: str):
-        self.error.append(message)
-
-    def add_report(self, report):
-        self.info.extend(report.info)
-        self.warning.extend(report.warning)
-        self.error.extend(report.error)
-
-    def __str__(self):
-        return json.dumps(
-            {"report_name": self.name, "info": self.info, "warning": self.warning, "error": self.error},
-            ensure_ascii=False,
-        )
-
-
-class BaseStory(object):
-    name = ""
-
-    def __init__(self):
-        self.report = Report(self.name)
-
-    def get_report(self):
-        return self.report
+    @list_route(methods=["POST"], url_path="run_check_collector")
+    def run_check_collector(self, request, *args, **kwargs):
+        data = self.params_valid(CheckCollectorSerializer)
+        key = CheckCollectorRecord.generate_check_record_id(**data)
+        async_run_check.delay(**data)
+        return Response({"check_record_id": key})
