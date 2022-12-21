@@ -31,6 +31,12 @@ class Template:
         self.bk_biz_id = [scope["bk_biz_id"] for scope in self.scope_list][0]
         self.meta = BaseHandler.get_meta_data(self.bk_biz_id)
 
+    def list_templates(self, template_id_list: List[int] = None) -> List[types.Template]:
+        templates = self.query_cc_templates()
+        if template_id_list:
+            templates = [template for template in templates if template["id"] in template_id_list]
+        return self.format_templates(templates)
+
     def format_templates(self, templates: List[Dict]) -> List[types.Template]:
         """格式化CC API接口获取到的模板列表"""
         BaseHandler.sort_by_name(templates)
@@ -79,12 +85,20 @@ class Template:
             return result
         nodes = nodes["info"]
         nodes = [self.format_template_node(node) for node in nodes]
-        result["data"] = TopoHandler.agent_statistics(nodes)
+        result["data"] = nodes
         return result
 
-    def template_agent_statistics(self, template_ids: List[int]) -> List[Dict]:
+    def agent_statistics(self, template_id_list: List[int]) -> List[Dict]:
         """统计模板下主机的agent状态"""
-        # TODO: 实现回查多个模板的Agent状态
+        templates = self.list_templates(template_id_list=template_id_list)
+        params_list = [{"template": template} for template in templates]
+        template_agent_result = batch_request.request_multi_thread(
+            self.template_agent_statistics, params_list=params_list, get_data=lambda x: x
+        )
+        return template_agent_result
+
+    def template_agent_statistics(self, template: Dict) -> List[Dict]:
+        """统计模板下主机的agent状态"""
         raise NotImplementedError
 
     def list_template_hosts(self, start: int, page_size: int) -> List[types.TemplateNode]:
@@ -186,6 +200,17 @@ class SetTemplate(Template):
         result["data"] = host_list
         return result
 
+    def template_agent_statistics(self, template: Dict) -> List[Dict]:
+        """统计模板下主机的agent状态"""
+        result = {"set_template": {"id": template["id"], "name": template["name"], "meta": self.meta}}
+
+        host_list = self.fetch_template_host_total(
+            template["id"], fields=constants.CommonEnum.SIMPLE_HOST_FIELDS.value
+        )["data"]
+        TopoHandler.fill_agent_status(host_list)
+        result.update(TopoHandler.count_agent_status(host_list))
+        return result
+
     def fetch_template_node_total(self, template_id: int) -> Dict:
         """
         获取模板下所有节点
@@ -259,6 +284,17 @@ class ServiceTemplate(Template):
         }
         return BkApi.find_host_by_service_template(params)
 
+    def template_agent_statistics(self, template: Dict) -> List[Dict]:
+        """统计模板下主机的agent状态"""
+        result = {"service_template": {"id": template["id"], "name": template["name"], "meta": self.meta}}
+
+        host_list = self.fetch_template_host_total(
+            template["id"], fields=constants.CommonEnum.SIMPLE_HOST_FIELDS.value
+        )["data"]
+        TopoHandler.fill_agent_status(host_list)
+        result.update(TopoHandler.count_agent_status(host_list))
+        return result
+
     def fetch_template_node_total(self, template_id: int) -> Dict:
         """
         获取模板下所有节点
@@ -270,7 +306,7 @@ class ServiceTemplate(Template):
             "bk_biz_id": self.bk_biz_id,
             "fields": constants.CommonEnum.DEFAULT_MODULE_FIELDS.value,
             "condition": {
-                "search_module": self.template_id,
+                "service_template_id": self.template_id,
             },
         }
         node_list = BkApi.bulk_search_module(params)
@@ -329,14 +365,13 @@ class TemplateHandler:
         }.get(self.template_type)(scope_list=self.scope_list, template_id=self.template_id)
 
     def list_templates(self, template_id_list: List[int] = None) -> List[types.Template]:
-        handler = self.get_instance()
-        templates = handler.query_cc_templates()
-        if template_id_list:
-            templates = [template for template in templates if template["id"] in template_id_list]
-        return handler.format_templates(templates)
+        return self.get_instance().list_templates(template_id_list=template_id_list)
 
     def list_nodes(self, start: int, page_size: int) -> List[types.TemplateNode]:
         return self.get_instance().list_template_nodes(start=start, page_size=page_size)
 
     def list_hosts(self, start: int, page_size: int) -> List[types.HostInfo]:
         return self.get_instance().list_template_hosts(start=start, page_size=page_size)
+
+    def agent_statistics(self, template_id_list: List[int] = None) -> List[Dict]:
+        return self.get_instance().agent_statistics(template_id_list=template_id_list)

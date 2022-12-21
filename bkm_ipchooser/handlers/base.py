@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import typing
 
+from pypinyin import lazy_pinyin
+
 from bkm_ipchooser import constants, types
 from bkm_ipchooser.api import BkApi
 from bkm_ipchooser.query import resource
@@ -97,7 +99,7 @@ class BaseHandler:
     def sort_by_name(cls, datas: typing.List[typing.Dict]):
         # 按照名称排序
         # 用在 动态拓扑, 服务模板, 集群模板
-        datas.sort(key=lambda g: g["name"])
+        datas.sort(key=lambda g: lazy_pinyin(g["name"]))
 
     @classmethod
     def fill_meta(self, datas: typing.List[typing.Dict], meta: dict):

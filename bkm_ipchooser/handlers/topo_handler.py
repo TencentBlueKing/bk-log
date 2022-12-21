@@ -182,7 +182,8 @@ class TopoHandler:
             index += 1
 
         try:
-            status_map = BkApi.get_agent_status({"hosts": hosts})
+            # 添加no_request参数, 多线程调用时，保证用户信息不漏传
+            status_map = BkApi.get_agent_status({"hosts": hosts, "no_request": True})
 
             for ip_cloud, detail in status_map.items():
                 cc_hosts[host_map[ip_cloud]]["status"] = detail["bk_agent_alive"]
