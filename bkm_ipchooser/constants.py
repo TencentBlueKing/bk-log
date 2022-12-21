@@ -116,6 +116,7 @@ class CommonEnum(EnhanceEnum):
         "bk_os_type",
         "bk_os_name",
     ]
+    FETCH_HOST_COUNT_FIELDS = ["bk_host_id"]
 
     @classmethod
     def _get_member__alias_map(cls) -> Dict[Enum, str]:
@@ -126,6 +127,8 @@ class CommonEnum(EnhanceEnum):
             cls.DEFAULT_HOST_FIELDS: _("主机列表默认返回字段"),
             cls.DEFAULT_SET_FIELDS: _("集群列表默认返回字段"),
             cls.DEFAULT_MODULE_FIELDS: _("模块列表默认返回字段"),
+            cls.SIMPLE_HOST_FIELDS: _("主机列表简单返回字段"),
+            cls.FETCH_HOST_COUNT_FIELDS: _("查询只为了统计主机数量限定返回bk_host_id减少请求时间"),
         }
 
 

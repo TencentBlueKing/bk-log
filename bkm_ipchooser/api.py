@@ -55,7 +55,15 @@ class AbstractBkApi(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @staticmethod
+    def bulk_search_set(params: dict = None):
+        raise NotImplementedError
+
+    @staticmethod
     def search_module(params: dict = None):
+        raise NotImplementedError
+
+    @staticmethod
+    def bulk_search_module(params: dict = None):
         raise NotImplementedError
 
     @staticmethod
@@ -68,6 +76,22 @@ class AbstractBkApi(metaclass=abc.ABCMeta):
 
     @staticmethod
     def bulk_execute_dynamic_group(params: dict = None):
+        raise NotImplementedError
+
+    @staticmethod
+    def find_host_by_service_template(params: dict = None):
+        raise NotImplementedError
+
+    @staticmethod
+    def bulk_find_host_by_service_template(params: dict = None):
+        raise NotImplementedError
+
+    @staticmethod
+    def find_host_by_set_template(params: dict = None):
+        raise NotImplementedError
+
+    @staticmethod
+    def bulk_find_host_by_set_template(params: dict = None):
         raise NotImplementedError
 
 
