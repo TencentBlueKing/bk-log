@@ -297,7 +297,7 @@ HTTP 请求方式: `POST`, `application/json`
 |-----------|------------|--------|-------------------------|
 | object_id | String | No | 节点类型 ID |
 | instance_id | String | No | 节点实例 ID |
-| scope | | | 参考公共参数 scope |
+| meta | Dict | No | 元数据meta |
 
 ### 请求参数示例
 
@@ -325,7 +325,7 @@ HTTP 请求方式: `POST`, `application/json`
     "data": [
         {
             "node": {"meta": { "scope_type": "biz", "scope_id": 2, "bk_biz_id": 2 }, "instance_id": 2, "object_id": "biz"},
-            "agent_statistics": {"alive_count": 100, "no_alive_count": 200, "total_count": 300},
+            "agent_statistics": {"alive_count": 100, "not_alive_count": 200, "total_count": 300},
         }
     ],
     "request_id": "c17ae1b76dc47a86",

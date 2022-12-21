@@ -94,6 +94,7 @@ HTTP请求方式: `POST`, `application/json`
 | cloud_id | Int | No | 云区域ID |
 | ip | String | No | IPv4 协议下的主机IP |
 | host_id | String | No | 主机 ID，优先取 `host_id`，否则取 `ip` + `cloud_id` |
+| meta | Dict | No | Meta元数据 |
 
 
 ### 请求参数示例
@@ -116,27 +117,37 @@ HTTP请求方式: `POST`, `application/json`
 
 ```json
 {
-    "success": True,
+    "result": true,
+    "data": [
+        {
+            "meta": {
+                "scope_type": "biz",
+                "scope_id": "2",
+                "bk_biz_id": 2
+            },
+            "host_id": 1,
+            "ip": "10.0.1.7",
+            "ipv6": "",
+            "cloud_id": 0,
+            "cloud_vendor": "",
+            "agent_id": "",
+            "host_name": "host_name",
+            "os_name": "1",
+            "alive": 1,
+            "cloud_area": {
+                "id": 0,
+                "name": "default area"
+            },
+            "biz": {
+                "id": 2,
+                "name": "蓝鲸"
+            },
+            "bk_mem": 32011,
+            "bk_disk": 245,
+            "bk_cpu": 8
+        }
+    ],
     "code": 0,
-    "error_msg": "成功",
-    "data": {
-        "start": 0,
-        "page_size": 10,
-        "total": 1,
-        "data": [
-            {
-                "meta": {"scope_type": "biz", "scope_id": 2, "bk_biz_id": 2},
-                "host_id": 355675,
-                "ip": "127.0.0.1",
-                "ipv6": "",
-                "host_name": "",
-                "alive": 0,
-                "cloud_area": {"id": 2, "name": "ababababa"},
-                "biz": {"id": 2, "name": "蓝鲸"},
-                "os_name": "",
-            }
-        ],
-    },
-    "request_id": "c17ae1b76dc47a86",
+    "message": ""
 }
 ```

@@ -35,7 +35,7 @@ class ScopeSer(serializers.Serializer):
 class TreeNodeSer(serializers.Serializer):
     object_id = serializers.CharField(help_text=_("节点类型ID"))
     instance_id = serializers.IntegerField(help_text=_("节点实例ID"))
-    meta = ScopeSer()
+    meta = ScopeSer(help_text=_("Meta元数据"), required=False)
 
 
 class HostSearchConditionSer(serializers.Serializer):
@@ -110,7 +110,7 @@ class QueryHostsBaseSer(PaginationSer):
 
 
 class HostInfoWithMetaSer(serializers.Serializer):
-    meta = ScopeSer()
+    meta = ScopeSer(help_text=_("Meta元数据"), required=False)
     cloud_id = serializers.IntegerField(help_text=_("云区域 ID"), required=False)
     ip = serializers.IPAddressField(help_text=_("IPv4 协议下的主机IP"), required=False, protocol="ipv4")
     host_id = serializers.IntegerField(help_text=_("主机 ID，优先取 `host_id`，否则取 `ip` + `cloud_id`"), required=False)
