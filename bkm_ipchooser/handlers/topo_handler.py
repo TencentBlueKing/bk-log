@@ -63,11 +63,19 @@ class TopoHandler:
     def query_path(
         scope_list: types.ScopeList, node_list: typing.List[types.TreeNode]
     ) -> typing.List[typing.List[types.TreeNode]]:
+        result = []
+        meta = scope_list[0]
         if not node_list:
-            return []
+            return result
         bk_biz_id = scope_list[0]["bk_biz_id"]
         topo_tool.TopoTool.find_topo_node_paths(bk_biz_id, node_list)
-        return node_list
+        for node in node_list:
+            _node_result = []
+            for node_path in node["node_path"]:
+                node_path["meta"] = meta
+                result.append(node_path)
+            result.append(_node_result)
+        return result
 
     @classmethod
     def query_hosts(
