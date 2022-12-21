@@ -63,6 +63,10 @@ class AbstractBkApi(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @staticmethod
+    def bulk_search_module(params: dict = None):
+        raise NotImplementedError
+
+    @staticmethod
     def search_dynamic_group(params: dict = None):
         raise NotImplementedError
 
@@ -88,14 +92,6 @@ class AbstractBkApi(metaclass=abc.ABCMeta):
 
     @staticmethod
     def bulk_find_host_by_set_template(params: dict = None):
-        raise NotImplementedError
-
-    @staticmethod
-    def find_module_with_relation(params: dict = None):
-        raise NotImplementedError
-
-    @staticmethod
-    def bulk_find_module_with_relation(params: dict = None):
         raise NotImplementedError
 
 

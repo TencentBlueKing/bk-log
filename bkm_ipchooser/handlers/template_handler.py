@@ -242,10 +242,10 @@ class ServiceTemplate(Template):
                 "limit": page_size,
             },
             "condition": {
-                "bk_service_template_ids": [self.template_id],
+                "service_template_id": self.template_id,
             },
         }
-        return BkApi.find_module_with_relation(params)
+        return BkApi.search_module(params)
 
     def query_template_hosts(self, start: int, page_size: int) -> List[types.FormatHostInfo]:
         params = {
@@ -270,10 +270,10 @@ class ServiceTemplate(Template):
             "bk_biz_id": self.bk_biz_id,
             "fields": constants.CommonEnum.DEFAULT_MODULE_FIELDS.value,
             "condition": {
-                "bk_service_template_ids": [self.template_id],
+                "search_module": self.template_id,
             },
         }
-        node_list = BkApi.bulk_find_module_with_relation(params)
+        node_list = BkApi.bulk_search_module(params)
         if not node_list:
             return result
 

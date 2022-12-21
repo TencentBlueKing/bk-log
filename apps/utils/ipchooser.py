@@ -62,6 +62,10 @@ class BkApi(AbstractBkApi):
         return CCApi.search_module(params)
 
     @staticmethod
+    def bulk_search_module(params: dict = None):
+        return CCApi.search_module.bulk_request(params)
+
+    @staticmethod
     def search_dynamic_group(params: dict = None):
         return CCApi.search_dynamic_group.bulk_request(params)
 
@@ -88,11 +92,3 @@ class BkApi(AbstractBkApi):
     @staticmethod
     def bulk_find_host_by_service_template(params: dict = None):
         return CCApi.find_host_by_service_template.bulk_request(params)
-
-    @staticmethod
-    def find_module_with_relation(params: dict = None):
-        return CCApi.find_module_with_relation(params)
-
-    @staticmethod
-    def bulk_find_module_with_relation(params: dict = None):
-        return CCApi.find_module_with_relation.bulk_request(params)
