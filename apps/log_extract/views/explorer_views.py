@@ -24,6 +24,7 @@ from apps.utils.drf import list_route
 from apps.generic import APIViewSet
 from apps.log_extract.handlers.explorer import ExplorerHandler
 from apps.log_extract import serializers
+from bkm_ipchooser.serializers import topo_sers
 
 
 class ExplorerViewSet(APIViewSet):
@@ -233,3 +234,13 @@ class ExplorerViewSet(APIViewSet):
         """
         data = self.params_valid(serializers.ExplorerListTopo)
         return Response(ExplorerHandler().list_accessible_topo(bk_biz_id=data["bk_biz_id"]))
+
+    @list_route(methods=["POST"], url_path="tree")
+    def list_accessible_tree(self, request, *args, **kwargs):
+        """
+        @api {get} /log_extract/explorer/tree/ 04_explorer-tree列表(过滤后) 基于通用实现扩展
+        @apiName list_accessible_tree
+        @apiGroup 18_extract
+        """
+        data = self.params_valid(topo_sers.TreesRequestSer)
+        return Response(ExplorerHandler().list_accessible_tree(scope_list=data["scope_list"]))

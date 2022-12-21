@@ -38,6 +38,9 @@ from apps.log_extract.models import Strategies
 from apps.utils.local import get_request_username
 from apps.exceptions import ApiResultError
 from apps.log_extract.constants import JOB_API_PERMISSION_CODE
+from bkm_ipchooser.handlers import topo_handler
+from bkm_ipchooser.query import resource
+from bkm_ipchooser.tools import topo_tool
 
 
 class ExplorerHandler(object):
@@ -235,6 +238,50 @@ class ExplorerHandler(object):
         # 合并过滤后的topo
         combined_topo = self.combin_filter_topo(user_topo_list, format_bizs_set)
         return combined_topo
+
+    @classmethod
+    def check_node(cls, node, auth_info):
+        if node["bk_obj_id"] == "biz" and node["bk_inst_id"] in auth_info["auth_topo"]["bizs"]:
+            return True
+        if node["bk_obj_id"] == "set" and node["bk_inst_id"] in auth_info["auth_topo"]["sets"]:
+            return True
+        if node["bk_obj_id"] == "module" and (
+            node["bk_inst_name"] in auth_info["auth_modules"] or node["bk_inst_id"] in auth_info["auth_topo"]["modules"]
+        ):
+            return True
+        return False
+
+    @classmethod
+    def filter_nodes(cls, nodes, auth_info):
+        filtered_nodes = []
+        for node in nodes:
+            if cls.check_node(node, auth_info):
+                filtered_nodes.append(node)
+            else:
+                node["child"] = cls.filter_nodes(node["child"], auth_info)
+                if node["child"]:
+                    filtered_nodes.append(node)
+        return filtered_nodes
+
+    def list_accessible_tree(self, scope_list):
+        if not scope_list:
+            return []
+
+        request_user = get_request_username()
+        bk_biz_id = scope_list[0]["bk_biz_id"]
+        origin_tree = resource.ResourceQueryHelper.get_topo_tree(bk_biz_id, return_all=True)
+
+        # 获取策略
+        auth_info = self.get_auth_info(request_user, bk_biz_id)
+
+        # 过滤用户有权限的节点
+        filtered_nodes = self.filter_nodes([origin_tree], auth_info)
+
+        # 对拓扑树进行格式化
+        formatted_tree = topo_handler.TopoHandler.format_tree(
+            topo_tool.TopoTool.get_topo_tree_with_count(bk_biz_id, return_all=True, topo_tree=filtered_nodes[0])
+        )
+        return formatted_tree
 
     @staticmethod
     def add_dot(file_type):
