@@ -2,10 +2,10 @@
 import logging
 import typing
 from collections import defaultdict
+from copy import deepcopy
 
 from django.core.cache import cache
 
-from bkm_ipchooser.api import BkApi
 from bkm_ipchooser import constants, types
 from bkm_ipchooser.query import resource
 
@@ -17,36 +17,25 @@ class TopoTool:
 
     @staticmethod
     def find_topo_node_paths(bk_biz_id: int, node_list: typing.List[types.TreeNode]):
-        """
-        填写节点路径, 需要格式化之后的节点列表
-        """
+        def _find_topo_node_paths(
+            _cur_node: types.TreeNode, _cur_path: typing.List[types.TreeNode], _hit_inst_ids: typing.Set
+        ):
+            if _cur_node["bk_inst_id"] in inst_id__node_map:
+                inst_id__node_map[_cur_node["bk_inst_id"]]["bk_path"] = deepcopy(_cur_path)
+                _hit_inst_ids.add(_cur_node["bk_inst_id"])
+                # 全部命中后提前返回
+                if len(_hit_inst_ids) == len(inst_id__node_map.keys()):
+                    return
 
-        def _build_node_key(object_id, instance_id) -> str:
-            return f"{object_id}-{instance_id}"
+            for _child_node in _cur_node.get("child") or []:
+                _cur_path.append(_child_node)
+                _find_topo_node_paths(_child_node, _cur_path, _hit_inst_ids)
+                # 以 del 代替 [:-1]，防止后者产生 list 对象导致路径重复压栈
+                del _cur_path[-1]
 
-        params = {
-            "bk_biz_id": bk_biz_id,
-            "bk_nodes": [
-                {
-                    "bk_obj_id": node["object_id"],
-                    "bk_inst_id": node["instance_id"],
-                }
-                for node in node_list
-            ],
-        }
-        topo_node_paths = BkApi.find_topo_node_paths(params)
-        if not topo_node_paths:
-            return
-        node_path_map = {}
-        for topo_node_path in topo_node_paths:
-            node_key = _build_node_key(topo_node_path["bk_obj_id"], topo_node_path["bk_inst_id"])
-            node_path = [TopoTool.format_topo_node(bk_path) for bk_path in topo_node_path["bk_paths"][0]]
-            node_path.append(TopoTool.format_topo_node(topo_node_path))
-            node_path_map[node_key] = node_path
-
-        for node in node_list:
-            node_key = _build_node_key(node["object_id"], node["instance_id"])
-            node["node_path"] = node_path_map[node_key]
+        topo_tree: types.TreeNode = resource.ResourceQueryHelper.get_topo_tree(bk_biz_id)
+        inst_id__node_map: typing.Dict[int, types.TreeNode] = {bk_node["bk_inst_id"]: bk_node for bk_node in node_list}
+        _find_topo_node_paths(topo_tree, [topo_tree], set())
         return node_list
 
     @classmethod
