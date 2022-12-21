@@ -123,6 +123,7 @@ class IpChooserTopoViewSet(CommonViewSet):
     def query_hosts(self, request, *args, **kwargs):
         return Response(
             topo_handler.TopoHandler.query_hosts(
+                scope_list=self.validated_data["scope_list"],
                 readable_node_list=self.validated_data["node_list"],
                 conditions=self.validated_data["conditions"],
                 start=self.validated_data["start"],
@@ -140,6 +141,7 @@ class IpChooserTopoViewSet(CommonViewSet):
     def query_host_id_infos(self, request, *args, **kwargs):
         return Response(
             topo_handler.TopoHandler.query_host_id_infos(
+                scope_list=self.validated_data["scope_list"],
                 readable_node_list=self.validated_data["node_list"],
                 conditions=self.validated_data["conditions"],
                 start=self.validated_data["start"],
@@ -149,7 +151,11 @@ class IpChooserTopoViewSet(CommonViewSet):
 
     @list_route(methods=["POST"], serializer_class=topo_sers.AgentStatisticsRequestSer)
     def agent_statistics(self, request, *args, **kwargs):
-        return Response(topo_handler.TopoHandler.agent_statistics(node_list=self.validated_data["node_list"]))
+        return Response(
+            topo_handler.TopoHandler.agent_statistics(
+                bk_biz_id=self.validated_data["scope_list"][0]["bk_biz_id"], node_list=self.validated_data["node_list"]
+            )
+        )
 
 
 class IpChooserHostViewSet(CommonViewSet):
