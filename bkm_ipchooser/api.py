@@ -94,6 +94,10 @@ class AbstractBkApi(metaclass=abc.ABCMeta):
     def bulk_find_host_by_set_template(params: dict = None):
         raise NotImplementedError
 
+    @staticmethod
+    def find_topo_node_paths(params: dict = None):
+        raise NotImplementedError
+
 
 class BkApiProxy:
     def __init__(self):

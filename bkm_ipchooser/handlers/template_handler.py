@@ -83,6 +83,7 @@ class Template:
             return result
         nodes = nodes["info"]
         nodes = [self.format_template_node(node) for node in nodes]
+        self.fill_node_path(nodes)
         result["data"] = nodes
         return result
 
@@ -107,9 +108,7 @@ class Template:
             return result
         result["total"] = hosts["count"]
         hosts = hosts["info"]
-        TopoHandler.fill_agent_status(hosts)
-        BaseHandler.fill_meta(hosts, self.meta)
-        result["data"] = hosts
+        result["data"] = BaseHandler.format_hosts(hosts, self.bk_biz_id)
 
         return result
 
@@ -138,6 +137,41 @@ class Template:
     def format_template_node(self, node: Dict) -> types.TemplateNode:
         """子类实现模板节点格式化"""
         raise NotImplementedError
+
+    def fill_node_path(self, node_list: List[Dict]):
+        """
+        填写节点路径, 需要格式化之后的节点列表
+        """
+
+        def _build_node_key(object_id, instance_id) -> str:
+            return f"{object_id}-{instance_id}"
+
+        params = {
+            "bk_biz_id": self.bk_biz_id,
+            "bk_nodes": [
+                {
+                    "bk_obj_id": node["object_id"],
+                    "bk_inst_id": node["instance_id"],
+                }
+                for node in node_list
+            ],
+        }
+        topo_node_paths = BkApi.find_topo_node_paths(params)
+        if not topo_node_paths:
+            return
+        node_path_map = {}
+        for topo_node_path in topo_node_paths:
+            node_key = _build_node_key(topo_node_path["bk_obj_id"], topo_node_path["bk_inst_id"])
+            node_path = (
+                "/".join([bk_path["bk_inst_name"] for bk_path in topo_node_path["bk_paths"][0]])
+                + "/"
+                + topo_node_path["bk_inst_name"]
+            )
+            node_path_map[node_key] = node_path
+
+        for node in node_list:
+            node_key = _build_node_key(node["object_id"], node["instance_id"])
+            node["node_path"] = node_path_map[node_key]
 
 
 class SetTemplate(Template):
@@ -173,7 +207,7 @@ class SetTemplate(Template):
         params = {
             "bk_biz_id": self.bk_biz_id,
             "bk_set_template_ids": [self.template_id],
-            "fields": constants.CommonEnum.SIMPLE_HOST_FIELDS.value,
+            "fields": constants.CommonEnum.DEFAULT_HOST_FIELDS.value,
             "page": {
                 "start": start,
                 "limit": page_size,
@@ -242,8 +276,6 @@ class SetTemplate(Template):
             object_id=constants.ObjectType.SET.value,
             object_name=constants.ObjectType.get_member_value__alias_map().get(constants.ObjectType.SET.value),
             meta=self.meta,
-            # TODO: node_path待研究
-            node_path=node.get("bk_set_name"),
         )
 
 
@@ -280,7 +312,7 @@ class ServiceTemplate(Template):
         params = {
             "bk_biz_id": self.bk_biz_id,
             "bk_service_template_ids": [self.template_id],
-            "fields": constants.CommonEnum.SIMPLE_HOST_FIELDS.value,
+            "fields": constants.CommonEnum.DEFAULT_HOST_FIELDS.value,
             "page": {
                 "start": start,
                 "limit": page_size,
@@ -349,7 +381,6 @@ class ServiceTemplate(Template):
             object_id=constants.ObjectType.MODULE.value,
             object_name=constants.ObjectType.get_member_value__alias_map().get(constants.ObjectType.MODULE.value),
             meta=self.meta,
-            node_path=node.get("bk_module_name"),
         )
 
 
