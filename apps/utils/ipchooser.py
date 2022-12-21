@@ -96,3 +96,7 @@ class BkApi(AbstractBkApi):
     @staticmethod
     def find_topo_node_paths(params: dict = None):
         return CCApi.find_topo_node_paths(params)
+
+    @staticmethod
+    def list_service_category(params: dict = None):
+        return CCApi.list_service_category(params)
