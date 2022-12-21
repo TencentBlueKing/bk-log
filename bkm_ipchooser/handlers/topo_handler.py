@@ -190,6 +190,27 @@ class TopoHandler:
             logger.exception("fill_agent_status exception: %s", e)
 
     @classmethod
+    def count_agent_status(cls, cc_hosts):
+        # fill_agent_status 之后，统计主机状态
+        result = {
+            "agent_statistics": {
+                "total_count": 0,
+                "alive_count": 0,
+                "not_alive_count": 0,
+            }
+        }
+        if not cc_hosts:
+            return result
+
+        result["agent_statistics"]["total_count"] = len(cc_hosts)
+        for cc_host in cc_hosts:
+            if cc_host.get("status", constants.AgentStatusType.NO_ALIVE.value) == constants.AgentStatusType.ALIVE.value:
+                result["agent_statistics"]["alive_count"] += 1
+            else:
+                result["agent_statistics"]["not_alive_count"] += 1
+        return result
+
+    @classmethod
     def fill_cloud_name(cls, cc_hosts):
         if not cc_hosts:
             return
@@ -331,7 +352,7 @@ class TopoHandler:
             "agent_statistics": {
                 "total_count": 0,
                 "alive_count": 0,
-                "no_alive_count": 0,
+                "not_alive_count": 0,
             },
         }
         object_id = node["object_id"]
@@ -344,13 +365,11 @@ class TopoHandler:
                 "condition": "AND",
                 "rules": [{"field": "bk_set_id", "operator": "equal", "value": node["instance_id"]}],
             }
-        if object == constants.ObjectType.MODULE.value:
-            params["module_property_filter"] = (
-                {
-                    "condition": "AND",
-                    "rules": [{"field": "bk_module_id", "operator": "in", "value": node["instance_id"]}],
-                },
-            )
+        if object_id == constants.ObjectType.MODULE.value:
+            params["module_property_filter"] = {
+                "condition": "AND",
+                "rules": [{"field": "bk_module_id", "operator": "equal", "value": node["instance_id"]}],
+            }
         hosts_with_topo = BkApi.list_biz_hosts_topo(params)
         if not hosts_with_topo:
             return result
@@ -370,6 +389,6 @@ class TopoHandler:
             if host_status.get("bk_agent_alive") == constants.AgentStatusType.ALIVE.value:
                 result["agent_statistics"]["alive_count"] += 1
             else:
-                result["agent_statistics"]["no_alive_count"] += 1
+                result["agent_statistics"]["not_alive_count"] += 1
 
         return result

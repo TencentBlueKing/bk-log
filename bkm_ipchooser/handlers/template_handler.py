@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 import logging
 from typing import List, Dict, Union
-from collections import defaultdict
 
 from bkm_ipchooser import constants, types
 from bkm_ipchooser.api import BkApi
-from bkm_ipchooser.query import resource
+from bkm_ipchooser.tools import batch_request
 from bkm_ipchooser.handlers.base import BaseHandler
 from bkm_ipchooser.handlers.topo_handler import TopoHandler
 
@@ -35,7 +34,7 @@ class Template:
     def format_templates(self, templates: List[Dict]) -> List[types.Template]:
         """格式化CC API接口获取到的模板列表"""
         BaseHandler.sort_by_name(templates)
-        self.add_node_count(templates)
+        self.fill_host_count(templates)
         return [
             {
                 "id": template.get("id"),
@@ -48,101 +47,84 @@ class Template:
             for template in templates
         ]
 
-    def query_template_nodes(self):
+    def query_template_nodes(self, start: int, page_size: int):
+        """分页查询模板下的节点列表"""
         raise NotImplementedError
 
-    def add_node_count(self, templates: List[types.Template]):
-        template_node_map = defaultdict(int)
-        nodes = self.query_template_nodes()
-        for node in nodes:
-            template_id = node.get(self.TEMPLATE_ID_KEY_MAP[self.template_type])
-            template_node_map[template_id] += 1
-        for template in templates:
-            template["count"] = template_node_map.get(template["id"], 0)
+    def query_template_hosts(self, start: int, page_size: int):
+        raise NotImplementedError
 
-    def list_template_nodes(self) -> List[types.TemplateNode]:
-        """获取节点列表"""
-        bk_biz_name = resource.ResourceQueryHelper.fetch_biz_list([self.bk_biz_id])[0]["bk_biz_name"]
-        template_name = ""
-        for template in self.query_cc_templates():
-            if template["id"] == self.template_id:
-                template_name = template["name"]
-                break
-        nodes = self.query_template_nodes()
-        nodes = [
-            self.format_template_node(node, bk_biz_name, template_name)
-            for node in nodes
-            if self.template_id == node.get(self.TEMPLATE_ID_KEY_MAP[self.template_type])
+    def fill_host_count(self, templates: List[types.Template]):
+        """填充模板下主机数量"""
+        params_list = [
+            {
+                "template_id": template["id"],
+                "fields": constants.CommonEnum.FETCH_HOST_COUNT_FIELDS.value,
+            }
+            for template in templates
         ]
-        node_agent_status = self.node_agent_status()
-        for node in nodes:
-            node_id = node["instance_id"]
-            hosts = node_agent_status.get(node_id, [])
-            node["total_count"] = len(hosts)
-            node["not_alive_count"] = len(
-                [host for host in hosts if host["status"] != constants.AgentStatusType.ALIVE.value]
-            )
-            node["alive_count"] = node["total_count"] - node["not_alive_count"]
-        return nodes
+        template_host_result = batch_request.request_multi_thread(
+            func=self.fetch_template_host_total, params_list=params_list, get_data=lambda x: x
+        )
+        template_host_map = {i["id"]: len(i["data"]) for i in template_host_result}
+        for template in templates:
+            template["count"] = template_host_map.get(template["id"], 0)
 
-    def node_agent_status(self, return_all: bool = False) -> List[Dict]:
-        result = defaultdict(list)
-        nodes = self.query_cc_sets()
-        nodes = [node for node in nodes if self.template_id == node.get(self.TEMPLATE_ID_KEY_MAP[self.template_type])]
-        node_info = {node[self.NODE_ID_KEY_MAP[self.template_type]]: node for node in nodes}
-        node_ids = list(node_info.keys())
-        hosts = self._list_biz_hosts_topo(node_ids)
-        for host in hosts:
-            host = self._get_host_with_topo(host, node_ids)
-            result[host["node_id"]].append(host)
-        for hosts in result.values():
-            TopoHandler.fill_agent_status(hosts)
-
-        if not return_all:
+    def list_template_nodes(self, start: int, page_size: int) -> List[types.TemplateNode]:
+        """获取节点列表"""
+        result = {"start": start, "page_size": page_size, "total": 0, "data": []}
+        result["total"] = len(self.fetch_template_node_total(self.template_id)["data"])
+        nodes = self.query_template_nodes(start=start, page_size=page_size)
+        if not nodes or not nodes["info"]:
             return result
+        nodes = nodes["info"]
+        nodes = [self.format_template_node(node) for node in nodes]
+        result["data"] = TopoHandler.agent_statistics(nodes)
+        return result
 
-        hosts = []
-        for hosts in result.values():
-            hosts.extend(hosts)
-        return hosts
+    def template_agent_statistics(self, template_ids: List[int]) -> List[Dict]:
+        """统计模板下主机的agent状态"""
+        # TODO: 实现回查多个模板的Agent状态
+        raise NotImplementedError
 
-    def list_template_hosts(self) -> List[types.TemplateNode]:
-        """获取主机列表"""
-        nodes = self.query_template_nodes()
-        nodes = [node for node in nodes if self.template_id == node.get(self.TEMPLATE_ID_KEY_MAP[self.template_type])]
-        hosts = self.node_agent_status(return_all=True)
-        return hosts
+    def list_template_hosts(self, start: int, page_size: int) -> List[types.TemplateNode]:
+        """获取主机列表, 带分页"""
+        result = {"start": start, "page_size": page_size, "total": 0, "data": []}
+        hosts = self.query_template_hosts(start=start, page_size=page_size)
+        if not hosts or not hosts["info"]:
+            return result
+        result["total"] = hosts["count"]
+        hosts = hosts["info"]
+        TopoHandler.fill_agent_status(hosts)
+        BaseHandler.fill_meta(hosts, self.meta)
+        result["data"] = hosts
+
+        return result
 
     def query_cc_templates(self) -> List[Dict]:
         """子类实现查询CC API接口获取模板列表"""
         raise NotImplementedError
 
+    def fetch_template_node_total(self, template_id: int) -> Dict:
+        """
+        子类实现获取模板下所有节点
+        param: template_id: 模板ID
+        param: fields: 需要返回的字段, 默认返回所有字段, 当只为了统计总数的时候, 可以只返回bk_set_id
+        """
+        raise NotImplementedError
+
+    def fetch_template_host_total(
+        self, template_id: int, fields: List[str] = constants.CommonEnum.SIMPLE_HOST_FIELDS.value
+    ) -> Dict:
+        """
+        子类实现获取模板下所有主机
+        param: template_id: 模板ID
+        param: fields: 需要返回的字段, 默认返回所有字段, 当只为了统计总数的时候, 可以只返回bk_host_id
+        """
+        raise NotImplementedError
+
     def format_template_node(self, node: Dict) -> types.TemplateNode:
         """子类实现模板节点格式化"""
-        raise NotImplementedError
-
-    def query_cc_sets(self) -> List[Dict]:
-        """查询CC API接口获取集群列表"""
-        params = {
-            "bk_biz_id": self.bk_biz_id,
-            "fields": constants.CommonEnum.DEFAULT_SET_FIELDS.value,
-        }
-        return BkApi.search_set(params)
-
-    def query_cc_modules(self) -> List[Dict]:
-        """查询CC API接口获取模块列表"""
-        params = {
-            "bk_biz_id": self.bk_biz_id,
-            "fields": constants.CommonEnum.DEFAULT_MODULE_FIELDS.value,
-        }
-        return BkApi.search_module(params)
-
-    def _list_biz_hosts_topo(self, node_ids: List[int] = None) -> List:
-        """子类重写获取主机列表"""
-        raise NotImplementedError
-
-    def _get_host_with_topo(self, host: Dict, node_ids: List[int] = None):
-        """子类重写添加主机拓扑信息"""
         raise NotImplementedError
 
 
@@ -154,14 +136,78 @@ class SetTemplate(Template):
             scope_list=scope_list, template_id=template_id, template_type=constants.TemplateType.SET_TEMPLATE.value
         )
 
-    def query_template_nodes(self):
-        return self.query_cc_sets()
+    def query_template_nodes(self, start: int, page_size: int) -> List[types.TemplateNode]:
+        params = {
+            "bk_biz_id": self.bk_biz_id,
+            "fields": constants.CommonEnum.DEFAULT_SET_FIELDS.value,
+            "page": {
+                "start": start,
+                "limit": page_size,
+            },
+            "condition": {
+                "set_template_id": self.template_id,
+            },
+        }
+        return BkApi.search_set(params)
 
     def query_cc_templates(self):
         """调用CC接口获取集群模板"""
         return BkApi.list_set_template({"bk_biz_id": self.bk_biz_id})
 
-    def format_template_node(self, node: Dict, bk_biz_name: str, template_name: str) -> types.TemplateNode:
+    def query_template_hosts(self, start: int, page_size: int) -> List[types.FormatHostInfo]:
+        params = {
+            "bk_biz_id": self.bk_biz_id,
+            "bk_set_template_ids": [self.template_id],
+            "fields": constants.CommonEnum.SIMPLE_HOST_FIELDS.value,
+            "page": {
+                "start": start,
+                "limit": page_size,
+            },
+        }
+        return BkApi.find_host_by_set_template(params)
+
+    def fetch_template_host_total(
+        self, template_id: int, fields: List[str] = constants.CommonEnum.SIMPLE_HOST_FIELDS.value
+    ) -> Dict:
+        result = {
+            "id": template_id,
+            "data": [],
+        }
+        params = {
+            "bk_biz_id": self.bk_biz_id,
+            "bk_set_template_ids": [template_id],
+            "fields": fields,
+            # 此处添加no_request参数，避免多线程调用时, 用户信息被覆盖
+            "no_request": True,
+        }
+        host_list = BkApi.bulk_find_host_by_set_template(params)
+        if not host_list:
+            return result
+        result["data"] = host_list
+        return result
+
+    def fetch_template_node_total(self, template_id: int) -> Dict:
+        """
+        获取模板下所有节点
+        param: template_id: 模板ID
+        param: fields: 需要返回的字段, 默认返回所有字段, 当只为了统计总数的时候, 可以只返回bk_set_id
+        """
+        result = {"template_id": template_id, "data": []}
+        params = {
+            "bk_biz_id": self.bk_biz_id,
+            "fields": constants.CommonEnum.DEFAULT_SET_FIELDS.value,
+            "condition": {
+                "set_template_id": self.template_id,
+            },
+        }
+        node_list = BkApi.bulk_search_set(params)
+        if not node_list:
+            return result
+
+        result["data"] = node_list
+        return result
+
+    def format_template_node(self, node: Dict) -> types.TemplateNode:
         """格式化节点"""
         return dict(
             instance_id=node.get("bk_set_id"),
@@ -170,29 +216,9 @@ class SetTemplate(Template):
             object_id=constants.ObjectType.SET.value,
             object_name=constants.ObjectType.get_member_value__alias_map().get(constants.ObjectType.SET.value),
             meta=self.meta,
-            node_path="{}/{}/{}".format(bk_biz_name, node.get("bk_set_name"), template_name),
+            # TODO: node_path待研究
+            node_path=node.get("bk_set_name"),
         )
-
-    def _list_biz_hosts_topo(self, node_ids: List[int] = None) -> List[Dict]:
-        """获取主机列表"""
-        params = {
-            "bk_biz_id": self.bk_biz_id,
-            "set_property_filter": {
-                "condition": "AND",
-                "rules": [{"field": "bk_set_id", "operator": "in", "value": node_ids}],
-            },
-            "fields": constants.CommonEnum.SIMPLE_HOST_FIELDS.value,
-        }
-        return BkApi.list_biz_hosts_topo(params)
-
-    def _get_host_with_topo(self, host: Dict, node_ids: List[int] = None):
-        """获取主机拓扑"""
-        result = host["host"]
-        for _set in host["topo"]:
-            if _set["bk_set_id"] in node_ids:
-                result["node_id"] = _set["bk_set_id"]
-                result["node_name"] = _set["bk_set_name"]
-        return result
 
 
 class ServiceTemplate(Template):
@@ -207,10 +233,74 @@ class ServiceTemplate(Template):
         """调用CC接口获取服务模板"""
         return BkApi.list_service_template({"bk_biz_id": self.bk_biz_id})
 
-    def query_template_nodes(self):
-        return self.query_cc_modules()
+    def query_template_nodes(self, start: int, page_size: int) -> List[types.TemplateNode]:
+        params = {
+            "bk_biz_id": self.bk_biz_id,
+            "fields": constants.CommonEnum.DEFAULT_MODULE_FIELDS.value,
+            "page": {
+                "start": start,
+                "limit": page_size,
+            },
+            "condition": {
+                "service_template_id": self.template_id,
+            },
+        }
+        return BkApi.search_module(params)
 
-    def format_template_node(self, node: Dict, bk_biz_name: str, template_name: str) -> types.TemplateNode:
+    def query_template_hosts(self, start: int, page_size: int) -> List[types.FormatHostInfo]:
+        params = {
+            "bk_biz_id": self.bk_biz_id,
+            "bk_service_template_ids": [self.template_id],
+            "fields": constants.CommonEnum.SIMPLE_HOST_FIELDS.value,
+            "page": {
+                "start": start,
+                "limit": page_size,
+            },
+        }
+        return BkApi.find_host_by_service_template(params)
+
+    def fetch_template_node_total(self, template_id: int) -> Dict:
+        """
+        获取模板下所有节点
+        param: template_id: 模板ID
+        param: fields: 需要返回的字段, 默认返回所有字段, 当只为了统计总数的时候, 可以只返回bk_module_id
+        """
+        result = {"template_id": template_id, "data": []}
+        params = {
+            "bk_biz_id": self.bk_biz_id,
+            "fields": constants.CommonEnum.DEFAULT_MODULE_FIELDS.value,
+            "condition": {
+                "search_module": self.template_id,
+            },
+        }
+        node_list = BkApi.bulk_search_module(params)
+        if not node_list:
+            return result
+
+        result["data"] = node_list
+        return result
+
+    def fetch_template_host_total(
+        self, template_id: int, fields: List[str] = constants.CommonEnum.SIMPLE_HOST_FIELDS.value
+    ) -> Dict:
+        result = {
+            "id": template_id,
+            "data": [],
+        }
+        params = {
+            "bk_biz_id": self.bk_biz_id,
+            "bk_service_template_ids": [template_id],
+            "fields": fields,
+            # 此处添加no_request参数，避免多线程调用时, 用户信息被覆盖
+            "no_request": True,
+        }
+        host_list = BkApi.bulk_find_host_by_service_template(params)
+        if not host_list:
+            return result
+        result["data"] = host_list
+        return result
+
+    def format_template_node(self, node: Dict) -> types.TemplateNode:
         """格式化节点"""
         return dict(
             instance_id=node.get("bk_module_id"),
@@ -219,30 +309,8 @@ class ServiceTemplate(Template):
             object_id=constants.ObjectType.MODULE.value,
             object_name=constants.ObjectType.get_member_value__alias_map().get(constants.ObjectType.MODULE.value),
             meta=self.meta,
-            node_path="{}/{}/{}".format(bk_biz_name, node.get("bk_module_name"), template_name),
+            node_path=node.get("bk_module_name"),
         )
-
-    def _get_host_with_topo(self, host: Dict, node_ids: List[int] = None):
-        """获取主机拓扑"""
-        result = host["host"]
-        for _set in host["topo"]:
-            for _module in _set["module"]:
-                if _module["bk_module_id"] in node_ids:
-                    host["node_id"] = _module["bk_module_id"]
-                    host["node_name"] = _module["bk_module_name"]
-        return result
-
-    def _list_biz_hosts_topo(self, node_ids: List[int] = None) -> List[Dict]:
-        """获取主机列表"""
-        params = {
-            "bk_biz_id": self.bk_biz_id,
-            "module_property_filter": {
-                "condition": "AND",
-                "rules": [{"field": "bk_module_id", "operator": "in", "value": node_ids}],
-            },
-            "fields": constants.CommonEnum.SIMPLE_HOST_FIELDS.value,
-        }
-        return BkApi.list_biz_hosts_topo(params)
 
 
 class TemplateHandler:
@@ -267,8 +335,8 @@ class TemplateHandler:
             templates = [template for template in templates if template["id"] in template_id_list]
         return handler.format_templates(templates)
 
-    def list_nodes(self) -> List[types.TemplateNode]:
-        return self.get_instance().list_template_nodes()
+    def list_nodes(self, start: int, page_size: int) -> List[types.TemplateNode]:
+        return self.get_instance().list_template_nodes(start=start, page_size=page_size)
 
-    def list_hosts(self) -> List[types.HostInfo]:
-        return self.get_instance().list_template_hosts()
+    def list_hosts(self, start: int, page_size: int) -> List[types.HostInfo]:
+        return self.get_instance().list_template_hosts(start=start, page_size=page_size)

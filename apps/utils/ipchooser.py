@@ -51,10 +51,18 @@ class BkApi(AbstractBkApi):
 
     @staticmethod
     def search_set(params: dict = None):
+        return CCApi.search_set(params)
+
+    @staticmethod
+    def bulk_search_set(params: dict = None):
         return CCApi.search_set.bulk_request(params)
 
     @staticmethod
     def search_module(params: dict = None):
+        return CCApi.search_module(params)
+
+    @staticmethod
+    def bulk_search_module(params: dict = None):
         return CCApi.search_module.bulk_request(params)
 
     @staticmethod
@@ -68,3 +76,19 @@ class BkApi(AbstractBkApi):
     @staticmethod
     def bulk_execute_dynamic_group(params: dict = None):
         return CCApi.execute_dynamic_group.bulk_request(params)
+
+    @staticmethod
+    def find_host_by_set_template(params: dict = None):
+        return CCApi.find_host_by_set_template(params)
+
+    @staticmethod
+    def bulk_find_host_by_set_template(params: dict = None):
+        return CCApi.find_host_by_set_template.bulk_request(params)
+
+    @staticmethod
+    def find_host_by_service_template(params: dict = None):
+        return CCApi.find_host_by_service_template(params)
+
+    @staticmethod
+    def bulk_find_host_by_service_template(params: dict = None):
+        return CCApi.find_host_by_service_template.bulk_request(params)
