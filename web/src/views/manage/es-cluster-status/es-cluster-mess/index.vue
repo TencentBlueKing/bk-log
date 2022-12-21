@@ -198,16 +198,16 @@
     <div
       :class="['intro-container',isDraging && 'draging-move']"
       :style="`width: ${ introWidth }px`">
+      <div :class="`drag-item ${!introWidth && 'hidden-drag'}`" :style="`right: ${introWidth - 18}px`">
+        <span
+          class="bk-icon icon-more"
+          @mousedown.left="dragBegin"></span>
+      </div>
       <intro-panel
         :is-open-window="isOpenWindow"
         @handleActiveDetails="handleActiveDetails" />
     </div>
 
-    <div :class="`drag-item ${!introWidth && 'hidden-drag'}`" :style="`right: ${introWidth - 18}px`">
-      <span
-        class="bk-icon icon-more"
-        @mousedown.left="dragBegin"></span>
-    </div>
     <!-- 编辑或新建ES源 -->
     <es-slider
       v-if="isRenderSlider"
@@ -223,6 +223,7 @@
 import { mapGetters } from 'vuex';
 import EsSlider from './es-slider';
 import IntroPanel from './components/intro-panel.vue';
+import dragMixin from '@/mixins/drag-mixin';
 import { formatFileSize } from '../../../../common/util';
 import * as authorityMap from '../../../../common/authority-map';
 
@@ -232,6 +233,7 @@ export default {
     EsSlider,
     IntroPanel,
   },
+  mixins: [dragMixin],
   data() {
     const settingFields = [
       // 数据ID
@@ -322,10 +324,7 @@ export default {
         fields: settingFields,
         selectedFields: settingFields.slice(0, 10),
       },
-      minIntroWidth: 300,
-      maxIntroWidth: 480,
       introWidth: 0,
-      isDraging: false,
     };
   },
   computed: {
@@ -611,31 +610,6 @@ export default {
     },
     checkcFields(field) {
       return this.clusterSetting.selectedFields.some(item => item.id === field);
-    },
-    // 控制页面布局宽度
-    dragBegin(e) {
-      this.currentTreeBoxWidth = this.introWidth;
-      this.currentScreenX = e.screenX;
-      window.addEventListener('mousemove', this.dragMoving, { passive: true });
-      window.addEventListener('mouseup', this.dragStop, { passive: true });
-    },
-    dragMoving(e) {
-      this.isDraging = true;
-      const newTreeBoxWidth = this.currentTreeBoxWidth - e.screenX + this.currentScreenX;
-      if (newTreeBoxWidth < this.minIntroWidth) {
-        this.introWidth = this.minIntroWidth;
-      } else if (newTreeBoxWidth >= this.maxIntroWidth) {
-        this.introWidth = this.maxIntroWidth;
-      } else {
-        this.introWidth = newTreeBoxWidth;
-      }
-    },
-    dragStop() {
-      this.isDraging = false;
-      this.currentTreeBoxWidth = null;
-      this.currentScreenX = null;
-      window.removeEventListener('mousemove', this.dragMoving);
-      window.removeEventListener('mouseup', this.dragStop);
     },
     getPercent($row) {
       return (100 - $row.storage_usage) / 100;
