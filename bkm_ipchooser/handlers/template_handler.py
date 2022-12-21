@@ -54,7 +54,6 @@ class Template:
     def list_template_nodes(self, start: int, page_size: int) -> List[types.TemplateNode]:
         """获取节点列表"""
         result = {"start": start, "page_size": page_size, "total": 0, "data": []}
-        result["total"] = len(self.fetch_template_node_total(self.template_id)["data"])
         nodes = self.query_template_nodes(start=start, page_size=page_size)
         if not nodes or not nodes["info"]:
             return result
@@ -79,11 +78,11 @@ class Template:
 
     def list_template_hosts(self, start: int, page_size: int) -> List[types.TemplateNode]:
         """获取主机列表, 带分页"""
-        result = {"start": start, "page_size": page_size, "total": 0, "data": []}
+        result = {"start": start, "page_size": page_size, "count": 0, "data": []}
         hosts = self.query_template_hosts(start=start, page_size=page_size)
         if not hosts or not hosts["info"]:
             return result
-        result["total"] = hosts["count"]
+        result["count"] = hosts["count"]
         hosts = hosts["info"]
         result["data"] = BaseHandler.format_hosts(hosts, self.bk_biz_id)
 
@@ -170,14 +169,12 @@ class SetTemplate(Template):
     def format_templates(self, templates: List[Dict]) -> List[types.Template]:
         """格式化CC API接口获取到的模板列表"""
         BaseHandler.sort_by_name(templates)
-        self.fill_host_count(templates)
         return [
             {
                 "id": template.get("id"),
                 "name": template.get("name"),
                 "template_type": self.template_type,
                 "last_time": template.get("last_time"),
-                "count": template.get("count", 0),
                 "meta": self.meta,
             }
             for template in templates
@@ -238,6 +235,8 @@ class SetTemplate(Template):
         )["data"]
         TopoHandler.fill_agent_status(host_list)
         result.update(TopoHandler.count_agent_status(host_list))
+        result["host_count"] = len(host_list)
+        result["node_count"] = len(self.fetch_template_node_total(template["id"])["data"])
         return result
 
     def fetch_template_node_total(self, template_id: int) -> Dict:
@@ -253,6 +252,7 @@ class SetTemplate(Template):
             "condition": {
                 "set_template_id": self.template_id,
             },
+            "no_request": True,
         }
         node_list = BkApi.bulk_search_set(params)
         if not node_list:
@@ -297,14 +297,12 @@ class ServiceTemplate(Template):
                 service_category_map[category["id"]] = category["name"]
 
         BaseHandler.sort_by_name(templates)
-        self.fill_host_count(templates)
         return [
             {
                 "id": template.get("id"),
                 "name": template.get("name"),
                 "template_type": self.template_type,
                 "last_time": template.get("last_time"),
-                "count": template.get("count", 0),
                 "meta": self.meta,
                 "service_category": service_category_map.get(template.get("service_category_id"), ""),
             }
@@ -346,6 +344,8 @@ class ServiceTemplate(Template):
         )["data"]
         TopoHandler.fill_agent_status(host_list)
         result.update(TopoHandler.count_agent_status(host_list))
+        result["host_count"] = len(host_list)
+        result["node_count"] = len(self.fetch_template_node_total(template["id"])["data"])
         return result
 
     def fetch_template_node_total(self, template_id: int) -> Dict:
@@ -361,6 +361,7 @@ class ServiceTemplate(Template):
             "condition": {
                 "service_template_id": self.template_id,
             },
+            "no_request": True,
         }
         node_list = BkApi.bulk_search_module(params)
         if not node_list:
