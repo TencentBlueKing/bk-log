@@ -60,7 +60,7 @@ class Template:
             return result
         nodes = nodes["info"]
         nodes = [self.format_template_node(node) for node in nodes]
-        topo_tool.TopoTool.find_topo_node_paths(self.bk_biz_id, nodes)
+        self.fill_node_path(nodes)
         result["data"] = nodes
         return result
 
@@ -114,6 +114,42 @@ class Template:
     def format_template_node(self, node: Dict) -> types.TemplateNode:
         """子类实现模板节点格式化"""
         raise NotImplementedError
+
+    def fill_node_path(self, node_list: List[Dict]):
+        """获取节点路径"""
+        result = []
+        if not node_list:
+            return result
+
+        def _build_node_key(object_id, instance_id) -> str:
+            return f"{object_id}-{instance_id}"
+
+        params = {
+            "bk_biz_id": self.bk_biz_id,
+            "bk_nodes": [
+                {
+                    "bk_obj_id": node["object_id"],
+                    "bk_inst_id": node["instance_id"],
+                }
+                for node in node_list
+            ],
+        }
+        topo_node_paths = BkApi.find_topo_node_paths(params)
+        if not topo_node_paths:
+            return result
+
+        node_path_map = {}
+        for topo_node_path in topo_node_paths:
+            node_key = _build_node_key(topo_node_path["bk_obj_id"], topo_node_path["bk_inst_id"])
+            node_path = [topo_tool.TopoTool.format_topo_node(bk_path) for bk_path in topo_node_path["bk_paths"][0]]
+            node_path.append(topo_tool.TopoTool.format_topo_node(topo_node_path))
+            node_path_map[node_key] = node_path
+
+        for node in node_list:
+            node_key = _build_node_key(node["object_id"], node["instance_id"])
+            node["node_path"] = node_path_map[node_key]
+
+        return result
 
 
 class SetTemplate(Template):

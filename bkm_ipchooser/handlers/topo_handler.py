@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import logging
+from collections import defaultdict
 import typing
 
 from bkm_ipchooser import constants, types
 from bkm_ipchooser.api import BkApi
-from bkm_ipchooser.tools import topo_tool
+from bkm_ipchooser.tools import topo_tool, batch_request
 from bkm_ipchooser.handlers.base import BaseHandler
 
 logger = logging.getLogger("bkm_ipchooser")
@@ -63,19 +64,43 @@ class TopoHandler:
     def query_path(
         scope_list: types.ScopeList, node_list: typing.List[types.TreeNode]
     ) -> typing.List[typing.List[types.TreeNode]]:
-        result = []
-        meta = scope_list[0]
         if not node_list:
-            return result
+            return []
         bk_biz_id = scope_list[0]["bk_biz_id"]
-        topo_tool.TopoTool.find_topo_node_paths(bk_biz_id, node_list)
+        nodes_gby_biz_id: typing.Dict[int, typing.List[types.TreeNode]] = defaultdict(list)
         for node in node_list:
-            _node_result = []
-            for node_path in node["node_path"]:
-                node_path["meta"] = meta
-                result.append(node_path)
-            result.append(_node_result)
-        return result
+            nodes_gby_biz_id[bk_biz_id].append({"bk_inst_id": node["instance_id"], "bk_obj_id": node["object_id"]})
+
+        params_list: typing.List[typing.Dict[str, typing.Any]] = []
+        for biz_id, bk_nodes in nodes_gby_biz_id.items():
+            params_list.append({"bk_biz_id": biz_id, "node_list": bk_nodes})
+        node_with_paths: typing.List[types.TreeNode] = batch_request.request_multi_thread(
+            func=topo_tool.TopoTool.find_topo_node_paths, params_list=params_list, get_data=lambda x: x
+        )
+
+        inst_id__path_map: typing.Dict[int, typing.List[types.TreeNode]] = {}
+        for node_with_path in node_with_paths:
+            inst_id__path_map[node_with_path["bk_inst_id"]] = node_with_path.get("bk_path", [])
+
+        node_paths_list: typing.List[typing.List[types.TreeNode]] = []
+        for node in node_list:
+            if node["instance_id"] not in inst_id__path_map:
+                node_paths_list.append([])
+                continue
+
+            node_paths_list.append(
+                [
+                    {
+                        "meta": node["meta"],
+                        "object_id": path_node["bk_obj_id"],
+                        "object_name": path_node["bk_obj_name"],
+                        "instance_id": path_node["bk_inst_id"],
+                        "instance_name": path_node["bk_inst_name"],
+                    }
+                    for path_node in inst_id__path_map[node["instance_id"]]
+                ]
+            )
+        return node_paths_list
 
     @classmethod
     def query_hosts(
@@ -238,20 +263,7 @@ class TopoHandler:
         resp = BkApi.list_biz_hosts(
             {
                 "bk_biz_id": bk_biz_id,
-                "fields": [
-                    "bk_host_id",
-                    "bk_host_innerip",
-                    "bk_host_innerip_v6",
-                    "bk_cloud_id",
-                    "bk_host_name",
-                    "bk_os_name",
-                    "bk_os_type",
-                    "bk_agent_id",
-                    "bk_cloud_vendor",
-                    "bk_mem",
-                    "bk_cpu",
-                    "bk_machine_type",
-                ],
+                "fields": constants.CommonEnum.DEFAULT_HOST_FIELDS.value,
                 "page": {"start": 0, "limit": limit, "sort": "bk_host_innerip"},
                 "host_property_filter": {"condition": "AND", "rules": rules},
             },
