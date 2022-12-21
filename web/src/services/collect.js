@@ -190,6 +190,12 @@ const createWeWork = {
   method: 'post',
 };
 
+// oplt_log 查看token请求
+const reviewToken = {
+  url: '/databus/collectors/:collector_config_id/report_token/',
+  method: 'get',
+};
+
 export {
   getStorage,
   globals,
@@ -224,4 +230,5 @@ export {
   getDynamicGroup,
   getPreCheck,
   createWeWork,
+  reviewToken,
 };
