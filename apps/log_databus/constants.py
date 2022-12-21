@@ -448,9 +448,9 @@ class InfoTypeEnum(ChoicesEnum):
 
 
 INFO_TYPE_PREFIX_MAPPING = {
-    InfoTypeEnum.INFO.value: "+",
-    InfoTypeEnum.WARNING.value: "-",
-    InfoTypeEnum.ERROR.value: "-",
+    InfoTypeEnum.INFO.value: "✅",
+    InfoTypeEnum.WARNING.value: "⚠️",
+    InfoTypeEnum.ERROR.value: "❌",
 }
 
 CHECK_COLLECTOR_CACHE_KEY_PREFIX = "check_collector"
