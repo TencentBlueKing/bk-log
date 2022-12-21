@@ -42,7 +42,6 @@ urlpatterns = (
     url(r"^bkdata_auth/$", views.bkdata_auth),
     url(r"^contact/$", views.contact),
     url(r"^healthz/$", views.healthz),
-    url(r"^collector_check/$", views.collector_check),
     url(r"^readiness/$", views.readiness),
     url(r"^metrics/$", views.metrics),
 )

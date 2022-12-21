@@ -11,9 +11,9 @@ from apps.log_databus.constants import (
     KAFKA_SSL_MECHANISM,
     KAFKA_SSL_USERNAME,
     KAFKA_SSL_PASSWORD,
+    KAFKA_SSL_PROTOCOL,
 )
 from apps.log_databus.handlers.check_collector.checker.base_checker import Checker
-from home_application.constants import KAFKA_SSL_PROTOCOL
 
 logger = logging.getLogger()
 
