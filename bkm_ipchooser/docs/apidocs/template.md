@@ -209,3 +209,77 @@ HTTP 请求方式: `POST`, `application/json`
     "message": ""
 }
 ```
+
+<hr>
+
+## [API] agent_statistics (拉取模板Agent状态统计)
+
+用法: 获取服务模板/集群模板Agent统计状态
+
+路径: /api/v1/ipchooser/template/agent_statistics/
+
+HTTP 请求方式: `POST`, `application/json`
+
+### 请求参数
+
+| 字段       | 类型 | 是否必选 | 描述                                           |
+| ---------- | ---- | -------- | ---------------------------------------------- |
+| all_scope  | Bool | NO       | 是否获取所有资源范围的拓扑结构，默认为 `false` |
+| scope_list | List | Yes      | 要获取拓扑结构的资源范围数组                   |
+| template_type | String | Yes | 模板类型, 服务模板(SERVICE_TEMPLATE), 集群模板(SET_TEMPLATE) |
+| service_template_list | List | No | 服务模板列表, 当模板类型为 SERVICE_TEMPLATE时生效, 不传获取所有 | 
+| set_template_list | List | No | 集群模板列表, 当模板类型为 SET_TEMPLATE时生效, 不传获取所有 | 
+
+### 请求参数示例
+
+```json
+{
+    "scope_list": [
+        {
+            "scope_type": "biz",
+            "scope_id": "2"
+        }
+    ],
+    "template_type": "SET_TEMPLATE",
+    "set_template_list": [
+        {
+            "id": 27,
+            "meta": {
+                "scope_type": "biz",
+                "scope_id": "2",
+                "bk_biz_id": 2
+            }
+        }
+    ]
+}
+```
+
+### 返回示例
+
+```json
+{
+    "result": true,
+    "data": [
+        {
+            "set_template": {
+                "id": 27,
+                "name": "模板名",
+                "meta": {
+                    "scope_type": "biz",
+                    "scope_id": "2",
+                    "bk_biz_id": 2
+                }
+            },
+            "agent_statistics": {
+                "total_count": 3,
+                "alive_count": 2,
+                "not_alive_count": 1
+            }
+        }
+    ],
+    "code": 0,
+    "message": ""
+}
+```
+
+<hr>

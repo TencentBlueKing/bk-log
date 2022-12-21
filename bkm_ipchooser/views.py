@@ -107,7 +107,11 @@ class IpChooserTopoViewSet(CommonViewSet):
     )
     @list_route(methods=["POST"], detail=False, serializer_class=topo_sers.QueryPathRequestSer)
     def query_path(self, request, *args, **kwargs):
-        return Response(topo_handler.TopoHandler.query_path(node_list=self.validated_data["node_list"]))
+        return Response(
+            topo_handler.TopoHandler.query_path(
+                scope_list=self.validated_data["scope_list"], node_list=self.validated_data["node_list"]
+            )
+        )
 
     @swagger_auto_schema(
         operation_summary=_("根据多个拓扑节点与搜索条件批量分页查询所包含的主机信息"),
