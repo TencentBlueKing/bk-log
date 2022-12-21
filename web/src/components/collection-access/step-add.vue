@@ -1298,7 +1298,6 @@ export default {
     },
     // 采集目标选择内容变更
     handleTargetChange(value) {
-      console.log(value, 1111);
       const { host_list: hostList, node_list: nodeList } = value;
       let type = '';
       let nodes = [];

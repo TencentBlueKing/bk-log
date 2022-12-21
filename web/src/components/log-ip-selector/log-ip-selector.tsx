@@ -67,6 +67,8 @@ export interface ITarget {
   path?: string
   children?: ITarget[]
   meta?: IMeta
+  ip?: string
+  bk_cloud_id?: number
 }
 
 export interface ITreeItem extends INode {
@@ -142,9 +144,11 @@ export function toSelectorNode(nodes: ITarget[], nodeType: INodeType) {
 
   switch (nodeType) {
     case 'INSTANCE':
-      return nodes.map(item => ({
-        host_id: item.bk_host_id,
-      }));
+      return nodes.map((item) => {
+        if (item.bk_host_id) return { host_id: item.bk_host_id };
+        // 兼容旧数据 没有bk_host_id的情况下 把ip和cloud_id传给组件 组件内部定位host_id
+        return { host_id: undefined, ip: item.ip, cloud_id: item.bk_cloud_id };
+      });
     case 'TOPO':
       return nodes.map(item => ({
         object_id: item.bk_obj_id,
@@ -165,8 +169,6 @@ export function toCollectorNode(nodes: Array<INode | IHost>, nodeType: INodeType
     case 'INSTANCE':
       return nodes.map((item: IHost) => ({
         bk_host_id: item.host_id,
-        ip: item.ip,
-        bk_cloud_id: item.cloud_area.id,
       }));
     case 'TOPO':
       return nodes.map((item: INode) => ({
