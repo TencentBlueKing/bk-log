@@ -55,6 +55,10 @@ class AbstractBkApi(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @staticmethod
+    def bulk_search_set(params: dict = None):
+        raise NotImplementedError
+
+    @staticmethod
     def search_module(params: dict = None):
         raise NotImplementedError
 

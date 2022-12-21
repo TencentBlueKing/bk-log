@@ -59,6 +59,7 @@ class Template:
         params_list = [
             {
                 "template_id": template["id"],
+                "fields": constants.CommonEnum.FETCH_HOST_COUNT_FIELDS.value,
             }
             for template in templates
         ]
@@ -72,6 +73,7 @@ class Template:
     def list_template_nodes(self, start: int, page_size: int) -> List[types.TemplateNode]:
         """获取节点列表"""
         result = {"start": start, "page_size": page_size, "total": 0, "data": []}
+        result["total"] = len(self.fetch_template_node_total(self.template_id)["data"])
         nodes = self.query_template_nodes(start=start, page_size=page_size)
         if not nodes or not nodes["info"]:
             return result
@@ -79,6 +81,11 @@ class Template:
         nodes = [self.format_template_node(node) for node in nodes]
         result["data"] = TopoHandler.agent_statistics(nodes)
         return result
+
+    def template_agent_statistics(self, template_ids: List[int]) -> List[Dict]:
+        """统计模板下主机的agent状态"""
+        # TODO: 实现回查多个模板的Agent状态
+        raise NotImplementedError
 
     def list_template_hosts(self, start: int, page_size: int) -> List[types.TemplateNode]:
         """获取主机列表, 带分页"""
@@ -98,8 +105,22 @@ class Template:
         """子类实现查询CC API接口获取模板列表"""
         raise NotImplementedError
 
-    def fetch_template_host_total(self, template_id: int) -> List:
-        """子类实现获取模板下所有主机"""
+    def fetch_template_node_total(self, template_id: int) -> Dict:
+        """
+        子类实现获取模板下所有节点
+        param: template_id: 模板ID
+        param: fields: 需要返回的字段, 默认返回所有字段, 当只为了统计总数的时候, 可以只返回bk_set_id
+        """
+        raise NotImplementedError
+
+    def fetch_template_host_total(
+        self, template_id: int, fields: List[str] = constants.CommonEnum.SIMPLE_HOST_FIELDS.value
+    ) -> Dict:
+        """
+        子类实现获取模板下所有主机
+        param: template_id: 模板ID
+        param: fields: 需要返回的字段, 默认返回所有字段, 当只为了统计总数的时候, 可以只返回bk_host_id
+        """
         raise NotImplementedError
 
     def format_template_node(self, node: Dict) -> types.TemplateNode:
@@ -145,7 +166,9 @@ class SetTemplate(Template):
         }
         return BkApi.find_host_by_set_template(params)
 
-    def fetch_template_host_total(self, template_id: int) -> int:
+    def fetch_template_host_total(
+        self, template_id: int, fields: List[str] = constants.CommonEnum.SIMPLE_HOST_FIELDS.value
+    ) -> Dict:
         result = {
             "id": template_id,
             "data": [],
@@ -153,14 +176,35 @@ class SetTemplate(Template):
         params = {
             "bk_biz_id": self.bk_biz_id,
             "bk_set_template_ids": [template_id],
-            "fields": constants.CommonEnum.SIMPLE_HOST_FIELDS.value,
+            "fields": fields,
             # 此处添加no_request参数，避免多线程调用时, 用户信息被覆盖
             "no_request": True,
         }
-        fetch_count_result = BkApi.bulk_find_host_by_set_template(params)
-        if not fetch_count_result:
+        host_list = BkApi.bulk_find_host_by_set_template(params)
+        if not host_list:
             return result
-        result["data"] = fetch_count_result
+        result["data"] = host_list
+        return result
+
+    def fetch_template_node_total(self, template_id: int) -> Dict:
+        """
+        获取模板下所有节点
+        param: template_id: 模板ID
+        param: fields: 需要返回的字段, 默认返回所有字段, 当只为了统计总数的时候, 可以只返回bk_set_id
+        """
+        result = {"template_id": template_id, "data": []}
+        params = {
+            "bk_biz_id": self.bk_biz_id,
+            "fields": constants.CommonEnum.DEFAULT_SET_FIELDS.value,
+            "condition": {
+                "set_template_id": self.template_id,
+            },
+        }
+        node_list = BkApi.bulk_search_set(params)
+        if not node_list:
+            return result
+
+        result["data"] = node_list
         return result
 
     def format_template_node(self, node: Dict) -> types.TemplateNode:
@@ -215,7 +259,30 @@ class ServiceTemplate(Template):
         }
         return BkApi.find_host_by_service_template(params)
 
-    def fetch_template_host_total(self, template_id: int) -> int:
+    def fetch_template_node_total(self, template_id: int) -> Dict:
+        """
+        获取模板下所有节点
+        param: template_id: 模板ID
+        param: fields: 需要返回的字段, 默认返回所有字段, 当只为了统计总数的时候, 可以只返回bk_module_id
+        """
+        result = {"template_id": template_id, "data": []}
+        params = {
+            "bk_biz_id": self.bk_biz_id,
+            "fields": constants.CommonEnum.DEFAULT_MODULE_FIELDS.value,
+            "condition": {
+                "bk_service_template_ids": [self.template_id],
+            },
+        }
+        node_list = BkApi.bulk_find_module_with_relation(params)
+        if not node_list:
+            return result
+
+        result["data"] = node_list
+        return result
+
+    def fetch_template_host_total(
+        self, template_id: int, fields: List[str] = constants.CommonEnum.SIMPLE_HOST_FIELDS.value
+    ) -> Dict:
         result = {
             "id": template_id,
             "data": [],
@@ -223,14 +290,14 @@ class ServiceTemplate(Template):
         params = {
             "bk_biz_id": self.bk_biz_id,
             "bk_service_template_ids": [template_id],
-            "fields": constants.CommonEnum.SIMPLE_HOST_FIELDS.value,
+            "fields": fields,
             # 此处添加no_request参数，避免多线程调用时, 用户信息被覆盖
             "no_request": True,
         }
-        fetch_count_result = BkApi.bulk_find_host_by_service_template(params)
-        if not fetch_count_result:
+        host_list = BkApi.bulk_find_host_by_service_template(params)
+        if not host_list:
             return result
-        result["data"] = fetch_count_result
+        result["data"] = host_list
         return result
 
     def format_template_node(self, node: Dict) -> types.TemplateNode:

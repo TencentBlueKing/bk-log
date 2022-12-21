@@ -54,6 +54,10 @@ class BkApi(AbstractBkApi):
         return CCApi.search_set(params)
 
     @staticmethod
+    def bulk_search_set(params: dict = None):
+        return CCApi.search_set.bulk_request(params)
+
+    @staticmethod
     def search_module(params: dict = None):
         return CCApi.search_module(params)
 
