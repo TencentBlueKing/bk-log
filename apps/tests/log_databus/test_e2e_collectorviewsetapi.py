@@ -153,6 +153,7 @@ COLLECTORS_LIST = {
                 "params": "{}",
                 "itsm_ticket_sn": None,
                 "itsm_ticket_status": "not_apply",
+                "log_group_id": None,
                 "can_use_independent_es_cluster": True,
                 "collector_package_count": 10,
                 "collector_output_format": None,

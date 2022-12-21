@@ -1575,4 +1575,5 @@ export default {
   个收藏: 'favorite',
   容器集群: 'Container cluster',
   段日志参数: 'Section log value',
+  点击查看: 'Click view',
 };
