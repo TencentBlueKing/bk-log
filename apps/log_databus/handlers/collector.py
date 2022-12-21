@@ -423,7 +423,7 @@ class CollectorHandler(object):
         """
         data = {"bk_data_token": ""}
         if self.data.custom_type == CustomTypeEnum.OTLP_LOG.value and self.data.log_group_id:
-            log_group = TransferApi.get_log_group(log_group_id=self.data.log_group_id)
+            log_group = TransferApi.get_log_group({"log_group_id": self.data.log_group_id})
             data["bk_data_token"] = log_group.get("bk_data_token", "")
         return data
 
