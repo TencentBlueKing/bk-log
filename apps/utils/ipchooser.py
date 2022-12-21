@@ -92,3 +92,11 @@ class BkApi(AbstractBkApi):
     @staticmethod
     def bulk_find_host_by_service_template(params: dict = None):
         return CCApi.find_host_by_service_template.bulk_request(params)
+
+    @staticmethod
+    def find_topo_node_paths(params: dict = None):
+        return CCApi.find_topo_node_paths(params)
+
+    @staticmethod
+    def list_service_category(params: dict = None):
+        return CCApi.list_service_category(params)

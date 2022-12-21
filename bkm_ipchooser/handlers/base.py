@@ -53,7 +53,8 @@ class BaseHandler:
                     "cloud_vendor": host.get("bk_cloud_vendor", ""),
                     "agent_id": host.get("bk_agent_id", ""),
                     "host_name": host["bk_host_name"],
-                    "os_name": host["bk_os_type"],
+                    "os_name": host["bk_os_name"],
+                    "os_type": host["bk_os_type"],
                     "alive": host.get("status"),
                     "cloud_area": {"id": bk_cloud_id, "name": cloud_id__info_map.get(bk_cloud_id, bk_cloud_id)},
                     "biz": {

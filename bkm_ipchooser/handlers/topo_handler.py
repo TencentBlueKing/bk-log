@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 import logging
 import typing
-from collections import defaultdict
 
 from bkm_ipchooser import constants, types
 from bkm_ipchooser.api import BkApi
-from bkm_ipchooser.tools import topo_tool, batch_request
+from bkm_ipchooser.tools import topo_tool
 from bkm_ipchooser.handlers.base import BaseHandler
 
 logger = logging.getLogger("bkm_ipchooser")
@@ -13,11 +12,11 @@ logger = logging.getLogger("bkm_ipchooser")
 
 class TopoHandler:
     @staticmethod
-    def format2tree_node(node: types.ReadableTreeNode) -> types.TreeNode:
+    def format2tree_node(bk_biz_id: int, node: types.ReadableTreeNode) -> types.TreeNode:
         return {
             "bk_obj_id": node["object_id"],
             "bk_inst_id": node["instance_id"],
-            "bk_biz_id": node["meta"]["bk_biz_id"],
+            "bk_biz_id": bk_biz_id,
         }
 
     @staticmethod
@@ -61,49 +60,27 @@ class TopoHandler:
         return [cls.format_tree(topo_tool.TopoTool.get_topo_tree_with_count(scope_list[0]["bk_biz_id"]))]
 
     @staticmethod
-    def query_path(node_list: typing.List[types.TreeNode]) -> typing.List[typing.List[types.TreeNode]]:
+    def query_path(
+        scope_list: types.ScopeList, node_list: typing.List[types.TreeNode]
+    ) -> typing.List[typing.List[types.TreeNode]]:
+        result = []
+        meta = scope_list[0]
         if not node_list:
-            return []
-        nodes_gby_biz_id: typing.Dict[int, typing.List[types.TreeNode]] = defaultdict(list)
+            return result
+        bk_biz_id = scope_list[0]["bk_biz_id"]
+        topo_tool.TopoTool.find_topo_node_paths(bk_biz_id, node_list)
         for node in node_list:
-            nodes_gby_biz_id[node["meta"]["bk_biz_id"]].append(
-                {"bk_inst_id": node["instance_id"], "bk_obj_id": node["object_id"]}
-            )
-
-        params_list: typing.List[typing.Dict[str, typing.Any]] = []
-        for biz_id, bk_nodes in nodes_gby_biz_id.items():
-            params_list.append({"bk_biz_id": biz_id, "node_list": bk_nodes})
-        node_with_paths: typing.List[types.TreeNode] = batch_request.request_multi_thread(
-            func=topo_tool.TopoTool.find_topo_node_paths, params_list=params_list, get_data=lambda x: x
-        )
-
-        inst_id__path_map: typing.Dict[int, typing.List[types.TreeNode]] = {}
-        for node_with_path in node_with_paths:
-            inst_id__path_map[node_with_path["bk_inst_id"]] = node_with_path.get("bk_path", [])
-
-        node_paths_list: typing.List[typing.List[types.TreeNode]] = []
-        for node in node_list:
-            if node["instance_id"] not in inst_id__path_map:
-                node_paths_list.append([])
-                continue
-
-            node_paths_list.append(
-                [
-                    {
-                        "meta": node["meta"],
-                        "object_id": path_node["bk_obj_id"],
-                        "object_name": path_node["bk_obj_name"],
-                        "instance_id": path_node["bk_inst_id"],
-                        "instance_name": path_node["bk_inst_name"],
-                    }
-                    for path_node in inst_id__path_map[node["instance_id"]]
-                ]
-            )
-        return node_paths_list
+            _node_result = []
+            for node_path in node["node_path"]:
+                node_path["meta"] = meta
+                result.append(node_path)
+            result.append(_node_result)
+        return result
 
     @classmethod
     def query_hosts(
         cls,
+        scope_list: types.ScopeList,
         readable_node_list: typing.List[types.ReadableTreeNode],
         conditions: typing.List[types.Condition],
         start: int,
@@ -112,6 +89,7 @@ class TopoHandler:
     ) -> typing.Dict:
         """
         查询主机
+        :param scope_list
         :param readable_node_list: 拓扑节点
         :param conditions: 查询条件，TODO: 暂不支持
         :param fields: 字段
@@ -122,17 +100,20 @@ class TopoHandler:
         if not readable_node_list:
             # 不存在查询节点提前返回，减少非必要 IO
             return {"total": 0, "data": []}
-
-        tree_node: types.TreeNode = cls.format2tree_node(readable_node_list[0])
+        bk_biz_id = scope_list[0]["bk_biz_id"]
+        tree_node: types.TreeNode = cls.format2tree_node(bk_biz_id, readable_node_list[0])
 
         # 获取主机信息
-        resp = cls.query_cc_hosts(readable_node_list, conditions, start, page_size, fields, return_status=True)
+        resp = cls.query_cc_hosts(
+            bk_biz_id, readable_node_list, conditions, start, page_size, fields, return_status=True
+        )
 
         return {"total": resp["count"], "data": BaseHandler.format_hosts(resp["info"], tree_node["bk_biz_id"])}
 
     @classmethod
     def query_host_id_infos(
         cls,
+        scope_list: types.ScopeList,
         readable_node_list: typing.List[types.ReadableTreeNode],
         conditions: typing.List[types.Condition],
         start: int,
@@ -150,13 +131,15 @@ class TopoHandler:
             # 不存在查询节点提前返回，减少非必要 IO
             return {"total": 0, "data": []}
 
-        tree_node: types.TreeNode = cls.format2tree_node(readable_node_list[0])
+        bk_biz_id = scope_list[0]["bk_biz_id"]
+        tree_node: types.TreeNode = cls.format2tree_node(bk_biz_id, readable_node_list[0])
 
         # TODO: 支持全量查询
         page_size = page_size if page_size > 0 else 1000
 
         # 获取主机信息
         resp = cls.query_cc_hosts(
+            bk_biz_id,
             readable_node_list,
             conditions,
             start,
@@ -284,6 +267,7 @@ class TopoHandler:
     @classmethod
     def query_cc_hosts(
         cls,
+        bk_biz_id: int,
         readable_node_list: typing.List[types.ReadableTreeNode],
         conditions: typing.List[types.Condition],
         start: int,
@@ -301,9 +285,10 @@ class TopoHandler:
         :param return_status: 返回agent状态
         :return:
         """
-
+        if not readable_node_list:
+            return {"count": 0, "info": []}
         # 查询主机
-        tree_node: types.TreeNode = cls.format2tree_node(readable_node_list[0])
+        tree_node: types.TreeNode = cls.format2tree_node(bk_biz_id, readable_node_list[0])
 
         instance_id = tree_node["bk_inst_id"]
         object_id = tree_node["bk_obj_id"]
@@ -333,16 +318,18 @@ class TopoHandler:
         return resp
 
     @classmethod
-    def agent_statistics(cls, node_list: typing.List[types.ReadableTreeNode]) -> typing.List[typing.Dict]:
+    def agent_statistics(
+        cls, bk_biz_id: int, node_list: typing.List[types.ReadableTreeNode]
+    ) -> typing.List[typing.Dict]:
         """
         获取多个拓扑节点的主机 Agent 状态统计信息
         :param node_list: 节点信息列表
         :return:
         """
-        return [cls.node_agent_statistics(node) for node in node_list]
+        return [cls.node_agent_statistics(bk_biz_id, node) for node in node_list]
 
     @classmethod
-    def node_agent_statistics(cls, node: types.ReadableTreeNode) -> typing.Dict:
+    def node_agent_statistics(cls, bk_biz_id: int, node: types.ReadableTreeNode) -> typing.Dict:
         """
         获取单个拓扑节点的主机 Agent 状态统计信息
         :param node: 节点信息
@@ -358,7 +345,7 @@ class TopoHandler:
         }
         object_id = node["object_id"]
         params = {
-            "bk_biz_id": node["meta"]["bk_biz_id"],
+            "bk_biz_id": bk_biz_id,
             "fields": constants.CommonEnum.SIMPLE_HOST_FIELDS.value,
         }
         if object_id == constants.ObjectType.SET.value:

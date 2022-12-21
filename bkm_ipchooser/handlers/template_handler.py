@@ -4,7 +4,7 @@ from typing import List, Dict, Union
 
 from bkm_ipchooser import constants, types
 from bkm_ipchooser.api import BkApi
-from bkm_ipchooser.tools import batch_request
+from bkm_ipchooser.tools import batch_request, topo_tool
 from bkm_ipchooser.handlers.base import BaseHandler
 from bkm_ipchooser.handlers.topo_handler import TopoHandler
 
@@ -12,17 +12,6 @@ logger = logging.getLogger("bkm_ipchooser")
 
 
 class Template:
-
-    TEMPLATE_ID_KEY_MAP = {
-        constants.TemplateType.SET_TEMPLATE.value: "set_template_id",
-        constants.TemplateType.SERVICE_TEMPLATE.value: "service_template_id",
-    }
-
-    NODE_ID_KEY_MAP = {
-        constants.TemplateType.SET_TEMPLATE.value: "bk_set_id",
-        constants.TemplateType.SERVICE_TEMPLATE.value: "bk_module_id",
-    }
-
     def __init__(self, scope_list: types.ScopeList, template_type: str, template_id: int = None):
         self.scope_list = scope_list
         self.template_type = template_type
@@ -37,19 +26,7 @@ class Template:
 
     def format_templates(self, templates: List[Dict]) -> List[types.Template]:
         """格式化CC API接口获取到的模板列表"""
-        BaseHandler.sort_by_name(templates)
-        self.fill_host_count(templates)
-        return [
-            {
-                "id": template.get("id"),
-                "name": template.get("name"),
-                "template_type": self.template_type,
-                "last_time": template.get("last_time"),
-                "count": template.get("count", 0),
-                "meta": self.meta,
-            }
-            for template in templates
-        ]
+        raise NotImplementedError
 
     def query_template_nodes(self, start: int, page_size: int):
         """分页查询模板下的节点列表"""
@@ -83,6 +60,7 @@ class Template:
             return result
         nodes = nodes["info"]
         nodes = [self.format_template_node(node) for node in nodes]
+        topo_tool.TopoTool.find_topo_node_paths(self.bk_biz_id, nodes)
         result["data"] = nodes
         return result
 
@@ -107,9 +85,7 @@ class Template:
             return result
         result["total"] = hosts["count"]
         hosts = hosts["info"]
-        TopoHandler.fill_agent_status(hosts)
-        BaseHandler.fill_meta(hosts, self.meta)
-        result["data"] = hosts
+        result["data"] = BaseHandler.format_hosts(hosts, self.bk_biz_id)
 
         return result
 
@@ -148,6 +124,29 @@ class SetTemplate(Template):
             scope_list=scope_list, template_id=template_id, template_type=constants.TemplateType.SET_TEMPLATE.value
         )
 
+    def query_cc_templates(self, template_id_list: List[int] = None):
+        """调用CC接口获取集群模板"""
+        params = {"bk_biz_id": self.bk_biz_id}
+        if template_id_list:
+            params["set_template_ids"] = template_id_list
+        return BkApi.list_set_template(params)
+
+    def format_templates(self, templates: List[Dict]) -> List[types.Template]:
+        """格式化CC API接口获取到的模板列表"""
+        BaseHandler.sort_by_name(templates)
+        self.fill_host_count(templates)
+        return [
+            {
+                "id": template.get("id"),
+                "name": template.get("name"),
+                "template_type": self.template_type,
+                "last_time": template.get("last_time"),
+                "count": template.get("count", 0),
+                "meta": self.meta,
+            }
+            for template in templates
+        ]
+
     def query_template_nodes(self, start: int, page_size: int) -> List[types.TemplateNode]:
         params = {
             "bk_biz_id": self.bk_biz_id,
@@ -162,18 +161,11 @@ class SetTemplate(Template):
         }
         return BkApi.search_set(params)
 
-    def query_cc_templates(self, template_id_list: List[int] = None):
-        """调用CC接口获取集群模板"""
-        params = {"bk_biz_id": self.bk_biz_id}
-        if template_id_list:
-            params["set_template_ids"] = template_id_list
-        return BkApi.list_set_template(params)
-
     def query_template_hosts(self, start: int, page_size: int) -> List[types.FormatHostInfo]:
         params = {
             "bk_biz_id": self.bk_biz_id,
             "bk_set_template_ids": [self.template_id],
-            "fields": constants.CommonEnum.SIMPLE_HOST_FIELDS.value,
+            "fields": constants.CommonEnum.DEFAULT_HOST_FIELDS.value,
             "page": {
                 "start": start,
                 "limit": page_size,
@@ -242,8 +234,6 @@ class SetTemplate(Template):
             object_id=constants.ObjectType.SET.value,
             object_name=constants.ObjectType.get_member_value__alias_map().get(constants.ObjectType.SET.value),
             meta=self.meta,
-            # TODO: node_path待研究
-            node_path=node.get("bk_set_name"),
         )
 
 
@@ -261,6 +251,29 @@ class ServiceTemplate(Template):
         if template_id_list:
             params["service_template_ids"] = template_id_list
         return BkApi.list_service_template(params)
+
+    def format_templates(self, templates: List[Dict]) -> List[types.Template]:
+        """格式化CC API接口获取到的模板列表"""
+        service_category_list = BkApi.list_service_category({"bk_biz_id": self.bk_biz_id})
+        service_category_map = {}
+        if service_category_list and service_category_list["info"]:
+            for category in service_category_list["info"]:
+                service_category_map[category["id"]] = category["name"]
+
+        BaseHandler.sort_by_name(templates)
+        self.fill_host_count(templates)
+        return [
+            {
+                "id": template.get("id"),
+                "name": template.get("name"),
+                "template_type": self.template_type,
+                "last_time": template.get("last_time"),
+                "count": template.get("count", 0),
+                "meta": self.meta,
+                "service_category": service_category_map.get(template.get("service_category_id"), ""),
+            }
+            for template in templates
+        ]
 
     def query_template_nodes(self, start: int, page_size: int) -> List[types.TemplateNode]:
         params = {
@@ -280,7 +293,7 @@ class ServiceTemplate(Template):
         params = {
             "bk_biz_id": self.bk_biz_id,
             "bk_service_template_ids": [self.template_id],
-            "fields": constants.CommonEnum.SIMPLE_HOST_FIELDS.value,
+            "fields": constants.CommonEnum.DEFAULT_HOST_FIELDS.value,
             "page": {
                 "start": start,
                 "limit": page_size,
@@ -349,7 +362,6 @@ class ServiceTemplate(Template):
             object_id=constants.ObjectType.MODULE.value,
             object_name=constants.ObjectType.get_member_value__alias_map().get(constants.ObjectType.MODULE.value),
             meta=self.meta,
-            node_path=node.get("bk_module_name"),
         )
 
 
