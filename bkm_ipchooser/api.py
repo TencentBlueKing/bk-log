@@ -31,7 +31,7 @@ class AbstractBkApi(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @staticmethod
-    def list_biz_hosts_topo(params: dict = None):
+    def bulk_list_biz_hosts(params: dict = None):
         raise NotImplementedError
 
     @staticmethod
@@ -76,6 +76,11 @@ class AbstractBkApi(metaclass=abc.ABCMeta):
     @staticmethod
     def search_dynamic_group(params: dict = None):
         """查询动态分组"""
+        raise NotImplementedError
+
+    @staticmethod
+    def bulk_search_dynamic_group(params: dict = None):
+        """批量查询动态分组"""
         raise NotImplementedError
 
     @staticmethod

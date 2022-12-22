@@ -153,7 +153,7 @@ class IpChooserTopoViewSet(CommonViewSet):
     def agent_statistics(self, request, *args, **kwargs):
         return Response(
             topo_handler.TopoHandler.agent_statistics(
-                bk_biz_id=self.validated_data["scope_list"][0]["bk_biz_id"], node_list=self.validated_data["node_list"]
+                scope_list=self.validated_data["scope_list"], node_list=self.validated_data["node_list"]
             )
         )
 

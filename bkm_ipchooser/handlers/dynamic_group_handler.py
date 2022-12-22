@@ -22,25 +22,13 @@ class DynamicGroupHandler:
     def list(self, dynamic_group_list: List[Dict] = None) -> List[types.DynamicGroup]:
         """获取动态分组列表"""
         dynamic_group_ids = [dynamic_group["id"] for dynamic_group in dynamic_group_list]
-        groups = BkApi.search_dynamic_group({"bk_biz_id": self.bk_biz_id})
+        groups = BkApi.bulk_search_dynamic_group({"bk_biz_id": self.bk_biz_id})
         if not groups:
             return groups
         if dynamic_group_ids:
             groups = [group for group in groups if group["id"] in dynamic_group_ids]
         # 排序并添加是否最近更新标签
         BaseHandler.sort_by_name(groups)
-        multi_get_dynamic_group_host_count_result = request_multi_thread(
-            func=self._get_dynamic_group_host_count,
-            params_list=[{"group_id": group["id"]} for group in groups],
-            get_data=lambda x: x,
-        )
-        host_count_by_group_id = {
-            _result["id"]: _result["count"] for _result in multi_get_dynamic_group_host_count_result
-        }
-        for group in groups:
-            group["meta"] = self.meta
-            group["count"] = host_count_by_group_id.get(group["id"], 0)
-
         return self._format_dynamic_groups(groups)
 
     def _format_dynamic_groups(cls, groups: List[Dict]) -> List[Dict]:
@@ -50,7 +38,6 @@ class DynamicGroupHandler:
                 "id": group["id"],
                 "name": group["name"],
                 "meta": cls.meta,
-                "count": group["count"],
                 "last_time": group["last_time"],
                 # TODO: 当需要支持动态分组为集群时, 去掉这个注释
                 # "object_id": group["bk_obj_id"],
@@ -62,26 +49,6 @@ class DynamicGroupHandler:
             if group["bk_obj_id"] == constants.ObjectType.HOST.value
         ]
         return groups
-
-    def _get_dynamic_group_host_count(self, group_id: str) -> Dict:
-        """获取动态分组主机数量"""
-        result = {
-            "id": group_id,
-            "count": 0,
-        }
-        execute_dynamic_group_result = BkApi.execute_dynamic_group(
-            {
-                "bk_biz_id": self.bk_biz_id,
-                "id": group_id,
-                "fields": ["bk_host_id"],
-                "page": {"start": 0, "limit": 1},
-                "no_request": True,
-            }
-        )
-        if not execute_dynamic_group_result:
-            return result
-        result["count"] = execute_dynamic_group_result["count"]
-        return result
 
     def execute(self, dynamic_group_id: str, start: int, page_size: int) -> List[Dict]:
         """执行动态分组"""
@@ -108,20 +75,23 @@ class DynamicGroupHandler:
 
     def agent_statistics(self, dynamic_group_list: List[Dict] = None):
         dynamic_group_ids = [dynamic_group["id"] for dynamic_group in dynamic_group_list]
-        groups = BkApi.search_dynamic_group({"bk_biz_id": self.bk_biz_id})
+        groups = BkApi.bulk_search_dynamic_group({"bk_biz_id": self.bk_biz_id})
         if not groups:
             return groups
-        groups = [
+        params_list = [
             {
-                "id": group["id"],
-                "name": group["name"],
-                "meta": self.meta,
+                "dynamic_group": {
+                    "id": group["id"],
+                    "name": group["name"],
+                    "meta": self.meta,
+                },
             }
             for group in groups
             if group["id"] in dynamic_group_ids
         ]
-
-        return [self._get_dynamic_group_agent_statistic(group) for group in groups]
+        return request_multi_thread(
+            func=self._get_dynamic_group_agent_statistic, params_list=params_list, get_data=lambda x: x
+        )
 
     def _get_dynamic_group_agent_statistic(self, dynamic_group: dict):
         result = {"dynamic_group": dynamic_group}
@@ -135,6 +105,7 @@ class DynamicGroupHandler:
         if not hosts:
             return result
 
+        result["host_count"] = len(hosts)
         TopoHandler.fill_agent_status(hosts)
         agent_statistics = TopoHandler.count_agent_status(hosts)
         result.update(agent_statistics)
