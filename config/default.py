@@ -883,6 +883,8 @@ BKM_SPACE_API_CLASS = "apps.log_search.models.SpaceApi"
 # IP选择器配置
 # ===============
 BKM_IPCHOOSER_BKAPI_CLASS = "apps.utils.ipchooser.BkApi"
+# 是否开启动态主机配置协议适配
+ENABLE_DHCP = bool(os.getenv("BKAPP_ENABLE_DHCP", False))
 
 
 # ==============================================================================

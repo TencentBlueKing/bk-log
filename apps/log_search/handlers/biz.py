@@ -435,6 +435,7 @@ class BizHandler(APIModel):
                 "bk_cloud_id": host["bk_cloud_id"],
                 "parent_inst_id": host["parent_inst_id"],
                 "bk_obj_id": bk_obj_id,
+                "bk_host_id": host["bk_host_id"],
             }
             for host in hosts
         ]
@@ -932,7 +933,11 @@ class BizHandler(APIModel):
         """
         host_list = []
         for host in hosts_info:
-            tmp_host = {"bk_host_innerip": host["host"]["bk_host_innerip"], "bk_cloud_id": host["host"]["bk_cloud_id"]}
+            tmp_host = {
+                "bk_host_innerip": host["host"]["bk_host_innerip"],
+                "bk_cloud_id": host["host"]["bk_cloud_id"],
+                "bk_host_id": host["host"]["bk_host_id"],
+            }
             if bk_obj_id in (CCInstanceType.BUSINESS.value):
                 tmp_host["parent_inst_id"] = [self.bk_biz_id]
             if bk_obj_id in (CCInstanceType.MODULE.value, TemplateType.SERIVCE_TEMPLATE.value,):

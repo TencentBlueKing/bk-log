@@ -46,11 +46,15 @@ class FileServer(object):
             "bk_username": operator,
             "bk_biz_id": bk_biz_id,
             "script_content": content,
-            "ip_list": ip,
             "script_type": JOB_SCRIPT_TYPE,
             "account": account,
             "task_name": task_name,
         }
+        if settings.ENABLE_DHCP:
+            kwargs["host_id_list"] = [{"bk_host_id": item["bk_host_id"]} for item in ip]
+        else:
+            kwargs["ip_list"] = [{"ip": item["ip"], "bk_cloud_id": item["bk_cloud_id"]} for item in ip]
+
         if script_params:
             kwargs["script_params"] = script_params
             kwargs["script_param"] = script_params
