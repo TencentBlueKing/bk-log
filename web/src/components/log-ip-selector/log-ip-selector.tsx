@@ -340,13 +340,21 @@ export default class MonitorIpSelector extends tsc<IMonitorIpSelectorProps> {
   // 选中节点(根据多个拓扑节点与搜索条件批量分页查询所包含的主机信息)
   async fetchTopologyHostsNodes(params: IQuery) {
     const { search_content, ...p } = params;
-    const res = await $http.request('ipChooser/queryHosts', { data: search_content ? params : p });
+    const data = {
+      scope_list: this.scopeList,
+      ...(search_content ? params : p),
+    };
+    const res = await $http.request('ipChooser/queryHosts', { data });
     return res?.data || [];
   }
 
   async fetchTopologyHostIdsNodes(params: IQuery) {
     const { search_content, ...p } = params;
-    const res = await $http.request('ipChooser/queryHostIdInfos', { data: search_content ? params : p });
+    const data = {
+      scope_list: this.scopeList,
+      ...(search_content ? params : p),
+    };
+    const res = await $http.request('ipChooser/queryHostIdInfos', { data });
     return res?.data || [];
   }
 
@@ -362,6 +370,7 @@ export default class MonitorIpSelector extends tsc<IMonitorIpSelectorProps> {
   // 动态拓扑 - 勾选节点(获取多个拓扑节点的主机 Agent 状态统计信息)
   async fetchHostAgentStatisticsNodes(node: IFetchNode): Promise<{ agent_statistics: IStatistics, node: INode }[]> {
     const data = {
+      scope_list: this.scopeList,
       node_list: node.node_list,
     };
     const res = await $http.request('ipChooser/agentStatistics', { data });

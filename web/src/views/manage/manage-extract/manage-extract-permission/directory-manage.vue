@@ -131,11 +131,20 @@
               {{$t('个节点')}}
             </div>
           </div>
+          <!-- <log-ip-selector
+            mode="dialog"
+            :height="670"
+            :show-dialog.sync="showSelectDialog"
+            :value="{}"
+            :panel-list="['dynamicTopo']"
+            @change="handleConfirmSelect"
+          /> -->
           <module-select
             :show-select-dialog.sync="showSelectDialog"
             :selected-type="manageStrategyData.select_type"
             :selected-modules="manageStrategyData.modules"
-            @confirm="handleConfirmSelect" />
+            @confirm="handleConfirmSelect"
+          />
         </div>
       </div>
 
@@ -174,12 +183,14 @@
 </template>
 
 <script>
+// import LogIpSelector from '@/components/log-ip-selector/log-ip-selector';
 import ModuleSelect from './module-select';
 import ValidateInput from './validate-input';
 import ValidateUserSelector from './validate-user-selector';
 
 export default {
   components: {
+    // LogIpSelector,
     ModuleSelect,
     ValidateInput,
     ValidateUserSelector,
@@ -260,6 +271,20 @@ export default {
         inputList[inputList.length - 1].focus();
       });
     },
+    // handleConfirmSelect(value) {
+    //   const { node_list: nodeList, service_template_list: serviceTemplateList } = value;
+    //   let selectType = '';
+    //   let modules = [];
+    //   if (nodeList.length) {
+    //     selectType = 'topo';
+    //     modules = nodeList;
+    //   } else if (serviceTemplateList.length) {
+    //     selectType = 'module';
+    //     modules = serviceTemplateList;
+    //   }
+    //   this.manageStrategyData.select_type = selectType;
+    //   this.manageStrategyData.modules = modules;
+    // },
     handleConfirmSelect(selectType, modules) {
       this.manageStrategyData.select_type = selectType;
       this.manageStrategyData.modules = modules;
