@@ -120,6 +120,12 @@ const templateHosts = {
   method: 'post',
 };
 
+// 获取服务模板/集群模板Agent统计状态
+const templateAgentStatistics = {
+  url: '/ipchooser/template/agent_statistics/',
+  method: 'post',
+};
+
 export {
   trees,
   queryHosts,
@@ -137,4 +143,5 @@ export {
   templates,
   templateNodes,
   templateHosts,
+  templateAgentStatistics,
 };

@@ -189,7 +189,9 @@
             :height="670"
             :show-dialog.sync="showIpSelectorDialog"
             :value="selectorNodes"
-            :panel-list="['staticTopo','dynamicTopo','manualInput']"
+            :show-view-diff="isUpdate"
+            :original-value="ipSelectorOriginalValue"
+            :panel-list="ipSelectorPanelList"
             @change="handleTargetChange"
           />
           <!-- <ip-selector-dialog
@@ -278,9 +280,10 @@
               <div class="config-container">
                 <div class="config-item container-select">
                   <span :class="{ 'none-hidden-dom': isNode }">{{$t('NameSpace选择')}}</span>
-                  <div v-bk-tooltips.top="{ content: $t('请先选择集群'), delay: 500 }"
-                       :class="{ 'none-hidden-dom': isNode }"
-                       :disabled="!!formData.bcs_cluster_id">
+                  <div
+                    v-bk-tooltips.top="{ content: $t('请先选择集群'), delay: 500 }"
+                    :class="{ 'none-hidden-dom': isNode }"
+                    :disabled="!!formData.bcs_cluster_id">
                     <bk-select
                       v-model="conItem.namespaces"
                       multiple
@@ -761,6 +764,16 @@ export default {
       isExtraError: false, // 附加标签是否有出错
       nameSpaceRequest: false, // 是否正在请求namespace接口
       uiconfigToYamlData: {}, // 切换成yaml时当前保存的ui配置
+      // ip选择器面板
+      ipSelectorPanelList: [
+        'staticTopo',
+        'dynamicTopo',
+        'serviceTemplate',
+        'setTemplate',
+        'manualInput',
+      ],
+      // 编辑态ip选择器初始值
+      ipSelectorOriginalValue: {},
     };
   },
   computed: {
@@ -822,11 +835,7 @@ export default {
     },
     // ip选择器选中节点
     selectorNodes() {
-      const { target_node_type: type, target_nodes: nodes } = this.formData;
-      return {
-        host_list: type === 'INSTANCE' ? toSelectorNode(nodes, type) : [],
-        node_list: type === 'TOPO' ? toSelectorNode(nodes, type) : [],
-      };
+      return this.getSelectorNodes();
     },
   },
   watch: {
@@ -882,6 +891,8 @@ export default {
         Object.assign(this.formData, cloneCollect);
         if (this.formData.target?.length) { // IP 选择器预览结果回填
           this.formData.target_nodes = this.formData.target;
+          this.ipSelectorOriginalValue = this.getSelectorNodes();
+          console.log('ipSelectorOriginalValue------', this.ipSelectorOriginalValue);
         }
         if (!this.formData.collector_config_name_en) { // 兼容旧数据英文名为空
           this.formData.collector_config_name_en = this.formData.table_id || '';
@@ -1298,7 +1309,12 @@ export default {
     },
     // 采集目标选择内容变更
     handleTargetChange(value) {
-      const { host_list: hostList, node_list: nodeList } = value;
+      const {
+        host_list: hostList,
+        node_list: nodeList,
+        service_template_list: serviceTemplateList,
+        set_template_list: setTemplateList,
+      } = value;
       let type = '';
       let nodes = [];
       if (nodeList?.length) {
@@ -1308,6 +1324,14 @@ export default {
       if (hostList?.length) {
         type = 'INSTANCE';
         nodes = hostList;
+      }
+      if (serviceTemplateList?.length) {
+        type = 'SERVICE_TEMPLATE';
+        nodes = serviceTemplateList;
+      }
+      if (setTemplateList?.length) {
+        type = 'SET_TEMPLATE';
+        nodes = setTemplateList;
       }
       if (!type) return;
 
@@ -1606,6 +1630,16 @@ export default {
         .catch(() => {
           if (convertStr.length < 5) this.isTextValid = true;
         });
+    },
+    getSelectorNodes() {
+      const { target_node_type: type, target_nodes: nodes } = this.formData;
+      const targetList = toSelectorNode(nodes, type);
+      return {
+        host_list: type === 'INSTANCE' ? targetList : [],
+        node_list: type === 'TOPO' ? targetList : [],
+        service_template_list: type === 'SERVICE_TEMPLATE' ? targetList : [],
+        set_template_list: type === 'SET_TEMPLATE' ? targetList : [],
+      };
     },
   },
 };

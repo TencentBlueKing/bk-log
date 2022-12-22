@@ -47,6 +47,7 @@ export interface IMeta {
 }
 
 export interface INode {
+  id?: number
   instance_id: number
   object_id: 'module' | 'set' | 'biz'
   meta: IMeta
@@ -88,6 +89,7 @@ export type IStatic = 'alive_count' | 'not_alive_count' | 'total_count';
 export type IStatistics = Record<IStatic, number>;
 
 export interface IQuery {
+  id?: number
   start?: number
   page_size?: number
   search_content?: string
@@ -135,6 +137,33 @@ export interface IGroupHostQuery {
   strart: number
   page_siza: number
 }
+export interface ITemplateItem {
+  id: number
+  name: string
+  service_category: string
+  template_type: INodeType
+  meta?: IMeta
+}
+export interface ITemplateNodeItem {
+  instance_id: number
+  instance_name: number
+  object_id: string
+  object_name: string
+  template_id: number
+  meta?: IMeta
+}
+export interface ITemplateNode {
+  start: number
+  count: number
+  page_size: number
+  data: ITemplateNodeItem[]
+}
+export interface ITemplateHost {
+  start: number
+  count: number
+  page_size: number
+  data: IHost[]
+}
 
 /**
  * 转换成标准的IP选择器的选中数据
@@ -154,6 +183,11 @@ export function toSelectorNode(nodes: ITarget[], nodeType: INodeType) {
       return nodes.map(item => ({
         object_id: item.bk_obj_id,
         instance_id: item.bk_inst_id,
+      }));
+    case 'SERVICE_TEMPLATE':
+    case 'SET_TEMPLATE':
+      return nodes.map(item => ({
+        id: item.bk_inst_id,
       }));
     default:
       return [];
@@ -184,6 +218,12 @@ export function toTransformNode(nodes: Array<INode | IHost>, nodeType: INodeType
         bk_obj_id: item.object_id,
         bk_inst_id: item.instance_id,
       }));
+    case 'SERVICE_TEMPLATE':
+    case 'SET_TEMPLATE':
+      return nodes.map((item: INode) => ({
+        bk_obj_id: nodeType,
+        bk_inst_id: item.id,
+      }));
     default:
       return [];
   }
@@ -202,12 +242,20 @@ export type IpSelectorService = {
   fetchDynamicGroups?: (params: CommomParams) => Promise<any>
   fetchHostsDynamicGroup?: (params: CommomParams) => Promise<any>
   fetchHostAgentStatisticsDynamicGroups?: (params: CommomParams) => Promise<any>
+  fetchServiceTemplates?: (params: CommomParams) => Promise<any>
+  fetchNodesServiceTemplate?: (params: CommomParams) => Promise<any>
+  fetchHostServiceTemplate?: (params: CommomParams) => Promise<any>
+  fetchHostAgentStatisticsServiceTemplate?: (params: CommomParams) => Promise<any>
+  fetchSetTemplates?: (params: CommomParams) => Promise<any>
+  fetchNodesSetTemplate?: (params: CommomParams) => Promise<any>
+  fetchHostSetTemplate?: (params: CommomParams) => Promise<any>
+  fetchHostAgentStatisticsSetTemplate?: (params: CommomParams) => Promise<any>
   fetchCustomSettings?: (params: CommomParams) => Promise<any>
   updateCustomSettings?: (params: CommomParams) => Promise<any>
   fetchConfig?: (params: CommomParams) => Promise<any>
 };
 export type IpSelectorConfig = {
-  // 需要支持的面板（'staticTopo', 'dynamicTopo', 'dynamicGroup', 'manualInput'）
+  // 需要支持的面板（'staticTopo', 'dynamicTopo', 'dynamicGroup', 'serviceTemplate', 'setTemplate', 'manualInput'）
   panelList?: string[];
   // 面板选项的值是否唯一
   unqiuePanelValue?: boolean,
@@ -259,8 +307,8 @@ export interface IMonitorIpSelectorEvents {
 }
 @Component
 export default class MonitorIpSelector extends tsc<IMonitorIpSelectorProps> {
-  // 需要支持的面板（'staticTopo', 'dynamicTopo', 'dynamicGroup', 'manualInput'）
-  @Prop({ default: () => ['staticTopo', 'dynamicTopo', 'dynamicGroup', 'manualInput'], type: Array }) panelList: string[];
+  // 需要支持的面板（'staticTopo', 'dynamicTopo', 'dynamicGroup', 'serviceTemplate', 'setTemplate', 'manualInput'）
+  @Prop({ default: () => ['staticTopo', 'dynamicTopo', 'dynamicGroup', 'serviceTemplate', 'setTemplate', 'manualInput'], type: Array }) panelList: string[];
   @Prop({ default: () => ({}), type: Object }) value: Record<string, any>;
   // 自定义主机列表列
   @Prop({ type: Array }) hostTableCustomColumnList: IpSelectorHostTableCustomColumn[];
@@ -314,17 +362,28 @@ export default class MonitorIpSelector extends tsc<IMonitorIpSelectorProps> {
       fetchDynamicGroups: this.fetchDynamicGroup, // 动态分组列表
       fetchHostsDynamicGroup: this.fetchDynamicGroupHost, // 动态分组下的节点
       fetchHostAgentStatisticsDynamicGroups: this.fetchBatchGroupAgentStatistics,
+      fetchServiceTemplates: this.fetchServiceTemplates,
+      fetchNodesServiceTemplate: this.fetchNodesServiceTemplate,
+      fetchHostServiceTemplate: this.fetchHostServiceTemplate,
+      fetchHostAgentStatisticsServiceTemplate: this.fetchHostAgentStatisticsServiceTemplate,
+      fetchSetTemplates: this.fetchSetTemplates,
+      fetchNodesSetTemplate: this.fetchNodesSetTemplate,
+      fetchHostSetTemplate: this.fetchHostSetTemplate,
+      fetchHostAgentStatisticsSetTemplate: this.fetchHostAgentStatisticsSetTemplate,
+
       fetchCustomSettings: this.fetchCustomSettings,
       updateCustomSettings: this.updateCustomSettings,
       fetchConfig: this.fetchConfig,
       ...this.service,
     };
     this.ipSelectorConfig = {
-      // 需要支持的面板（'staticTopo', 'dynamicTopo', 'dynamicGroup', 'manualInput'）
+      // 需要支持的面板（'staticTopo', 'dynamicTopo', 'dynamicGroup', 'serviceTemplate', 'setTemplate', 'manualInput'）
       panelList: this.panelList ?? [
         'staticTopo',
         'dynamicTopo',
         'dynamicGroup',
+        'serviceTemplate',
+        'setTemplate',
         'manualInput',
       ],
       // 面板选项的值是否唯一
@@ -386,6 +445,8 @@ export default class MonitorIpSelector extends tsc<IMonitorIpSelectorProps> {
     return res?.data || [];
   }
   async fetchHostsDetails(node) {
+    console.log('detail node----', node);
+
     const data = {
       scope_list: this.scopeList,
       host_list: node.host_list,
@@ -426,6 +487,86 @@ export default class MonitorIpSelector extends tsc<IMonitorIpSelectorProps> {
       ...node,
     };
     const res = await $http.request('ipChooser/groupAgentStatistics', { data });
+    return res?.data || [];
+  }
+  // 获取服务模板列表
+  async fetchServiceTemplates(): Promise<Array<ITemplateItem>[]> {
+    const data = {
+      scope_list: this.scopeList,
+      template_type: 'SERVICE_TEMPLATE',
+    };
+    const res = await $http.request('ipChooser/templates', { data });
+    return res?.data || [];
+  }
+  // 获取服务模板下各个节点
+  async fetchNodesServiceTemplate(query: IQuery): Promise<Array<ITemplateNode>[]> {
+    const data = {
+      scope_list: this.scopeList,
+      template_type: 'SERVICE_TEMPLATE',
+      ...query,
+    };
+    const res = await $http.request('ipChooser/templateNodes', { data });
+    return res?.data || [];
+  }
+  // 获取服务模板下各个主机
+  async fetchHostServiceTemplate(query: IQuery): Promise<Array<ITemplateHost>[]> {
+    const data = {
+      scope_list: this.scopeList,
+      template_type: 'SERVICE_TEMPLATE',
+      template_id: query.id,
+      ...query,
+    };
+    const res = await $http.request('ipChooser/templateHosts', { data });
+    return res?.data || [];
+  }
+  // 获取服务模板Agent统计状态
+  async fetchHostAgentStatisticsServiceTemplate(query) {
+    const data = {
+      scope_list: this.scopeList,
+      template_type: 'SERVICE_TEMPLATE',
+      ...query,
+    };
+    const res = await $http.request('ipChooser/templateAgentStatistics', { data });
+    return res?.data || [];
+  }
+  // 获取集群模板列表
+  async fetchSetTemplates() {
+    const data = {
+      scope_list: this.scopeList,
+      template_type: 'SET_TEMPLATE',
+    };
+    const res = await $http.request('ipChooser/templates', { data });
+    return res?.data || [];
+  }
+  // 获取集群模板下各个节点
+  async fetchNodesSetTemplate(query: IQuery): Promise<Array<ITemplateNode>[]> {
+    const data = {
+      scope_list: this.scopeList,
+      template_type: 'SET_TEMPLATE',
+      ...query,
+    };
+    const res = await $http.request('ipChooser/templateNodes', { data });
+    return res?.data || [];
+  }
+  // 获取集群模板下各个主机
+  async fetchHostSetTemplate(query: IQuery): Promise<Array<ITemplateHost>[]> {
+    const data = {
+      scope_list: this.scopeList,
+      template_type: 'SET_TEMPLATE',
+      template_id: query.id,
+      ...query,
+    };
+    const res = await $http.request('ipChooser/templateHosts', { data });
+    return res?.data || [];
+  }
+  // 获取集群模板Agent统计状态
+  async fetchHostAgentStatisticsSetTemplate(query) {
+    const data = {
+      scope_list: this.scopeList,
+      template_type: 'SET_TEMPLATE',
+      ...query,
+    };
+    const res = await $http.request('ipChooser/templateAgentStatistics', { data });
     return res?.data || [];
   }
   async fetchCustomSettings(params: CommomParams) {
