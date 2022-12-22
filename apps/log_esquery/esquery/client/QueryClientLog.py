@@ -39,6 +39,7 @@ from apps.log_esquery.exceptions import (
 )
 from apps.log_esquery.type_constants import type_mapping_dict
 from apps.utils.log import logger
+from apps.utils.cache import cache_five_minute
 from apps.log_databus.models import CollectorConfig
 from apps.utils.thread import MultiExecuteFunc
 from apps.log_search.exceptions import IndexResultTableApiException
@@ -210,8 +211,8 @@ class QueryClientLog(QueryClientTemplate):
                 EsClientMetaInfoException.MESSAGE.format(message=transfer_api_response.get("message"))
             )
 
-    @staticmethod
-    def indices(bk_biz_id, result_table_id=None, with_storage=False):
+    @classmethod
+    def indices(cls, bk_biz_id, result_table_id=None, with_storage=False):
         """
         获取索引列表
         :param bk_biz_id:
@@ -235,10 +236,8 @@ class QueryClientLog(QueryClientTemplate):
 
         # 补充索引集群信息
         if with_storage and index_list:
-            indices = ",".join([_collect.table_id for _collect in collect_obj])
-            storage_info = TransferApi.get_result_table_storage(
-                {"result_table_list": indices, "storage_type": "elasticsearch"}
-            )
+            indices = [_collect.table_id for _collect in collect_obj]
+            storage_info = cls.bulk_cluster_infos(indices)
             for _index in index_list:
                 cluster_config = storage_info.get(_index["result_table_id"], {}).get("cluster_config", {})
                 _index.update(
@@ -248,6 +247,20 @@ class QueryClientLog(QueryClientTemplate):
                     }
                 )
         return index_list
+
+    @staticmethod
+    @cache_five_minute("bulk_cluster_info_{result_table_list}", need_md5=True)
+    def bulk_cluster_infos(result_table_list: list = None):
+        multi_execute_func = MultiExecuteFunc()
+        for rt in result_table_list:
+            multi_execute_func.append(
+                rt, TransferApi.get_result_table_storage, {"result_table_list": rt, "storage_type": "elasticsearch"}
+            )
+        result = multi_execute_func.run()
+        cluster_infos = {}
+        for _, cluster_info in result.items():  # noqa
+            cluster_infos.update(cluster_info)
+        return cluster_infos
 
     def get_cluster_info(self, result_table_id):
         result_table_id = result_table_id.split(",")[0]
