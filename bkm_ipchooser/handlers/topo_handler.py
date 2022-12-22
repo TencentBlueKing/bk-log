@@ -201,13 +201,7 @@ class TopoHandler:
     @classmethod
     def count_agent_status(cls, cc_hosts) -> typing.Dict:
         # fill_agent_status 之后，统计主机状态
-        result = {
-            "agent_statistics": {
-                "total_count": 0,
-                "alive_count": 0,
-                "not_alive_count": 0,
-            }
-        }
+        result = {"agent_statistics": {"total_count": 0, "alive_count": 0, "not_alive_count": 0}}
         if not cc_hosts:
             return result
 
@@ -302,8 +296,14 @@ class TopoHandler:
         # 查询主机
         tree_node: types.TreeNode = cls.format2tree_node(bk_biz_id, readable_node_list[0])
 
-        instance_id = tree_node["bk_inst_id"]
-        object_id = tree_node["bk_obj_id"]
+        bk_module_ids = []
+        bk_set_ids = []
+
+        for node in readable_node_list:
+            if node["object_id"] == "module":
+                bk_module_ids.append(node["instance_id"])
+            elif node["object_id"] == "set":
+                bk_set_ids.append(node["instance_id"])
 
         params = {
             "bk_biz_id": tree_node["bk_biz_id"],
@@ -315,11 +315,11 @@ class TopoHandler:
         if conditions:
             params.update({"host_property_filter": {"condition": "OR", "rules": conditions}})
 
-        if object_id == "module":
-            params.update(bk_module_ids=[instance_id])
+        if bk_module_ids:
+            params.update(bk_module_ids=bk_module_ids)
 
-        if object_id == "set":
-            params.update(bk_set_ids=[instance_id])
+        if bk_set_ids:
+            params.update(bk_set_ids=bk_set_ids)
 
         # 获取主机信息
         resp = BkApi.list_biz_hosts(params)
@@ -353,11 +353,7 @@ class TopoHandler:
         """
         result = {
             "node": node,
-            "agent_statistics": {
-                "total_count": 0,
-                "alive_count": 0,
-                "not_alive_count": 0,
-            },
+            "agent_statistics": {"total_count": 0, "alive_count": 0, "not_alive_count": 0},
         }
         object_id = node["object_id"]
         params = {"bk_biz_id": bk_biz_id, "fields": constants.CommonEnum.SIMPLE_HOST_FIELDS.value, "no_request": True}
