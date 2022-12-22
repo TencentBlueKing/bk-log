@@ -91,7 +91,7 @@ class TopoHandler:
             node_paths_list.append(
                 [
                     {
-                        "meta": node["meta"],
+                        "meta": BaseHandler.get_meta_data(bk_biz_id),
                         "object_id": path_node["bk_obj_id"],
                         "object_name": path_node["bk_obj_name"],
                         "instance_id": path_node["bk_inst_id"],
@@ -199,7 +199,7 @@ class TopoHandler:
             logger.exception("fill_agent_status exception: %s", e)
 
     @classmethod
-    def count_agent_status(cls, cc_hosts):
+    def count_agent_status(cls, cc_hosts) -> typing.Dict:
         # fill_agent_status 之后，统计主机状态
         result = {
             "agent_statistics": {
@@ -331,14 +331,18 @@ class TopoHandler:
 
     @classmethod
     def agent_statistics(
-        cls, bk_biz_id: int, node_list: typing.List[types.ReadableTreeNode]
+        cls, scope_list: types.ScopeList, node_list: typing.List[types.ReadableTreeNode]
     ) -> typing.List[typing.Dict]:
         """
         获取多个拓扑节点的主机 Agent 状态统计信息
         :param node_list: 节点信息列表
         :return:
         """
-        return [cls.node_agent_statistics(bk_biz_id, node) for node in node_list]
+        bk_biz_id = scope_list[0]["bk_biz_id"]
+        params_list = [{"bk_biz_id": bk_biz_id, "node": node} for node in node_list]
+        return batch_request.request_multi_thread(
+            func=cls.node_agent_statistics, params_list=params_list, get_data=lambda x: x
+        )
 
     @classmethod
     def node_agent_statistics(cls, bk_biz_id: int, node: types.ReadableTreeNode) -> typing.Dict:
@@ -356,39 +360,15 @@ class TopoHandler:
             },
         }
         object_id = node["object_id"]
-        params = {
-            "bk_biz_id": bk_biz_id,
-            "fields": constants.CommonEnum.SIMPLE_HOST_FIELDS.value,
-        }
+        params = {"bk_biz_id": bk_biz_id, "fields": constants.CommonEnum.SIMPLE_HOST_FIELDS.value, "no_request": True}
         if object_id == constants.ObjectType.SET.value:
-            params["set_property_filter"] = {
-                "condition": "AND",
-                "rules": [{"field": "bk_set_id", "operator": "equal", "value": node["instance_id"]}],
-            }
+            params["bk_set_ids"] = [node["instance_id"]]
         if object_id == constants.ObjectType.MODULE.value:
-            params["module_property_filter"] = {
-                "condition": "AND",
-                "rules": [{"field": "bk_module_id", "operator": "equal", "value": node["instance_id"]}],
-            }
-        hosts_with_topo = BkApi.list_biz_hosts_topo(params)
-        if not hosts_with_topo:
+            params["bk_module_ids"] = [node["instance_id"]]
+        hosts = BkApi.bulk_list_biz_hosts(params)
+        if not hosts:
             return result
-
-        params = {
-            "hosts": [
-                {
-                    "ip": host["host"].get("bk_host_innerip"),
-                    "bk_cloud_id": host["host"].get("bk_cloud_id"),
-                }
-                for host in hosts_with_topo
-            ]
-        }
-        agent_status_result = BkApi.get_agent_status(params)
-        for host_status in agent_status_result.values():
-            result["agent_statistics"]["total_count"] += 1
-            if host_status.get("bk_agent_alive") == constants.AgentStatusType.ALIVE.value:
-                result["agent_statistics"]["alive_count"] += 1
-            else:
-                result["agent_statistics"]["not_alive_count"] += 1
+        cls.fill_agent_status(hosts)
+        result.update(cls.count_agent_status(hosts))
 
         return result

@@ -31,7 +31,7 @@ class AbstractBkApi(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @staticmethod
-    def list_biz_hosts_topo(params: dict = None):
+    def bulk_list_biz_hosts(params: dict = None):
         raise NotImplementedError
 
     @staticmethod
