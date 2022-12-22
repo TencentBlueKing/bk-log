@@ -30,8 +30,8 @@ class BkApi(AbstractBkApi):
         return CCApi.list_biz_hosts(params)
 
     @staticmethod
-    def list_biz_hosts_topo(params: dict = None):
-        return CCApi.list_biz_hosts_topo.bulk_request(params)
+    def bulk_list_biz_hosts(params: dict = None):
+        return CCApi.list_biz_hosts.bulk_request(params)
 
     @staticmethod
     def list_host_total_mainline_topo(params: dict = None):
@@ -67,6 +67,11 @@ class BkApi(AbstractBkApi):
 
     @staticmethod
     def search_dynamic_group(params: dict = None):
+        return CCApi.search_dynamic_group(params)
+
+    @staticmethod
+    def bulk_search_dynamic_group(params: dict = None):
+        """批量查询动态分组"""
         return CCApi.search_dynamic_group.bulk_request(params)
 
     @staticmethod
