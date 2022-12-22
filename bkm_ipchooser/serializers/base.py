@@ -51,7 +51,7 @@ class ScopeSelectorBaseSer(serializers.Serializer):
     scope_list = serializers.ListField(help_text=_("要获取拓扑结构的资源范围数组"), child=ScopeSer(), default=[], required=False)
 
 
-class QueryHostsBaseSer(PaginationSer):
+class QueryHostsBaseSer(ScopeSelectorBaseSer, PaginationSer):
     search_condition = HostSearchConditionSer(required=False)
 
     # k-v 查找上线前临时兼容的模糊查询字段
