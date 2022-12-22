@@ -54,8 +54,12 @@ class TopoTool:
         return total_host_ids
 
     @classmethod
-    def get_topo_tree_with_count(cls, bk_biz_id: int, return_all: bool = True) -> types.TreeNode:
-        topo_tree: types.TreeNode = resource.ResourceQueryHelper.get_topo_tree(bk_biz_id, return_all=return_all)
+    def get_topo_tree_with_count(
+        cls, bk_biz_id: int, return_all: bool = True, topo_tree: types.TreeNode = None
+    ) -> types.TreeNode:
+        topo_tree: types.TreeNode = topo_tree or resource.ResourceQueryHelper.get_topo_tree(
+            bk_biz_id, return_all=return_all
+        )
 
         # 这个接口较慢，缓存5min
         cache_key = f"host_topo_relations:{bk_biz_id}"
