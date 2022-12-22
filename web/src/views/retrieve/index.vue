@@ -573,11 +573,12 @@ export default {
     //   return this.ipTopoSwitch;
     // },
     showFilterCutline() {
-      const { host_scopes, addition } = this.retrieveParams;
+      const { host_scopes: hostScopes, addition } = this.retrieveParams;
       // return (host_scopes.modules.length || host_scopes.ips.length) && addition.length;
-      return (host_scopes?.modules?.length
-      || host_scopes?.ips?.length
-      || host_scopes?.target_nodes?.length)
+      return (hostScopes?.modules?.length
+      || hostScopes?.ips?.length
+      // eslint-disable-next-line camelcase
+      || hostScopes?.target_nodes?.length)
       && addition?.length;
     },
     showSearchPage() {
@@ -597,6 +598,7 @@ export default {
       return this.activeFavorite?.params?.keyword === this.retrieveParams.keyword;
     },
     isShowUiType() { // 判断当前点击的收藏是否展示表单字段
+      // eslint-disable-next-line camelcase
       return this.activeFavorite?.params?.search_fields?.length;
     },
   },
@@ -1222,6 +1224,7 @@ export default {
         }
       } finally {
         // 如果是收藏检索并且开启检索显示, 则更新显示字段
+        // eslint-disable-next-line camelcase
         if (this.isFavoriteSearch && this.activeFavorite?.is_enable_display_fields) {
           const { display_fields: favoriteDisplayFields } = this.activeFavorite;
           const visibilityFields = this.visibleFields.map(item => item.field_name);
@@ -1335,8 +1338,13 @@ export default {
         throw e;
       }
     },
-    // 字段设置更新了
-    async handleFieldsUpdated(displayFieldNames, showFieldAlias) {
+    /**
+     * @desc: 字段设置更新了
+     * @param {Array} displayFieldNames 展示字段
+     * @param {Boolean} showFieldAlias 是否别名
+     * @param {Boolean} isRequestFields 是否请求字段
+     */
+    async handleFieldsUpdated(displayFieldNames, showFieldAlias, isRequestFields = true) {
       this.$store.commit('updateClearTableWidth', 1);
       this.visibleFields = displayFieldNames.map((displayName) => {
         for (const field of this.totalFields) {
@@ -1351,7 +1359,7 @@ export default {
       }
       this.renderTable = false;
       await this.$nextTick();
-      this.requestFields();
+      isRequestFields && this.requestFields();
       this.renderTable = true;
     },
     requestTableData() {

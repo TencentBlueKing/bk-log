@@ -145,6 +145,7 @@ export default {
     },
     handleActiveDetails(state) {
       this.isOpenWindow = state;
+      this.introWidth = state ? 360 : 0;
     },
   },
 };

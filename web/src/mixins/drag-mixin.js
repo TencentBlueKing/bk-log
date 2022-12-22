@@ -23,11 +23,11 @@
 export default {
   data() {
     return {
-      minIntroWidth: 300,
-      maxIntroWidth: 480,
-      introWidth: 400,
-      isDraging: false,
-      currentTreeBoxWidth: null,
+      minIntroWidth: 300, // 最小宽度
+      maxIntroWidth: 480, // 默认最大宽度
+      introWidth: 400, // 侧边栏宽度
+      isDraging: false, // 是否正在拖拽
+      currentTreeBoxWidth: null, // 当前侧边宽度
     };
   },
   methods: {
