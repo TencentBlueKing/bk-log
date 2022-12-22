@@ -145,8 +145,9 @@ export function toSelectorNode(nodes: ITarget[], nodeType: INodeType) {
   switch (nodeType) {
     case 'INSTANCE':
       return nodes.map((item) => {
+        // 增量数据只需使用host_id
         if (item.bk_host_id) return { host_id: item.bk_host_id };
-        // 兼容旧数据 没有bk_host_id的情况下 把ip和cloud_id传给组件 组件内部定位host_id
+        // 兼容旧数据 没有bk_host_id的情况下 把ip和cloud_id传给组件 提供组件内部定位host_id
         return { host_id: undefined, ip: item.ip, cloud_id: item.bk_cloud_id };
       });
     case 'TOPO':
@@ -160,16 +161,24 @@ export function toSelectorNode(nodes: ITarget[], nodeType: INodeType) {
 }
 
 /**
- * 转换为采集项需要的选中数据
+ * 转换为具体场景需要的选中数据
+ * needIpAndCloudArea 需要同时返回ip和cloud_id
  */
-export function toCollectorNode(nodes: Array<INode | IHost>, nodeType: INodeType) {
+export function toTransformNode(nodes: Array<INode | IHost>, nodeType: INodeType, needIpAndCloudArea = false) {
   if (!nodeType) return [];
 
   switch (nodeType) {
     case 'INSTANCE':
-      return nodes.map((item: IHost) => ({
-        bk_host_id: item.host_id,
-      }));
+      return nodes.map((item: IHost) => {
+        if (needIpAndCloudArea) { // 部分场景 需要同时返回host_id、ip、cloud_id 其中ip、cloud_id用于展示
+          return {
+            bk_host_id: item.host_id,
+            ip: item.ip,
+            bk_cloud_id: item.cloud_area.id,
+          };
+        }
+        return { bk_host_id: item.host_id };
+      });
     case 'TOPO':
       return nodes.map((item: INode) => ({
         bk_obj_id: item.object_id,

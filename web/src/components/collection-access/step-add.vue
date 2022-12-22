@@ -517,7 +517,7 @@ import LinuxSvg from '@/images/container-icons/Linux.svg';
 import NodeSvg from '@/images/container-icons/Node.svg';
 import StdoutSvg from '@/images/container-icons/Stdout.svg';
 import WindowsSvg from '@/images/container-icons/Windows.svg';
-import LogIpSelector, { toCollectorNode, toSelectorNode } from '@/components/log-ip-selector/log-ip-selector';
+import LogIpSelector, { toTransformNode, toSelectorNode } from '@/components/log-ip-selector/log-ip-selector';
 // import ipSelectorDialog from './ip-selector-dialog';
 import configLogSetItem from './components/step-add/config-log-set-item';
 import labelTargetDialog from './components/step-add/label-target-dialog';
@@ -1312,7 +1312,7 @@ export default {
       if (!type) return;
 
       this.formData.target_node_type = type;
-      this.formData.target_nodes = toCollectorNode(nodes, type);
+      this.formData.target_nodes = toTransformNode(nodes, type);
       // 触发 bk-form 的表单验证
       this.$refs.formItemTarget.validate('change');
     },
