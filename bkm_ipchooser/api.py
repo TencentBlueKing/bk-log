@@ -79,6 +79,11 @@ class AbstractBkApi(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @staticmethod
+    def bulk_search_dynamic_group(params: dict = None):
+        """批量查询动态分组"""
+        raise NotImplementedError
+
+    @staticmethod
     def execute_dynamic_group(params: dict = None):
         """执行动态分组"""
         raise NotImplementedError

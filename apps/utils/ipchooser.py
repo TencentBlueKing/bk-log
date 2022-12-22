@@ -67,6 +67,11 @@ class BkApi(AbstractBkApi):
 
     @staticmethod
     def search_dynamic_group(params: dict = None):
+        return CCApi.search_dynamic_group(params)
+
+    @staticmethod
+    def bulk_search_dynamic_group(params: dict = None):
+        """批量查询动态分组"""
         return CCApi.search_dynamic_group.bulk_request(params)
 
     @staticmethod
