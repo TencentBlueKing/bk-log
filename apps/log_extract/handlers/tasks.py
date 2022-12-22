@@ -36,7 +36,7 @@ from apps.utils.log import logger
 from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
 from apps.iam import ActionEnum, Permission
 from apps.log_extract import constants, exceptions
-from apps.log_extract.constants import TASK_IP_INDEX, TASK_BK_CLOUD_ID_INDEX, ExtractLinkType
+from apps.log_extract.constants import TASK_IP_INDEX, TASK_BK_CLOUD_ID_INDEX, ExtractLinkType, TASK_HOST_ID_INDEX
 from apps.log_extract.handlers.explorer import ExplorerHandler
 from apps.log_extract.handlers.extract import ExtractLinkBase
 from apps.log_extract.models import Tasks, ExtractLink
@@ -122,10 +122,10 @@ class TasksHandler(object):
         # step 3：创建任务并启动pipeline
         formatted_ip_list = []
         for ip in ip_list:
+            ip_key = f"{ip['bk_cloud_id']}:{ip['ip']}"
             if ip.get("bk_host_id"):
-                formatted_ip_list.append(str(ip["bk_host_id"]))
-            else:
-                formatted_ip_list.append(f"{ip['bk_cloud_id']}:{ip['ip']}")
+                ip_key = f"{ip_key}:{ip['bk_host_id']}"
+            formatted_ip_list.append(ip_key)
 
         params = {
             "bk_biz_id": bk_biz_id,
@@ -248,6 +248,7 @@ class TasksHandler(object):
                 component_status["state"]
             )
         task["task_step_status"] = component_status_list
+        task = self.get_ip_and_bk_cloud_id([task])[0]
         return Response(task)
 
     def partial_update(self, tasks_views, *args, **kwargs):
@@ -317,9 +318,17 @@ class TasksHandler(object):
                 if ":" not in ip:
                     ip_list.append({"bk_host_id": ip})
                 else:
-                    ip_list.append(
-                        {"ip": ip.split(":")[TASK_IP_INDEX], "bk_cloud_id": int(ip.split(":")[TASK_BK_CLOUD_ID_INDEX])}
-                    )
+                    items = ip.split(":")
+                    if len(items) == 2:
+                        ip_list.append({"ip": items[TASK_IP_INDEX], "bk_cloud_id": int(items[TASK_BK_CLOUD_ID_INDEX])})
+                    elif len(items) == 3:
+                        ip_list.append(
+                            {
+                                "ip": items[TASK_IP_INDEX],
+                                "bk_cloud_id": int(items[TASK_BK_CLOUD_ID_INDEX]),
+                                "bk_host_id": int(items[TASK_HOST_ID_INDEX]),
+                            }
+                        )
             task["ip_list"] = ip_list
         return task_list
 

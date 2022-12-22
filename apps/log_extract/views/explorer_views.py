@@ -24,6 +24,7 @@ from apps.utils.drf import list_route
 from apps.generic import APIViewSet
 from apps.log_extract.handlers.explorer import ExplorerHandler
 from apps.log_extract import serializers
+from bkm_ipchooser.serializers import topo_sers
 
 
 class ExplorerViewSet(APIViewSet):
@@ -233,3 +234,33 @@ class ExplorerViewSet(APIViewSet):
         """
         data = self.params_valid(serializers.ExplorerListTopo)
         return Response(ExplorerHandler().list_accessible_topo(bk_biz_id=data["bk_biz_id"]))
+
+    @list_route(methods=["POST"])
+    def trees(self, request, *args, **kwargs):
+        """
+        @api {get} /log_extract/explorer/tree/ 04_explorer-拓扑树列表(过滤后) 基于通用实现扩展
+        @apiName trees
+        @apiGroup 18_extract
+        """
+        data = self.params_valid(topo_sers.TreesRequestSer)
+        return Response(ExplorerHandler().ipchooser_trees(scope_list=data["scope_list"]))
+
+    @list_route(methods=["POST"])
+    def query_hosts(self, request, *args, **kwargs):
+        """
+        @api {get} /log_extract/explorer/query_hosts/ 04_explorer-查询主机列表(过滤后) 基于通用实现扩展
+        @apiName query_hosts
+        @apiGroup 18_extract
+        """
+        data = self.params_valid(topo_sers.QueryHostsRequestSer)
+        return Response(ExplorerHandler().ipchooser_query_hosts(data=data))
+
+    @list_route(methods=["POST"])
+    def query_host_id_infos(self, request, *args, **kwargs):
+        """
+        @api {get} /log_extract/explorer/query_host_id_infos/ 04_explorer-查询主机列表详请(过滤后) 基于通用实现扩展
+        @apiName query_host_id_infos
+        @apiGroup 18_extract
+        """
+        data = self.params_valid(topo_sers.QueryHostIdInfosRequestSer)
+        return Response(ExplorerHandler().ipchooser_query_host_id_infos(data=data))
