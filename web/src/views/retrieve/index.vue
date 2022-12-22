@@ -1340,9 +1340,9 @@ export default {
     },
     /**
      * @desc: 字段设置更新了
-     * @param {*} displayFieldNames 展示字段
-     * @param {*} showFieldAlias 是否别名
-     * @param {*} isRequestFields 是否请求字段
+     * @param {Array} displayFieldNames 展示字段
+     * @param {Boolean} showFieldAlias 是否别名
+     * @param {Boolean} isRequestFields 是否请求字段
      */
     async handleFieldsUpdated(displayFieldNames, showFieldAlias, isRequestFields = true) {
       this.$store.commit('updateClearTableWidth', 1);
