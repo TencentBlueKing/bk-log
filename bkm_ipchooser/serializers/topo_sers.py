@@ -15,7 +15,7 @@ class TreesResponseSer(serializers.Serializer):
         swagger_schema_fields = {"example": mock_data.API_TOPO_TREES_RESPONSE}
 
 
-class QueryPathRequestSer(serializers.Serializer):
+class QueryPathRequestSer(base.ScopeSelectorBaseSer):
     node_list = serializers.ListField(child=base.TreeNodeSer())
 
     class Meta:

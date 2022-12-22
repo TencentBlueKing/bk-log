@@ -76,3 +76,15 @@ class TopoTool:
         cls.fill_host_count_to_tree([topo_tree], host_ids_gby_module_id)
 
         return topo_tree
+
+    @classmethod
+    def format_topo_node(cls, node: typing.Dict) -> typing.Dict:
+        """
+        格式化节点
+        """
+        return {
+            "object_id": node["bk_obj_id"],
+            "object_name": constants.ObjectType.get_member_value__alias_map().get(node["bk_obj_id"], ""),
+            "instance_id": node["bk_inst_id"],
+            "instance_name": node["bk_inst_name"],
+        }

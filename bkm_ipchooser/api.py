@@ -31,7 +31,7 @@ class AbstractBkApi(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @staticmethod
-    def list_biz_hosts_topo(params: dict = None):
+    def bulk_list_biz_hosts(params: dict = None):
         raise NotImplementedError
 
     @staticmethod
@@ -40,34 +40,87 @@ class AbstractBkApi(metaclass=abc.ABCMeta):
 
     @staticmethod
     def get_agent_status(params: dict = None):
+        """查询主机agent状态"""
         raise NotImplementedError
 
     @staticmethod
     def list_service_template(params: dict = None):
+        """查询服务模板"""
         raise NotImplementedError
 
     @staticmethod
     def list_set_template(params: dict = None):
+        """查询集群模板"""
         raise NotImplementedError
 
     @staticmethod
     def search_set(params: dict = None):
+        """查询集群"""
+        raise NotImplementedError
+
+    @staticmethod
+    def bulk_search_set(params: dict = None):
+        """批量查询集群"""
         raise NotImplementedError
 
     @staticmethod
     def search_module(params: dict = None):
+        """查询模块"""
+        raise NotImplementedError
+
+    @staticmethod
+    def bulk_search_module(params: dict = None):
+        """批量查询模块"""
         raise NotImplementedError
 
     @staticmethod
     def search_dynamic_group(params: dict = None):
+        """查询动态分组"""
+        raise NotImplementedError
+
+    @staticmethod
+    def bulk_search_dynamic_group(params: dict = None):
+        """批量查询动态分组"""
         raise NotImplementedError
 
     @staticmethod
     def execute_dynamic_group(params: dict = None):
+        """执行动态分组"""
         raise NotImplementedError
 
     @staticmethod
     def bulk_execute_dynamic_group(params: dict = None):
+        """批量执行动态分组"""
+        raise NotImplementedError
+
+    @staticmethod
+    def find_host_by_service_template(params: dict = None):
+        """分页查询服务模板的主机"""
+        raise NotImplementedError
+
+    @staticmethod
+    def bulk_find_host_by_service_template(params: dict = None):
+        """批量查询服务模板的主机"""
+        raise NotImplementedError
+
+    @staticmethod
+    def find_host_by_set_template(params: dict = None):
+        """分页查询集群模板的主机"""
+        raise NotImplementedError
+
+    @staticmethod
+    def bulk_find_host_by_set_template(params: dict = None):
+        """批量查询集群模板的主机"""
+        raise NotImplementedError
+
+    @staticmethod
+    def find_topo_node_paths(params: dict = None):
+        """查询拓扑节点所在的拓扑路径"""
+        raise NotImplementedError
+
+    @staticmethod
+    def list_service_category(params: dict = None):
+        """查询服务分类列表"""
         raise NotImplementedError
 
 

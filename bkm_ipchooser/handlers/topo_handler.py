@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
-import typing
 from collections import defaultdict
+import typing
 
 from bkm_ipchooser import constants, types
 from bkm_ipchooser.api import BkApi
@@ -13,11 +13,11 @@ logger = logging.getLogger("bkm_ipchooser")
 
 class TopoHandler:
     @staticmethod
-    def format2tree_node(node: types.ReadableTreeNode) -> types.TreeNode:
+    def format2tree_node(bk_biz_id: int, node: types.ReadableTreeNode) -> types.TreeNode:
         return {
             "bk_obj_id": node["object_id"],
             "bk_inst_id": node["instance_id"],
-            "bk_biz_id": node["meta"]["bk_biz_id"],
+            "bk_biz_id": bk_biz_id,
         }
 
     @staticmethod
@@ -61,14 +61,15 @@ class TopoHandler:
         return [cls.format_tree(topo_tool.TopoTool.get_topo_tree_with_count(scope_list[0]["bk_biz_id"]))]
 
     @staticmethod
-    def query_path(node_list: typing.List[types.TreeNode]) -> typing.List[typing.List[types.TreeNode]]:
+    def query_path(
+        scope_list: types.ScopeList, node_list: typing.List[types.TreeNode]
+    ) -> typing.List[typing.List[types.TreeNode]]:
         if not node_list:
             return []
+        bk_biz_id = scope_list[0]["bk_biz_id"]
         nodes_gby_biz_id: typing.Dict[int, typing.List[types.TreeNode]] = defaultdict(list)
         for node in node_list:
-            nodes_gby_biz_id[node["meta"]["bk_biz_id"]].append(
-                {"bk_inst_id": node["instance_id"], "bk_obj_id": node["object_id"]}
-            )
+            nodes_gby_biz_id[bk_biz_id].append({"bk_inst_id": node["instance_id"], "bk_obj_id": node["object_id"]})
 
         params_list: typing.List[typing.Dict[str, typing.Any]] = []
         for biz_id, bk_nodes in nodes_gby_biz_id.items():
@@ -90,7 +91,7 @@ class TopoHandler:
             node_paths_list.append(
                 [
                     {
-                        "meta": node["meta"],
+                        "meta": BaseHandler.get_meta_data(bk_biz_id),
                         "object_id": path_node["bk_obj_id"],
                         "object_name": path_node["bk_obj_name"],
                         "instance_id": path_node["bk_inst_id"],
@@ -104,6 +105,7 @@ class TopoHandler:
     @classmethod
     def query_hosts(
         cls,
+        scope_list: types.ScopeList,
         readable_node_list: typing.List[types.ReadableTreeNode],
         conditions: typing.List[types.Condition],
         start: int,
@@ -112,6 +114,7 @@ class TopoHandler:
     ) -> typing.Dict:
         """
         查询主机
+        :param scope_list
         :param readable_node_list: 拓扑节点
         :param conditions: 查询条件，TODO: 暂不支持
         :param fields: 字段
@@ -122,17 +125,20 @@ class TopoHandler:
         if not readable_node_list:
             # 不存在查询节点提前返回，减少非必要 IO
             return {"total": 0, "data": []}
-
-        tree_node: types.TreeNode = cls.format2tree_node(readable_node_list[0])
+        bk_biz_id = scope_list[0]["bk_biz_id"]
+        tree_node: types.TreeNode = cls.format2tree_node(bk_biz_id, readable_node_list[0])
 
         # 获取主机信息
-        resp = cls.query_cc_hosts(readable_node_list, conditions, start, page_size, fields, return_status=True)
+        resp = cls.query_cc_hosts(
+            bk_biz_id, readable_node_list, conditions, start, page_size, fields, return_status=True
+        )
 
         return {"total": resp["count"], "data": BaseHandler.format_hosts(resp["info"], tree_node["bk_biz_id"])}
 
     @classmethod
     def query_host_id_infos(
         cls,
+        scope_list: types.ScopeList,
         readable_node_list: typing.List[types.ReadableTreeNode],
         conditions: typing.List[types.Condition],
         start: int,
@@ -150,13 +156,15 @@ class TopoHandler:
             # 不存在查询节点提前返回，减少非必要 IO
             return {"total": 0, "data": []}
 
-        tree_node: types.TreeNode = cls.format2tree_node(readable_node_list[0])
+        bk_biz_id = scope_list[0]["bk_biz_id"]
+        tree_node: types.TreeNode = cls.format2tree_node(bk_biz_id, readable_node_list[0])
 
         # TODO: 支持全量查询
         page_size = page_size if page_size > 0 else 1000
 
         # 获取主机信息
         resp = cls.query_cc_hosts(
+            bk_biz_id,
             readable_node_list,
             conditions,
             start,
@@ -182,12 +190,34 @@ class TopoHandler:
             index += 1
 
         try:
-            status_map = BkApi.get_agent_status({"hosts": hosts})
+            # 添加no_request参数, 多线程调用时，保证用户信息不漏传
+            status_map = BkApi.get_agent_status({"hosts": hosts, "no_request": True})
 
             for ip_cloud, detail in status_map.items():
                 cc_hosts[host_map[ip_cloud]]["status"] = detail["bk_agent_alive"]
         except KeyError as e:
             logger.exception("fill_agent_status exception: %s", e)
+
+    @classmethod
+    def count_agent_status(cls, cc_hosts) -> typing.Dict:
+        # fill_agent_status 之后，统计主机状态
+        result = {
+            "agent_statistics": {
+                "total_count": 0,
+                "alive_count": 0,
+                "not_alive_count": 0,
+            }
+        }
+        if not cc_hosts:
+            return result
+
+        result["agent_statistics"]["total_count"] = len(cc_hosts)
+        for cc_host in cc_hosts:
+            if cc_host.get("status", constants.AgentStatusType.NO_ALIVE.value) == constants.AgentStatusType.ALIVE.value:
+                result["agent_statistics"]["alive_count"] += 1
+            else:
+                result["agent_statistics"]["not_alive_count"] += 1
+        return result
 
     @classmethod
     def fill_cloud_name(cls, cc_hosts):
@@ -233,20 +263,7 @@ class TopoHandler:
         resp = BkApi.list_biz_hosts(
             {
                 "bk_biz_id": bk_biz_id,
-                "fields": [
-                    "bk_host_id",
-                    "bk_host_innerip",
-                    "bk_host_innerip_v6",
-                    "bk_cloud_id",
-                    "bk_host_name",
-                    "bk_os_name",
-                    "bk_os_type",
-                    "bk_agent_id",
-                    "bk_cloud_vendor",
-                    "bk_mem",
-                    "bk_cpu",
-                    "bk_machine_type",
-                ],
+                "fields": constants.CommonEnum.DEFAULT_HOST_FIELDS.value,
                 "page": {"start": 0, "limit": limit, "sort": "bk_host_innerip"},
                 "host_property_filter": {"condition": "AND", "rules": rules},
             },
@@ -262,6 +279,7 @@ class TopoHandler:
     @classmethod
     def query_cc_hosts(
         cls,
+        bk_biz_id: int,
         readable_node_list: typing.List[types.ReadableTreeNode],
         conditions: typing.List[types.Condition],
         start: int,
@@ -279,9 +297,10 @@ class TopoHandler:
         :param return_status: 返回agent状态
         :return:
         """
-
+        if not readable_node_list:
+            return {"count": 0, "info": []}
         # 查询主机
-        tree_node: types.TreeNode = cls.format2tree_node(readable_node_list[0])
+        tree_node: types.TreeNode = cls.format2tree_node(bk_biz_id, readable_node_list[0])
 
         instance_id = tree_node["bk_inst_id"]
         object_id = tree_node["bk_obj_id"]
@@ -311,16 +330,22 @@ class TopoHandler:
         return resp
 
     @classmethod
-    def agent_statistics(cls, node_list: typing.List[types.ReadableTreeNode]) -> typing.List[typing.Dict]:
+    def agent_statistics(
+        cls, scope_list: types.ScopeList, node_list: typing.List[types.ReadableTreeNode]
+    ) -> typing.List[typing.Dict]:
         """
         获取多个拓扑节点的主机 Agent 状态统计信息
         :param node_list: 节点信息列表
         :return:
         """
-        return [cls.node_agent_statistics(node) for node in node_list]
+        bk_biz_id = scope_list[0]["bk_biz_id"]
+        params_list = [{"bk_biz_id": bk_biz_id, "node": node} for node in node_list]
+        return batch_request.request_multi_thread(
+            func=cls.node_agent_statistics, params_list=params_list, get_data=lambda x: x
+        )
 
     @classmethod
-    def node_agent_statistics(cls, node: types.ReadableTreeNode) -> typing.Dict:
+    def node_agent_statistics(cls, bk_biz_id: int, node: types.ReadableTreeNode) -> typing.Dict:
         """
         获取单个拓扑节点的主机 Agent 状态统计信息
         :param node: 节点信息
@@ -331,45 +356,19 @@ class TopoHandler:
             "agent_statistics": {
                 "total_count": 0,
                 "alive_count": 0,
-                "no_alive_count": 0,
+                "not_alive_count": 0,
             },
         }
         object_id = node["object_id"]
-        params = {
-            "bk_biz_id": node["meta"]["bk_biz_id"],
-            "fields": constants.CommonEnum.SIMPLE_HOST_FIELDS.value,
-        }
+        params = {"bk_biz_id": bk_biz_id, "fields": constants.CommonEnum.SIMPLE_HOST_FIELDS.value, "no_request": True}
         if object_id == constants.ObjectType.SET.value:
-            params["set_property_filter"] = {
-                "condition": "AND",
-                "rules": [{"field": "bk_set_id", "operator": "equal", "value": node["instance_id"]}],
-            }
-        if object == constants.ObjectType.MODULE.value:
-            params["module_property_filter"] = (
-                {
-                    "condition": "AND",
-                    "rules": [{"field": "bk_module_id", "operator": "in", "value": node["instance_id"]}],
-                },
-            )
-        hosts_with_topo = BkApi.list_biz_hosts_topo(params)
-        if not hosts_with_topo:
+            params["bk_set_ids"] = [node["instance_id"]]
+        if object_id == constants.ObjectType.MODULE.value:
+            params["bk_module_ids"] = [node["instance_id"]]
+        hosts = BkApi.bulk_list_biz_hosts(params)
+        if not hosts:
             return result
-
-        params = {
-            "hosts": [
-                {
-                    "ip": host["host"].get("bk_host_innerip"),
-                    "bk_cloud_id": host["host"].get("bk_cloud_id"),
-                }
-                for host in hosts_with_topo
-            ]
-        }
-        agent_status_result = BkApi.get_agent_status(params)
-        for host_status in agent_status_result.values():
-            result["agent_statistics"]["total_count"] += 1
-            if host_status.get("bk_agent_alive") == constants.AgentStatusType.ALIVE.value:
-                result["agent_statistics"]["alive_count"] += 1
-            else:
-                result["agent_statistics"]["no_alive_count"] += 1
+        cls.fill_agent_status(hosts)
+        result.update(cls.count_agent_status(hosts))
 
         return result

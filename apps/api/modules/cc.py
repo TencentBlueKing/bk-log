@@ -201,6 +201,20 @@ class _CCApi:
             description="查询主机及其对应拓扑",
             before_request=get_supplier_account_before,
         )
+        self.find_topo_node_paths = DataAPI(
+            method="POST",
+            url=CC_APIGATEWAY_ROOT_V2 + "find_topo_node_paths",
+            module=self.MODULE,
+            description="查询业务拓扑节点的拓扑路径",
+            before_request=get_supplier_account_before,
+        )
+        self.list_service_category = DataAPI(
+            method="POST",
+            url=CC_APIGATEWAY_ROOT_V2 + "list_service_category",
+            module=self.MODULE,
+            description="list_service_category",
+            before_request=get_supplier_account_before,
+        )
 
     def get_biz_location(self, *args, **kwargs):
         return []

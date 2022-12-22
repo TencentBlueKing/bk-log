@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import typing
 
+from pypinyin import lazy_pinyin
+
 from bkm_ipchooser import constants, types
 from bkm_ipchooser.api import BkApi
 from bkm_ipchooser.query import resource
@@ -51,7 +53,8 @@ class BaseHandler:
                     "cloud_vendor": host.get("bk_cloud_vendor", ""),
                     "agent_id": host.get("bk_agent_id", ""),
                     "host_name": host["bk_host_name"],
-                    "os_name": host["bk_os_type"],
+                    "os_name": host["bk_os_name"],
+                    "os_type": host["bk_os_type"],
                     "alive": host.get("status"),
                     "cloud_area": {"id": bk_cloud_id, "name": cloud_id__info_map.get(bk_cloud_id, bk_cloud_id)},
                     "biz": {
@@ -97,4 +100,9 @@ class BaseHandler:
     def sort_by_name(cls, datas: typing.List[typing.Dict]):
         # 按照名称排序
         # 用在 动态拓扑, 服务模板, 集群模板
-        datas.sort(key=lambda g: g["name"])
+        datas.sort(key=lambda g: lazy_pinyin(g["name"]))
+
+    @classmethod
+    def fill_meta(self, datas: typing.List[typing.Dict], meta: dict):
+        for data in datas:
+            data["meta"] = meta

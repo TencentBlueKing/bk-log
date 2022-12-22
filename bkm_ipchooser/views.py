@@ -107,7 +107,11 @@ class IpChooserTopoViewSet(CommonViewSet):
     )
     @list_route(methods=["POST"], detail=False, serializer_class=topo_sers.QueryPathRequestSer)
     def query_path(self, request, *args, **kwargs):
-        return Response(topo_handler.TopoHandler.query_path(node_list=self.validated_data["node_list"]))
+        return Response(
+            topo_handler.TopoHandler.query_path(
+                scope_list=self.validated_data["scope_list"], node_list=self.validated_data["node_list"]
+            )
+        )
 
     @swagger_auto_schema(
         operation_summary=_("根据多个拓扑节点与搜索条件批量分页查询所包含的主机信息"),
@@ -119,6 +123,7 @@ class IpChooserTopoViewSet(CommonViewSet):
     def query_hosts(self, request, *args, **kwargs):
         return Response(
             topo_handler.TopoHandler.query_hosts(
+                scope_list=self.validated_data["scope_list"],
                 readable_node_list=self.validated_data["node_list"],
                 conditions=self.validated_data["conditions"],
                 start=self.validated_data["start"],
@@ -136,6 +141,7 @@ class IpChooserTopoViewSet(CommonViewSet):
     def query_host_id_infos(self, request, *args, **kwargs):
         return Response(
             topo_handler.TopoHandler.query_host_id_infos(
+                scope_list=self.validated_data["scope_list"],
                 readable_node_list=self.validated_data["node_list"],
                 conditions=self.validated_data["conditions"],
                 start=self.validated_data["start"],
@@ -145,7 +151,11 @@ class IpChooserTopoViewSet(CommonViewSet):
 
     @list_route(methods=["POST"], serializer_class=topo_sers.AgentStatisticsRequestSer)
     def agent_statistics(self, request, *args, **kwargs):
-        return Response(topo_handler.TopoHandler.agent_statistics(node_list=self.validated_data["node_list"]))
+        return Response(
+            topo_handler.TopoHandler.agent_statistics(
+                scope_list=self.validated_data["scope_list"], node_list=self.validated_data["node_list"]
+            )
+        )
 
 
 class IpChooserHostViewSet(CommonViewSet):
@@ -209,8 +219,8 @@ class IpChooserTemplateViewSet(CommonViewSet):
             template_handler.TemplateHandler(
                 scope_list=self.validated_data["scope_list"],
                 template_type=self.validated_data["template_type"],
-                template_id=self.validated_data["template_id"],
-            ).list_nodes()
+                template_id=self.validated_data["id"],
+            ).list_nodes(start=self.validated_data["start"], page_size=self.validated_data["page_size"])
         )
 
     @list_route(methods=["POST"], serializer_class=template_sers.ListHostSer)
@@ -219,8 +229,16 @@ class IpChooserTemplateViewSet(CommonViewSet):
             template_handler.TemplateHandler(
                 scope_list=self.validated_data["scope_list"],
                 template_type=self.validated_data["template_type"],
-                template_id=self.validated_data["template_id"],
-            ).list_hosts()
+                template_id=self.validated_data["id"],
+            ).list_hosts(start=self.validated_data["start"], page_size=self.validated_data["page_size"])
+        )
+
+    @list_route(methods=["POST"], serializer_class=template_sers.AgentStatisticsSer)
+    def agent_statistics(self, request, *args, **kwargs):
+        return Response(
+            template_handler.TemplateHandler(
+                scope_list=self.validated_data["scope_list"], template_type=self.validated_data["template_type"]
+            ).agent_statistics(template_id_list=self.validated_data["template_id_list"])
         )
 
 

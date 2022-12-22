@@ -26,6 +26,13 @@ HTTP 请求方式: `POST`, `application/json`
 | scope_list | List | Yes      | 要获取拓扑结构的资源范围数组                   |
 | dynamic_group_list | List | No | 指定动态分组列表, 不填返回所有 |
 
+dynamic_group
+
+| 字段       | 类型 | 是否必选 | 描述                                           |
+| ---------- | ---- | -------- | ---------------------------------------------- |
+| id  | Int | Yes       | 动态分组ID |
+| meta | Dict | No      | 元数据                   |
+
 ### 请求参数示例
 
 ```json
@@ -149,7 +156,14 @@ HTTP 请求方式: `POST`, `application/json`
 | ---------- | ---- | -------- | ---------------------------------------------- |
 | all_scope  | Bool | NO       | 是否获取所有资源范围的拓扑结构，默认为 `false` |
 | scope_list | List | Yes      | 要获取拓扑结构的资源范围数组                   |
-| dynamic_group_list | List | No | 动态分组列表 |
+| dynamic_group_list | List | No | 指定动态分组列表, 不填返回所有 |
+
+dynamic_group
+
+| 字段       | 类型 | 是否必选 | 描述                                           |
+| ---------- | ---- | -------- | ---------------------------------------------- |
+| id  | Int | Yes       | 动态分组ID |
+| meta | Dict | No      | 元数据                   |
 
 ### 请求参数示例
 
