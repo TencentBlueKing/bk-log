@@ -277,7 +277,7 @@ export default {
           await this.submitFieldsSet(this.currentClickConfigID);
         }
         this.$store.commit('updateClearTableWidth', 1);
-        this.$emit('confirm', this.shadowVisible, this.showFieldAlias);
+        this.$emit('confirm', this.shadowVisible, this.showFieldAlias, true);
       } catch (error) {
         console.warn(error);
       } finally {
