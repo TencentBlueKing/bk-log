@@ -55,7 +55,7 @@ class QueryHostsBaseSer(ScopeSelectorBaseSer, PaginationSer):
     search_condition = HostSearchConditionSer(required=False)
 
     # k-v 查找上线前临时兼容的模糊查询字段
-    search_content = serializers.CharField(label=_("模糊搜索内容"), required=False)
+    search_content = serializers.CharField(label=_("模糊搜索内容"), required=False, allow_blank=True)
 
     # 适配原代码风格
     conditions = serializers.ListField(label=_("搜索条件"), required=False, child=serializers.DictField())

@@ -126,14 +126,12 @@ class TopoHandler:
             # 不存在查询节点提前返回，减少非必要 IO
             return {"total": 0, "data": []}
         bk_biz_id = scope_list[0]["bk_biz_id"]
-        tree_node: types.TreeNode = cls.format2tree_node(bk_biz_id, readable_node_list[0])
-
         # 获取主机信息
         resp = cls.query_cc_hosts(
             bk_biz_id, readable_node_list, conditions, start, page_size, fields, return_status=True
         )
 
-        return {"total": resp["count"], "data": BaseHandler.format_hosts(resp["info"], tree_node["bk_biz_id"])}
+        return {"total": resp["count"], "data": BaseHandler.format_hosts(resp["info"], bk_biz_id)}
 
     @classmethod
     def query_host_id_infos(
@@ -293,8 +291,6 @@ class TopoHandler:
         """
         if not readable_node_list:
             return {"count": 0, "info": []}
-        # 查询主机
-        tree_node: types.TreeNode = cls.format2tree_node(bk_biz_id, readable_node_list[0])
 
         bk_module_ids = []
         bk_set_ids = []
@@ -306,7 +302,7 @@ class TopoHandler:
                 bk_set_ids.append(node["instance_id"])
 
         params = {
-            "bk_biz_id": tree_node["bk_biz_id"],
+            "bk_biz_id": bk_biz_id,
             "fields": fields,
             "page": {"start": start, "limit": page_size, "sort": "bk_host_innerip"},
         }
