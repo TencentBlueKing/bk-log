@@ -85,9 +85,7 @@ class CosUploadService(BaseService):
         bk_biz_id = extract_link.op_bk_biz_id
         operator = extract_link.operator
         query_result = self._poll_status(
-            task_instance_id=data.get_one_of_outputs("task_instance_id"),
-            operator=operator,
-            bk_biz_id=bk_biz_id,
+            task_instance_id=data.get_one_of_outputs("task_instance_id"), operator=operator, bk_biz_id=bk_biz_id,
         )
         # 判断脚本是否执行结束
         if not FileServer.is_finished_for_single_ip(query_result):
@@ -96,7 +94,9 @@ class CosUploadService(BaseService):
 
         for item in FileServer.get_detail_for_ips(query_result):
             if item["exit_code"] != 0:
-                raise Exception(_("上传网盘异常: {}").format(FileServer.get_job_tag(query_result)))
+                raise Exception(
+                    _("上传网盘异常: {}, status: {}").format(FileServer.get_job_tag(item), item.get("status", ""))
+                )
 
         # 如果是提取链路bkrepo类型 需要上传bkrepo
         if extract_link.link_type == ExtractLinkType.BK_REPO.value:
