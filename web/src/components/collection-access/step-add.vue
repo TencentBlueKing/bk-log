@@ -889,10 +889,8 @@ export default {
       } else { // 物理环境
         this.currentEnvironment = cloneCollect.environment;
         Object.assign(this.formData, cloneCollect);
-        if (this.formData.target?.length) { // IP 选择器预览结果回填
-          this.formData.target_nodes = this.formData.target;
+        if (this.formData.target_nodes?.length) { // IP 选择器预览结果回填
           this.ipSelectorOriginalValue = this.getSelectorNodes();
-          console.log('ipSelectorOriginalValue------', this.ipSelectorOriginalValue);
         }
         if (!this.formData.collector_config_name_en) { // 兼容旧数据英文名为空
           this.formData.collector_config_name_en = this.formData.table_id || '';

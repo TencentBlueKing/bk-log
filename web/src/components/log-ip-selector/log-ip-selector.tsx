@@ -301,6 +301,7 @@ export interface IMonitorIpSelectorProps {
   viewSearchKey?: string;
   service?: IpSelectorService;
   height?: number;
+  extractScene: boolean
 }
 export interface IMonitorIpSelectorEvents {
   onChange: (v: Record<string, INode[]>) => void
@@ -343,6 +344,8 @@ export default class MonitorIpSelector extends tsc<IMonitorIpSelectorProps> {
   @Prop({ type: Object }) service: IpSelectorService;
   // 高度
   @Prop({ type: Number }) height: number;
+  // 字段提取场景 拓扑树与节点主机需要通过定制接口获取
+  @Prop({ type: Boolean, default: false }) extractScene: boolean;
 
   scopeList: IScopeItme[] = [{
     scope_type: 'space',
@@ -401,7 +404,8 @@ export default class MonitorIpSelector extends tsc<IMonitorIpSelectorProps> {
   }
   // 拉取topology
   async fetchTopologyHostCount(node?: INode): Promise<ITreeItem[]> {
-    const res = await $http.request('ipChooser/trees', { data: { scope_list: this.scopeList } });
+    const serviceModule = this.extractScene ? 'extract' : 'ipChooser';
+    const res = await $http.request(`${serviceModule}/trees`, { data: { scope_list: this.scopeList } });
     return res?.data || [];
   }
 
@@ -412,7 +416,8 @@ export default class MonitorIpSelector extends tsc<IMonitorIpSelectorProps> {
       scope_list: this.scopeList,
       ...(search_content ? params : p),
     };
-    const res = await $http.request('ipChooser/queryHosts', { data });
+    const serviceModule = this.extractScene ? 'extract' : 'ipChooser';
+    const res = await $http.request(`${serviceModule}/queryHosts`, { data });
     return res?.data || [];
   }
 
@@ -422,7 +427,8 @@ export default class MonitorIpSelector extends tsc<IMonitorIpSelectorProps> {
       scope_list: this.scopeList,
       ...(search_content ? params : p),
     };
-    const res = await $http.request('ipChooser/queryHostIdInfos', { data });
+    const serviceModule = this.extractScene ? 'extract' : 'ipChooser';
+    const res = await $http.request(`${serviceModule}/queryHostIdInfos`, { data });
     return res?.data || [];
   }
 

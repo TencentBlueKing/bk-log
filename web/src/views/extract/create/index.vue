@@ -39,14 +39,17 @@
             {{ $t('已选择') }}
             <span class="primary" v-if="ipList.length">{{ ipList.length }}</span>
             <span class="error" v-else>{{ ipList.length }}</span>
-            {{ $t('个节点') }}
+            {{ $t('retrieve.main_engines') }}
           </div>
         </div>
         <log-ip-selector
           mode="dialog"
+          extract-scene
           :height="670"
           :show-dialog.sync="showSelectDialog"
           :value="selectorNodes"
+          :show-view-diff="isClone"
+          :original-value="ipSelectorOriginalValue"
           :panel-list="['staticTopo']"
           @change="handleConfirm"
         />
@@ -151,12 +154,17 @@ export default {
       remark: '', // 备注
       extractLinks: [], // 提取链路
       link_id: null,
+      // 编辑态ip选择器初始值
+      ipSelectorOriginalValue: {},
     };
   },
   computed: {
     canSubmit() {
       // eslint-disable-next-line eqeqeq
       return (!this.ipList.length || !this.downloadFiles.length) && this.link_id != null;
+    },
+    isClone() {
+      return this.$route.name === 'extract-clone' && !!(sessionStorage.getItem('cloneData'));
     },
     // ip选择器选中节点
     selectorNodes() {
@@ -169,7 +177,7 @@ export default {
   },
   methods: {
     async checkIsClone() {
-      if (this.$route.name === 'extract-clone' && sessionStorage.getItem('cloneData')) {
+      if (this.isClone) {
         const cloneData = JSON.parse(sessionStorage.getItem('cloneData'));
         sessionStorage.removeItem('cloneData');
 
@@ -182,6 +190,7 @@ export default {
         this.$nextTick(() => {
           this.$refs.preview.handleClone(cloneData);
         });
+        this.ipSelectorOriginalValue = { host_list: toSelectorNode(this.ipList, 'INSTANCE') };
       }
     },
     getExtractLinkList() {
