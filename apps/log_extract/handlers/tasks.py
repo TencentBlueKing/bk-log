@@ -248,7 +248,10 @@ class TasksHandler(object):
                 component_status["state"]
             )
         task["task_step_status"] = component_status_list
-        task = self.get_ip_and_bk_cloud_id([task])[0]
+
+        # 主机显示优化
+        task["ip_list"] = [":".join(ip.split(":")[:2]) for ip in task["ip_list"]]
+
         return Response(task)
 
     def partial_update(self, tasks_views, *args, **kwargs):
