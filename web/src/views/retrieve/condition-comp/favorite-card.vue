@@ -178,9 +178,12 @@ export default {
     },
     handleSearch(item) {
       const payload = item;
-      if (!item.params.host_scopes.target_node_type) {
-        payload.params.host_scopes.target_node_type = '';
-        payload.params.host_scopes.target_nodes = [];
+      // if (!item.params.host_scopes.target_node_type) {
+      //   payload.params.host_scopes.target_node_type = '';
+      //   payload.params.host_scopes.target_nodes = [];
+      // }
+      if (Object.keys(!item.params.ip_chooser).length) {
+        payload.params.ip_chooser = {};
       }
       this.$emit('shouldRetrieve', payload);
     },

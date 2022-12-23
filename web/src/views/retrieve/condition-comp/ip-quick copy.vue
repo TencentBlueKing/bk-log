@@ -22,8 +22,8 @@
 
 <template>
   <div class="ip-quick-container">
-    <div v-if="nodeCount" class="tag" @click="openDialog">
-      {{ $t('已选择') + ' ' + nodeCount + ' ' + `${$t('个')}${nodeUnit}` }}
+    <div v-if="targetNode.length" class="tag" @click="openDialog">
+      {{ $t('已选择') + ' ' + targetNode.length + ' ' + `${$t('个')}${nodeUnit}` }}
       <span class="bk-icon icon-close-line" @click.stop="removeSelections"></span>
     </div>
   </div>
@@ -33,26 +33,24 @@
 export default {
   props: {
     targetNode: {
-      type: Object,
+      type: Array,
+      required: true,
+    },
+    targetNodeType: {
+      type: String,
       required: true,
     },
   },
   computed: {
-    nodeType() {
-      return  Object.keys(this.targetNode || [])?.[0] ?? '';
-    },
-    nodeCount() {
-      return this.targetNode[this.nodeType]?.length ?? 0;
-    },
     nodeUnit() {
       const nodeTypeTextMap = {
-        node_list: this.$t('节点'),
-        host_list: this.$t('IP'),
-        service_template_list: this.$t('服务模板'),
-        set_template_list: this.$t('集群模板'),
-        dynamic_group_list: this.$t('动态分组'),
+        TOPO: this.$t('节点'),
+        INSTANCE: this.$t('IP'),
+        SERVICE_TEMPLATE: this.$t('服务模板'),
+        SET_TEMPLATE: this.$t('集群模板'),
+        DYNAMIC_GROUP: this.$t('动态分组'),
       };
-      return nodeTypeTextMap[this.nodeType] || '';
+      return nodeTypeTextMap[this.targetNodeType] || '';
     },
   },
   methods: {
@@ -61,7 +59,12 @@ export default {
     },
     // 移除已选择的模块或IP
     removeSelections() {
-      this.$emit('confirm', {});
+      this.$emit('confirm', {
+        modules: [],
+        ips: '',
+        target_nodes: [],
+        target_node_type: '',
+      });
     },
   },
 };
