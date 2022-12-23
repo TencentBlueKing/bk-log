@@ -2276,6 +2276,7 @@ class CollectorHandler(object):
                 "fields": custom_config.fields,
             }
             self.data.index_set_id = etl_handler.update_or_create(**etl_params)["index_set_id"]
+            self.data.save(update_fields=["index_set_id"])
 
         custom_config.after_hook(self.data)
 
