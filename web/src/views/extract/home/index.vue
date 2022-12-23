@@ -88,7 +88,11 @@
           <span
             class="log-icon icon-info-fill"
             v-if="row.download_status === 'failed'"
-            v-bk-tooltips="row.task_process_info"></span>
+            v-bk-tooltips="{
+              disabled: !row.task_process_info,
+              content: row.task_process_info
+            }"
+          />
         </div>
       </bk-table-column>
       <bk-table-column :label="$t('操作')" min-width="100">

@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/camelcase -->
 <!--
   - Tencent is pleased to support the open source community by making BK-LOG 蓝鲸日志平台 available.
   - Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
@@ -38,10 +39,21 @@
             {{ $t('已选择') }}
             <span class="primary" v-if="ipList.length">{{ ipList.length }}</span>
             <span class="error" v-else>{{ ipList.length }}</span>
-            {{ $t('个节点') }}
+            {{ $t('retrieve.main_engines') }}
           </div>
         </div>
-        <ip-select :show-select-dialog.sync="showSelectDialog" @confirm="handleConfirm" />
+        <log-ip-selector
+          mode="dialog"
+          extract-scene
+          :height="670"
+          :show-dialog.sync="showSelectDialog"
+          :value="selectorNodes"
+          :show-view-diff="isClone"
+          :original-value="ipSelectorOriginalValue"
+          :panel-list="['staticTopo']"
+          @change="handleConfirm"
+        />
+        <!-- <ip-select :show-select-dialog.sync="showSelectDialog" @confirm="handleConfirm" /> -->
       </div>
     </div>
 
@@ -85,11 +97,11 @@
     <div class="row-container">
       <div class="title">{{ $t('提取链路') }}</div>
       <div class="content">
-        <!-- eslint-disable-next-line vue/camelcase -->
-        <bk-select v-model="link_id"
-                   style="width: 250px;margin-right: 20px;background-color: #fff;"
-                   data-test-id="addNewExtraction_select_selectLink"
-                   :clearable="false">
+        <bk-select
+          v-model="link_id"
+          style="width: 250px;margin-right: 20px;background-color: #fff;"
+          data-test-id="addNewExtraction_select_selectLink"
+          :clearable="false">
           <bk-option
             v-for="link in extractLinks"
             :key="link.link_id"
@@ -117,7 +129,8 @@
 </template>
 
 <script>
-import IpSelect from '@/views/extract/create/ip-select';
+import LogIpSelector, { toSelectorNode, toTransformNode } from '@/components/log-ip-selector/log-ip-selector';
+// import IpSelect from '@/views/extract/create/ip-select';
 import FilesInput from '@/views/extract/create/files-input';
 import TextFilter from '@/views/extract/create/test-filter';
 import PreviewFiles from '@/views/extract/create/preview-files';
@@ -125,7 +138,8 @@ import PreviewFiles from '@/views/extract/create/preview-files';
 export default {
   name: 'ExtractCreate',
   components: {
-    IpSelect,
+    LogIpSelector,
+    // IpSelect,
     FilesInput,
     TextFilter,
     PreviewFiles,
@@ -140,12 +154,21 @@ export default {
       remark: '', // 备注
       extractLinks: [], // 提取链路
       link_id: null,
+      // 编辑态ip选择器初始值
+      ipSelectorOriginalValue: {},
     };
   },
   computed: {
     canSubmit() {
       // eslint-disable-next-line eqeqeq
       return (!this.ipList.length || !this.downloadFiles.length) && this.link_id != null;
+    },
+    isClone() {
+      return this.$route.name === 'extract-clone' && !!(sessionStorage.getItem('cloneData'));
+    },
+    // ip选择器选中节点
+    selectorNodes() {
+      return { host_list: toSelectorNode(this.ipList, 'INSTANCE') };
     },
   },
   mounted() {
@@ -154,7 +177,7 @@ export default {
   },
   methods: {
     async checkIsClone() {
-      if (this.$route.name === 'extract-clone' && sessionStorage.getItem('cloneData')) {
+      if (this.isClone) {
         const cloneData = JSON.parse(sessionStorage.getItem('cloneData'));
         sessionStorage.removeItem('cloneData');
 
@@ -167,6 +190,7 @@ export default {
         this.$nextTick(() => {
           this.$refs.preview.handleClone(cloneData);
         });
+        this.ipSelectorOriginalValue = { host_list: toSelectorNode(this.ipList, 'INSTANCE') };
       }
     },
     getExtractLinkList() {
@@ -200,10 +224,24 @@ export default {
     handleFilesSelect(fileOrPath) {
       this.$refs.preview.getExplorerList({ path: fileOrPath });
     },
-    handleConfirm(ipList, availablePaths) {
+    async handleConfirm(value) {
+      const { host_list: hostList } = value;
+      const ipList = toTransformNode(hostList, 'INSTANCE', true);
+      // 选择服务器后，获取可预览的路径
+      const strategies = await this.$http.request('extract/getAvailableExplorerPath', {
+        data: {
+          bk_biz_id: this.$store.state.bkBizId,
+          ip_list: ipList,
+        },
+      });
+      const availablePaths = strategies.data.map(item => item.file_path);
       this.ipList = ipList;
       this.availablePaths = availablePaths;
     },
+    // handleConfirm(ipList, availablePaths) {
+    //   this.ipList = ipList;
+    //   this.availablePaths = availablePaths;
+    // },
     handleSubmit() {
       this.$emit('loading', true);
       // 根据预览地址选择的文件提交下载任务

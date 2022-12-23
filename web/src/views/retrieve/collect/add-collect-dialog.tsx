@@ -268,13 +268,20 @@ export default class CollectDialog extends tsc<IProps> {
       id,
       is_enable_display_fields,
     } = subData;
-    const { host_scopes, addition, keyword, search_fields } = params;
+    const {
+      // host_scopes,
+      ip_chooser,
+      addition,
+      keyword,
+      search_fields,
+    } = params;
     const data = {
       name,
       group_id,
       display_fields,
       visible_type,
-      host_scopes,
+      // host_scopes,
+      ip_chooser,
       addition,
       keyword,
       search_fields,

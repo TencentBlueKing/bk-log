@@ -184,10 +184,10 @@
                 </div>
                 <div class="add-filter-condition-container">
                   <ip-quick
-                    :target-node="retrieveParams.ip_chooser"
+                    :target-node="retrieveParams.host_scopes.target_nodes"
+                    :target-node-type="retrieveParams.host_scopes.target_node_type"
                     @openIpQuick="openIpQuick"
-                    @confirm="handleIpSelectorValueChange"
-                  />
+                    @confirm="handleSaveIpQuick" />
                   <div class="cut-line" v-if="showFilterCutline"></div>
                   <template v-for="(item, index) in retrieveParams.addition">
                     <filter-condition-item
@@ -330,13 +330,19 @@
     </div>
 
     <!-- 目标选择器 -->
-    <log-ip-selector
+    <!-- <log-ip-selector
       mode="dialog"
       :height="670"
       :show-dialog.sync="showIpSelectorDialog"
-      :value="retrieveParams.ip_chooser"
-      @change="handleIpSelectorValueChange"
-    />
+      :value="{}"
+    /> -->
+    <ip-selector-dialog
+      :show-dialog.sync="showIpSelectorDialog"
+      :show-dynamic-group="true"
+      :target-nodes="retrieveParams.host_scopes.target_nodes"
+      :target-node-type="retrieveParams.host_scopes.target_node_type"
+      @target-change="handleSaveIpQuick">
+    </ip-selector-dialog>
 
     <setting-modal
       :index-set-item="indexSetItem"
@@ -370,8 +376,8 @@ import RetrieveDetailInput from './condition-comp/retrieve-detail-input';
 import QueryStatement from './condition-comp/query-statement';
 import FilterConditionItem from './condition-comp/filter-condition-item';
 import IpQuick from './condition-comp/ip-quick';
-import LogIpSelector from '@/components/log-ip-selector/log-ip-selector';
-// import IpSelectorDialog from '@/components/collection-access/ip-selector-dialog';
+// import LogIpSelector from '@/components/log-ip-selector/log-ip-selector';
+import IpSelectorDialog from '@/components/collection-access/ip-selector-dialog';
 import FieldFilter from './condition-comp/field-filter';
 import FavoritePopper from './condition-comp/favorite-popper';
 import ResultHeader from './result-comp/result-header';
@@ -399,8 +405,8 @@ export default {
     QueryStatement,
     FilterConditionItem,
     IpQuick,
-    LogIpSelector,
-    // IpSelectorDialog,
+    // LogIpSelector,
+    IpSelectorDialog,
     FieldFilter,
     FavoritePopper,
     ResultHeader,
@@ -461,8 +467,6 @@ export default {
           // 目标节点类型
           target_node_type: '',
         },
-        // 新版ip-selector选值
-        ip_chooser: {},
         // 过滤条件，可添加多个，每个过滤条件格式 {field: 'time', operator: 'is', value: 'xxx'}
         // field 为过滤的字段
         // operator 从接口获取，默认为 'is'
@@ -577,8 +581,12 @@ export default {
     //   return this.ipTopoSwitch;
     // },
     showFilterCutline() {
-      const { ip_chooser, addition } = this.retrieveParams;
-      return (Object.keys(ip_chooser).length) && addition?.length;
+      const { host_scopes, addition } = this.retrieveParams;
+      // return (host_scopes.modules.length || host_scopes.ips.length) && addition.length;
+      return (host_scopes?.modules?.length
+      || host_scopes?.ips?.length
+      || host_scopes?.target_nodes?.length)
+      && addition?.length;
     },
     showSearchPage() {
       return this.hasAuth || this.isNoIndexSet;
@@ -955,8 +963,7 @@ export default {
     },
     updateSearchParam(addition, host) {
       this.retrieveParams.addition = addition;
-      // this.retrieveParams.host_scopes = host;
-      this.retrieveParams.ip_chooser = host;
+      this.retrieveParams.host_scopes = host;
     },
     // 日期选择器选择时间完毕，检索
     retrieveWhenDateChange() {
@@ -990,37 +997,27 @@ export default {
     },
     // 打开 ip 选择弹窗
     openIpQuick() {
+      // this.$refs.ipQuick.openDialog();
       this.showIpSelectorDialog = true;
     },
     // IP 选择
-    // handleSaveIpQuick(data) {
-    //   const { target_node_type: targetNodeType, target_nodes: targetNodes } = data;
-    //   this.retrieveParams.host_scopes.target_node_type = targetNodes.length ? targetNodeType : '';
-    //   this.retrieveParams.host_scopes.target_nodes = targetNodes.map((node) => {
-    //     const targets = ['TOPO', 'SERVICE_TEMPLATE', 'SET_TEMPLATE'].includes(targetNodeType)
-    //       ? {
-    //         node_path: node.node_path,
-    //         bk_inst_name: node.bk_inst_name,
-    //         bk_inst_id: node.bk_inst_id,
-    //         bk_obj_id: node.bk_obj_id,
-    //       }
-    //       : targetNodeType === 'DYNAMIC_GROUP' ? { id: node.id, name: node.name, bk_obj_id: node.bk_obj_id }
-    //         : { ip: node.ip, bk_cloud_id: node.bk_cloud_id, bk_supplier_id: node.bk_supplier_id };
-    //     return targets;
-    //   });
-    //   this.showIpSelectorDialog = false;
-    //   if (this.isAutoQuery) {
-    //     this.retrieveLog();
-    //   }
-    // },
-    // ip 选择器选中值发生变化
-    handleIpSelectorValueChange(value) {
-      const ipChooserValue = {};
-      const nodeType = Object.keys(value).find(item => value[item].length);
-      if (nodeType) {
-        ipChooserValue[nodeType] = value[nodeType];
-      }
-      this.retrieveParams.ip_chooser = ipChooserValue;
+    handleSaveIpQuick(data) {
+      // this.retrieveParams.host_scopes = data;
+      const { target_node_type: targetNodeType, target_nodes: targetNodes } = data;
+      this.retrieveParams.host_scopes.target_node_type = targetNodes.length ? targetNodeType : '';
+      this.retrieveParams.host_scopes.target_nodes = targetNodes.map((node) => {
+        const targets = ['TOPO', 'SERVICE_TEMPLATE', 'SET_TEMPLATE'].includes(targetNodeType)
+          ? {
+            node_path: node.node_path,
+            bk_inst_name: node.bk_inst_name,
+            bk_inst_id: node.bk_inst_id,
+            bk_obj_id: node.bk_obj_id,
+          }
+          : targetNodeType === 'DYNAMIC_GROUP' ? { id: node.id, name: node.name, bk_obj_id: node.bk_obj_id }
+            : { ip: node.ip, bk_cloud_id: node.bk_cloud_id, bk_supplier_id: node.bk_supplier_id };
+        return targets;
+      });
+      this.showIpSelectorDialog = false;
       if (this.isAutoQuery) {
         this.retrieveLog();
       }
@@ -1029,13 +1026,12 @@ export default {
     clearCondition() {
       Object.assign(this.retrieveParams, {
         keyword: '',
-        // host_scopes: {
-        //   modules: [],
-        //   ips: '',
-        //   target_nodes: [],
-        //   target_node_type: '',
-        // },
-        ip_chooser: {},
+        host_scopes: {
+          modules: [],
+          ips: '',
+          target_nodes: [],
+          target_node_type: '',
+        },
         addition: [],
       });
       this.retrieveLog();
@@ -1129,7 +1125,6 @@ export default {
         const shouldCoverParamFields = [
           'keyword',
           'host_scopes',
-          'ip_chooser',
           'addition',
           'start_time',
           'end_time',
@@ -1173,11 +1168,6 @@ export default {
                 || this.retrieveParams[field].modules.length
                 || this.retrieveParams[field].target_nodes.length) {
                   queryParamsStr[field] = (JSON.stringify(this.retrieveParams[field]));
-                }
-                break;
-              case 'ip_chooser':
-                if (Object.keys(this.retrieveParams[field]).length) {
-                  queryParamsStr[field] = JSON.stringify(this.retrieveParams[field]);
                 }
                 break;
               case 'pickerTimeRange':
@@ -1664,16 +1654,15 @@ export default {
       // 如果点击过收藏，进行参数判断
       const displayFields = this.visibleFields.map(item => item.field_name);
       const indexItem = this.indexSetList.find(item => item.index_set_id === String(this.indexId));
-      // const { modules, ips, target_node_type, target_nodes } =  this.retrieveParams.host_scopes;
-      // // eslint-disable-next-line camelcase
-      // const host_scopes = { modules, ips, target_node_type, target_nodes }; // 初始化host传参
-      // if (!modules) host_scopes.modules = [];
-      // if (!ips) host_scopes.ips = '';
-      // if (!host_scopes.target_node_type) {
-      //   host_scopes.target_node_type = '';
-      //   host_scopes.target_nodes = [];
-      // }
-      const ipChooser = deepClone(this.retrieveParams.ip_chooser);
+      const { modules, ips, target_node_type, target_nodes } =  this.retrieveParams.host_scopes;
+      // eslint-disable-next-line camelcase
+      const host_scopes = { modules, ips, target_node_type, target_nodes }; // 初始化host传参
+      if (!modules) host_scopes.modules = [];
+      if (!ips) host_scopes.ips = '';
+      if (!host_scopes.target_node_type) {
+        host_scopes.target_node_type = '';
+        host_scopes.target_nodes = [];
+      }
       const favoriteData = { // 新增收藏参数
         index_set_id: this.indexId,
         space_uid: this.spaceUid,
@@ -1683,8 +1672,7 @@ export default {
         name: '',
         is_enable_display_fields: false,
         params: {
-          // host_scopes,
-          ip_chooser: ipChooser,
+          host_scopes,
           keyword: Boolean(this.retrieveParams.keyword) ? this.retrieveParams.keyword : '*',
           addition: this.retrieveParams.addition,
           search_fields: [],
@@ -1695,8 +1683,7 @@ export default {
         this.showFavoritePopperContent = true; // 展示收藏是否替换Tips
         const comparedSubData = { // 检索页面的数据
           params: {
-            // host_scopes: this.retrieveParams.host_scopes,
-            ip_chooser: this.retrieveParams.ip_chooser,
+            host_scopes: this.retrieveParams.host_scopes,
             addition: this.retrieveParams.addition,
             keyword: this.retrieveParams.keyword,
           },
@@ -1708,7 +1695,6 @@ export default {
         this.isShowAddNewCollectDialog = true; // 展示新增弹窗
         this.showFavoritePopperContent = false;
       };
-      console.log(this.addFavoriteData, 2324324);
       if (isAdd) {
         this.addFavoriteData = favoriteData;
       }
@@ -1775,21 +1761,13 @@ export default {
     // 点击收藏列表的收藏
     handleClickFavoriteItem(value) {
       this.isFavoriteSearch = true;
-      const data = deepClone(value);
-      if (!Object.keys(data.params.ip_chooser || []).length) {
-        data.params.ip_chooser = {};
+      if (!value.params.host_scopes.target_node_type) {
+        value.params.host_scopes.target_node_type = '';
+        value.params.host_scopes.target_nodes = [];
       }
-      this.activeFavorite = data;
-      this.activeFavoriteID = data.id;
-      this.retrieveFavorite(data);
-
-      // if (!value.params.host_scopes.target_node_type) {
-      //   value.params.host_scopes.target_node_type = '';
-      //   value.params.host_scopes.target_nodes = [];
-      // }
-      // this.activeFavorite = deepClone(value);
-      // this.activeFavoriteID = value.id;
-      // this.retrieveFavorite(deepClone(value));
+      this.activeFavorite = deepClone(value);
+      this.activeFavoriteID = value.id;
+      this.retrieveFavorite(deepClone(value));
     },
     // 收藏列表刷新, 判断当前是否有点击活跃的收藏 如有则进行数据更新
     async updateActiveFavoriteData(value) {
