@@ -47,16 +47,17 @@ class FileServer(object):
             "bk_biz_id": bk_biz_id,
             "script_content": content,
             "script_type": JOB_SCRIPT_TYPE,
-            "account": account,
+            "script_language": JOB_SCRIPT_TYPE,
+            "account_alias": account,
             "task_name": task_name,
+            "target_server": {},
         }
         if settings.ENABLE_DHCP:
-            kwargs["host_id_list"] = [{"bk_host_id": item["bk_host_id"]} for item in ip]
+            kwargs["target_server"]["host_id_list"] = [{"bk_host_id": item["bk_host_id"]} for item in ip]
         else:
-            kwargs["ip_list"] = [{"ip": item["ip"], "bk_cloud_id": item["bk_cloud_id"]} for item in ip]
+            kwargs["target_server"]["ip_list"] = [{"ip": item["ip"], "bk_cloud_id": item["bk_cloud_id"]} for item in ip]
 
         if script_params:
-            kwargs["script_params"] = script_params
             kwargs["script_param"] = script_params
         return JobApi.fast_execute_script(kwargs, request_cookies=False)
 
@@ -66,28 +67,56 @@ class FileServer(object):
 
     @staticmethod
     def is_finished_for_single_ip(query_result):
-        return query_result[0]["is_finished"]
+        return query_result["finished"]
 
     @staticmethod
     def get_detail_for_ips(query_result):
-        return query_result[0]["step_results"][0]["ip_logs"]
+        step_instance, *_ = query_result["step_instance_list"]
+        return step_instance["step_ip_result_list"]
 
     @staticmethod
-    def get_log_content_for_single_ip(query_result):
-        return query_result[0]["step_results"][0]["ip_logs"][0]["log_content"]
+    def get_step_instance(query_result):
+        step_instance, *_ = query_result["step_instance_list"]
+        return step_instance
+
+    @staticmethod
+    def get_step_instance_id(query_result):
+        step_instance, *_ = query_result["step_instance_list"]
+        return step_instance["step_instance_id"]
+
+    @staticmethod
+    def get_job_instance_status(query_result):
+        return query_result["job_instance"]["status"]
 
     @staticmethod
     def get_ip_status(query_result):
-        return query_result[0]["step_results"][0]["ip_status"]
+        return query_result["status"]
 
     @staticmethod
     def get_job_tag(query_result):
-        return query_result[0]["step_results"][0]["tag"]
+        return query_result.get("tag", "")
+
+    @staticmethod
+    def get_ip_list_log(ip_list, job_instance_id, step_instance_id, bk_biz_id):
+        return JobApi.batch_get_job_instance_ip_log(
+            params={
+                "bk_biz_id": bk_biz_id,
+                "ip_list": ip_list,
+                "job_instance_id": job_instance_id,
+                "step_instance_id": step_instance_id,
+            },
+            request_cookies=False,
+        )
 
     @classmethod
     def query_task_result(cls, task_instance_id, operator, bk_biz_id):
-        result = JobApi.get_job_instance_log(
-            params={"bk_biz_id": bk_biz_id, "job_instance_id": task_instance_id, "bk_username": operator},
+        result = JobApi.get_job_instance_status(
+            params={
+                "bk_biz_id": bk_biz_id,
+                "job_instance_id": task_instance_id,
+                "bk_username": operator,
+                "return_ip_result": True,
+            },
             request_cookies=False,
         )
         return result
@@ -100,16 +129,27 @@ class FileServer(object):
         # file_target_path:目标路径
         # target_ip_list:目标IP列表
         # bk_biz_id: 业务ID
+        for file_source in file_source_list:
+            ip_list = file_source["server"].pop("ip_list", [])
+            if settings.ENABLE_DHCP:
+                file_source["server"]["host_id_list"] = [{"bk_host_id": item["bk_host_id"]} for item in ip_list]
+            else:
+                file_source["server"]["ip_list"] = [
+                    {"ip": item["ip"], "bk_cloud_id": item["bk_cloud_id"]} for item in ip_list
+                ]
+
         kwargs = {
             "bk_username": operator,
             "bk_biz_id": bk_biz_id,
-            "file_source": file_source_list,
+            "file_source_list": file_source_list,
             "account": account,
+            "account_alias": account,
             "file_target_path": file_target_path,
-            "ip_list": target_ip_list,
+            "target_server": {"ip_list": target_ip_list},  # TODO 中转机不支持DHCP，还是提供IP+云区域
             "task_name": task_name,
         }
-        task_result = JobApi.fast_push_file(kwargs, raw=True, request_cookies=False)
+
+        task_result = JobApi.fast_transfer_file(kwargs, raw=True, request_cookies=False)
         if not task_result["result"]:
             raise PipelineApiFailed(PipelineApiFailed.MESSAGE.format(message=task_result["message"]))
         return task_result["data"]

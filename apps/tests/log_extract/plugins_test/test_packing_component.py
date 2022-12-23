@@ -51,44 +51,38 @@ class FilePackingComponentTest(TestCase, ComponentTestMixin):
             "step_instance_id": 20036358098,
         }
         QUERY_TASK_RESULT = BASE_URL + ".FileServer.query_task_result"
-        success_task_result = [
-            {
-                "status": 3,
-                "step_results": [
-                    {
-                        "tag": "packing done",
-                        "ip_logs": [
-                            {
-                                "total_time": 0.552,
-                                "ip": "127.0.0.1",
-                                "start_time": "2021-01-06 11:31:56",
-                                "log_content": "xxxx",
-                                "exit_code": 0,
-                                "bk_cloud_id": 0,
-                                "end_time": "2021-01-06 11:31:57",
-                                "execute_count": 0,
-                                "error_code": 0,
-                            },
-                            {
-                                "total_time": 0.233,
-                                "ip": "127.0.0.1",
-                                "start_time": "2021-01-06 11:31:56",
-                                "log_content": "xxxx",
-                                "exit_code": 0,
-                                "bk_cloud_id": 0,
-                                "end_time": "2021-01-06 11:31:56",
-                                "execute_count": 0,
-                                "error_code": 0,
-                            },
-                        ],
-                        "ip_status": 9,
-                    }
-                ],
-                "is_finished": True,
-                "step_instance_id": 20036358098,
-                "name": "[BKLOG] Packing File By admin",
-            }
-        ]
+
+        success_task_result = {
+            "finished": True,
+            "job_instance": {"status": 3},
+            "step_instance_list": [
+                {
+                    "status": 3,
+                    "total_time": 1000,
+                    "name": "API Quick execution scriptxxx",
+                    "step_instance_id": 75,
+                    "execute_count": 0,
+                    "create_time": 1605064271000,
+                    "end_time": 1605064272000,
+                    "type": 1,
+                    "start_time": 1605064271000,
+                    "step_ip_result_list": [
+                        {
+                            "ip": "127.0.0.1",
+                            "bk_cloud_id": 0,
+                            "status": 9,
+                            "tag": "",
+                            "exit_code": 0,
+                            "error_code": 0,
+                            "start_time": 1605064271000,
+                            "end_time": 1605064272000,
+                            "total_time": 1000,
+                        }
+                    ],
+                }
+            ],
+        }
+        file_list = [get_packed_dir_name("/tmp/bk_log_extract/", 111) + get_packed_file_name(111)]
 
         params = {
             "task_id": 111,
@@ -106,7 +100,6 @@ class FilePackingComponentTest(TestCase, ComponentTestMixin):
             "preview_is_search_child": True,
         }
         Tasks.objects.create(**params)
-
         return [
             ComponentTestCase(
                 patchers=[
@@ -133,10 +126,10 @@ class FilePackingComponentTest(TestCase, ComponentTestMixin):
                         "task_instance_id": 123,
                         "distribution_source_file_list": [
                             {
-                                "group_ids": "",
-                                "account": "root",
-                                "ip_list": [ip],
-                                "files": [get_packed_dir_name("/tmp/bk_log_extract/", 111) + get_packed_file_name(111)],
+                                "account": {"alias": "root"},
+                                # 转换IP格式
+                                "server": {"ip_list": [ip]},
+                                "file_list": file_list,
                             }
                             for ip in [{"ip": "1.1.1.1", "bk_cloud_id": "0"}, {"ip": "2.2.2.2", "bk_cloud_id": "0"}]
                         ],
@@ -149,16 +142,13 @@ class FilePackingComponentTest(TestCase, ComponentTestMixin):
                             "task_instance_id": 123,
                             "distribution_source_file_list": [
                                 {
-                                    "group_ids": "",
-                                    "account": "root",
-                                    "ip_list": [ip],
-                                    "files": [
-                                        get_packed_dir_name("/tmp/bk_log_extract/", 111) + get_packed_file_name(111)
-                                    ],
+                                    "account": {"alias": "root"},
+                                    # 转换IP格式
+                                    "server": {"ip_list": [ip]},
+                                    "file_list": file_list,
                                 }
                                 for ip in [{"ip": "1.1.1.1", "bk_cloud_id": "0"}, {"ip": "2.2.2.2", "bk_cloud_id": "0"}]
                             ],
-                            "task_script_output": "xxxx",
                         },
                         schedule_finished=True,
                     ),
