@@ -64,7 +64,7 @@ interface IFavoriteItem {
   search_fields_select_list?: any[];
   visible_option: any[];
   group_option: any[];
-  params: object;
+  params: Record<string, any>;
 }
 
 const settingFields = [ // 设置显示的字段
@@ -498,7 +498,8 @@ export default class GroupDialog extends tsc<IProps> {
       visible_type: item.visible_type,
       display_fields: item.display_fields,
       is_enable_display_fields: item.is_enable_display_fields,
-      host_scopes: item.params.host_scopes,
+      // host_scopes: item.params.host_scopes,
+      ip_chooser: item.params.ip_chooser,
       addition: item.params.addition,
     }));
     try {

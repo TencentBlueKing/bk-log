@@ -136,9 +136,9 @@ class FileDistributionService(BaseService):
             return True
 
         # 判断文件分发是否成功
-        ip_status = FileServer.get_ip_status(query_result)
-        if ip_status != constants.JOB_SUCCESS_STATUS:
-            raise Exception(_("文件分发异常({})".format(ip_status)))
+        job_status = FileServer.get_job_instance_status(query_result)
+        if job_status != constants.JOB_SUCCESS_STATUS:
+            raise Exception(_("文件分发异常({})".format(job_status)))
 
         self.finish_schedule()
         return True

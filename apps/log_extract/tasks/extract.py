@@ -38,6 +38,7 @@ from apps.log_extract.constants import (
     ExtractLinkType,
     TASK_POLLING_INTERVAL,
     MAX_SCHEDULE_TIMES,
+    BATCH_GET_JOB_INSTANCE_IP_LOG_IP_LIST_SIZE,
 )
 from apps.log_extract.fileserver import FileServer
 from apps.log_extract.models import Tasks, ExtractLink
@@ -46,22 +47,14 @@ from apps.log_extract.utils.packing import (
     get_packed_file_name,
     get_filter_content,
 )
+from apps.utils.db import array_chunk
 from apps.utils.remote_storage import BKREPOStorage
 from apps.utils.log import logger
 
 
 @celery_task(ignore_result=True, queue="async_export")
 def log_extract_task(
-    task_id,
-    operator,
-    bk_biz_id,
-    ip_list,
-    file_path,
-    filter_type,
-    filter_content,
-    account,
-    os_type,
-    username,
+    task_id, operator, bk_biz_id, ip_list, file_path, filter_type, filter_content, account, os_type, username,
 ):
     LogExtractUtils(
         task_id=task_id,
@@ -180,12 +173,11 @@ class LogExtractUtils(object):
             ip_list = [ip_list]
         distribution_source_file_list = [
             {
-                "group_ids": "",
-                "account": self.account,
+                "account": {"alias": self.account},
                 # 转换IP格式
-                "ip_list": [ip],
+                "server": {"ip_list": [ip]},
                 # 这里是直接分发目录
-                "files": [f"{distribution_path}{packed_file_name}"],
+                "file_list": [f"{distribution_path}{packed_file_name}"],
             }
             for ip in ip_list
         ]
@@ -195,9 +187,7 @@ class LogExtractUtils(object):
 
     def _packing_schedule(self):
         query_result = self._poll_status(
-            task_instance_id=self.task_instance_id,
-            operator=self.operator,
-            bk_biz_id=self.bk_biz_id,
+            task_instance_id=self.task_instance_id, operator=self.operator, bk_biz_id=self.bk_biz_id,
         )
         # 判断脚本是否执行结束
         if not FileServer.is_finished_for_single_ip(query_result):
@@ -206,25 +196,37 @@ class LogExtractUtils(object):
         # 输出脚本内容, 如果所有IP都失败了，则返回异常
         has_success = False
         job_message = ""
-        for item in FileServer.get_detail_for_ips(query_result):
+        step_ip_result_list = FileServer.get_detail_for_ips(query_result)
+        for item in step_ip_result_list:
             if item["exit_code"] == 0:
                 has_success = True
                 break
             elif item["exit_code"] == PACK_TASK_SCRIPT_NOT_HAVE_ENOUGH_CAP_ERROR_CODE:
                 job_message = _("目标机器没有足够的储存")
             else:
-                job_message = FileServer.get_job_tag(query_result)
+                job_message = FileServer.get_job_tag(item)
 
         if not has_success:
             raise Exception(_("任务打包异常: {}").format(job_message))
 
-        self.task_script_output = FileServer.get_log_content_for_single_ip(query_result)
+        ip_list_group = array_chunk(
+            [{"ip": item["ip"], "bk_cloud_id": item["bk_cloud_id"]} for item in step_ip_result_list],
+            BATCH_GET_JOB_INSTANCE_IP_LOG_IP_LIST_SIZE,
+        )
         ip_log_output_kv = {}
-        for ip_log_content in FileServer.get_detail_for_ips(query_result):
-            content = html.unescape(ip_log_content["log_content"])
-            log_output_kv = FileServer.get_bk_kv_log(content)
-            log_output_kv = {kv[constants.BKLOG_LOG_KEY]: kv[constants.BKLOG_LOG_VALUE] for kv in log_output_kv}
-            ip_log_output_kv[ip_log_content["ip"]] = log_output_kv
+        step_instance_id = FileServer.get_step_instance_id(query_result)
+        try:
+            for ip_list in ip_list_group:
+                ip_list_log = FileServer.get_ip_list_log(
+                    ip_list, self.task_instance_id, step_instance_id, self.bk_biz_id
+                )
+                for log_content in ip_list_log.get("script_task_logs", []):
+                    content = html.unescape(log_content.get("log_content"))
+                    log_output_kv = FileServer.get_bk_kv_log(content)
+                    log_output_kv = {kv[constants.BKLOG_LOG_KEY]: kv[constants.BKLOG_LOG_VALUE] for kv in log_output_kv}
+                    ip_log_output_kv[log_content["ip"]] = log_output_kv
+        except Exception as e:
+            logger.exception(f"[packing get bklog] get log content failed => {e}")
 
         task = Tasks.objects.get(task_id=self.task_id)
         task.ex_data.update(ip_log_output_kv)
@@ -355,9 +357,7 @@ class LogExtractUtils(object):
         bk_biz_id = extract_link.op_bk_biz_id
         operator = extract_link.operator
         query_result = self._poll_status(
-            task_instance_id=self.task_instance_id,
-            operator=operator,
-            bk_biz_id=bk_biz_id,
+            task_instance_id=self.task_instance_id, operator=operator, bk_biz_id=bk_biz_id,
         )
         # 判断脚本是否执行结束
         if not FileServer.is_finished_for_single_ip(query_result):
