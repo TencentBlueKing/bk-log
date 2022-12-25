@@ -45,7 +45,7 @@ FAVORITE_NAME_5 = "test_favorite_5"
 KEYWORD = """number: >=83063 OR title: "The Right Way" AND text: go OR gseIndex: [ 200 TO 600 ] \
 AND log: blue~ AND time: /[L-N].*z*l{2}a/ AND a: b AND c: d OR (a: (b OR c AND d) OR x: y ) AND INFO AND ERROR"""
 
-HOST_SCOPES = {"modules": [], "ips": "", "target_nodes": [], "target_node_type": ""}
+IP_CHOOSER = {"host_list": [{"host_id": 1}]}
 ADDITION = [{"field": "cloudId", "operator": "is", "value": "0"}]
 SEARCH_FIELDS = ["title"]
 DISPLAY_FIELDS = ["time", "cloudId", "log"]
@@ -54,7 +54,7 @@ DISPLAY_FIELDS = ["time", "cloudId", "log"]
 CREATE_PRIVATE_FAVORITE_PARAMS = {
     "name": FAVORITE_NAME_1,
     "index_set_id": INDEX_SET_ID,
-    "host_scopes": HOST_SCOPES,
+    "ip_chooser": IP_CHOOSER,
     "addition": ADDITION,
     "keyword": KEYWORD,
     "visible_type": FavoriteVisibleType.PRIVATE.value,
@@ -67,7 +67,7 @@ CREATE_PRIVATE_FAVORITE_PARAMS = {
 CREATE_UNKNOWN_FAVORITE_PARAMS = {
     "name": FAVORITE_NAME_2,
     "index_set_id": INDEX_SET_ID,
-    "host_scopes": HOST_SCOPES,
+    "ip_chooser": IP_CHOOSER,
     "addition": ADDITION,
     "keyword": KEYWORD,
     "visible_type": FavoriteVisibleType.PUBLIC.value,
@@ -81,7 +81,7 @@ USER1_CREATE_FAVORITE_PARAM = {
     "name": FAVORITE_NAME_3,
     "index_set_id": INDEX_SET_ID,
     "group_id": 0,
-    "host_scopes": HOST_SCOPES,
+    "ip_chooser": IP_CHOOSER,
     "addition": ADDITION,
     "keyword": KEYWORD,
     "visible_type": FavoriteVisibleType.PUBLIC.value,
@@ -93,7 +93,7 @@ USER2_CREATE_FAVORITE_PARAM = {
     "name": FAVORITE_NAME_4,
     "index_set_id": INDEX_SET_ID,
     "group_id": 0,
-    "host_scopes": HOST_SCOPES,
+    "ip_chooser": IP_CHOOSER,
     "addition": ADDITION,
     "keyword": KEYWORD,
     "visible_type": FavoriteVisibleType.PUBLIC.value,
