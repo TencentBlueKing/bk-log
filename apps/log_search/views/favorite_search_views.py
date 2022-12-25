@@ -363,7 +363,7 @@ class FavoriteViewSet(APIViewSet):
         data = self.params_valid(UpdateFavoriteSerializer)
         favorite_search = FavoriteHandler(favorite_id=kwargs["id"]).create_or_update(
             name=data["name"],
-            host_scopes=data["host_scopes"],
+            ip_chooser=data["ip_chooser"],
             addition=data["addition"],
             keyword=data["keyword"],
             visible_type=data["visible_type"],
