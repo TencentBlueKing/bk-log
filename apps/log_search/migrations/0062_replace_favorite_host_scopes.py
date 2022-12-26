@@ -8,7 +8,7 @@ from bkm_space.utils import space_uid_to_bk_biz_id
 
 
 def forwards_func(apps, schema_editor):
-    objs = list(Favorite.objects.filter(is_deleted=False).all())
+    objs = list(Favorite.objects.all())
     for obj in objs:
         ip_chooser = {}
         params = obj.params
