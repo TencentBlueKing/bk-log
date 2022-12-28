@@ -145,8 +145,7 @@ class ResultTableAdaptSerializer(serializers.Serializer):
 
 class SearchAttrSerializer(serializers.Serializer):
     bk_biz_id = serializers.IntegerField(label=_("业务ID"), required=False, default=None)
-    # 从host scope 转换成ip
-    host_scopes = serializers.DictField(default={}, required=False)
+    ip_chooser = serializers.DictField(default={}, required=False)
     addition = serializers.ListField(allow_empty=True, required=False, default="")
 
     start_time = serializers.DateTimeField(required=False, format="%Y-%m-%d %H:%M:%S")
@@ -260,7 +259,7 @@ class SearchAsyncExportSerializer(serializers.Serializer):
     time_range = serializers.CharField(label=_("时间范围"), required=False)
     start_time = serializers.CharField(label=_("起始时间"), required=True)
     end_time = serializers.CharField(label=_("结束时间"), required=True)
-    host_scopes = serializers.DictField(label=_("检索模块ip等信息"), required=True)
+    ip_chooser = serializers.DictField(label=_("检索IP条件"), required=False, default={})
     addition = serializers.ListField(label=_("搜索条件"), required=False)
     begin = serializers.IntegerField(label=_("检索开始 offset"), required=True)
     size = serializers.IntegerField(label=_("检索结果大小"), required=True)
@@ -349,7 +348,7 @@ class CreateFavoriteSerializer(serializers.Serializer):
     index_set_id = serializers.IntegerField(label=_("索引集ID"), required=True)
     group_id = serializers.IntegerField(label=_("收藏组ID"), required=False)
     visible_type = serializers.ChoiceField(choices=FavoriteVisibleType.get_choices(), required=True)
-    host_scopes = serializers.DictField(default={}, required=False)
+    ip_chooser = serializers.DictField(default={}, required=False)
     addition = serializers.ListField(allow_empty=True, required=False, default="")
     keyword = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     search_fields = serializers.ListField(required=False, child=serializers.CharField(), default=[])
@@ -371,7 +370,7 @@ class UpdateFavoriteSerializer(serializers.Serializer):
     name = serializers.CharField(label=_("收藏组名"), max_length=256, required=False)
     group_id = serializers.IntegerField(label=_("收藏组ID"), required=False, default=0)
     visible_type = serializers.ChoiceField(choices=FavoriteVisibleType.get_choices(), required=False)
-    host_scopes = serializers.DictField(default={}, required=False)
+    ip_chooser = serializers.DictField(default={}, required=False)
     addition = serializers.ListField(allow_empty=True, required=False, default="")
     keyword = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     search_fields = serializers.ListField(required=False, child=serializers.CharField(), default=[])

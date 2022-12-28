@@ -28,11 +28,11 @@ from django.core.cache import cache
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
-from apps.api import CCApi, MonitorApi
+from apps.api import MonitorApi
 from apps.api.base import DataApiRetryClass
 from apps.exceptions import ApiRequestError, ApiResultError
 from apps.log_clustering.models import ClusteringConfig
-from apps.log_databus.constants import EtlConfig, TargetNodeTypeEnum
+from apps.log_databus.constants import EtlConfig
 from apps.log_databus.models import CollectorConfig
 from apps.log_search.models import (
     LogIndexSet,
@@ -72,6 +72,7 @@ from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.api import BkLogApi, BcsCcApi
 from apps.utils.cache import cache_five_minute
 from apps.utils.db import array_group
+from apps.utils.ipchooser import IPChooser
 from apps.utils.local import get_request_username
 from apps.log_search.handlers.es.dsl_bkdata_builder import (
     DslBkDataCreateSearchContextBody,
@@ -81,11 +82,11 @@ from apps.log_search.handlers.es.dsl_bkdata_builder import (
 )
 from apps.log_search.handlers.es.indices_optimizer_context_tail import IndicesOptimizerContextTail
 from apps.utils.local import get_local_param
-from apps.log_search.handlers.biz import BizHandler
 from apps.log_search.handlers.search.mapping_handlers import MappingHandlers
 from apps.log_search.handlers.search.pre_search_handlers import PreSearchHandlers
 from apps.utils.log import logger
 from apps.utils.lucene import generate_query_string
+from bkm_ipchooser.constants import CommonEnum
 
 max_len_dict = Dict[str, int]  # pylint: disable=invalid-name
 
@@ -136,7 +137,7 @@ class SearchHandler(object):
 
         # 检索历史记录
         self.addition = copy.deepcopy(search_dict.get("addition", []))
-        self.host_scopes = copy.deepcopy(search_dict.get("host_scopes", {}))
+        self.ip_chooser = copy.deepcopy(search_dict.get("ip_chooser", {}))
 
         self.use_time_range = search_dict.get("use_time_range", True)
         # 构建时间字段
@@ -467,7 +468,7 @@ class SearchHandler(object):
         return result
 
     def _save_history(self, result, search_type):
-        params = {"keyword": self.query_string, "host_scopes": self.host_scopes, "addition": self.addition}
+        params = {"keyword": self.query_string, "ip_chooser": self.ip_chooser, "addition": self.addition}
         self._cache_history(
             username=self.request_username,
             index_set_id=self.index_set_id,
@@ -752,14 +753,14 @@ class SearchHandler(object):
                 return False
             if op1_params["addition"] != op2_params["addition"]:
                 return False
-            host_scopes_op1: dict = op1_params["host_scopes"]
-            host_scopes_op2: dict = op2_params["host_scopes"]
+            ip_chooser_op1: dict = op1_params.get("ip_chooser", {})
+            ip_chooser_op2: dict = op2_params.get("ip_chooser", {})
 
-            if host_scopes_op1.keys() != host_scopes_op2.keys():
+            if ip_chooser_op1.keys() != ip_chooser_op2.keys():
                 return False
 
-            for k in host_scopes_op1:
-                if host_scopes_op1[k] != host_scopes_op2[k]:
+            for k in ip_chooser_op1:
+                if ip_chooser_op1[k] != ip_chooser_op2[k]:
                     return False
 
             return True
@@ -1038,7 +1039,7 @@ class SearchHandler(object):
     # 过滤filter
     def _init_filter(self):
 
-        new_attrs: dict = self._combine_addition_host_scope(self.search_dict)
+        new_attrs: dict = self._combine_addition_ip_chooser(self.search_dict)
         mapping_handlers = MappingHandlers(
             index_set_id=self.index_set_id,
             indices=self.indices,
@@ -1391,73 +1392,19 @@ class SearchHandler(object):
             log_not_empty_list.append(a_item_dict)
         return log_not_empty_list
 
-    def _get_addition_host(self, bk_biz_id, target_node_type: str, target_nodes: list) -> list:
-        host_list = []
-        if target_node_type == TargetNodeTypeEnum.INSTANCE.value:
-            host_list = target_nodes
-        elif target_node_type == TargetNodeTypeEnum.DYNAMIC_GROUP.value:
-            conditions = []
-            for target_node in target_nodes:
-                dynamic_group_id = target_node["id"]
-                data = CCApi.execute_dynamic_group.bulk_request(
-                    params={
-                        "bk_biz_id": bk_biz_id,
-                        "id": dynamic_group_id,
-                        "fields": ["bk_cloud_id", "bk_host_innerip", "bk_supplier_account", "bk_set_id", "bk_set_name"],
-                    }
-                )
-                for each_instance in data or []:
-                    if each_instance.get("bk_host_innerip"):
-                        host_list.append(
-                            {"ip": each_instance["bk_host_innerip"], "bk_cloud_id": each_instance["bk_cloud_id"]}
-                        )
-                    else:
-                        conditions.append({"bk_inst_id": each_instance["bk_set_id"], "bk_obj_id": "set"})
-            host_result = BizHandler(bk_biz_id).search_host(conditions)
-            host_list.extend(
-                [{"ip": host["bk_host_innerip"], "bk_cloud_id": host["bk_cloud_id"]} for host in host_result]
-            )
-
-        else:
-            conditions = [
-                {"bk_obj_id": node_obj["bk_obj_id"], "bk_inst_id": node_obj["bk_inst_id"]} for node_obj in target_nodes
-            ]
-            host_result = BizHandler(bk_biz_id).search_host(conditions)
-            host_list = [{"ip": host["bk_host_innerip"], "bk_cloud_id": host["bk_cloud_id"]} for host in host_result]
-
-        return host_list
-
-    def _combine_addition_host_scope(self, attrs: dict):
-        host_scopes_ip_list: list = []
-        ips_list: list = []
-        translated_ips: list = []
-        target_ips = []
-        host_scopes: dict = attrs.get("host_scopes")
-        if host_scopes:
-            modules: list = host_scopes.get("modules")
-            target_nodes = host_scopes.get("target_nodes", {})
-            target_node_type = host_scopes.get("target_node_type", "")
-            if target_nodes:
-                target_ips = [
-                    host["ip"] for host in self._get_addition_host(attrs["bk_biz_id"], target_node_type, target_nodes)
-                ]
-            if modules:
-                biz_handler = BizHandler(attrs["bk_biz_id"])
-                search_list: list = biz_handler.search_host(modules)
-                host_list: list = [x.get("bk_host_innerip") for x in search_list]
-                translated_ips: list = host_list
-
-            ips: str = host_scopes.get("ips")
-            if ips:
-                ips_list = ips.split(",")
-
-        host_scopes_ip_list = host_scopes_ip_list + ips_list + translated_ips + target_ips
+    def _combine_addition_ip_chooser(self, attrs: dict):
+        ip_chooser_ip_list: list = []
+        ip_chooser: dict = attrs.get("ip_chooser")
+        if ip_chooser:
+            ip_chooser_host_list = IPChooser(
+                bk_biz_id=attrs["bk_biz_id"], fields=CommonEnum.SIMPLE_HOST_FIELDS.value
+            ).transfer2host(ip_chooser)
+            ip_chooser_ip_list = [host["bk_host_innerip"] for host in ip_chooser_host_list]
         addition_ip_list, new_addition = self._deal_addition(attrs)
-
         if addition_ip_list:
             search_ip_list = addition_ip_list
-        elif not addition_ip_list and host_scopes_ip_list:
-            search_ip_list = host_scopes_ip_list
+        elif not addition_ip_list and ip_chooser_ip_list:
+            search_ip_list = ip_chooser_ip_list
         else:
             search_ip_list = []
         new_addition.append({"field": self.ip_field, "operator": "is one of", "value": list(set(search_ip_list))})
