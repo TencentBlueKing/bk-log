@@ -220,7 +220,7 @@ class SetTemplate(Template):
             # 此处添加no_request参数，避免多线程调用时, 用户信息被覆盖
             "no_request": True,
         }
-        host_list = BkApi.bulk_find_host_by_set_template(params)
+        host_list = batch_request.batch_request(func=BkApi.find_host_by_set_template, params=params)
         if not host_list:
             return result
         result["data"] = host_list
@@ -254,7 +254,7 @@ class SetTemplate(Template):
             },
             "no_request": True,
         }
-        node_list = BkApi.bulk_search_set(params)
+        node_list = batch_request.batch_request(func=BkApi.search_set, params=params)
         if not node_list:
             return result
 
@@ -363,7 +363,7 @@ class ServiceTemplate(Template):
             },
             "no_request": True,
         }
-        node_list = BkApi.bulk_search_module(params)
+        node_list = batch_request.batch_request(func=BkApi.search_module, params=params)
         if not node_list:
             return result
 
@@ -384,7 +384,7 @@ class ServiceTemplate(Template):
             # 此处添加no_request参数，避免多线程调用时, 用户信息被覆盖
             "no_request": True,
         }
-        host_list = BkApi.bulk_find_host_by_service_template(params)
+        host_list = batch_request.batch_request(func=BkApi.find_host_by_service_template, params=params)
         if not host_list:
             return result
         result["data"] = host_list

@@ -4,7 +4,7 @@ from typing import List, Dict
 
 from bkm_ipchooser import constants, types
 from bkm_ipchooser.api import BkApi
-from bkm_ipchooser.tools.batch_request import request_multi_thread
+from bkm_ipchooser.tools.batch_request import request_multi_thread, batch_request
 from bkm_ipchooser.handlers.base import BaseHandler
 from bkm_ipchooser.handlers.topo_handler import TopoHandler
 
@@ -22,7 +22,8 @@ class DynamicGroupHandler:
     def list(self, dynamic_group_list: List[Dict] = None) -> List[types.DynamicGroup]:
         """获取动态分组列表"""
         dynamic_group_ids = [dynamic_group["id"] for dynamic_group in dynamic_group_list]
-        groups = BkApi.bulk_search_dynamic_group({"bk_biz_id": self.bk_biz_id})
+        params = {"bk_biz_id": self.bk_biz_id}
+        groups = batch_request(func=BkApi.search_dynamic_group, params=params)
         if not groups:
             return groups
         if dynamic_group_ids:
@@ -75,7 +76,8 @@ class DynamicGroupHandler:
 
     def agent_statistics(self, dynamic_group_list: List[Dict] = None):
         dynamic_group_ids = [dynamic_group["id"] for dynamic_group in dynamic_group_list]
-        groups = BkApi.bulk_search_dynamic_group({"bk_biz_id": self.bk_biz_id})
+        params = {"bk_biz_id": self.bk_biz_id}
+        groups = batch_request(func=BkApi.search_dynamic_group, params=params)
         if not groups:
             return groups
         params_list = [
@@ -95,13 +97,12 @@ class DynamicGroupHandler:
 
     def _get_dynamic_group_agent_statistic(self, dynamic_group: dict):
         result = {"dynamic_group": dynamic_group}
-        hosts = BkApi.bulk_execute_dynamic_group(
-            {
-                "bk_biz_id": self.bk_biz_id,
-                "id": dynamic_group["id"],
-                "fields": constants.CommonEnum.SIMPLE_HOST_FIELDS.value,
-            }
-        )
+        params = {
+            "bk_biz_id": self.bk_biz_id,
+            "id": dynamic_group["id"],
+            "fields": constants.CommonEnum.SIMPLE_HOST_FIELDS.value,
+        }
+        hosts = batch_request(func=BkApi.execute_dynamic_group, params=params)
         if not hosts:
             return result
 
