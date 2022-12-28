@@ -16,10 +16,7 @@ def forwards_func(apps, schema_editor):
         if target_nodes:
             if host_scopes["target_node_type"] == TargetNodeTypeEnum.INSTANCE.value:
                 ip_chooser["host_list"] = [
-                    {
-                        "cloud_id": target_node["bk_cloud_id"],
-                        "ip": target_node["bk_host_innerip"],
-                    }
+                    {"ip": target_node["ip"], "cloud_area": {"id": target_node["bk_cloud_id"]}}
                     for target_node in target_nodes
                 ]
             elif host_scopes["target_node_type"] == TargetNodeTypeEnum.DYNAMIC_GROUP.value:
