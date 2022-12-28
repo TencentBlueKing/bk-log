@@ -556,7 +556,16 @@ def generate_query_string(params: dict) -> str:
     ipchooser = params.get("ip_chooser", {})
     for node_type, node_value in ipchooser.items():
         if node_type == "host_list":
-            query_string += " AND (host_id: " + ",".join([i["host_id"] for i in node_value]) + ")"
+            _host_slice = []
+            _host_id_slice = []
+            for _node in node_value:
+                if _node.get("id"):
+                    _host_id_slice.append(str(_node["id"]))
+                    continue
+                # 这里key值是参考了format_hosts方法的返回值
+                _host_slice.append(f"{_node['cloud_id']}:{_node['ip']}")
+            # 分开以便于前端展示
+            query_string += " AND (host_id: " + ",".join(_host_id_slice) + " AND (host: " + ",".join(_host_slice) + ")"
         elif node_type == "node_list":
             for _node in node_value:
                 query_string += " AND ({}: {})".format(_node["object_id"], _node["instance_id"])

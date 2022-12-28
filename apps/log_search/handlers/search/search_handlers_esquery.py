@@ -86,6 +86,7 @@ from apps.log_search.handlers.search.mapping_handlers import MappingHandlers
 from apps.log_search.handlers.search.pre_search_handlers import PreSearchHandlers
 from apps.utils.log import logger
 from apps.utils.lucene import generate_query_string
+from bkm_ipchooser.constants import CommonEnum
 
 max_len_dict = Dict[str, int]  # pylint: disable=invalid-name
 
@@ -1395,7 +1396,10 @@ class SearchHandler(object):
         ip_chooser_ip_list: list = []
         ip_chooser: dict = attrs.get("ip_chooser")
         if ip_chooser:
-            ip_chooser_ip_list = IPChooser(bk_biz_id=attrs["bk_biz_id"]).transfer2ip(ip_chooser)
+            ip_chooser_host_list = IPChooser(
+                bk_biz_id=attrs["bk_biz_id"], fields=CommonEnum.SIMPLE_HOST_FIELDS.value
+            ).transfer2host(ip_chooser)
+            ip_chooser_ip_list = [host["bk_host_innerip"] for host in ip_chooser_host_list]
         addition_ip_list, new_addition = self._deal_addition(attrs)
         if addition_ip_list:
             search_ip_list = addition_ip_list

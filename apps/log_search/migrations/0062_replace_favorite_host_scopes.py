@@ -3,8 +3,6 @@ from django.db import migrations
 
 from apps.log_databus.constants import TargetNodeTypeEnum
 from apps.log_search.models import Favorite
-from apps.utils.ipchooser import BkApi
-from bkm_space.utils import space_uid_to_bk_biz_id
 
 
 def forwards_func(apps, schema_editor):
@@ -17,37 +15,13 @@ def forwards_func(apps, schema_editor):
 
         if target_nodes:
             if host_scopes["target_node_type"] == TargetNodeTypeEnum.INSTANCE.value:
-                # 因为没有实例ID，所以只能通过IP去查询
-                _params = {
-                    "bk_biz_id": space_uid_to_bk_biz_id(obj.space_uid),
-                    "fields": ["bk_host_id"],
-                    "host_property_filter": {
-                        "condition": "OR",
-                        "rules": [],
-                    },
-                }
-                for target_node in target_nodes:
-                    _params["host_property_filter"]["rules"].append(
-                        {
-                            "condition": "AND",
-                            "rules": [
-                                {
-                                    "field": "bk_cloud_id",
-                                    "operator": "equal",
-                                    "value": target_node["bk_cloud_id"],
-                                },
-                                {
-                                    "field": "bk_host_innerip",
-                                    "operator": "equal",
-                                    "value": target_node["ip"],
-                                },
-                            ],
-                        }
-                    )
-                hosts = BkApi.bulk_list_biz_hosts(_params)
-                if not hosts:
-                    continue
-                ip_chooser["host_list"] = [{"host_id": host["bk_host_id"]} for host in hosts]
+                ip_chooser["host_list"] = [
+                    {
+                        "cloud_id": target_node["bk_cloud_id"],
+                        "ip": target_node["bk_host_innerip"],
+                    }
+                    for target_node in target_nodes
+                ]
             elif host_scopes["target_node_type"] == TargetNodeTypeEnum.DYNAMIC_GROUP.value:
                 ip_chooser["dynamic_group_list"] = [{"id": target_node["id"]} for target_node in target_nodes]
             elif host_scopes["target_node_type"] == TargetNodeTypeEnum.SERVICE_TEMPLATE.value:
