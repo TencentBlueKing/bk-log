@@ -31,10 +31,6 @@ class AbstractBkApi(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @staticmethod
-    def bulk_list_biz_hosts(params: dict = None):
-        raise NotImplementedError
-
-    @staticmethod
     def list_host_total_mainline_topo(params: dict = None):
         raise NotImplementedError
 
@@ -59,18 +55,8 @@ class AbstractBkApi(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @staticmethod
-    def bulk_search_set(params: dict = None):
-        """批量查询集群"""
-        raise NotImplementedError
-
-    @staticmethod
     def search_module(params: dict = None):
         """查询模块"""
-        raise NotImplementedError
-
-    @staticmethod
-    def bulk_search_module(params: dict = None):
-        """批量查询模块"""
         raise NotImplementedError
 
     @staticmethod
@@ -79,18 +65,8 @@ class AbstractBkApi(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @staticmethod
-    def bulk_search_dynamic_group(params: dict = None):
-        """批量查询动态分组"""
-        raise NotImplementedError
-
-    @staticmethod
     def execute_dynamic_group(params: dict = None):
         """执行动态分组"""
-        raise NotImplementedError
-
-    @staticmethod
-    def bulk_execute_dynamic_group(params: dict = None):
-        """批量执行动态分组"""
         raise NotImplementedError
 
     @staticmethod
@@ -99,18 +75,8 @@ class AbstractBkApi(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @staticmethod
-    def bulk_find_host_by_service_template(params: dict = None):
-        """批量查询服务模板的主机"""
-        raise NotImplementedError
-
-    @staticmethod
     def find_host_by_set_template(params: dict = None):
         """分页查询集群模板的主机"""
-        raise NotImplementedError
-
-    @staticmethod
-    def bulk_find_host_by_set_template(params: dict = None):
-        """批量查询集群模板的主机"""
         raise NotImplementedError
 
     @staticmethod

@@ -357,7 +357,7 @@ class TopoHandler:
             params["bk_set_ids"] = [node["instance_id"]]
         if object_id == constants.ObjectType.MODULE.value:
             params["bk_module_ids"] = [node["instance_id"]]
-        hosts = BkApi.bulk_list_biz_hosts(params)
+        hosts = batch_request.batch_request(func=BkApi.list_biz_hosts, params=params)
         if not hosts:
             return result
         cls.fill_agent_status(hosts)
