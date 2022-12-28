@@ -563,7 +563,7 @@ def generate_query_string(params: dict) -> str:
                     _host_id_slice.append(str(_node["id"]))
                     continue
                 # 这里key值是参考了format_hosts方法的返回值
-                _host_slice.append(f"{_node['cloud_id']}:{_node['ip']}")
+                _host_slice.append(f"{_node['cloud_area']['id']}:{_node['ip']}")
             # 分开以便于前端展示
             query_string += " AND (host_id: " + ",".join(_host_id_slice) + " AND (host: " + ",".join(_host_slice) + ")"
         elif node_type == "node_list":
