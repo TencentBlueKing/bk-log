@@ -6,6 +6,7 @@ import typing
 from bkm_ipchooser import constants, types
 from bkm_ipchooser.api import BkApi
 from bkm_ipchooser.tools import topo_tool, batch_request
+from bkm_ipchooser.tools.gse_tool import GseTool
 from bkm_ipchooser.handlers.base import BaseHandler
 
 logger = logging.getLogger("bkm_ipchooser")
@@ -174,27 +175,7 @@ class TopoHandler:
 
     @classmethod
     def fill_agent_status(cls, cc_hosts):
-        # TODO: get_agent_status暂只支持 bk_cloud_id:bk_host_innerip 格式
-        if not cc_hosts:
-            return
-
-        index = 0
-        hosts, host_map = [], {}
-        for cc_host in cc_hosts:
-            ip, bk_cloud_id = cc_host["bk_host_innerip"], cc_host["bk_cloud_id"]
-            hosts.append({"ip": ip, "bk_cloud_id": bk_cloud_id})
-
-            host_map[f"{bk_cloud_id}:{ip}"] = index
-            index += 1
-
-        try:
-            # 添加no_request参数, 多线程调用时，保证用户信息不漏传
-            status_map = BkApi.get_agent_status({"hosts": hosts, "no_request": True})
-
-            for ip_cloud, detail in status_map.items():
-                cc_hosts[host_map[ip_cloud]]["status"] = detail["bk_agent_alive"]
-        except KeyError as e:
-            logger.exception("fill_agent_status exception: %s", e)
+        GseTool.get_adapter().fill_agent_status(cc_hosts)
 
     @classmethod
     def count_agent_status(cls, cc_hosts) -> typing.Dict:

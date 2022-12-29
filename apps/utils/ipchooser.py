@@ -44,6 +44,10 @@ class BkApi(AbstractBkApi):
         return GseApi.get_agent_status_raw(params)
 
     @staticmethod
+    def get_agent_status_v2(params: dict = None):
+        return GseApi.get_agent_status_raw_v2(params)
+
+    @staticmethod
     def list_service_template(params: dict = None):
         return CCApi.list_service_template.bulk_request(params)
 

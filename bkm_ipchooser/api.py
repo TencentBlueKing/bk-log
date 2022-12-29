@@ -36,7 +36,20 @@ class AbstractBkApi(metaclass=abc.ABCMeta):
 
     @staticmethod
     def get_agent_status(params: dict = None):
-        """查询主机agent状态"""
+        """
+        GSE1.0, 查询主机agent状态, bk_cloud_id:ip为唯一标识版本
+        params:
+            hosts: List[Dict[str, Any]], [{"bk_cloud_id": 0, "ip": ""]}, 云区域ID和IP
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    def get_agent_status_v2(params: dict = None):
+        """
+        GSE2.0, 查询主机agent状态, bk_agent_id为唯一标识版本
+        params:
+            agent_id_list: List[str], ["010000000000001"] 主机agent_id列表
+        """
         raise NotImplementedError
 
     @staticmethod
