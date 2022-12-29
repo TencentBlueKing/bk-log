@@ -133,7 +133,11 @@ export default class CollectIndex extends tsc<IProps> {
     return this.editFavoriteID === this.activeFavoriteID;
   }
 
-  @Watch('isShowCollect')
+  get allFavoriteNumber() {
+    return this.favoriteList.reduce((pre, cur) => (pre += cur.favorites.length, pre), 0);
+  }
+
+  @Watch("isShowCollect")
   async handleShowCollect(value) {
     if (value) {
       this.baseSortType = localStorage.getItem('favoriteSortType') || 'NAME_ASC';
@@ -257,6 +261,36 @@ export default class CollectIndex extends tsc<IProps> {
               group_order: value,
             },
           });
+        } catch (error) {}
+        break;
+      case 'create-copy':
+        try {
+          const {
+            index_set_id,
+            params,
+            name,
+            group_id,
+            display_fields,
+            visible_type,
+            is_enable_display_fields,
+          } = value;
+          const { host_scopes, addition, keyword, search_fields } = params;
+          const data = {
+            name: `${name} ${this.$t('副本')}`,
+            group_id,
+            display_fields,
+            visible_type,
+            host_scopes,
+            addition,
+            keyword,
+            search_fields,
+            is_enable_display_fields,
+            index_set_id,
+            space_uid: this.spaceUid,
+          };
+          await $http.request('favorite/createFavorite', { data });
+          this.showMessagePop(this.$t('创建成功'));
+          this.getFavoriteList();
         } catch (error) {}
         break;
       default:
@@ -425,6 +459,7 @@ export default class CollectIndex extends tsc<IProps> {
       this.collectWidth = 0;
       this.isShowCollect = false;
       this.dragStop();
+      localStorage.setItem('isAutoShowCollect', 'false');
     } else if (newTreeBoxWidth >= this.collectMaxWidth) {
       this.collectWidth = this.collectMaxWidth;
     } else {
@@ -448,11 +483,13 @@ export default class CollectIndex extends tsc<IProps> {
           activeFavoriteID={this.activeFavoriteID}
           isSearchFilter={this.isSearchFilter}
           collectLoading={this.collectLoading || this.favoriteLoading}
-          on-change={this.handleUserOperate}
-        >
+          on-change={this.handleUserOperate}>
           <div class="search-container">
             <div class="fl-jcsb">
-              <span class="search-title">{this.$t('收藏查询')}</span>
+              <span class="search-title fl-jcsb">
+                {this.$t('收藏查询')}
+                <span class="favorite-number">{this.allFavoriteNumber}</span>
+              </span>
               <span
                 class="bk-icon icon-cog"
                 onClick={() => (this.isShowManageDialog = true)}
@@ -515,6 +552,12 @@ export default class CollectIndex extends tsc<IProps> {
                 </Popover>
               </div>
             </div>
+          </div>
+          <div
+            class={`new-search ${this.activeFavoriteID === -1 && 'active'}`}
+            onClick={() => this.handleClickFavorite(undefined)}>
+            <span class="bk-icon icon-enlarge-line"></span>
+            <span>{this.$t('新检索')}</span>
           </div>
         </CollectContainer>
         <div

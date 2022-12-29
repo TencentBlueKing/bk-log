@@ -1576,4 +1576,13 @@ export default {
   容器集群: 'Container cluster',
   段日志参数: 'Section log value',
   点击查看: 'Click view',
+  创建副本: 'Create copy',
+  保存Tips: 'The current collection has been updated, click to save the current modification',
+  已收藏: 'Collected',
+  更新时间: 'Update time',
+  修改人: 'Update by',
+  更新人: 'Updater',
+  新检索: 'New search',
+  收藏名重复: 'Favorite name is exist',
+  更新成功: 'Update success'
 };

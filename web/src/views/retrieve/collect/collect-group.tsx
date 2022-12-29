@@ -22,6 +22,8 @@
 
 import { Component as tsc } from 'vue-tsx-support';
 import { Component, Prop, Inject } from 'vue-property-decorator';
+import { Popover } from 'bk-magic-vue';
+import { formatDate } from '../../../common/util';
 import GroupDropdown from './component/group-dropdown';
 import { IGroupItem, IFavoriteItem } from './collect-index';
 import './collect-group.scss';
@@ -61,13 +63,23 @@ export default class CollectGroup extends tsc<ICollectProps> {
     this.clickDrop = false;
     this.handleUserOperate('click-favorite', item);
   }
+  handleHoverTitle(type: boolean) {
+    if (!type) {
+      setTimeout(() => {
+        this.isHoverTitle = type;
+      }, 200);
+      return;
+    }
+    this.isHoverTitle = type;
+  }
 
   render() {
-    const groupDropdownSlot = () => {
+    const groupDropdownSlot = (groupName) => {
       return !this.isCannotChange ? (
         <GroupDropdown
           data={this.collectItem}
           group-list={this.groupList}
+          group-name={groupName}
           is-hover-title={this.isHoverTitle} />
       ) : <span class="title-number">{this.collectItem.favorites.length}</span>;
     };
@@ -90,14 +102,13 @@ export default class CollectGroup extends tsc<ICollectProps> {
                 'is-move-cur': !this.isSearchFilter && !this.isCannotChange,
               },
             ]}
-            onMouseenter={() => (this.isHoverTitle = true)}
-            onMouseleave={() => (this.isHoverTitle = false)}
-          >
+            onMouseenter={() => this.handleHoverTitle(true)}
+            onMouseleave={() => this.handleHoverTitle(false)}>
             <span class="group-cur" onClick={() => (this.isShow = !this.isShow)}>
               <span class={['bk-icon icon-play-shape', { 'is-active': !this.isShow }]}></span>
               <span>{this.collectItem.group_name}</span>
             </span>
-            {groupDropdownSlot()}
+            {groupDropdownSlot(this.collectItem.group_name)}
           </div>
         ) : undefined}
         <div class={['group-list', { 'list-hidden': this.isShow }]}>
@@ -106,20 +117,28 @@ export default class CollectGroup extends tsc<ICollectProps> {
               key={index}
               class={['group-item', { active: item.id === this.activeFavoriteID }]}
               onClick={() => this.handleClickCollect(item)}>
-              <div class="group-item-left">
-                <div>
-                  <p>
-                    <span class={{ 'active-name': item.id === this.activeFavoriteID }}>{item.name}</span>
-                    {!item.is_active ? (
-                       <span v-bk-tooltips={{ content: this.$t('数据源不存在'), placement: 'right' }}>
+              {/* <Popover delay={500}> */}
+                <div class={{
+                  'group-item-left': true,
+                  'active-name': item.id === this.activeFavoriteID,
+                }}>
+                  <Popover delay={500}>
+                    <div>
+                      <span>{item.name}</span>
+                      {!item.is_active ? (
+                        <span v-bk-tooltips={{ content: this.$t('数据源不存在'), placement: 'right' }}>
                           <span class="bk-icon log-icon icon-shixiao"></span>
-                       </span>
-                    ) : undefined}
-                  </p>
-                  <p class="creator">{item.created_by || '--'}</p>
+                        </span>
+                      ) : undefined}
+                    </div>
+                    <div slot="content">
+                      <p>{this.$t('创建人')}: {item.created_by || '--'}</p>
+                      <p>{this.$t('修改人')}: {item.updated_by || '--'}</p>
+                      <p>{this.$t('更新时间')}: {formatDate(item.updated_at)}</p>
+                    </div>
+                  </Popover>
+                  {collectDropdownSlot(item)}
                 </div>
-                {collectDropdownSlot(item)}
-              </div>
             </div>
           ))}
         </div>

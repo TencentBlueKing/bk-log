@@ -109,7 +109,13 @@
 
           <div class="king-tab" :class="isAsIframe && 'as-iframe'">
             <div class="tab-header">
-              <span class="tab-title">{{ $t('数据检索') }}</span>
+              <span class="tab-title">
+                {{ isFavoriteNewSearch ? $t('新检索') : getFavoriteName }}
+                <span
+                  v-show="!isFavoriteNewSearch"
+                  class="bk-icon icon-edit-line"
+                  @click="handleEditFavorite"></span>
+              </span>
               <div class="tab-operation">
                 <bk-popover
                   v-show="isShowUiType"
@@ -224,29 +230,37 @@
                     <!-- {{ $t('查询') }} -->
                     {{ getSearchType.text }}
                   </bk-button>
-                  <bk-popover
-                    ref="favoritePopper"
-                    trigger="click"
-                    placement="top"
-                    theme="light"
-                    :disabled="!showFavoritePopperContent">
+                  <div class="favorite-btn-container">
                     <bk-button
-                      style="width: 86px;margin: 0 8px;font-size: 12px"
+                      v-show="isFavoriteNewSearch"
+                      ext-cls="favorite-btn"
                       data-test-id="dataQuery_button_collection"
                       @click="handleClickFavorite">
-                      <span style="display: flex;align-items: center;justify-content: center;">
-                        <span
-                          class="bk-icon icon-star"
-                          style="margin-right: 2px;margin-top: -4px;font-size: 12px;">
-                        </span>
+                      <span class="favorite-btn-text">
+                        <span class="icon bk-icon icon-star"></span>
                         <span>{{ $t('收藏') }}</span>
                       </span>
                     </bk-button>
-                    <favorite-popper
-                      slot="content"
-                      :active-favorite="activeFavorite"
-                      @favoriteTipsOperate="favoriteTipsOperate" />
-                  </bk-popover>
+                    <span
+                      v-show="!isFavoriteNewSearch && !isFavoriteUpdate"
+                      class="catching-ball"></span>
+                    <bk-button
+                      v-show="!isFavoriteNewSearch"
+                      ext-cls="favorite-btn"
+                      :disabled="isFavoriteUpdate || favoriteUpdateLoading"
+                      @click="handleUpdateFavorite">
+                      <span v-bk-tooltips="{content: $t('保存Tips'), disabled: isFavoriteUpdate }">
+                        <span class="favorite-btn-text">
+                          <span
+                            :class="`icon
+                          ${ isFavoriteUpdate
+                          ? 'log-icon icon-star-shape'
+                            : 'bk-icon icon-save'}`"></span>
+                          <span>{{ isFavoriteUpdate ? $t('已收藏') : $t('保存') }}</span>
+                        </span>
+                      </span>
+                    </bk-button>
+                  </div>
                   <bk-button
                     style="font-size: 12px"
                     @click="clearCondition"
@@ -352,7 +366,7 @@
 
     <add-collect-dialog
       v-model="isShowAddNewCollectDialog"
-      :is-favorite-add="isFavoriteAdd"
+      :favorite-list="favoriteList"
       :add-favorite-data="addFavoriteData"
       :favorite-i-d="activeFavoriteID"
       :replace-data="replaceFavoriteData"
@@ -372,7 +386,6 @@ import FilterConditionItem from './condition-comp/filter-condition-item';
 import IpQuick from './condition-comp/ip-quick';
 import IpSelectorDialog from '@/components/collection-access/ip-selector-dialog';
 import FieldFilter from './condition-comp/field-filter';
-import FavoritePopper from './condition-comp/favorite-popper';
 import ResultHeader from './result-comp/result-header';
 import NoIndexSet from './result-comp/no-index-set';
 import ResultMain from './result-comp/result-main';
@@ -400,7 +413,6 @@ export default {
     IpQuick,
     IpSelectorDialog,
     FieldFilter,
-    FavoritePopper,
     ResultHeader,
     ResultMain,
     NoIndexSet,
@@ -472,8 +484,8 @@ export default {
       },
       showHistory: false, // 历史记录
       historyList: [],
-      isFavoriteSearch: false,
-      showFavoritePopperContent: false, // 是否显示是否替换当前收藏
+      isFavoriteSearch: false, // 是否是收藏检索
+      isAfterRequestFavoriteList: false, // 是否在检索后更新收藏列表
       statisticalFieldsData: {}, // 字段可选值统计
       retrieveDropdownData: {}, // 检索下拉字段可选值统计
       statementSearchrecords: [], // 查询语句历史记录
@@ -528,7 +540,8 @@ export default {
       isShowCollect: localStorage.getItem('isAutoShowCollect') === 'true',
       isSqlSearchType: true, // 是否是sql模式
       activeFavorite: {}, // 当前点击的收藏参数
-      activeFavoriteID: -1,
+      activeFavoriteID: -1, // 当前点击就的收藏ID
+      favoriteUpdateLoading: false,
       favoriteList: [],
       favoriteLoading: false,
       formTippyOptions: {
@@ -537,7 +550,6 @@ export default {
         trigger: 'mouseenter',
       },
       filterAllOperators: {},
-      isFavoriteAdd: true,
       addFavoriteData: {}, // 新增收藏所需的参数
       favoriteRequestID: 0, // 参数改变更新收藏
       replaceFavoriteData: {}, // 收藏判断不同后的替换参数
@@ -600,6 +612,22 @@ export default {
     isShowUiType() { // 判断当前点击的收藏是否展示表单字段
       // eslint-disable-next-line camelcase
       return this.activeFavorite?.params?.search_fields?.length;
+    },
+    isFavoriteNewSearch() { // 是否时新检索
+      return this.activeFavoriteID === -1;
+    },
+    getFavoriteName() { // 获取当前点击的收藏名
+      return this.activeFavorite?.name || '--';
+    },
+    isFavoriteUpdate() { // 判断当前收藏是否有参数更新
+      const { params: retrieveParams } = this.getRetrieveFavoriteData();
+      const { params } = this.activeFavorite;
+      const favoriteParams = {
+        host_scopes: params?.host_scopes,
+        addition: params?.addition,
+        keyword: params?.keyword,
+      };
+      return JSON.stringify(retrieveParams) === JSON.stringify(favoriteParams);
     },
   },
   provide() {
@@ -1041,10 +1069,6 @@ export default {
         this.messageError(this.$t('没有找到该记录下相关索引集'));
       }
     },
-    // 关闭收藏浮层
-    closeFavoritePopper() {
-      this.$refs.favoritePopper.hideHandler();
-    },
     // 检索日志
     async retrieveLog(historyParams) {
       if (!this.indexId) {
@@ -1216,6 +1240,9 @@ export default {
 
         await this.handleResetTimer();
         await this.requestTable();
+        if (this.isAfterRequestFavoriteList) {
+          await this.getFavoriteList();
+        }
         this.requestSearchHistory(this.indexId);
       } catch (e) {
         console.warn(e);
@@ -1241,6 +1268,8 @@ export default {
         // 搜索完毕后，如果开启了自动刷新，会在 timeout 后自动刷新
         this.$refs.resultHeader && this.$refs.resultHeader.setRefreshTime();
         this.isFavoriteSearch = false;
+        this.isAfterRequestFavoriteList = false;
+        this.favoriteUpdateLoading = false;
         this.basicLoading = false;
       }
     },
@@ -1650,7 +1679,7 @@ export default {
       };
     },
     // 点击新增收藏
-    handleClickFavorite(isAdd = false) {
+    handleClickFavorite() {
       // 如果点击过收藏，进行参数判断
       const displayFields = this.visibleFields.map(item => item.field_name);
       const indexItem = this.indexSetList.find(item => item.index_set_id === String(this.indexId));
@@ -1678,38 +1707,71 @@ export default {
           search_fields: [],
         },
       };
-      // 收藏列表有点击,收藏不为空 则提示是否替换
-      if (JSON.stringify(this.activeFavorite) !== '{}') {
-        this.showFavoritePopperContent = true; // 展示收藏是否替换Tips
-        const comparedSubData = { // 检索页面的数据
-          params: {
-            host_scopes: this.retrieveParams.host_scopes,
-            addition: this.retrieveParams.addition,
-            keyword: this.retrieveParams.keyword,
-          },
-          display_fields: this.visibleFields.map(item => item.field_name),
+      this.addFavoriteData = favoriteData;
+      this.isShowAddNewCollectDialog = true; // 展示新增弹窗
+    },
+    // 更新参数更变后的收藏
+    async handleUpdateFavorite() {
+      try {
+        this.favoriteUpdateLoading = true;
+        const {
+          params,
+          name,
+          group_id,
+          display_fields,
+          visible_type,
+          id,
+        } = this.activeFavorite;
+        const { search_fields } = params;
+        const { host_scopes, addition, keyword } = this.retrieveParams;
+        const data = {
+          name,
+          group_id,
+          display_fields,
+          visible_type,
+          host_scopes,
+          addition,
+          keyword,
+          search_fields,
         };
-        this.replaceFavoriteData = comparedSubData;
-      } else {
-        this.addFavoriteData = favoriteData;
-        this.isShowAddNewCollectDialog = true; // 展示新增弹窗
-        this.showFavoritePopperContent = false;
+        const res = await this.$http.request('favorite/updateFavorite', {
+          params: { id },
+          data,
+        });
+        if (res.result) {
+          this.$bkMessage({
+            message: this.$t('更新成功'),
+            theme: 'success',
+          });
+        if (this.isAutoQuery && this.isSqlSearchType) {
+          this.isAfterRequestFavoriteList = true;
+        }
+        };
+      } catch (error) {
+        console.warn(error);
+      } finally {
+        await this.getFavoriteList();
+        this.favoriteUpdateLoading = false;
+      }
+    },
+    // 检索头部点击编辑收藏
+    handleEditFavorite() {
+      // 获取检索页面的数据替换当前收藏详情参数
+      this.replaceFavoriteData = this.getRetrieveFavoriteData();
+      this.isShowAddNewCollectDialog = true;
+    },
+    // 当前检索监听的收藏参数
+    getRetrieveFavoriteData() {
+      return {
+        params: {
+          host_scopes: this.retrieveParams.host_scopes,
+          addition: this.retrieveParams.addition,
+          keyword: this.retrieveParams.keyword,
+        },
+        display_fields: this.visibleFields.map(item => item.field_name),
       };
-      if (isAdd) {
-        this.addFavoriteData = favoriteData;
-      }
     },
-    // 收藏更变tips操作
-    favoriteTipsOperate(type) {
-      this.closeFavoritePopper();
-      if (type === 'add-new') {
-        this.handleClickFavorite(true);
-        this.isFavoriteAdd = true;
-      } else {
-        this.isFavoriteAdd = false;
-      }
-      this.isShowAddNewCollectDialog = true; // 展示编辑弹窗
-    },
+
     handleChangeSearchType() {
       if (this.tableLoading) return;
       this.isAutoQuery = !this.isAutoQuery;
@@ -1760,6 +1822,13 @@ export default {
     },
     // 点击收藏列表的收藏
     handleClickFavoriteItem(value) {
+      if (value === undefined) { // 点击为新检索时 清空收藏
+        this.activeFavoriteID = -1;
+        this.activeFavorite = {};
+        this.isSqlSearchType = true;
+        return;
+      }
+      this.addFavoriteData = {}; // 清空新增收藏的数据
       this.isFavoriteSearch = true;
       if (!value.params.host_scopes.target_node_type) {
         value.params.host_scopes.target_node_type = '';
@@ -1953,6 +2022,14 @@ export default {
             color: #313238;
             font-size: 16px;
 
+            .tab-title {
+              font-size: 14px;
+            }
+            .icon-edit-line {
+              color: #979BA5;
+              cursor: pointer;
+            }
+
             .tab-operation {
               display: flex;
               justify-content: space-between;
@@ -2063,6 +2140,40 @@ export default {
             .query-search {
               width: 80px;
               font-size: 12px
+            }
+
+            .favorite-btn-container {
+              position: relative;
+              .favorite-btn {
+                width: 86px;
+                margin: 0 8px;
+                font-size: 12px
+              }
+              .favorite-btn-text {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              }
+              .catching-ball {
+                position: absolute;
+                width: 12px;
+                height: 12px;
+                right: 4px;
+                top: -6px;
+                z-index: 999;
+                border-radius: 50%;
+                background: #EA3636;
+              }
+              .icon {
+                margin-right: 2px;
+                font-size: 12px;
+              }
+              .bk-icon, {
+                margin-top: -4px;
+              }
+              .icon-save {
+                transform: translateY(1px);
+              }
             }
 
             .loading {
