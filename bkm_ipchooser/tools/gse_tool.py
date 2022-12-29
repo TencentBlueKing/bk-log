@@ -12,7 +12,7 @@ class GseAdapter:
     """GSE适配器"""
 
     @classmethod
-    def fill_agent_status(cls, cc_hosts: List[Dict]) -> None:
+    def fill_agent_status(cls, cc_hosts: List[Dict]) -> List[Dict]:
         """
         填充主机agent状态
         params:
@@ -25,10 +25,10 @@ class GseAdapterV1(GseAdapter):
     """GSE适配器V1, bk_cloud_id:ip为唯一标识版本"""
 
     @classmethod
-    def fill_agent_status(cls, cc_hosts: List[Dict]) -> None:
+    def fill_agent_status(cls, cc_hosts: List[Dict]) -> List[Dict]:
         """填充主机agent状态"""
         if not cc_hosts:
-            return
+            return cc_hosts
 
         index = 0
         hosts, host_map = [], {}
@@ -48,15 +48,17 @@ class GseAdapterV1(GseAdapter):
         except KeyError as e:
             logger.exception("fill_agent_status exception: %s", e)
 
+        return cc_hosts
+
 
 class GseAdapterV2(GseAdapter):
     """GSE适配器V2, bk_agent_id为唯一标识版本"""
 
     @classmethod
-    def fill_agent_status(cls, cc_hosts: List[Dict]) -> None:
+    def fill_agent_status(cls, cc_hosts: List[Dict]) -> List[Dict]:
         """填充主机agent状态"""
         if not cc_hosts:
-            return
+            return cc_hosts
 
         index = 0
         agent_id_list, host_map = [], {}
@@ -79,6 +81,8 @@ class GseAdapterV2(GseAdapter):
 
         except KeyError as e:
             logger.exception("fill_agent_status exception: %s", e)
+
+        return cc_hosts
 
 
 class GseTool:
