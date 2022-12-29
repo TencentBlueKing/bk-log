@@ -178,8 +178,8 @@ class EsConfig(FeatureToggleBase):
 
 
 @register
-class CheckCollectorTransferUrl(FeatureToggleBase):
-    target = "check_collector_transfer_url"
+class CheckCollectorCustomConfig(FeatureToggleBase):
+    target = "check_collector_custom_config"
 
     def set_status(self, param: dict) -> dict:
         return param
