@@ -92,6 +92,7 @@ class TransferChecker(Checker):
                 return
             monitor_host = transfer_custom_config.get("monitor_host")
             bk_token = transfer_custom_config.get("bk_token")
+            bk_biz_id = transfer_custom_config.get("bk_biz_id")
 
             end_time = int(time.time())
             start_time = end_time - TimeEnum.FIVE_MINUTE_SECOND.value
@@ -119,7 +120,7 @@ class TransferChecker(Checker):
                     }
                 ],
                 "target": [],
-                "bk_biz_id": str(settings.BLUEKING_BK_BIZ_ID),
+                "bk_biz_id": bk_biz_id,
             }
 
             headers = {"Content-Type": "application/json", "Cookie": f"bk_token={bk_token}"}
