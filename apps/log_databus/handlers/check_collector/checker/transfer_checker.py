@@ -96,23 +96,21 @@ class TransferChecker(Checker):
             end_time = int(time.time())
             start_time = end_time - TimeEnum.FIVE_MINUTE_SECOND.value
             params_temp = {
-                "down_sample_range": "5s",
+                "down_sample_range": "1m",
+                "step": "auto",
                 "start_time": start_time,
                 "end_time": end_time,
                 "expression": "a",
                 "display": True,
                 "query_configs": [
                     {
-                        "data_source_label": "custom",
+                        "data_source_label": "bk_monitor",
                         "data_type_label": "time_series",
-                        "metrics": [{"field": metric_name, "method": "", "alias": metric_name}],
-                        "table": TABLE_TRANSFER,
+                        "metrics": [{"field": metric_name, "method": "SUM", "alias": "a"}],
+                        "table": "",
                         "group_by": [],
                         "display": True,
-                        "where": [
-                            {"condition": "and", "key": "time", "method": "ge", "value": ["1m"]},
-                            {"condition": "and", "key": "id", "method": "eq", "value": [self.bk_data_id]},
-                        ],
+                        "where": [{"key": "id", "method": "eq", "value": [self.bk_data_id]}],
                         "interval": TimeEnum.ONE_MINUTE_SECOND.value,
                         "interval_unit": "s",
                         "time_field": "time",
@@ -145,7 +143,7 @@ class TransferChecker(Checker):
                     self.append_warning_info(message)
                     return
 
-                value, _ = series[0]["datapoints"][0]
+                value, _ = series[0]["datapoints"][-1]
                 self.append_normal_info(f"[请求监控接口] [unify query] {metric_name}: {value}")
             except Exception as e:
                 message = f"[请求监控接口] [unify query] 获取 {metric_name} 数据失败, err: {e}"
