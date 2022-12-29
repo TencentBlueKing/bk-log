@@ -80,7 +80,7 @@ class AgentChecker(Checker):
             "timeout": 7200,
             "task_name": "检查采集项配置",
         }
-        script_pwd = os.path.join(BASE_DIR, "scripts/check_bkunifylogbeat/check.py")
+        script_pwd = os.path.join(BASE_DIR, "apps/log_databus/scripts/check_bkunifylogbeat/check.py")
         try:
             with open(script_pwd, "r") as f:
                 params["script_content"] = base64.b64encode(f.read().encode()).decode()
