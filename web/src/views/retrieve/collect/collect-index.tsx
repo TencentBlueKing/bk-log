@@ -137,7 +137,7 @@ export default class CollectIndex extends tsc<IProps> {
     return this.favoriteList.reduce((pre, cur) => (pre += cur.favorites.length, pre), 0);
   }
 
-  @Watch("isShowCollect")
+  @Watch('isShowCollect')
   async handleShowCollect(value) {
     if (value) {
       this.baseSortType = localStorage.getItem('favoriteSortType') || 'NAME_ASC';
@@ -570,6 +570,7 @@ export default class CollectIndex extends tsc<IProps> {
         <AddCollectDialog
           vModel={this.isShowAddNewFavoriteDialog}
           favoriteID={this.editFavoriteID}
+          favoriteList={this.favoriteList}
           isClickFavoriteEdit={this.isClickFavoriteEdit}
           visibleFields={this.visibleFields}
           onSubmit={this.handleSubmitFavoriteData} />
