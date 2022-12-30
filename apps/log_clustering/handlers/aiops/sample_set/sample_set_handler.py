@@ -46,7 +46,7 @@ from apps.log_clustering.handlers.aiops.sample_set.data_cls import (
 )
 from apps.log_clustering.constants import MAX_FAILED_REQUEST_RETRY
 from apps.api import BkDataAIOPSApi
-from apps.api.base import DataApiRetryClass
+from apps.api.base import DataApiRetryClass, check_result_is_true
 
 
 class SampleSetHandler(BaseAiopsHandler):
