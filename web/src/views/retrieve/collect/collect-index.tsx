@@ -514,8 +514,8 @@ export default class CollectIndex extends tsc<IProps> {
                       clearable
                       placeholder={this.$t('请输入组名')}
                       vModel={this.groupName}
-                      maxlength={10}
-                    ></Input>
+                      maxlength={10}>
+                    </Input>
                     <div class="operate-button">
                       <Button text onClick={() => this.handleClickGroupBtn('add')}>
                         {this.$t('确定')}

@@ -207,8 +207,8 @@ export default class CollectGroup extends tsc<IProps> {
                 clearable
                 placeholder={this.$t('请输入组名')}
                 vModel={this.groupName}
-                maxlength={10}
-              ></Input>
+                maxlength={10}>
+              </Input>
               <div class="operate-button">
                 <Button text onClick={e => this.handleResetGroupName(e)}>
                   {this.$t('确定')}
@@ -271,8 +271,8 @@ export default class CollectGroup extends tsc<IProps> {
                 clearable
                 placeholder={this.$t('请输入组名')}
                 vModel={this.groupEditName}
-                maxlength={10}
-              ></Input>
+                maxlength={10}>
+              </Input>
               <div class="operate-button">
                 <Button text onClick={e => this.handleChangeGroupInputStatus(e, 'add')}>
                   {this.$t('确定')}

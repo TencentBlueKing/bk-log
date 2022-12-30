@@ -114,7 +114,8 @@
                 <span
                   v-show="!isFavoriteNewSearch"
                   class="bk-icon icon-edit-line"
-                  @click="handleEditFavorite"></span>
+                  @click="handleEditFavorite">
+                </span>
               </span>
               <div class="tab-operation">
                 <bk-popover
@@ -129,12 +130,11 @@
                     <span>{{isSqlSearchType ? $t('表单') : 'SQL'}}</span>
                   </div>
                   <div slot="content">
-                    <span>
-                      <span
-                        style="color: #d7473f; display: inline-block; transform: translateY(-2px);"
-                        class="bk-icon icon-exclamation-circle-shape"></span>
-                      <span>{{$t('表单Tips')}}</span>
+                    <span
+                      style="color: #d7473f; display: inline-block; transform: translateY(-2px);"
+                      class="bk-icon icon-exclamation-circle-shape">
                     </span>
+                    <span>{{$t('表单Tips')}}</span>
                   </div>
                 </bk-popover>
               </div>
@@ -249,7 +249,7 @@
                       ext-cls="favorite-btn"
                       :disabled="isFavoriteUpdate || favoriteUpdateLoading"
                       @click="handleUpdateFavorite">
-                      <span v-bk-tooltips="{content: $t('保存Tips'), disabled: isFavoriteUpdate }">
+                      <span v-bk-tooltips="{ content: $t('保存Tips'), disabled: isFavoriteUpdate }">
                         <span class="favorite-btn-text">
                           <span
                             :class="`icon
@@ -349,8 +349,7 @@
       :show-dynamic-group="true"
       :target-nodes="retrieveParams.host_scopes.target_nodes"
       :target-node-type="retrieveParams.host_scopes.target_node_type"
-      @target-change="handleSaveIpQuick">
-    </ip-selector-dialog>
+      @target-change="handleSaveIpQuick" />
 
     <setting-modal
       :index-set-item="indexSetItem"
@@ -361,8 +360,7 @@
       :config-data="clusteringData"
       :statistical-fields-data="statisticalFieldsData"
       @closeSetting="isShowSettingModal = false;"
-      @updateLogFields="requestFields"
-    />
+      @updateLogFields="requestFields" />
 
     <add-collect-dialog
       v-model="isShowAddNewCollectDialog"
@@ -1743,9 +1741,9 @@ export default {
             message: this.$t('更新成功'),
             theme: 'success',
           });
-        if (this.isAutoQuery && this.isSqlSearchType) {
-          this.isAfterRequestFavoriteList = true;
-        }
+          if (this.isAutoQuery && this.isSqlSearchType) {
+            this.isAfterRequestFavoriteList = true;
+          }
         };
       } catch (error) {
         console.warn(error);

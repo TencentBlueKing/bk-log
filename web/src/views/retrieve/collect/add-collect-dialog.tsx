@@ -191,10 +191,8 @@ export default class CollectDialog extends tsc<IProps> {
   }
 
   handleSelectGroup(nVal: number) {
-    let visible_type = 'public';
-    this.isDisableSelect = false;
-    nVal === this.privateGroupID && (visible_type = 'private');
-    nVal === this.privateGroupID && (this.isDisableSelect = true);
+    const visible_type = nVal === this.privateGroupID ? 'private' : 'public'
+    this.isDisableSelect = nVal === this.privateGroupID
     Object.assign(this.favoriteData, { visible_type });
   }
 
@@ -432,8 +430,8 @@ export default class CollectDialog extends tsc<IProps> {
                         clearable
                         placeholder={this.$t('请输入组名')}
                         vModel={this.groupName}
-                        maxlength={10}
-                      ></Input>
+                        maxlength={10}>
+                      </Input>
                       <div class="operate-button">
                         <Button text onClick={() => this.handleCreateGroup()}>
                           {this.$t('确定')}
