@@ -29,10 +29,9 @@ from jinja2 import Environment, FileSystemLoader
 from retrying import retry
 
 from apps.log_search.models import LogIndexSet
-from apps.log_search.constants import MAX_EXPORT_REQUEST_RETRY
 
 from apps.api import BkDataDataFlowApi, BkDataAIOPSApi, BkDataMetaApi, BkDataDatabusApi
-from apps.api.base import DataApiRetryClass, base_retry_on_result_func
+from apps.api.base import DataApiRetryClass, check_result_is_true
 
 from apps.log_clustering.constants import DEFAULT_NEW_CLS_HOURS, AGGS_FIELD_PREFIX, PatternEnum, NOT_NEED_EDIT_NODES
 from apps.log_clustering.exceptions import (
@@ -87,6 +86,7 @@ from apps.log_clustering.handlers.dataflow.data_cls import (
     SplitCls,
 )
 from apps.log_clustering.models import ClusteringConfig
+from apps.log_clustering.constants import MAX_FAILED_REQUEST_RETRY
 from apps.log_databus.models import CollectorConfig
 from apps.utils.log import logger
 
@@ -739,7 +739,7 @@ class DataFlowHandler(BaseAiopsHandler):
         return BkDataDataFlowApi.get_latest_deploy_data(
             params={"flow_id": flow_id, "bk_username": self.conf.get("bk_username")},
             data_api_retry_cls=DataApiRetryClass.create_retry_obj(
-                fail_check_functions=[base_retry_on_result_func], stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
+                fail_check_functions=[check_result_is_true], stop_max_attempt_number=MAX_FAILED_REQUEST_RETRY
             ),
         )
 

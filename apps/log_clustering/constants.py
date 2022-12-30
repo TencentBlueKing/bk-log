@@ -183,3 +183,7 @@ class ActionEnum(ChoicesEnum):
             cls.CREATE.value,
             cls.DELETE.value,
         )
+
+
+# 日志聚类失败重试次数
+MAX_FAILED_REQUEST_RETRY = 3
