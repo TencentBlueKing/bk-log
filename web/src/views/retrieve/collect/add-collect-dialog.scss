@@ -1,0 +1,109 @@
+@import '@/scss/mixins/flex.scss';
+
+.add-collect-dialog {
+  .bk-form {
+    > :first-child {
+      margin-top: -10px;
+    }
+
+    > :not(:first-child) {
+      /* stylelint-disable-next-line declaration-no-important */
+      margin-top: 12px !important;
+    }
+  }
+
+  .edit-information {
+    padding: 0 16px;
+    font-size: 12px;
+
+    > :first-child {
+      display: inline-block;
+      min-width: 72px;
+      color: #979ba5;
+    }
+  }
+
+  .collect-radio {
+    /* stylelint-disable-next-line declaration-no-important */
+    margin-top: 0 !important;
+
+    .bk-form-control {
+      > :last-child {
+        margin-left: 20px;
+      }
+    }
+  }
+
+  .filed-label .bk-label-text {
+    width: 150px;
+  }
+
+  .bk-form-item {
+    padding: 0 16px;
+
+    .bk-label,
+    .bk-radio-text,
+    .bk-checkbox-text {
+      font-size: 12px;
+    }
+  }
+
+  .form-item-container {
+    align-items: center;
+
+    @include flex-justify(space-between);
+
+    .bk-form-item {
+      width: 50%;
+    }
+  }
+
+  .explanation-field {
+    font-size: 12px;
+    line-height: 20px;
+    background: #f5f7fa;
+    padding: 6px 8px;
+  }
+
+  .bk-form-checkbox {
+    margin-right: 20px;
+  }
+
+  .filed-container {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+
+    .current-filed {
+      font-size: 12px;
+      color: #979ba5;
+      margin-left: 24px;
+    }
+  }
+
+  .add-new-group-input {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    font-size: 12px;
+
+    .operate-button {
+      margin-top: 4px;
+
+      .bk-button-text {
+        font-size: 12px;
+      }
+
+      span {
+        margin-left: 6px;
+        cursor: pointer;
+      }
+    }
+  }
+
+  .fl-jcsb {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+}

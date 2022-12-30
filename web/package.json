@@ -56,6 +56,8 @@
     "@blueking/stylelint-config-bk": "2.0.0",
     "@commitlint/cli": "^12.1.4",
     "@commitlint/config-conventional": "^12.1.4",
+    "@typescript-eslint/parser": "^5.20.0",
+    "vue-eslint-parser": "^7.10.0",
     "husky": "^4.3.8",
     "lint-staged": "^11.0.0",
     "nodemon": "^2.0.9",

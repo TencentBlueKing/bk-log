@@ -16,48 +16,37 @@ LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE A
 NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-We undertake not to change the open source license (MIT license) applicable to the current version of
-the project delivered to anyone in the future.
 """
-import json
+
+from django.db import migrations
+from apps.feature_toggle.plugins.constants import USER_GUIDE_CONFIG
 
 
-class Report(object):
-    def __init__(self, name, info: list = None, warning: list = None, error: list = None):
-        self.name = name
-        self.info = info if info else []
-        self.warning = warning if warning else []
-        self.error = error if error else []
-
-    def has_problem(self):
-        return self.error != []
-
-    def add_info(self, message: str):
-        self.info.append(message)
-
-    def add_warning(self, message: str):
-        self.warning.append(message)
-
-    def add_error(self, message: str):
-        self.error.append(message)
-
-    def add_report(self, report):
-        self.info.extend(report.info)
-        self.warning.extend(report.warning)
-        self.error.extend(report.error)
-
-    def __str__(self):
-        return json.dumps(
-            {"report_name": self.name, "info": self.info, "warning": self.warning, "error": self.error},
-            ensure_ascii=False,
-        )
+def forwards_func(apps, schema_editor):
+    feature_toggle = apps.get_model("feature_toggle", "FeatureToggle")
+    feature_toggle.objects.update_or_create(
+        name=USER_GUIDE_CONFIG,
+        defaults={
+            "alias": None,
+            "status": "on",
+            "description": "",
+            "is_viewed": False,
+            "feature_config": {
+                "default": {
+                    "step_list": [
+                        {"title": "业务选择框", "target": "#bizSelectorGuide", "content": "业务选择框的位置全部换到左侧导航"},
+                        {"title": "管理能力增强", "target": "#manageMenuGuide", "content": "日志提取任务挪到管理；增加数据存储、使用等状态管理"},
+                    ]
+                }
+            },
+            "biz_id_white_list": None,
+        },
+    )
 
 
-class BaseStory(object):
-    name = ""
+class Migration(migrations.Migration):
+    dependencies = [
+        ("feature_toggle", "0005_merge_20220409_2322"),
+    ]
 
-    def __init__(self):
-        self.report = Report(self.name)
-
-    def get_report(self):
-        return self.report
+    operations = [migrations.RunPython(forwards_func)]

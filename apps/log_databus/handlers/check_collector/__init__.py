@@ -19,12 +19,3 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-
-from .base import BaseStory, Report
-from .check_agent import CheckAgentStory
-from .check_es import CheckESStory
-from .check_kafka import CheckKafkaStory
-from .check_route import CheckRouteStory
-from .check_transfer import CheckTransferStory
-
-__ALL__ = [BaseStory, Report, CheckAgentStory, CheckESStory, CheckKafkaStory, CheckRouteStory, CheckTransferStory]

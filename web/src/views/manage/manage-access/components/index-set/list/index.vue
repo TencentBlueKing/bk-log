@@ -273,7 +273,7 @@ export default {
       this.$router.push({
         name: this.$route.name.replace('list', 'create'),
         query: {
-          spaceUid: window.localStorage.getItem('space_uid'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
     },
@@ -305,7 +305,7 @@ export default {
             indexSetId: row.index_set_id,
           },
           query: {
-            spaceUid: window.localStorage.getItem('space_uid'),
+            spaceUid: this.$store.state.spaceUid,
           },
         });
       } else if (type === 'search') { // 检索
@@ -315,7 +315,7 @@ export default {
             indexId: row.index_set_id ? row.index_set_id : row.bkdata_index_set_ids[0],
           },
           query: {
-            spaceUid: window.localStorage.getItem('space_uid'),
+            spaceUid: this.$store.state.spaceUid,
           },
         });
       }  else if (type === 'edit') { // 编辑索引集
@@ -326,7 +326,7 @@ export default {
             indexSetId: row.index_set_id,
           },
           query: {
-            spaceUid: window.localStorage.getItem('space_uid'),
+            spaceUid: this.$store.state.spaceUid,
           },
         });
       } else if (type === 'delete') { // 删除索引集

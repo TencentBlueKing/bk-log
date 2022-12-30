@@ -147,7 +147,7 @@ export default {
       window.open(this.$router.resolve({
         name: 'es-cluster-manage',
         query: {
-          spaceUid: window.localStorage.getItem('space_uid'),
+          spaceUid: this.$store.state.spaceUid,
         },
       }).href, '_blank');
     },

@@ -536,10 +536,10 @@ class DataFlowHandler(BaseAiopsHandler):
 
             after_treat_flow.es_cluster = clustering_config.es_storage
             after_treat_flow.es.expires = es_storage["expires"]
-            after_treat_flow.es.has_replica = json.dumps(es_storage["has_replica"])
-            after_treat_flow.es.json_fields = json.dumps(es_storage["json_fields"])
-            after_treat_flow.es.analyzed_fields = json.dumps(es_storage["analyzed_fields"])
-            doc_values_fields = es_storage["doc_values_fields"]
+            after_treat_flow.es.has_replica = json.dumps(es_storage.get("has_replica", False))
+            after_treat_flow.es.json_fields = json.dumps(es_storage.get("json_fields", []))
+            after_treat_flow.es.analyzed_fields = json.dumps(es_storage.get("analyzed_fields", []))
+            doc_values_fields = es_storage.get("doc_values_fields", [])
             doc_values_fields.extend(
                 [f"{AGGS_FIELD_PREFIX}_{pattern_level}" for pattern_level in PatternEnum.get_choices()]
             )

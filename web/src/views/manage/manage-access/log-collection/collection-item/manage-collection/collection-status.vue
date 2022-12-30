@@ -111,8 +111,12 @@
               <bk-table-column :label="$t('monitors.detail')">
                 <template slot-scope="props">
                   <div class="text-style">
-                    <span></span>
                     <span @click.stop="viewDetail(props.row)">{{ $t('部署详情') }}</span>
+                    <span
+                      v-if="enableCheckCollector"
+                      @click.stop="viewReport(props.row)">
+                      {{ $t('一键检测') }}
+                    </span>
                   </div>
                 </template>
               </bk-table-column>
@@ -149,16 +153,23 @@
         </bk-sideslider>
       </div>
     </template>
+    <collection-report-view
+      v-model="reportDetailShow"
+      :check-record-id="checkRecordId"
+      @closeReport="() => reportDetailShow = false"
+    />
   </div>
 </template>
 
 <script>
 import { projectManages } from '@/common/util';
 import containerStatus from './components/container-status.vue';
+import CollectionReportView from '../../../components/collection-report-view';
 
 export default {
   components: {
     containerStatus,
+    CollectionReportView,
   },
   props: {
     collectorData: {
@@ -233,6 +244,12 @@ export default {
       dataFal: {},
       dataPen: {},
       dataAll: {},
+      // 是否支持一键检测
+      enableCheckCollector: window.ENABLE_CHECK_COLLECTOR,
+      // 一键检测弹窗配置
+      reportDetailShow: false,
+      // 一键检测采集项标识
+      checkRecordId: '',
     };
   },
   computed: {
@@ -483,9 +500,22 @@ export default {
       //     collectorId: this.config_id,
       //   },
       //   query: {
-      //     spaceUid: window.localStorage.getItem('space_uid'),
+      //     spaceUid: this.$store.state.spaceUid,
       //   },
       // });
+    },
+    viewReport(row) {
+      this.$http.request('collect/runCheck', {
+        data: {
+          collector_config_id: this.$route.params.collectorId,
+          hosts: `${row.bk_cloud_id}:${row.ip}`,
+        },
+      }).then((res) => {
+        if (res.data?.check_record_id) {
+          this.reportDetailShow = true;
+          this.checkRecordId = res.data.check_record_id;
+        }
+      });
     },
   },
 };
@@ -563,14 +593,8 @@ export default {
     .text-style {
       display: flex;
 
-      :nth-child(1) {
-        display: inline-block;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      :nth-child(2) {
+      span {
+        margin-right: 12px;
         color: #3a84ff;
         cursor: pointer;
       }

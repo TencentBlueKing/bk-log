@@ -153,15 +153,7 @@ class BluekingInstrumentor(BaseInstrumentor):
             sample_all = feature_config.get(self.SAMPLE_ALL, sample_all)
         otlp_exporter = OTLPSpanExporter(endpoint=otlp_grpc_host)
         span_processor = LazyBatchSpanProcessor(otlp_exporter)
-        suffix = ""
-        if settings.BKAPP_IS_BKLOG_API:
-            suffix = "_api"
 
-        if settings.IS_CELERY:
-            suffix = "_worker"
-
-        if settings.IS_CELERY_BEAT:
-            suffix = "_beat"
 
         # periord task not sampler
         sampler = DEFAULT_OFF
@@ -174,7 +166,7 @@ class BluekingInstrumentor(BaseInstrumentor):
         tracer_provider = TracerProvider(
             resource=Resource.create(
                 {
-                    "service.name": settings.APP_CODE + suffix,
+                    "service.name": settings.SERVICE_NAME,
                     "service.version": settings.VERSION,
                     "bk_data_id": otlp_bk_data_id,
                     "bk.data.token": otlp_bk_data_token,

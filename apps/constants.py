@@ -65,6 +65,7 @@ class UserOperationTypeEnum(ChoicesEnum):
     COLLECTOR_PLUGIN = "collector_plugin"
     STORAGE = "storage"
     INDEX_SET = "index_set"
+    INDEX_SET_CONFIG = "index_set_config"
     SEARCH = "search"
     ETL = "etl"
     EXPORT = "export"
@@ -76,6 +77,7 @@ class UserOperationTypeEnum(ChoicesEnum):
         (COLLECTOR, _("采集项")),
         (STORAGE, _("存储集群")),
         (INDEX_SET, _("索引集")),
+        (INDEX_SET_CONFIG, _("索引集配置")),
         (SEARCH, _("检索配置")),
         (ETL, _("清洗配置")),
         (EXPORT, _("导出")),
@@ -107,3 +109,43 @@ class UserOperationActionEnum(ChoicesEnum):
         (REPLACE_UPDATE, _("替换")),
         (CONFIG, _("配置")),
     )
+
+
+class LuceneSyntaxEnum(object):
+    """Lucene语法枚举"""
+
+    UNKNOWN = "UnknownOperation"
+    SEARCH_FIELD = "SearchField"
+    OR_OPERATION = "OrOperation"
+    AND_OPERATION = "AndOperation"
+    WORD = "Word"
+    PHRASE = "Phrase"
+    PROXIMITY = "Proximity"
+    RANGE = "Range"
+    FUZZY = "Fuzzy"
+    REGEX = "Regex"
+    GROUP = "Group"
+    FIELD_GROUP = "FieldGroup"
+    # Unary operator
+    NOT = "Not"
+    PLUS = "Plus"
+    PROHIBIT = "Prohibit"
+
+
+FULL_TEXT_SEARCH_FIELD_NAME = _("全文检索")
+
+DEFAULT_FIELD_OPERATOR = "~="
+FIELD_GROUP_OPERATOR = "()"
+NOT_OPERATOR = "NOT"
+PLUS_OPERATOR = "+"
+PROHIBIT_OPERATOR = "-"
+
+LOW_CHAR = {True: "[", False: "{"}
+HIGH_CHAR = {True: "]", False: "}"}
+
+WORD_RANGE_OPERATORS = r"<=|>=|<|>"
+
+BRACKET_DICT = {"[": "]", "(": ")", "{": "}"}
+
+# 最大语法修复次数
+MAX_RESOLVE_TIMES = 10

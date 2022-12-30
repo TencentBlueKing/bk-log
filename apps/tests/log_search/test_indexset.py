@@ -19,6 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import copy
 
 import arrow
 import json
@@ -588,12 +589,19 @@ class TestIndexSet(TestCase):
         self.maxDiff = 1000000
         self.assertEqual(content["data"], UPDATE_INDEX_SET)
 
-        # 测试不可编辑情况
+        # 测试不可编辑字段 为True下仍可以编辑
         index_set.is_editable = False
         index_set.save()
         response = self.client.patch(path=path, data=json.dumps(data), content_type="application/json")
+        content = json.loads(response.content)
+        created_at = content["data"]["created_at"]
+        updated_at = content["data"]["updated_at"]
 
-        self.assertEqual(json.loads(response.content), NOT_EDITABLE_RETURN)
+        check_data = copy.deepcopy(UPDATE_INDEX_SET)
+        self.sync_params(
+            check_data, index_set_id=index_set_id, created_at=created_at, updated_at=updated_at, is_editable=False
+        )
+        self.assertEqual(json.loads(response.content)["data"], check_data)
 
     @override_settings(MIDDLEWARE=(OVERRIDE_MIDDLEWARE,))
     def test_delete_index_set(self, *args):

@@ -57,246 +57,269 @@
     </div>
     <!-- 检索页详情页 -->
     <div v-if="!isRetrieveHome" class="retrieve-detail-container">
+      <result-header
+        ref="resultHeader"
+        :is-as-iframe="isAsIframe"
+        :show-retrieve-condition="showRetrieveCondition"
+        :show-expand-init-tips="showExpandInitTips"
+        :retrieve-params="retrieveParams"
+        :time-range.sync="retrieveParams.time_range"
+        :date-picker-value="datePickerValue"
+        :index-set-item="indexSetItem"
+        :is-show-collect="isShowCollect"
+        @shouldRetrieve="retrieveLog"
+        @initTipsHidden="handleInitTipsHidden"
+        @open="openRetrieveCondition"
+        @update:datePickerValue="handleDateChange"
+        @datePickerChange="retrieveWhenDateChange"
+        @settingMenuClick="handleSettingMenuClick"
+        @closeRetrieveCondition="closeRetrieveCondition"
+        @updateCollectCondition="updateCollectCondition" />
       <div class="page-loading-wrap" v-if="basicLoading || tableLoading">
         <div class="page-loading-bar"></div>
       </div>
-      <!-- 检索详情页左侧 -->
-      <div v-show="showRetrieveCondition" class="retrieve-condition" :style="{ width: leftPanelWidth + 'px' }">
-        <!-- 监控显示的 tab 切换 -->
-        <!-- <div v-if="isAsIframe" class="bk-button-group">
+      <div class="result-content">
+        <!-- 收藏列表 -->
+        <collect-index
+          :width.sync="collectWidth"
+          :is-show.sync="isShowCollect"
+          :favorite-loading="favoriteLoading"
+          :favorite-list="favoriteList"
+          :style="{ width: collectWidth + 'px' }"
+          :favorite-request-i-d="favoriteRequestID"
+          :active-favorite="activeFavorite"
+          :active-favorite-i-d="activeFavoriteID"
+          :visible-fields="visibleFields"
+          @handleClick="handleClickFavoriteItem"
+          @isRefreshFavorite="updateActiveFavoriteData"
+          @favoriteDialogSubmit="handleSubmitFavorite"
+          @requestFavoriteList="getFavoriteList" />
+        <!-- 检索详情页左侧 -->
+        <div v-show="showRetrieveCondition" class="retrieve-condition" :style="{ width: leftPanelWidth + 'px' }">
+          <!-- 监控显示的 tab 切换 -->
+          <!-- <div v-if="isAsIframe" class="bk-button-group">
           <bk-button @click="handleCheckMonitor">{{ $t('指标检索') }}</bk-button>
           <bk-button class="is-selected">{{ $t('日志检索') }}</bk-button>
           <bk-button @click="handleCheckEvent">{{ $t('事件检索') }}</bk-button>
         </div> -->
 
-        <div class="biz-menu-box" id="bizSelectorGuide" v-if="!isAsIframe">
+          <!-- <div class="biz-menu-box" id="bizSelectorGuide" v-if="!isAsIframe">
           <biz-menu-select theme="light"></biz-menu-select>
-        </div>
+        </div> -->
 
-        <div class="king-tab" :class="isAsIframe && 'as-iframe'">
-          <div class="tab-header">
-            <span class="tab-title">{{ $t('数据查询') }}</span>
-            <div class="tab-operation">
-              <bk-popover
-                ref="queryTipPopover"
-                placement="bottom"
-                theme="light"
-                :transfer="true"
-                trigger="click">
-                <span class="bk-icon icon-cog" @click="toggleCog"></span>
-                <div slot="content" class="auto-query-popover-content">
-                  <span>{{ $t('是否开启自动查询') }}</span>
-                  <bk-switcher
-                    v-model="isAutoQuery"
-                    theme="primary"
-                    size="small"
-                    @change="switchAutoQuery">
-                  </bk-switcher>
-                  <span class="confirm-btn" v-if="!isHideAutoQueryTips" @click="toggleNotice">{{ $t('知道了') }}</span>
-                </div>
-              </bk-popover>
-              <span class="bk-icon icon-angle-double-left-line" @click="closeRetrieveCondition"></span>
-            </div>
-          </div>
-          <div class="tab-content" :style="`height:calc(100% - ${isAsIframe ? 60 : 108}px);`">
-            <div class="tab-content-item" data-test-id="retrieve_div_dataQueryBox">
-              <!-- 选择索引集 -->
-              <div class="tab-item-title">{{ $t('索引集') }}</div>
-              <select-indexSet
-                :index-id="indexId"
-                :index-set-list="indexSetList"
-                :basic-loading.sync="basicLoading"
-                @selected="handleSelectIndex"
-                @updateIndexSetList="updateIndexSetList" />
-              <!-- 查询语句 -->
-              <query-statement
-                v-model="retrieveParams.keyword"
-                :history-records="statementSearchrecords"
-                @updateSearchParam="updateSearchParam"
-                @retrieve="retrieveLog" />
-              <retrieve-detail-input
-                v-model="retrieveParams.keyword"
-                :is-auto-query="isAutoQuery"
-                :retrieved-keyword="retrievedKeyword"
-                :dropdown-data="retrieveDropdownData"
-                :history-records="statementSearchrecords"
-                @retrieve="retrieveLog" />
-              <!-- 添加过滤条件 -->
-              <div class="tab-item-title flex-item-title">
-                <span>{{ $t('过滤条件') }}</span>
-                <div class="filter-item">
-                  <span
-                    @click="openIpQuick"
-                    data-test-id="dataQuery_span_addIP"
-                  >{{ $t('添加IP') }}</span>
-                  <filter-condition-item
-                    :filter-condition="retrieveParams.addition"
-                    :total-fields="totalFields"
-                    :field-alias-map="fieldAliasMap"
-                    :statistical-fields-data="statisticalFieldsData"
-                    @addFilterCondition="addFilterCondition"
-                    @removeFilterCondition="removeFilterCondition" />
-                </div>
-              </div>
-              <div class="add-filter-condition-container">
-                <ip-quick
-                  :target-node="retrieveParams.host_scopes.target_nodes"
-                  :target-node-type="retrieveParams.host_scopes.target_node_type"
-                  @openIpQuick="openIpQuick"
-                  @confirm="handleSaveIpQuick" />
-                <div class="cut-line" v-if="showFilterCutline"></div>
-                <template v-for="(item, index) in retrieveParams.addition">
-                  <filter-condition-item
-                    :key="item.field + index + item.value"
-                    :edit-index="index"
-                    :is-add="false"
-                    :edit-data="item"
-                    :filter-condition="retrieveParams.addition"
-                    :total-fields="totalFields"
-                    :field-alias-map="fieldAliasMap"
-                    :statistical-fields-data="statisticalFieldsData"
-                    @addFilterCondition="addFilterCondition"
-                    @removeFilterCondition="() => removeFilterCondition(index)" />
-                </template>
-              </div>
-              <!-- 查询收藏清空按钮 -->
-              <div class="retrieve-button-group">
-                <bk-button
-                  v-if="isAutoQuery"
-                  v-cursor="{ active: isSearchAllowed === false }"
-                  theme="primary"
-                  style="width: 86px;font-size: 12px"
-                  data-test-id="dataQuery_button_filterSearch"
-                  @click="retrieveLog">
-                  <span class="log-icon icon-zidongchaxun" style="margin-right: 2px;font-size: 14px;"></span>
-                  {{ $t('查询') }}
-                </bk-button>
-                <bk-button
-                  v-else
-                  v-cursor="{ active: isSearchAllowed === false }"
-                  theme="primary"
-                  style="width: 86px;font-size: 12px"
-                  data-test-id="dataQuery_button_filterSearch"
-                  @click="retrieveLog">
-                  <span class="log-icon icon-shoudongchaxun" style="margin-right: 2px;font-size: 14px;"></span>
-                  {{ $t('查询') }}
-                </bk-button>
+          <div class="king-tab" :class="isAsIframe && 'as-iframe'">
+            <div class="tab-header">
+              <span class="tab-title">{{ $t('数据检索') }}</span>
+              <div class="tab-operation">
                 <bk-popover
-                  ref="favoritePopper"
-                  trigger="click"
-                  placement="top"
-                  theme="light"
-                  :on-show="handleFavoritePopperShow">
-                  <bk-button
-                    style="width: 86px;margin: 0 8px;font-size: 12px"
-                    data-test-id="dataQuery_button_collection">
-                    <span style="display: flex;align-items: center;justify-content: center;">
+                  v-show="isShowUiType"
+                  ref="formTipsRef"
+                  :tippy-options="formTippyOptions"
+                  :disabled="isCanUseUiType || !isSqlSearchType">
+                  <div
+                    class="search-type"
+                    @click="handleClickSearchType">
+                    <span class="bk-icon icon-sort"></span>
+                    <span>{{isSqlSearchType ? $t('表单') : 'SQL'}}</span>
+                  </div>
+                  <div slot="content">
+                    <span>
                       <span
-                        class="bk-icon icon-star"
-                        style="margin-right: 2px;margin-top: -4px;font-size: 12px;">
-                      </span>
-                      <span>{{ $t('收藏') }}</span>
+                        style="color: #d7473f; display: inline-block; transform: translateY(-2px);"
+                        class="bk-icon icon-exclamation-circle-shape"></span>
+                      <span>{{$t('表单Tips')}}</span>
                     </span>
-                  </bk-button>
-                  <favorite-popper
-                    v-if="showFavoritePopperContent"
-                    :is-loading="favoritePopperLoading"
-                    :panel-width="leftPanelWidth"
-                    slot="content"
-                    @add="addFavorite"
-                    @close="closeFavoritePopper" />
+                  </div>
                 </bk-popover>
-                <bk-button
-                  style="font-size: 12px"
-                  @click="clearCondition"
-                  data-test-id="dataQuery_button_phrasesClear">
-                  {{ $t('清空') }}
-                </bk-button>
               </div>
             </div>
-            <div class="tab-content-item" data-test-id="retrieve_div_fieldFilterBox">
-              <!-- 字段过滤 -->
-              <div class="tab-item-title field-filter-title" style="color: #313238;">{{ $t('字段过滤') }}</div>
-              <field-filter
-                :retrieve-params="retrieveParams"
-                :total-fields="totalFields"
-                :visible-fields="visibleFields"
-                :sort-list="sortList"
-                :field-alias-map="fieldAliasMap"
-                :show-field-alias="showFieldAlias"
-                :statistical-fields-data="statisticalFieldsData"
-                :parent-loading="tableLoading"
-                @fieldsUpdated="handleFieldsUpdated" />
+            <div class="tab-content" :style="`height:calc(100% - ${isAsIframe ? 60 : 108}px);`">
+              <div class="tab-content-item" data-test-id="retrieve_div_dataQueryBox">
+                <!-- 选择索引集 -->
+                <div class="tab-item-title">{{ $t('索引集') }}</div>
+                <select-indexSet
+                  :index-id="indexId"
+                  :index-set-list="indexSetList"
+                  :basic-loading.sync="basicLoading"
+                  @selected="handleSelectIndex"
+                  @updateIndexSetList="updateIndexSetList" />
+                <template v-if="isSqlSearchType">
+                  <!-- 查询语句 -->
+                  <query-statement
+                    v-model="retrieveParams.keyword"
+                    :history-records="statementSearchrecords"
+                    @updateSearchParam="updateSearchParam"
+                    @retrieve="retrieveLog" />
+                  <retrieve-detail-input
+                    v-model="retrieveParams.keyword"
+                    :is-auto-query="isAutoQuery"
+                    :retrieved-keyword="retrievedKeyword"
+                    :dropdown-data="retrieveDropdownData"
+                    @retrieve="retrieveLog" />
+                </template>
+                <template v-else>
+                  <ui-query
+                    :is-favorite-search="isFavoriteSearch"
+                    :keyword="retrieveParams.keyword"
+                    :active-favorite="activeFavorite"
+                    @updateKeyWords="updateKeyWords"></ui-query>
+                </template>
+                <!-- 添加过滤条件 -->
+                <div class="tab-item-title flex-item-title">
+                  <span>{{ $t('过滤条件') }}</span>
+                  <div class="filter-item">
+                    <span
+                      @click="openIpQuick"
+                      data-test-id="dataQuery_span_addIP"
+                    >{{ $t('添加IP') }}</span>
+                    <filter-condition-item
+                      :filter-condition="retrieveParams.addition"
+                      :total-fields="totalFields"
+                      :field-alias-map="fieldAliasMap"
+                      :filter-all-operators="filterAllOperators"
+                      :statistical-fields-data="statisticalFieldsData"
+                      @addFilterCondition="addFilterCondition"
+                      @removeFilterCondition="removeFilterCondition" />
+                  </div>
+                </div>
+                <div class="add-filter-condition-container">
+                  <ip-quick
+                    :target-node="retrieveParams.host_scopes.target_nodes"
+                    :target-node-type="retrieveParams.host_scopes.target_node_type"
+                    @openIpQuick="openIpQuick"
+                    @confirm="handleSaveIpQuick" />
+                  <div class="cut-line" v-if="showFilterCutline"></div>
+                  <template v-for="(item, index) in retrieveParams.addition">
+                    <filter-condition-item
+                      :key="item.field + index + item.value"
+                      :edit-index="index"
+                      :is-add="false"
+                      :edit-data="item"
+                      :filter-all-operators="filterAllOperators"
+                      :filter-condition="retrieveParams.addition"
+                      :total-fields="totalFields"
+                      :field-alias-map="fieldAliasMap"
+                      :statistical-fields-data="statisticalFieldsData"
+                      @addFilterCondition="addFilterCondition"
+                      @removeFilterCondition="() => removeFilterCondition(index)" />
+                  </template>
+                </div>
+                <!-- 查询收藏清空按钮 -->
+                <div class="retrieve-button-group">
+                  <div v-if="tableLoading" class="loading-box">
+                    <div class="loading" v-bkloading="{ isLoading: true, theme: 'primary', mode: 'spin' }"></div>
+                  </div>
+                  <bk-button
+                    v-else
+                    class="query-btn"
+                    :icon="getSearchType.icon"
+                    @click="handleChangeSearchType">
+                  </bk-button>
+                  <bk-button
+                    v-cursor="{ active: isSearchAllowed === false }"
+                    theme="primary"
+                    data-test-id="dataQuery_button_filterSearch"
+                    :class="{ 'query-search': true,'loading': tableLoading }"
+                    @click="retrieveLog">
+                    <!-- {{ $t('查询') }} -->
+                    {{ getSearchType.text }}
+                  </bk-button>
+                  <bk-popover
+                    ref="favoritePopper"
+                    trigger="click"
+                    placement="top"
+                    theme="light"
+                    :disabled="!showFavoritePopperContent">
+                    <bk-button
+                      style="width: 86px;margin: 0 8px;font-size: 12px"
+                      data-test-id="dataQuery_button_collection"
+                      @click="handleClickFavorite">
+                      <span style="display: flex;align-items: center;justify-content: center;">
+                        <span
+                          class="bk-icon icon-star"
+                          style="margin-right: 2px;margin-top: -4px;font-size: 12px;">
+                        </span>
+                        <span>{{ $t('收藏') }}</span>
+                      </span>
+                    </bk-button>
+                    <favorite-popper
+                      slot="content"
+                      :active-favorite="activeFavorite"
+                      @favoriteTipsOperate="favoriteTipsOperate" />
+                  </bk-popover>
+                  <bk-button
+                    style="font-size: 12px"
+                    @click="clearCondition"
+                    data-test-id="dataQuery_button_phrasesClear">
+                    {{ $t('清空') }}
+                  </bk-button>
+                </div>
+              </div>
+              <div class="tab-content-item" data-test-id="retrieve_div_fieldFilterBox">
+                <!-- 字段过滤 -->
+                <div class="tab-item-title field-filter-title" style="color: #313238;">{{ $t('字段过滤') }}</div>
+                <field-filter
+                  :retrieve-params="retrieveParams"
+                  :total-fields="totalFields"
+                  :visible-fields="visibleFields"
+                  :sort-list="sortList"
+                  :field-alias-map="fieldAliasMap"
+                  :show-field-alias="showFieldAlias"
+                  :statistical-fields-data="statisticalFieldsData"
+                  :parent-loading="tableLoading"
+                  @fieldsUpdated="handleFieldsUpdated" />
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      <!-- 检索详情页右侧检索结果 -->
-      <div class="retrieve-result" :style="{ width: 'calc(100% - ' + leftPanelWidth + 'px)' }">
-        <result-header
-          ref="resultHeader"
-          :show-retrieve-condition="showRetrieveCondition"
-          :show-expand-init-tips="showExpandInitTips"
-          :retrieve-params="retrieveParams"
-          :time-range.sync="retrieveParams.time_range"
-          :date-picker-value="datePickerValue"
-          :favorite-list="favoriteList"
-          :latest-favorite-id="latestFavoriteId"
-          :index-set-item="indexSetItem"
-          @remove="removeFavorite"
-          @shouldRetrieve="retrieveLog"
-          @retrieveFavorite="retrieveFavorite"
-          @initTipsHidden="handleInitTipsHidden"
-          @open="openRetrieveCondition"
-          @update:datePickerValue="handleDateChange"
-          @datePickerChange="retrieveWhenDateChange"
-          @settingMenuClick="handleSettingMenuClick" />
-        <!-- 无权限页面 -->
-        <auth-container-page v-if="showAuthInfo" :info="showAuthInfo" />
-        <template v-else>
-          <!-- 初始化加载时显示这个空的盒子 避免先显示内容 再显示无权限页面 -->
-          <div v-if="!hasAuth && !showAuthInfo && !isNoIndexSet" style="height: 100%;background: #f4f7fa;"></div>
-          <!-- 无索引集 申请索引集页面 -->
-          <no-index-set v-if="isNoIndexSet" />
-          <!-- 详情右侧 -->
-          <result-main
-            ref="resultMainRef"
-            v-else
-            :sort-list="sortList"
-            :table-loading="tableLoading"
-            :retrieve-params="retrieveParams"
-            :took-time="tookTime"
-            :index-set-list="indexSetList"
-            :table-data="tableData"
-            :visible-fields="visibleFields"
-            :total-fields="totalFields"
-            :field-alias-map="fieldAliasMap"
-            :show-field-alias="showFieldAlias"
-            :bk-monitor-url="bkmonitorUrl"
-            :async-export-usable="asyncExportUsable"
-            :async-export-usable-reason="asyncExportUsableReason"
-            :statistical-fields-data="statisticalFieldsData"
-            :time-field="timeField"
-            :config-data="clusteringData"
-            :apm-relation="apmRelationData"
-            :clean-config="cleanConfig"
-            :picker-time-range="pickerTimeRange"
-            :date-picker-value="datePickerValue"
-            :index-set-item="indexSetItem"
-            :operator-config="operatorConfig"
-            @request-table-data="requestTableData"
-            @fieldsUpdated="handleFieldsUpdated"
-            @shouldRetrieve="retrieveLog"
-            @addFilterCondition="addFilterCondition"
-            @showSettingLog="handleSettingMenuClick('clustering')" />
-        </template>
+        <!-- 检索详情页右侧检索结果 -->
+        <div class="retrieve-result" :style="{ width: 'calc(100% - ' + sumLeftWidth + 'px)' }">
+          <!-- 无权限页面 -->
+          <auth-container-page v-if="showAuthInfo" :info="showAuthInfo" />
+          <template v-else>
+            <!-- 初始化加载时显示这个空的盒子 避免先显示内容 再显示无权限页面 -->
+            <div v-if="!hasAuth && !showAuthInfo && !isNoIndexSet" style="height: 100%;background: #f4f7fa;"></div>
+            <!-- 无索引集 申请索引集页面 -->
+            <no-index-set v-if="isNoIndexSet" />
+            <!-- 详情右侧 -->
+            <result-main
+              ref="resultMainRef"
+              v-else
+              :sort-list="sortList"
+              :table-loading="tableLoading"
+              :retrieve-params="retrieveParams"
+              :took-time="tookTime"
+              :index-set-list="indexSetList"
+              :table-data="tableData"
+              :visible-fields="visibleFields"
+              :total-fields="totalFields"
+              :field-alias-map="fieldAliasMap"
+              :show-field-alias="showFieldAlias"
+              :bk-monitor-url="bkmonitorUrl"
+              :async-export-usable="asyncExportUsable"
+              :async-export-usable-reason="asyncExportUsableReason"
+              :statistical-fields-data="statisticalFieldsData"
+              :time-field="timeField"
+              :config-data="clusteringData"
+              :apm-relation="apmRelationData"
+              :clean-config="cleanConfig"
+              :picker-time-range="pickerTimeRange"
+              :date-picker-value="datePickerValue"
+              :index-set-item="indexSetItem"
+              :operator-config="operatorConfig"
+              @request-table-data="requestTableData"
+              @fieldsUpdated="handleFieldsUpdated"
+              @shouldRetrieve="retrieveLog"
+              @addFilterCondition="addFilterCondition"
+              @showSettingLog="handleSettingMenuClick('clustering')" />
+          </template>
+        </div>
       </div>
       <!-- 可拖拽页面布局宽度 -->
       <div
         v-show="showRetrieveCondition"
-        ref="dragBar"
         :class="['drag-bar', isChangingWidth && 'dragging']"
-        :style="{ left: leftPanelWidth - 1 + 'px' }">
+        :style="{ left: sumLeftWidth - 1 + 'px' }">
         <img
           src="../../images/icons/drag-icon.svg"
           alt=""
@@ -326,6 +349,15 @@
       @closeSetting="isShowSettingModal = false;"
       @updateLogFields="requestFields"
     />
+
+    <add-collect-dialog
+      v-model="isShowAddNewCollectDialog"
+      :is-favorite-add="isFavoriteAdd"
+      :add-favorite-data="addFavoriteData"
+      :favorite-i-d="activeFavoriteID"
+      :replace-data="replaceFavoriteData"
+      :visible-fields="visibleFields"
+      @submit="handleSubmitFavorite" />
   </div>
 </template>
 
@@ -346,12 +378,15 @@ import NoIndexSet from './result-comp/no-index-set';
 import ResultMain from './result-comp/result-main';
 import AuthContainerPage from '@/components/common/auth-container-page';
 import SettingModal from './setting-modal/index.vue';
-import BizMenuSelect from '@/components/biz-menu';
+import CollectIndex from './collect/collect-index';
+import AddCollectDialog from './collect/add-collect-dialog';
+import UiQuery from './condition-comp/ui-query';
 import { formatDate, readBlobRespToJson, parseBigNumberList, random } from '@/common/util';
 import { handleTransformToTimestamp } from '../../components/time-range/utils';
 import indexSetSearchMixin from '@/mixins/indexSet-search-mixin';
 import axios from 'axios';
 import * as authorityMap from '../../common/authority-map';
+import { deepClone } from '../../components/monitor-echarts/utils';
 
 export default {
   name: 'Retrieve',
@@ -370,8 +405,11 @@ export default {
     ResultMain,
     NoIndexSet,
     SettingModal,
-    BizMenuSelect,
     AuthContainerPage,
+    CollectIndex,
+    AddCollectDialog,
+    UiQuery,
+    UiQuery,
   },
   mixins: [indexSetSearchMixin],
   data() {
@@ -395,7 +433,7 @@ export default {
       footerHtml: '', // 页脚内容
       isChangingWidth: false, // 拖拽
       leftPanelWidth: 450, // 左栏默认宽度
-      leftPanelMinWidth: 300, // 左栏最小宽度
+      leftPanelMinWidth: 350, // 左栏最小宽度
       leftPanelMaxWidth: 750, // 左栏最大宽度
       indexId: '', // 当前选择的索引ID
       indexSetItem: {}, // 当前索引集元素
@@ -434,11 +472,8 @@ export default {
       },
       showHistory: false, // 历史记录
       historyList: [],
-      favoriteList: [], // 收藏记录
-      latestFavoriteId: '', // 最新添加的收藏历史，高亮显示
       isFavoriteSearch: false,
-      favoritePopperLoading: false,
-      showFavoritePopperContent: false, // 显示收藏记录按钮浮层
+      showFavoritePopperContent: false, // 是否显示是否替换当前收藏
       statisticalFieldsData: {}, // 字段可选值统计
       retrieveDropdownData: {}, // 检索下拉字段可选值统计
       statementSearchrecords: [], // 查询语句历史记录
@@ -458,7 +493,6 @@ export default {
       isInitPage: true,
       isAutoQuery: localStorage.getItem('closeAutoQuery') !== 'true',
       isHideAutoQueryTips: localStorage.getItem('hideAutoQueryTips') === 'true',
-      showConditionPopperContent: false,
       isPollingStart: false,
       startTimeStamp: 0,
       endTimeStamp: 0,
@@ -489,6 +523,38 @@ export default {
       pickerTimeRange: ['now-15m', 'now'],
       operatorConfig: {}, // 当前table操作的值
       authPageInfo: null,
+      isShowAddNewCollectDialog: false, // 是否展示新增收藏弹窗
+      collectWidth: localStorage.getItem('isAutoShowCollect') === 'true' ? 240 : 0, // 收藏默认栏宽度
+      isShowCollect: localStorage.getItem('isAutoShowCollect') === 'true',
+      isSqlSearchType: true, // 是否是sql模式
+      activeFavorite: {}, // 当前点击的收藏参数
+      activeFavoriteID: -1,
+      favoriteList: [],
+      favoriteLoading: false,
+      formTippyOptions: {
+        placement: 'top',
+        theme: 'light',
+        trigger: 'mouseenter',
+      },
+      filterAllOperators: {},
+      isFavoriteAdd: true,
+      addFavoriteData: {}, // 新增收藏所需的参数
+      favoriteRequestID: 0, // 参数改变更新收藏
+      replaceFavoriteData: {}, // 收藏判断不同后的替换参数
+      searchMap: { // 检索按钮
+        search: { // 查询
+          icon: 'bk-icon log-icon icon-bofang',
+          text: this.$t('查询'),
+        },
+        searchIng: { // 查询中
+          icon: 'loading',
+          text: `${this.$t('查询中')}...`,
+        },
+        autoSearch: { // 自动查询
+          icon: 'bk-icon log-icon icon-zanting',
+          text: this.$t('自动查询'),
+        },
+      },
     };
   },
   computed: {
@@ -507,18 +573,33 @@ export default {
     //   return this.ipTopoSwitch;
     // },
     showFilterCutline() {
-      const { host_scopes, addition } = this.retrieveParams;
+      const { host_scopes: hostScopes, addition } = this.retrieveParams;
       // return (host_scopes.modules.length || host_scopes.ips.length) && addition.length;
-      return (host_scopes.modules.length
-      || host_scopes.ips.length
-      || host_scopes.target_nodes?.length)
-      && addition.length;
+      return (hostScopes?.modules?.length
+      || hostScopes?.ips?.length
+      // eslint-disable-next-line camelcase
+      || hostScopes?.target_nodes?.length)
+      && addition?.length;
     },
     showSearchPage() {
       return this.hasAuth || this.isNoIndexSet;
     },
     showAuthInfo() { // 无业务权限则展示store里的 然后判断是否有索引集权限
       return this.authMainPageInfo || this.authPageInfo;
+    },
+    sumLeftWidth() { // 收藏和检索左边的页面的合计宽度
+      return this.collectWidth + this.leftPanelWidth;
+    },
+    getSearchType() { // 获取搜索按钮状态
+      if (this.tableLoading) return this.searchMap.searchIng;
+      return this.searchMap[this.isAutoQuery ? 'autoSearch' : 'search'];
+    },
+    isCanUseUiType() { // 判断当前的检索语句是否与收藏的相对于 不相等的话不显示表单模式
+      return this.activeFavorite?.params?.keyword === this.retrieveParams.keyword;
+    },
+    isShowUiType() { // 判断当前点击的收藏是否展示表单字段
+      // eslint-disable-next-line camelcase
+      return this.activeFavorite?.params?.search_fields?.length;
     },
   },
   provide() {
@@ -536,6 +617,7 @@ export default {
         this.authPageInfo = null;
         this.hasAuth = true;
       }
+      this.isSqlSearchType = true;
       this.resetRetrieveCondition();
       this.$store.commit('updateIndexId', val);
       val && this.requestSearchHistory(val);
@@ -543,12 +625,14 @@ export default {
     spaceUid: {
       async handler() {
         this.indexId = '';
-        this.requestFavoriteList();
         this.indexSetList.splice(0);
-        this.favoriteList.splice(0);
         this.totalFields.splice(0);
+        this.activeFavorite = {};
+        this.activeFavoriteID = -1;
         this.retrieveParams.bk_biz_id = this.bkBizId;
+        this.isSqlSearchType = true;
         this.fetchPageData();
+        this.getFavoriteList();
       },
       immediate: true,
     },
@@ -566,33 +650,6 @@ export default {
             console.warn(e);
           });
       }
-    },
-    'retrieveParams.keyword'() {
-      if (!this.isFavoriteSearch) this.latestFavoriteId = '';
-    },
-    'retrieveParams.host_scopes.ips': {
-      deep: true,
-      handler() {
-        if (!this.isFavoriteSearch) this.latestFavoriteId = '';
-      },
-    },
-    'retrieveParams.host_scopes.modules': {
-      deep: true,
-      handler() {
-        if (!this.isFavoriteSearch) this.latestFavoriteId = '';
-      },
-    },
-    'retrieveParams.host_scopes.target_nodes': {
-      deep: true,
-      handler() {
-        if (!this.isFavoriteSearch) this.latestFavoriteId = '';
-      },
-    },
-    'retrieveParams.addition': {
-      deep: true,
-      handler() {
-        if (!this.isFavoriteSearch) this.latestFavoriteId = '';
-      },
     },
     showSearchPage(val) {
       if (val) this.$store.commit('retrieve/updateDisplayRetrieve', true);
@@ -651,13 +708,9 @@ export default {
       this.isHideAutoQueryTips = true;
       this.$refs.queryTipPopover.instance.hide();
     },
-    switchAutoQuery(data) {
-      localStorage.setItem('closeAutoQuery', !data);
-      if (!this.isHideAutoQueryTips) {
-        localStorage.setItem('hideAutoQueryTips', true);
-        this.isHideAutoQueryTips = true;
-      }
-    },
+    // switchAutoQuery(data) {
+    //   localStorage.setItem('closeAutoQuery', !data);
+    // },
     // 切换到监控指标检索
     handleCheckMonitor() {
       window.parent.postMessage('datarieval-click', '*');
@@ -666,9 +719,11 @@ export default {
     handleCheckEvent() {
       window.parent.postMessage('event-click', '*');
     },
-    fetchPageData() {
+    async fetchPageData() {
       // 有spaceUid且有业务权限时 才去请求索引集列表
       if (!this.authMainPageInfo && this.spaceUid) {
+        await this.getFavoriteList(); // 先获取到收藏列表再获取索引集列表
+        this.requestOperateList();
         this.requestIndexSetList();
       } else {
         this.isFirstLoad = false;
@@ -758,8 +813,8 @@ export default {
                   indexId: null,
                 },
                 query: {
-                  bizId: window.localStorage.getItem('bk_biz_id'),
-                  spaceUid: window.localStorage.getItem('space_uid'),
+                  spaceUid: this.$store.state.spaceUid,
+                  bizId: this.$store.state.bkBizId,
                 },
               });
             })
@@ -794,8 +849,8 @@ export default {
               this.retrieveLog();
             } else {
               const queryObj = {
-                spaceUid: window.localStorage.getItem('space_uid'),
-                bizId: window.localStorage.getItem('bk_biz_id'),
+                spaceUid: this.$store.state.spaceUid,
+                bizId: this.$store.state.bkBizId,
               };
               if (this.$route.query.from) {
                 queryObj.from = this.$route.query.from;
@@ -814,8 +869,8 @@ export default {
           this.isRetrieveHome = false;
           this.isNoIndexSet = true;
           const queryObj = {
-            spaceUid: window.localStorage.getItem('space_uid'),
-            bizId: window.localStorage.getItem('bk_biz_id'),
+            spaceUid: this.$store.state.spaceUid,
+            bizId: this.$store.state.bkBizId,
           };
           if (this.$route.query.from) {
             queryObj.from = this.$route.query.from;
@@ -852,9 +907,16 @@ export default {
         this.statementSearchrecords = res.data;
       });
     },
+    requestOperateList() {
+      this.$http.request('retrieve/getOperators').then((res) => {
+        this.filterAllOperators = res.data;
+      });
+    },
     // 切换索引
     handleSelectIndex(val) {
       this.indexId = val;
+      this.activeFavoriteID = -1;
+      this.activeFavorite = {};
       if (!this.isRetrieveHome) {
         this.retrieveLog();
       }
@@ -968,90 +1030,20 @@ export default {
       });
       this.retrieveLog();
     },
-    // 收藏记录，和业务相关
-    async requestFavoriteList(isAddLater = false) {
-      if (!!this.authMainPageInfo || !this.spaceUid) return; // 无业务权限 则不请求收藏
-      try {
-        const query = { space_uid: this.spaceUid };
-        const res = await this.$http.request('retrieve/getRetrieveFavorite', { query });
-        this.favoriteList = res.data;
-        // 新增后需标记最新的高亮显示
-        if (isAddLater) this.latestFavoriteId = this.favoriteList[0] && this.favoriteList[0].favorite_search_id;
-      } catch (e) {
-        console.warn(e);
-        this.favoriteList.splice(0);
-      }
-    },
     // 搜索记录
-    retrieveFavorite({ indexId, params, id }) {
-      this.isFavoriteSearch = true;
-      if (this.indexSetList.find(item => item.index_set_id === indexId)) {
-        this.indexId = indexId;
-        this.latestFavoriteId = id;
-        this.retrieveLog(params);
+    retrieveFavorite({ index_set_id: indexSetID, params }) {
+      if (this.indexSetList.find(item => item.index_set_id === String(indexSetID))) {
+        this.isFavoriteSearch = true;
+        this.indexId = String(indexSetID);
+        const { search_fields, ...reset } = params;
+        this.retrieveLog(reset);
       } else {
         this.messageError(this.$t('没有找到该记录下相关索引集'));
       }
     },
-    // 删除收藏记录
-    removeFavorite(id) {
-      this.$bkInfo({
-        title: `${this.$t('确定要删除')}？`,
-        confirmFn: () => {
-          this.$http.request('retrieve/deleteRetrieveFavorite', {
-            params: { id },
-          }).then(() => {
-            const index = this.favoriteList.findIndex(item => item.favorite_search_id === id);
-            this.favoriteList.splice(index, 1);
-            this.messageSuccess(this.$t('删除成功'));
-          })
-            .catch((e) => {
-              console.warn(e);
-            });
-        },
-      });
-    },
-    handleFavoritePopperShow() {
-      this.showFavoritePopperContent = false;
-      this.$nextTick(() => {
-        this.showFavoritePopperContent = true;
-      });
-    },
-    handleConditionPopperShow() {
-      this.showConditionPopperContent = false;
-      this.$nextTick(() => {
-        this.showConditionPopperContent = true;
-      });
-    },
-    handleConditionPopperHide() {
-      this.showConditionPopperContent = false;
-    },
-    // 添加收藏记录
-    addFavorite(description) {
-      this.favoritePopperLoading = true;
-      this.$http.request('retrieve/postRetrieveFavorite', {
-        data: {
-          index_set_id: this.indexId,
-          space_uid: this.spaceUid,
-          description,
-          keyword: this.retrieveParams.keyword.trim(),
-          host_scopes: this.retrieveParams.host_scopes,
-          addition: this.retrieveParams.addition,
-        },
-      }).then(() => {
-        this.requestFavoriteList(true);
-        this.closeFavoritePopper();
-      })
-        .catch((e) => {
-          console.warn(e);
-        })
-        .finally(() => {
-          this.favoritePopperLoading = false;
-        });
-    },
     // 关闭收藏浮层
     closeFavoritePopper() {
-      this.$refs.favoritePopper.instance.hide();
+      this.$refs.favoritePopper.hideHandler();
     },
     // 检索日志
     async retrieveLog(historyParams) {
@@ -1185,8 +1177,8 @@ export default {
       // 进入检索详情页
       this.isRetrieveHome = false;
       const queryObj = {
-        spaceUid: window.localStorage.getItem('space_uid'),
-        bizId: window.localStorage.getItem('bk_biz_id'),
+        spaceUid: this.$store.state.spaceUid,
+        bizId: this.$store.state.bkBizId,
         ...queryParamsStr,
       };
       if (this.$route.query.from) {
@@ -1231,6 +1223,21 @@ export default {
           this.tableLoading = false;
         }
       } finally {
+        // 如果是收藏检索并且开启检索显示, 则更新显示字段
+        // eslint-disable-next-line camelcase
+        if (this.isFavoriteSearch && this.activeFavorite?.is_enable_display_fields) {
+          const { display_fields: favoriteDisplayFields } = this.activeFavorite;
+          const visibilityFields = this.visibleFields.map(item => item.field_name);
+          const displayFields = [...new Set([...visibilityFields, ...favoriteDisplayFields])];
+          this.visibleFields = displayFields.map((displayName) => {
+            for (const field of this.totalFields) {
+              if (field.field_name === displayName) {
+                return field;
+              }
+            }
+          }).filter(Boolean);
+        };
+        if (this.isFavoriteSearch) this.isSqlSearchType = !this.isShowUiType; // 判断是否有表单模式的数组值 如果有 则切换为表单模式
         // 搜索完毕后，如果开启了自动刷新，会在 timeout 后自动刷新
         this.$refs.resultHeader && this.$refs.resultHeader.setRefreshTime();
         this.isFavoriteSearch = false;
@@ -1258,6 +1265,7 @@ export default {
           display_fields: displayFields,
           time_field: timeField,
           sort_list: sortList,
+          config_id,
         } = data;
         const localConfig = {};
         config.forEach((item) => {
@@ -1317,6 +1325,7 @@ export default {
         });
         this.fieldAliasMap = fieldAliasMap;
         this.isThollteField = false;
+        this.$store.commit('retrieve/updateFiledSettingConfigID', config_id); // 当前配置ID
       } catch (e) {
         this.ipTopoSwitch = true;
         this.bkmonitorUrl = false;
@@ -1329,8 +1338,13 @@ export default {
         throw e;
       }
     },
-    // 字段设置更新了
-    async handleFieldsUpdated(displayFieldNames, showFieldAlias) {
+    /**
+     * @desc: 字段设置更新了
+     * @param {Array} displayFieldNames 展示字段
+     * @param {Boolean} showFieldAlias 是否别名
+     * @param {Boolean} isRequestFields 是否请求字段
+     */
+    async handleFieldsUpdated(displayFieldNames, showFieldAlias, isRequestFields = true) {
       this.$store.commit('updateClearTableWidth', 1);
       this.visibleFields = displayFieldNames.map((displayName) => {
         for (const field of this.totalFields) {
@@ -1345,7 +1359,7 @@ export default {
       }
       this.renderTable = false;
       await this.$nextTick();
-      this.requestFields();
+      isRequestFields && this.requestFields();
       this.renderTable = true;
     },
     requestTableData() {
@@ -1584,7 +1598,7 @@ export default {
       } else {
         this.leftPanelWidth = newTreeBoxWidth;
       }
-      window.bus.$emit('set-chart-width');
+      // window.bus.$emit('set-chart-width');
     },
     dragStop() {
       this.isChangingWidth = false;
@@ -1594,13 +1608,23 @@ export default {
       window.removeEventListener('mouseup', this.dragStop);
     },
     openRetrieveCondition() {
-      window.bus.$emit('set-chart-width');
+      // window.bus.$emit('set-chart-width');
       this.leftPanelWidth = this.leftPanelMinWidth;
       this.showRetrieveCondition = true;
     },
     closeRetrieveCondition() {
       this.leftPanelWidth = 0;
       this.showRetrieveCondition = false;
+    },
+    updateCollectCondition(status) {
+      this.collectWidth = status ? 240 : 0;
+      localStorage.setItem('isAutoShowCollect', `${status}`);
+      this.isShowCollect = status;
+      if (!status) {
+        this.activeFavorite = {};
+        this.activeFavoriteID = -1;
+        this.isSqlSearchType = true;
+      }
     },
     // 初始 tips 消失后显示普通的 tips
     handleInitTipsHidden() {
@@ -1624,6 +1648,130 @@ export default {
         realTimeLog: contextAndRealtime.is_active ? this.$t('retrieve.log') : contextAndRealtime?.extra.reason,
         contextLog: contextAndRealtime.is_active ? this.$t('retrieve.context') : contextAndRealtime?.extra.reason,
       };
+    },
+    // 点击新增收藏
+    handleClickFavorite(isAdd = false) {
+      // 如果点击过收藏，进行参数判断
+      const displayFields = this.visibleFields.map(item => item.field_name);
+      const indexItem = this.indexSetList.find(item => item.index_set_id === String(this.indexId));
+      const { modules, ips, target_node_type, target_nodes } =  this.retrieveParams.host_scopes;
+      // eslint-disable-next-line camelcase
+      const host_scopes = { modules, ips, target_node_type, target_nodes }; // 初始化host传参
+      if (!modules) host_scopes.modules = [];
+      if (!ips) host_scopes.ips = '';
+      if (!host_scopes.target_node_type) {
+        host_scopes.target_node_type = '';
+        host_scopes.target_nodes = [];
+      }
+      const favoriteData = { // 新增收藏参数
+        index_set_id: this.indexId,
+        space_uid: this.spaceUid,
+        index_set_name: indexItem.index_set_name,
+        display_fields: displayFields,
+        visible_type: 'public',
+        name: '',
+        is_enable_display_fields: false,
+        params: {
+          host_scopes,
+          keyword: Boolean(this.retrieveParams.keyword) ? this.retrieveParams.keyword : '*',
+          addition: this.retrieveParams.addition,
+          search_fields: [],
+        },
+      };
+      // 收藏列表有点击,收藏不为空 则提示是否替换
+      if (JSON.stringify(this.activeFavorite) !== '{}') {
+        this.showFavoritePopperContent = true; // 展示收藏是否替换Tips
+        const comparedSubData = { // 检索页面的数据
+          params: {
+            host_scopes: this.retrieveParams.host_scopes,
+            addition: this.retrieveParams.addition,
+            keyword: this.retrieveParams.keyword,
+          },
+          display_fields: this.visibleFields.map(item => item.field_name),
+        };
+        this.replaceFavoriteData = comparedSubData;
+      } else {
+        this.addFavoriteData = favoriteData;
+        this.isShowAddNewCollectDialog = true; // 展示新增弹窗
+        this.showFavoritePopperContent = false;
+      };
+      if (isAdd) {
+        this.addFavoriteData = favoriteData;
+      }
+    },
+    // 收藏更变tips操作
+    favoriteTipsOperate(type) {
+      this.closeFavoritePopper();
+      if (type === 'add-new') {
+        this.handleClickFavorite(true);
+        this.isFavoriteAdd = true;
+      } else {
+        this.isFavoriteAdd = false;
+      }
+      this.isShowAddNewCollectDialog = true; // 展示编辑弹窗
+    },
+    handleChangeSearchType() {
+      if (this.tableLoading) return;
+      this.isAutoQuery = !this.isAutoQuery;
+      localStorage.setItem('closeAutoQuery', !this.isAutoQuery);
+    },
+    /** 获取收藏列表 */
+    async getFavoriteList() {
+      // 第一次显示收藏列表时因路由更变原因 在本页面第一次请求
+      try {
+        this.favoriteLoading = true;
+        const res = await this.$http.request('favorite/getFavoriteByGroupList', {
+          query: {
+            space_uid: this.spaceUid,
+            order_type: localStorage.getItem('favoriteSortType'),
+          },
+        });
+        this.favoriteList = res.data;
+      } catch (error) {
+        console.warn(error);
+      } finally {
+        this.favoriteLoading = false;
+      }
+    },
+    handleClickSearchType() {
+      if (this.isSqlSearchType) {
+        this.$refs.formTipsRef?.instance.set({ trigger: 'click' });
+      }
+      // 如果当前为sql模式，且检索的keywords和收藏的keywords不一致 则不允许切换
+      if (this.isSqlSearchType && !this.isCanUseUiType) return;
+      // 切换表单模式或者sql模式
+      this.isSqlSearchType = !this.isSqlSearchType;
+      // 如果是sql模式切到表单模式 则缓存keywords  表单切回sql模式时回填缓存的keywords
+    },
+    updateKeyWords(keyword) {
+      // 表单模式 更新keywords
+      Object.assign(this.retrieveParams, { keyword });
+      if (this.isAutoQuery) {
+        this.retrieveLog();
+      }
+    },
+    handleSubmitFavorite({ isCreate, resValue }) {
+      this.favoriteRequestID += 1; // 编辑或新增刷新收藏列表
+      if (isCreate) { // 新建收藏 刷新收藏列表同时高亮显示新增的收藏
+        this.handleClickFavoriteItem(resValue);
+        if (!this.isShowCollect) this.collectWidth = 240;
+        this.isShowCollect = true;
+      };
+    },
+    // 点击收藏列表的收藏
+    handleClickFavoriteItem(value) {
+      this.isFavoriteSearch = true;
+      if (!value.params.host_scopes.target_node_type) {
+        value.params.host_scopes.target_node_type = '';
+        value.params.host_scopes.target_nodes = [];
+      }
+      this.activeFavorite = deepClone(value);
+      this.activeFavoriteID = value.id;
+      this.retrieveFavorite(deepClone(value));
+    },
+    // 收藏列表刷新, 判断当前是否有点击活跃的收藏 如有则进行数据更新
+    async updateActiveFavoriteData(value) {
+      this.activeFavorite = deepClone(value);
     },
   },
 };
@@ -1669,6 +1817,7 @@ export default {
 
     .page-loading-wrap {
       position: absolute;
+      top: 0;
       width: 100%;
       height: 4px;
       z-index: 2400;
@@ -1716,13 +1865,17 @@ export default {
     /*详情页*/
     .retrieve-detail-container {
       position: relative;
-      display: flex;
+      // display: flex;
       height: 100%;
+
+      .result-content {
+        display: flex;
+        height: calc(100% - 52px);
+      }
 
       .retrieve-condition {
         display: flow-root;
         width: 450px;
-        height: 100%;
         box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .1);
         background: #fff;
 
@@ -1766,7 +1919,8 @@ export default {
           padding-top: 10px;
 
           .tab-content {
-            height: calc(100% - 108px);
+            /* stylelint-disable-next-line declaration-no-important */
+            height: calc(100% - 52px) !important;
             overflow-y: auto;
             background-color: #fbfbfb;
 
@@ -1798,6 +1952,28 @@ export default {
             padding: 10px 24px 18px;
             color: #313238;
             font-size: 16px;
+
+            .tab-operation {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              font-size: 12px;
+              user-select: none;
+
+              .search-type {
+                width: 50px;
+                margin-right: 10px;
+                color: #3a84ff;
+                transform: translateY(-1px);
+                text-align: right;
+                cursor: pointer;
+              }
+
+              .icon-sort {
+                display: inline-block;
+                transform: rotate(90deg) translateX(-1px);
+              }
+            }
 
             .icon-cog {
               font-size: 18px;
@@ -1866,6 +2042,52 @@ export default {
             padding: 20px 0 24px;
             background-color: #fff;
             // z-index: 1;
+            ::v-deep .query-btn {
+              width: 32px;
+              height: 32px;
+              background: #fff;
+              margin-right: 2px;
+              color: #9a9ba5;
+              display: flex;
+              justify-content: center;
+
+              div {
+                transform: translateY(-2px);
+              }
+
+              .bk-icon {
+                font-size: 16px;
+              }
+            }
+
+            .query-search {
+              width: 80px;
+              font-size: 12px
+            }
+
+            .loading {
+              &.bk-primary {
+                /* stylelint-disable-next-line declaration-no-important */
+                background: #a3c5fd !important;
+
+                /* stylelint-disable-next-line declaration-no-important */
+                border-color: #a3c5fd !important;
+                color: #fff;
+              }
+            }
+
+            .loading-box {
+              width: 32px;
+              height: 32px;
+              cursor: pointer;
+              border: 1px solid #c4c6cc;
+              border-radius: 2px;
+              margin-right: 2px;
+
+              .loading {
+                transform: scale(.2) translateY(78px);
+              }
+            }
           }
 
           .cut-line {
@@ -1889,7 +2111,7 @@ export default {
       .drag-bar {
         position: absolute;
         left: 449px;
-        top: 0;
+        top: 52px;
         width: 1px;
         height: 100%;
         background: #dcdee5;
@@ -1905,7 +2127,7 @@ export default {
         }
 
         &.dragging {
-          z-index: 3001;
+          z-index: 100;
         }
       }
     }

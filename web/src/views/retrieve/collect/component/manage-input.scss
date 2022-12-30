@@ -1,0 +1,22 @@
+.manage-input {
+  .bk-form-input {
+    height: 42px;
+    transition: background .2s;
+    border-radius: 0;
+    box-sizing: border-box;
+    border: 1px solid transparent;
+    padding: 0 16px;
+  }
+
+  .collect-name {
+    height: 42px;
+    padding: 0 16px;
+    line-height: 44px;
+    cursor: text;
+  }
+
+  .icon-shixiao {
+    margin-left: 4px;
+    color: #ff9c01;
+  }
+}

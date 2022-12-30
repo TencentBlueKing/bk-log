@@ -64,13 +64,13 @@ class EtlStorage(object):
             raise NotImplementedError(f"{etl_config} not implement, error: {error}")
 
     @classmethod
-    def get_etl_config(cls, result_table_config):
+    def get_etl_config(cls, result_table_config, default="bk_log_text"):
         """
         根据RT表配置返回etl_config类型
         """
         separator_node_action = result_table_config.get("option", {}).get("separator_node_action")
         return {"regexp": "bk_log_regexp", "delimiter": "bk_log_delimiter", "json": "bk_log_json"}.get(
-            separator_node_action, "bk_log_text"
+            separator_node_action, default
         )
 
     def etl_preview(self, data, etl_params) -> list:

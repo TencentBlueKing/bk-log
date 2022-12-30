@@ -70,7 +70,7 @@ export default {
       this.$router.push({
         name: id,
         query: {
-          spaceUid: window.localStorage.getItem('space_uid'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
       if (this.activeManageNav.id === id) {
@@ -106,7 +106,7 @@ export default {
       height: calc(100% - 52px);
       // height: 100%;
       position: relative;
-      top: 51px;
+      top: 48px;
       overflow: auto;
 
       @include scroller($backgroundColor: #C4C6CC, $width: 4px);

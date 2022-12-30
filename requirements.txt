@@ -16,7 +16,7 @@ django-celery-beat==2.2.0
 django-celery-results==2.0.1
 django-dbconn-retry==0.1.5
 
-cloudpickle==1.6.0
+cloudpickle==2.1.0
 
 pytz==2019.3
 gunicorn==19.6.0
@@ -42,7 +42,6 @@ elasticsearch==7.0.0
 elasticsearch5==5.5.6
 elasticsearch6==6.4.2
 elasticsearch_dsl==7.0.0
-luqum==0.11.0
 
 # kafka
 kafka-python==1.4.6
@@ -72,17 +71,19 @@ humanize==3.11.0
 
 # opentelemetry
 protobuf==3.19.5
-opentelemetry-api==1.6.2
-opentelemetry-sdk==1.6.2
-opentelemetry-exporter-otlp-proto-http==1.6.2
-opentelemetry-semantic-conventions==0.25b2
-opentelemetry-instrumentation-django==0.25b2
-opentelemetry-instrumentation-elasticsearch==0.25b2
-opentelemetry-instrumentation-dbapi==0.25b2
-opentelemetry-instrumentation-redis==0.25b2
-opentelemetry-instrumentation-requests==0.25b2
-opentelemetry-instrumentation-celery==0.25b2
-opentelemetry-instrumentation-logging==0.25b2
+opentelemetry-api==1.7.1
+opentelemetry-sdk==1.7.1
+opentelemetry-exporter-otlp-proto-http==1.7.1
+opentelemetry-exporter-otlp-proto-grpc==1.7.1
+opentelemetry-semantic-conventions==0.26b1
+opentelemetry-instrumentation-django==0.26b1
+opentelemetry-instrumentation-elasticsearch==0.26b1
+opentelemetry-instrumentation-dbapi==0.26b1
+opentelemetry-instrumentation-redis==0.26b1
+opentelemetry-instrumentation-requests==0.26b1
+opentelemetry-instrumentation-celery==0.26b1
+opentelemetry-instrumentation-logging==0.26b1
+
 
 # kubernetes
 kubernetes==18.20.0
@@ -111,6 +112,9 @@ pymysql==1.0.2
 
 # pika, rabbitmq client
 pika==1.2.1
+
+# luqum, ES Search SQL
+luqum==0.12.0
 
 # 各自环境所需的不同依赖, 通过 sites/${env}/deploy/requirements_env.txt得到
 -r requirements_env.txt

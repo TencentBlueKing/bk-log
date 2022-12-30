@@ -143,7 +143,7 @@ export default {
         this.$router.push({
           name: 'extract-link-create',
           query: {
-            spaceUid: window.localStorage.getItem('space_uid'),
+            spaceUid: this.$store.state.spaceUid,
           },
         });
       }
@@ -156,7 +156,7 @@ export default {
           linkId: row.link_id,
         },
         query: {
-          spaceUid: window.localStorage.getItem('space_uid'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
     },

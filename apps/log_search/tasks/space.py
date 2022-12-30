@@ -9,7 +9,7 @@ from apps.utils.log import logger
 from bkm_space.utils import space_uid_to_bk_biz_id
 
 
-@periodic_task(run_every=crontab(minute="*/1"))
+@periodic_task(run_every=crontab(minute="*/5"))
 @share_lock()
 def sync():
     """
@@ -47,7 +47,7 @@ def sync_spaces():
     # 获取类型ID到类型名称的映射
     type_names = {t["type_id"]: t["type_name"] for t in TransferApi.list_space_types()}
 
-    spaces = TransferApi.list_spaces({"is_detail": True})["list"]
+    spaces = TransferApi.list_spaces({"is_detail": True, "page": 0})["list"]
 
     all_spaces = []
 

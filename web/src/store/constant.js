@@ -73,12 +73,12 @@ export const SPACE_TYPE_MAP = {
   bkcc: {
     name: i18n.t('业务'),
     dark: {
-      color: '#F85959',
-      backgroundColor: '#4C3232',
+      color: '#478EFC',
+      backgroundColor: '#2B354D',
     },
     light: {
       color: '#63656E',
-      backgroundColor: '#F8D8D4',
+      backgroundColor: '#CDE8FB',
     },
   },
   default: {
@@ -95,12 +95,12 @@ export const SPACE_TYPE_MAP = {
   bkci: {
     name: i18n.t('研发项目'),
     dark: {
-      color: '#478EFC',
-      backgroundColor: '#2B354D',
+      color: '#F85959',
+      backgroundColor: '#4C3232',
     },
     light: {
       color: '#63656E',
-      backgroundColor: '#CDE8FB',
+      backgroundColor: '#F8D8D4',
     },
   },
   bcs: {
@@ -117,8 +117,8 @@ export const SPACE_TYPE_MAP = {
   paas: {
     name: i18n.t('PaaS应用'),
     dark: {
-      color: '#F85959',
-      backgroundColor: '#4C3232',
+      color: '#2BB950',
+      backgroundColor: '#223B2B',
     },
     light: {
       color: '#63656E',

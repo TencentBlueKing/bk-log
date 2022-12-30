@@ -282,7 +282,7 @@
                 style="margin-left: 5px; font-size: 14px; font-weight: bold;"
                 slot="dropdown-trigger">
               </i>
-              <ul class="bk-dropdown-list" slot="dropdown-content">
+              <ul class="bk-dropdown-list collection-operation-list" slot="dropdown-content">
                 <!-- 查看详情 -->
                 <li>
                   <a
@@ -381,6 +381,11 @@
                     }"
                     @click.stop="operateHandler(props.row, 'clone')">{{ $t('克隆') }}</a>
                 </li>
+                <li v-if="enableCheckCollector">
+                  <a href="javascript:;" @click.stop="handleShowReport(props.row)">
+                    {{ $t('一键检测') }}
+                  </a>
+                </li>
               </ul>
             </bk-dropdown-menu>
           </div>
@@ -395,6 +400,11 @@
         </bk-table-column>
       </bk-table>
     </section>
+    <collection-report-view
+      v-model="reportDetailShow"
+      :check-record-id="checkRecordId"
+      @closeReport="() => reportDetailShow = false"
+    />
   </section>
 </template>
 
@@ -403,9 +413,13 @@ import { projectManages } from '@/common/util';
 import collectedItemsMixin from '@/mixins/collected-items-mixin';
 import { mapGetters } from 'vuex';
 import * as authorityMap from '../../../../../common/authority-map';
+import CollectionReportView from '../../components/collection-report-view';
 
 export default {
   name: 'CollectionItem',
+  components: {
+    CollectionReportView,
+  },
   mixins: [collectedItemsMixin],
   data() {
     const settingFields = [
@@ -496,6 +510,12 @@ export default {
         fields: settingFields,
         selectedFields: settingFields.slice(1, 8),
       },
+      // 是否支持一键检测
+      enableCheckCollector: window.ENABLE_CHECK_COLLECTOR,
+      // 一键检测弹窗配置
+      reportDetailShow: false,
+      // 一键检测采集项标识
+      checkRecordId: '',
     };
   },
   computed: {
@@ -575,7 +595,7 @@ export default {
               collectorId: row.collector_config_id || '',
             },
             query: {
-              spaceUid: window.localStorage.getItem('space_uid'),
+              spaceUid: this.$store.state.spaceUid,
             },
           });
         }
@@ -646,7 +666,7 @@ export default {
         params,
         query: {
           ...query,
-          spaceUid: window.localStorage.getItem('space_uid'),
+          spaceUid: this.$store.state.spaceUid,
           backRoute,
         },
       });
@@ -805,6 +825,18 @@ export default {
         });
       });
     },
+    handleShowReport(row) {
+      this.$http.request('collect/runCheck', {
+        data: {
+          collector_config_id: row.collector_config_id,
+        },
+      }).then((res) => {
+        if (res.data?.check_record_id) {
+          this.reportDetailShow = true;
+          this.checkRecordId = res.data.check_record_id;
+        }
+      });
+    },
   },
 };
 </script>
@@ -920,6 +952,10 @@ export default {
     .bk-dropdown-list a.text-disabled:hover {
       color: #c4c6cc;
       cursor: not-allowed;
+    }
+
+    .collection-operation-list {
+      max-height: 190px;
     }
 
     .collect-table-operate {

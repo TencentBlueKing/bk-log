@@ -32,6 +32,7 @@ from apps.bk_log_admin.exceptions import InitDataSourceErrorException
 from apps.log_search.models import UserIndexSetSearchHistory
 from apps.utils.drf import DataPageNumberPagination
 from apps.models import model_to_dict
+from apps.utils.lucene import generate_query_string
 from apps.utils.local import get_local_param
 from bk_monitor.exceptions import GetTsDataException
 from bk_monitor.handler.monitor import BKMonitor
@@ -167,27 +168,7 @@ class IndexSetHandler(object):
 
     @staticmethod
     def build_query_string(history):
-        key_word = history["params"].get("keyword", "")
-        if key_word is None:
-            key_word = ""
-        query_string = "keyword:" + key_word
-        # IP快选、过滤条件
-        host_scopes = history["params"].get("host_scopes", {})
-        if host_scopes.get("modules"):
-            modules_list = [str(_module["bk_inst_id"]) for _module in host_scopes["modules"]]
-            query_string += " ADN (modules:" + ",".join(modules_list) + ")"
-        if host_scopes.get("ips"):
-            query_string += " AND (ips:" + host_scopes["ips"] + ")"
-        additions = history["params"].get("addition", [])
-        if additions:
-            query_string += (
-                " AND ("
-                + " AND ".join(
-                    [f'{addition["field"]} {addition["operator"]} {addition["value"]}' for addition in additions]
-                )
-                + ")"
-            )
-        history["query_string"] = query_string
+        history["query_string"] = generate_query_string(history["params"])
         return history
 
     @staticmethod

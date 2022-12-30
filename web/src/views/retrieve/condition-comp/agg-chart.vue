@@ -42,12 +42,12 @@
           <div class="operation-container">
             <span
               v-bk-tooltips="getIconPopover('is', item[0])"
-              :class="['bk-icon icon-close-circle', filterIsExist('is', item[0]) ? 'disable' : '']"
+              :class="['bk-icon icon-enlarge-line', filterIsExist('is', item[0]) ? 'disable' : '']"
               @click="addCondition('is', item[0])">
             </span>
             <span
               v-bk-tooltips="getIconPopover('is not', item[0])"
-              :class="['bk-icon icon-minus-circle', filterIsExist('is not', item[0]) ? 'disable' : '']"
+              :class="['bk-icon icon-narrow-line', filterIsExist('is not', item[0]) ? 'disable' : '']"
               @click="addCondition('is not', item[0])">
             </span>
           </div>
@@ -199,11 +199,12 @@ export default {
           justify-content: space-between;
           width: 36px;
           margin-left: 10px;
+          transform: translateY(4px);
 
           .bk-icon {
-            font-size: 16px;
+            font-size: 18px;
             color: #3a84ff;
-            transform: rotate(45deg);
+            // transform: rotate(45deg);
             cursor: pointer;
 
             &:active {
