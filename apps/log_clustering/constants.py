@@ -19,9 +19,9 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-from apps.utils import ChoicesEnum
-
 from django.utils.translation import ugettext as _
+
+from apps.utils import ChoicesEnum
 
 DEFAULT_NEW_CLS_HOURS = 24
 
@@ -172,6 +172,14 @@ class PatternEnum(ChoicesEnum):
             cls.LEVEL_01.value,
         )
 
+    model_choice = (
+        (LEVEL_01, "01"),
+        (LEVEL_03, "03"),
+        (LEVEL_05, "05"),
+        (LEVEL_07, "07"),
+        (LEVEL_09, "09"),
+    )
+
 
 class ActionEnum(ChoicesEnum):
     CREATE = "create"
@@ -183,3 +191,35 @@ class ActionEnum(ChoicesEnum):
             cls.CREATE.value,
             cls.DELETE.value,
         )
+
+
+class SubscriptionTypeEnum(ChoicesEnum):
+    EMAIL = "email"
+    WECHAT = "wechat"
+
+    _choices_labels = (
+        (EMAIL, _("邮件")),
+        (WECHAT, _("企业微信")),
+    )
+
+
+class YearOnYearChangeEnum(ChoicesEnum):
+    ALL = "all"
+    RISE = "rise"
+    DECLINE = "decline"
+
+    _choices_labels = (
+        (ALL, _("所有")),
+        (RISE, _("上升")),
+        (DECLINE, _("下降")),
+    )
+
+
+class LogColShowTypeEnum(ChoicesEnum):
+    PATTERN = "pattern"
+    LOG = "log"
+
+    _choices_labels = (
+        (PATTERN, _("PATTERN模式")),
+        (LOG, _("采样日志")),
+    )
