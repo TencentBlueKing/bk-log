@@ -204,9 +204,7 @@ class FavoriteViewSet(APIViewSet):
         @apiParam {String} space_uid 空间唯一标识
         @apiParam {String} name 收藏名
         @apiParam {String} keyword 搜索关键字
-        @apiParam {Json} host_scopes 主机维度
-        @apiParam {dict} host_scopes.modules 模块参数
-        @apiParam {String} host_scopes.ips IP列表
+        @apiParam {String} ip_chooser IP选择器
         @apiParam {Json} addition 搜索条件
         @apiParam {List} search_fields 检索字段
         @apiParam {List} display_fields 展示字段
@@ -216,18 +214,12 @@ class FavoriteViewSet(APIViewSet):
             "space_uid": "bkcc__2",
             "name": "收藏名",
             "keyword": "error",
-            "host_scopes": {
-                "modules": [
+            "ip_chooser": {
+                "host_list": [
                     {
-                        "bk_obj_id": "module",
-                        "bk_inst_id": 4
-                    },
-                    {
-                        "bk_obj_id": "set",
-                        "bk_inst_id": 4
+                        "id": 1,
                     }
-                ],
-                "ips": "127.0.0.1,127.0.0.2"
+                ]
             },
             "addition": [
                 {
@@ -274,7 +266,7 @@ class FavoriteViewSet(APIViewSet):
         favorite_search = FavoriteHandler(space_uid=data["space_uid"]).create_or_update(
             name=data["name"],
             index_set_id=data["index_set_id"],
-            host_scopes=data["host_scopes"],
+            ip_chooser=data["ip_chooser"],
             addition=data["addition"],
             keyword=data["keyword"],
             visible_type=data["visible_type"],
@@ -293,9 +285,6 @@ class FavoriteViewSet(APIViewSet):
         @apiGroup 21_Favorite
         @apiParam {String} name 收藏名
         @apiParam {String} keyword 搜索关键字
-        @apiParam {Json} host_scopes 主机维度
-        @apiParam {dict} host_scopes.modules 模块参数
-        @apiParam {String} host_scopes.ips IP列表
         @apiParam {Json} addition 搜索条件
         @apiParam {List} search_fields 检索字段
         @apiParam {List} display_fields 展示字段
@@ -305,18 +294,12 @@ class FavoriteViewSet(APIViewSet):
             "space_uid": "bkcc__2",
             "name": "收藏名",
             "keyword": "error",
-            "host_scopes": {
-                "modules": [
+            "ip_chooser": {
+                "host_list": [
                     {
-                        "bk_obj_id": "module",
-                        "bk_inst_id": 4
-                    },
-                    {
-                        "bk_obj_id": "set",
-                        "bk_inst_id": 4
+                        "id": 1,
                     }
-                ],
-                "ips": "127.0.0.1,127.0.0.2"
+                ]
             },
             "addition": [
                 {
