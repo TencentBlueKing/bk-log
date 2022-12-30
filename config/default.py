@@ -19,13 +19,13 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import os
 import sys
 
-from django.http import HttpResponseRedirect
-from django.utils.translation import ugettext_lazy as _
-from django.urls import reverse
-
 from blueapps.conf.default_settings import *  # noqa
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+from django.utils.translation import ugettext_lazy as _
 
 from config.log import get_logging_config_dict
 
@@ -202,6 +202,7 @@ CELERY_IMPORTS = (
     "apps.log_measure.tasks.report",
     "apps.log_extract.tasks",
     "apps.log_clustering.tasks.sync_pattern",
+    "apps.log_clustering.tasks.subscription",
     "apps.log_extract.tasks.extract",
 )
 
@@ -343,6 +344,11 @@ BK_HOT_WARM_CONFIG_URL = (
 )
 BK_COMPONENT_API_URL = os.environ.get("BK_COMPONENT_API_URL")
 DEPLOY_MODE = os.environ.get("DEPLOY_MODE", "")
+
+# 企业微信机器人
+WECHAT_WEB_HOOK_URL = os.getenv("WECHAT_WEB_HOOK_URL", "")
+
+LOG_SEARCH_SAAS_URL = os.getenv("LOG_SEARCH_SAAS_URL", "")
 
 
 # ===============================================================================
