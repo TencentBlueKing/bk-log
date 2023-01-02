@@ -44,7 +44,10 @@ from apps.log_clustering.handlers.aiops.sample_set.data_cls import (
     CollectConfigsCls,
     SampleSetInfoCls,
 )
+from apps.log_clustering.constants import MAX_FAILED_REQUEST_RETRY
+
 from apps.api import BkDataAIOPSApi
+from apps.api.base import DataApiRetryClass, check_result_is_true
 
 
 class SampleSetHandler(BaseAiopsHandler):
@@ -97,7 +100,12 @@ class SampleSetHandler(BaseAiopsHandler):
             project_id=self.conf.get("project_id"),
         )
         request_dict = self._set_username(add_rt_to_sample_set_request)
-        return BkDataAIOPSApi.add_rt_to_sample_set(request_dict)
+        return BkDataAIOPSApi.add_rt_to_sample_set(
+            request_dict,
+            data_api_retry_cls=DataApiRetryClass.create_retry_obj(
+                fail_check_functions=[check_result_is_true], stop_max_attempt_number=MAX_FAILED_REQUEST_RETRY
+            ),
+        )
 
     def collect_configs(self, sample_set_id: int):
         """
