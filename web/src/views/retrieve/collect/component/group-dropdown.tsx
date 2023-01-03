@@ -29,6 +29,7 @@ import './group-dropdown.scss';
 interface IProps {
   dropType: string;
   groupList: IGroupItem[];
+  groupName: string;
   isHoverTitle: boolean;
   data: IGroupItem | IFavoriteItem;
 }
@@ -38,52 +39,40 @@ export default class CollectGroup extends tsc<IProps> {
   @Inject('handleUserOperate') handleUserOperate;
 
   @Prop({ type: String, default: 'group' }) dropType: string; // 分组类型
+  @Prop({ type: String, default: '' }) groupName: string; // 组名
   @Prop({ type: Boolean, default: false }) isHoverTitle: boolean; // 鼠标是否经过表头
   @Prop({ type: Array, default: () => [] }) groupList: IGroupItem[]; // 组列表
   @Prop({ type: Object, required: true }) data: IGroupItem | IFavoriteItem; // 所有数据
   @Ref('operate') private readonly operatePopoverRef: Popover; // 操作列表实例
   @Ref('groupMoveList') private readonly groupMoveListPopoverRef: Popover; // 移动到分组实例
-  tippyOption = { // 操作列表配置项
-    trigger: 'click',
-    interactive: true,
-    theme: 'light',
-    arrow: false,
-    boundary: 'viewport',
-    hideOnClick: true,
-    distance: 4,
-    placement: 'bottom-start',
-    extCls: 'more-container',
-  };
-  groupTippyOption = { // 移动到其他组配置项
-    trigger: 'click',
-    interactive: true,
-    theme: 'light',
-    arrow: false,
-    placement: 'bottom-start',
-    boundary: 'viewport',
-    distance: 4,
-  };
+  @Ref('titleDrop') private readonly titlePopoverRef: Popover; // 操作列表实例
+
   isShowNewGroupInput = false; // 是否展示新建分组
   isShowResetGroupName = false; // 是否展示重命名组名
-  groupName = ''; // 创建分组名称
+  groupEditName = ''; // 创建分组名称
   operatePopoverInstance = null; // 收藏操作实例例
   groupListPopoverInstance = null; // 分组列表实例
+  titlePopoverInstance = null; // 表头列表实例
 
-  get unPrivateGroupList() { // 去掉个人组的组列表
+  get unPrivateGroupList() {
+    // 去掉个人组的组列表
     return this.groupList.slice(1);
   }
 
-  get userMeta() { // 用户信息
+  get userMeta() {
+    // 用户信息
     return this.$store.state.userMeta;
   }
 
-  get showGroupList() { // 根据用户名判断是否时自己创建的收藏 若不是自己的则去除个人组选项
+  get showGroupList() {
+    // 根据用户名判断是否时自己创建的收藏 若不是自己的则去除个人组选项
     return this.userMeta.username !== this.data.created_by
       ? this.unPrivateGroupList
       : this.groupList;
   }
 
-  get isGroupDrop() { // 是否是组操作
+  get isGroupDrop() {
+    // 是否是组操作
     return this.dropType === 'group';
   }
   /** 重命名 */
@@ -91,19 +80,20 @@ export default class CollectGroup extends tsc<IProps> {
     e.stopPropagation();
     this.handleUserOperate('reset-group-name', {
       group_id: this.data.group_id,
-      group_new_name: this.groupName,
+      group_new_name: this.groupEditName,
     });
-    this.groupName = '';
+    this.groupEditName = '';
     this.isShowResetGroupName = false;
   }
   /** 新增组 */
   handleChangeGroupInputStatus(e, type) {
     e.stopPropagation();
-    type === 'add' && this.handleUserOperate('add-group', this.groupName);
+    type === 'add' && this.handleUserOperate('add-group', this.groupEditName);
     this.isShowNewGroupInput = false;
   }
   handleClickLi(type: string, value?: any) {
-    if (type === 'move-favorite') { // 如果是移动到其他组 则更新移动的ID
+    if (type === 'move-favorite') {
+      // 如果是移动到其他组 则更新移动的ID
       Object.assign(this.data, { group_id: value });
     }
     this.handleUserOperate(type, this.data);
@@ -157,7 +147,6 @@ export default class CollectGroup extends tsc<IProps> {
     if (!this.operatePopoverInstance) {
       this.operatePopoverInstance = this.$bkPopover(e.target, {
         content: this.operatePopoverRef,
-        trigger: 'click',
         interactive: true,
         theme: 'light shield',
         arrow: false,
@@ -176,50 +165,80 @@ export default class CollectGroup extends tsc<IProps> {
       this.operatePopoverInstance.show(100);
     }
   }
+  handleHoverIcon(e) {
+    if (!this.titlePopoverInstance) {
+      this.titlePopoverInstance = this.$bkPopover(e.target, {
+        content: this.titlePopoverRef,
+        interactive: true,
+        theme: 'light',
+        arrow: false,
+        placement: 'bottom-start',
+        boundary: 'viewport',
+        extCls: 'more-container',
+        distance: 4,
+        onHidden: () => {
+          this.titlePopoverInstance?.destroy();
+          this.titlePopoverInstance = null;
+          this.clearStatus(); // 清空状态
+        },
+      });
+      this.titlePopoverInstance.show(100);
+    }
+  }
+
+  handleResetGroupTitleName() {
+    this.isShowResetGroupName = true;
+    this.groupEditName = this.groupName;
+  }
 
   clearStatus() {
     this.isShowNewGroupInput = false;
     this.isShowResetGroupName = false;
-    this.groupName = '';
+    this.groupEditName = '';
   }
 
   render() {
     const groupDropList = () => (
-      <ul class="dropdown-list" ref="groupDropList">
-        {this.isShowResetGroupName ? (
-          <li class="add-new-group-input">
-            <Input
-              clearable
-              placeholder={this.$t('请输入组名')}
-              vModel={this.groupName}
-              maxlength={10}
-            ></Input>
-            <div class="operate-button">
-              <Button text onClick={e => this.handleResetGroupName(e)}>
-                {this.$t('确定')}
-              </Button>
-              <span onClick={() => (this.isShowResetGroupName = false)}>
-                {this.$t('取消')}
-              </span>
-            </div>
+      <div style={{ display: 'none' }}>
+        <ul class="dropdown-list" ref="titleDrop">
+          {this.isShowResetGroupName ? (
+            <li class="add-new-group-input">
+              <Input
+                clearable
+                placeholder={this.$t('请输入组名')}
+                vModel={this.groupName}
+                maxlength={10}>
+              </Input>
+              <div class="operate-button">
+                <Button text onClick={e => this.handleResetGroupName(e)}>
+                  {this.$t('确定')}
+                </Button>
+              </div>
+            </li>
+          ) : (
+            <li onClick={() => this.handleResetGroupTitleName()}>
+              {this.$t('重命名')}
+            </li>
+          )}
+          <li
+            class="eye-catching"
+            onClick={() => this.handleClickLi('dismiss-group')}
+          >
+            {this.$t('解散分组')}
           </li>
-        ) : (
-          <li onClick={() => (this.isShowResetGroupName = true)}>
-            {this.$t('重命名')}
-          </li>
-        )}
-        <li
-          class='eye-catching'
-          onClick={() => this.handleClickLi('dismiss-group')}
-        >
-          {this.$t('解散分组')}
-        </li>
-      </ul>
+        </ul>
+      </div>
     );
     const collectDropList = () => (
       <div style={{ display: 'none' }}>
         <ul class="dropdown-list" ref="operate">
           <li onClick={() => this.handleClickLi('share')}>{this.$t('分享')}</li>
+          <li onClick={() => this.handleClickLi('edit-favorite')}>
+            {this.$t('编辑')}
+          </li>
+          <li onClick={() => this.handleClickLi('create-copy')}>
+            {this.$t('创建副本')}
+          </li>
           <li class="move-group" onClick={this.handleClickMoveGroup}>
             {this.$t('移动至分组')}
             <span class="bk-icon icon-angle-right more-icon"></span>
@@ -227,11 +246,8 @@ export default class CollectGroup extends tsc<IProps> {
           <li onClick={() => this.handleClickLi('remove-group')}>
             {this.$t('从该组移除')}
           </li>
-          <li onClick={() => this.handleClickLi('edit-favorite')}>
-            {this.$t('编辑')}
-          </li>
           <li
-            class='eye-catching'
+            class="eye-catching"
             onClick={() => this.handleClickLi('delete-favorite')}
           >
             {this.$t('删除')}
@@ -243,7 +259,9 @@ export default class CollectGroup extends tsc<IProps> {
       <div style={{ display: 'none' }}>
         <ul class="group-dropdown-list" ref="groupMoveList">
           {this.showGroupList.map(item => (
-            <li onClick={() => this.handleClickLi('move-favorite', item.group_id)}>
+            <li
+              onClick={() => this.handleClickLi('move-favorite', item.group_id)}
+            >
               {item.group_name}
             </li>
           ))}
@@ -252,9 +270,9 @@ export default class CollectGroup extends tsc<IProps> {
               <Input
                 clearable
                 placeholder={this.$t('请输入组名')}
-                vModel={this.groupName}
-                maxlength={10}
-              ></Input>
+                vModel={this.groupEditName}
+                maxlength={10}>
+              </Input>
               <div class="operate-button">
                 <Button text onClick={e => this.handleChangeGroupInputStatus(e, 'add')}>
                   {this.$t('确定')}
@@ -278,32 +296,29 @@ export default class CollectGroup extends tsc<IProps> {
     return (
       <div>
         {this.isGroupDrop ? (
-          <Popover
-            ref="groupLiList"
-            tippy-options={this.groupTippyOption}
-            placement="right-start"
-            ext-cls="more-container"
-            on-hide={() => this.clearStatus()}>
-            <div class="more-container">
+          <div>
+            <div class="more-container" onMouseenter={this.handleHoverIcon}>
               {!this.isHoverTitle ? (
-                <span class="title-number">
-                  {this.data.favorites.length}
-                </span>
+                <span class="title-number">{this.data.favorites.length}</span>
               ) : (
                 <div class="more-box">
                   <span class="bk-icon icon-more"></span>
                 </div>
               )}
             </div>
-            <div slot="content">{groupDropList()}</div>
-          </Popover>
+            {groupDropList()}
+          </div>
         ) : (
           <div>
             <div class="more-container">
               {this.$slots.default ?? (
                 <div
-                  class={['more-box', { 'is-click': !!this.operatePopoverInstance }]}
-                  onClick={this.handleClickIcon}>
+                  class={[
+                    'more-box',
+                    { 'is-click': !!this.operatePopoverInstance },
+                  ]}
+                  onMouseenter={this.handleClickIcon}
+                >
                   <span class="bk-icon icon-more"></span>
                 </div>
               )}

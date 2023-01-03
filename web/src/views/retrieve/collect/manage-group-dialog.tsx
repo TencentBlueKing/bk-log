@@ -647,8 +647,8 @@ export default class GroupDialog extends tsc<IProps> {
                 <Input
                   vModel={this.groupName}
                   maxlength={10}
-                  behavior={'simplicity'}
-                ></Input>
+                  behavior={'simplicity'}>
+                </Input>
                 <div class="operate-button">
                   <span class="bk-icon icon-check-line" onClick={() => this.handleAddGroupName()}></span>
                   <span class="bk-icon icon-close-line-2" onClick={() => {

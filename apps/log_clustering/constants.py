@@ -193,6 +193,10 @@ class ActionEnum(ChoicesEnum):
         )
 
 
+# 日志聚类失败重试次数
+MAX_FAILED_REQUEST_RETRY = 3
+
+
 class SubscriptionTypeEnum(ChoicesEnum):
     EMAIL = "email"
     WECHAT = "wechat"
