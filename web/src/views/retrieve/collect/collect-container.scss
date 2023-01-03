@@ -36,18 +36,20 @@
     display: flex;
     align-items: center;
     padding: 0 16px;
-    margin-bottom: 16px;
+    margin-bottom: 8px;
     height: 32px;
     cursor: pointer;
     color: #313238;
     position: relative;
     z-index: 9;
     border: 1px solid #dcdee5;
+
     &.active {
       color: #3a84ff;
       background: #f0f5ff;
       border: 1px solid #3a84ff;
       z-index: 999;
+
       .icon-enlarge-line {
         color: #3a84ff;
       }
@@ -61,7 +63,7 @@
 
   .icon-box {
     display: inline-block;
-    transform: scale(0.84);
+    transform: scale(.84);
     border: 1px solid #63656e;
   }
 

@@ -291,7 +291,9 @@ export default class CollectIndex extends tsc<IProps> {
           await $http.request('favorite/createFavorite', { data });
           this.showMessagePop(this.$t('创建成功'));
           this.getFavoriteList();
-        } catch (error) {}
+        } catch (error) {
+          console.warn(error);
+        }
         break;
       default:
     }
@@ -442,7 +444,9 @@ export default class CollectIndex extends tsc<IProps> {
         data,
       });
       if (res.result) this.showMessagePop(this.$t('操作成功'));
-    } catch (error) {}
+    } catch (error) {
+      console.warn(error);
+    }
   }
 
   /** 控制页面布局宽度 */

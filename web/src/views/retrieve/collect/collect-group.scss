@@ -5,8 +5,8 @@
     display: inline-block;
     margin-right: 6px;
     font-size: 12px;
-    transform: scale(0.6);
-    transition: transform 0.3s;
+    transform: scale(.6);
+    transition: transform .3s;
   }
 
   .group-cur {
@@ -16,13 +16,8 @@
     cursor: pointer;
 
     .is-active {
-      transform: scale(0.5) rotate(90deg);
+      transform: scale(.5) rotate(90deg);
     }
-  }
-
-  .bk-tooltip,
-  .bk-tooltip-ref {
-    width: 100%;
   }
 
   .group-title {
@@ -51,6 +46,7 @@
       background: #fff;
       transform: translateX(2px);
     }
+
     &:hover {
       background: #eff1f5;
     }
@@ -92,14 +88,20 @@
         justify-content: space-between;
         align-items: center;
         padding-left: 28px;
-        border-bottom: 1px solid #eaebf0;
+        border-bottom: 1px solid transparent;
         position: relative;
+
+        .fav-name {
+          flex: 1;
+        }
+
         .creator {
           color: #979ba5;
         }
 
         &.active-name {
           color: #3a84ff;
+
           &::before {
             background: #3a84ff;
           }
@@ -114,7 +116,7 @@
         }
 
         &::before {
-          content: " ";
+          content: ' ';
           width: 4px;
           height: 4px;
           position: absolute;

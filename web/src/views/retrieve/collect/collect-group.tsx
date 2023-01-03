@@ -22,7 +22,6 @@
 
 import { Component as tsc } from 'vue-tsx-support';
 import { Component, Prop, Inject } from 'vue-property-decorator';
-import { Popover } from 'bk-magic-vue';
 import { formatDate } from '../../../common/util';
 import GroupDropdown from './component/group-dropdown';
 import { IGroupItem, IFavoriteItem } from './collect-index';
@@ -38,23 +37,24 @@ interface ICollectProps {
 
 @Component
 export default class CollectGroup extends tsc<ICollectProps> {
-  @Prop({ type: Object, required: true }) collectItem: IGroupItem;
-  @Prop({ type: Number, required: true }) activeFavoriteID: number;
-  @Prop({ type: Boolean, default: true }) isShowGroupTitle: boolean;
-  @Prop({ type: Boolean, default: false }) isSearchFilter: boolean;
-  @Prop({ type: Array, default: () => [] }) groupList: IGroupItem[];
+  @Prop({ type: Object, required: true }) collectItem: IGroupItem; // 组的收藏列表
+  @Prop({ type: Number, required: true }) activeFavoriteID: number; // 点击的活跃ID
+  @Prop({ type: Boolean, default: true }) isShowGroupTitle: boolean; // 是否展示组标题
+  @Prop({ type: Boolean, default: false }) isSearchFilter: boolean; // 是否搜索过
+  @Prop({ type: Array, default: () => [] }) groupList: IGroupItem[]; // 组列表
   @Inject('handleUserOperate') handleUserOperate;
-  isShow = false;
+  isHiddenList = false; // 是否不显示列表
   isHoverTitle = false;
-  clickDrop = false;
+  clickDrop = false; // 点击侧边更多
+  favoriteMessageInstance = null;
 
   get isCannotChange() {
     return ['private', 'unknown'].includes(this.collectItem.group_type);
   }
-
   get isShowTitleIcon() {
     return this.collectItem.group_type !== 'unknown';
   }
+
   handleClickCollect(item: IFavoriteItem) {
     setTimeout(() => {
       this.clickDrop = false;
@@ -71,6 +71,24 @@ export default class CollectGroup extends tsc<ICollectProps> {
       return;
     }
     this.isHoverTitle = type;
+  }
+  handleHoverFavoriteName(e, item) {
+    if (!this.favoriteMessageInstance) {
+      this.favoriteMessageInstance = this.$bkPopover(e.target, {
+        content: `<div style="font-size: 12px;">
+                  <p>${this.$t('创建人')}: ${item.created_by || '--'}</p>
+                  <p>${this.$t('修改人')}: ${item.updated_by || '--'}</p>
+                  <p>${this.$t('更新时间')}: ${formatDate(item.updated_at)}</p>
+                </div>`,
+        arrow: true,
+        placement: 'top',
+        onHidden: () => {
+          this.favoriteMessageInstance?.destroy();
+          this.favoriteMessageInstance = null;
+        },
+      });
+      this.favoriteMessageInstance.show(500);
+    }
   }
 
   render() {
@@ -98,32 +116,30 @@ export default class CollectGroup extends tsc<ICollectProps> {
             class={[
               'group-title fl-jcsb',
               {
-                'is-active': !this.isShow,
+                'is-active': !this.isHiddenList,
                 'is-move-cur': !this.isSearchFilter && !this.isCannotChange,
               },
             ]}
             onMouseenter={() => this.handleHoverTitle(true)}
             onMouseleave={() => this.handleHoverTitle(false)}>
-            <span class="group-cur" onClick={() => (this.isShow = !this.isShow)}>
-              <span class={['bk-icon icon-play-shape', { 'is-active': !this.isShow }]}></span>
+            <span class="group-cur" onClick={() => (this.isHiddenList = !this.isHiddenList)}>
+              <span class={['bk-icon icon-play-shape', { 'is-active': !this.isHiddenList }]}></span>
               <span>{this.collectItem.group_name}</span>
             </span>
             {groupDropdownSlot(this.collectItem.group_name)}
           </div>
         ) : undefined}
-        <div class={['group-list', { 'list-hidden': this.isShow }]}>
+        <div class={['group-list', { 'list-hidden': this.isHiddenList }]}>
           {this.collectItem.favorites.map((item, index) => (
             <div
               key={index}
               class={['group-item', { active: item.id === this.activeFavoriteID }]}
               onClick={() => this.handleClickCollect(item)}>
-              {/* <Popover delay={500}> */}
                 <div class={{
                   'group-item-left': true,
                   'active-name': item.id === this.activeFavoriteID,
                 }}>
-                  <Popover delay={500}>
-                    <div>
+                    <div class="fav-name" onMouseenter={e => this.handleHoverFavoriteName(e, item)}>
                       <span>{item.name}</span>
                       {!item.is_active ? (
                         <span v-bk-tooltips={{ content: this.$t('数据源不存在'), placement: 'right' }}>
@@ -131,12 +147,6 @@ export default class CollectGroup extends tsc<ICollectProps> {
                         </span>
                       ) : undefined}
                     </div>
-                    <div slot="content">
-                      <p>{this.$t('创建人')}: {item.created_by || '--'}</p>
-                      <p>{this.$t('修改人')}: {item.updated_by || '--'}</p>
-                      <p>{this.$t('更新时间')}: {formatDate(item.updated_at)}</p>
-                    </div>
-                  </Popover>
                   {collectDropdownSlot(item)}
                 </div>
             </div>

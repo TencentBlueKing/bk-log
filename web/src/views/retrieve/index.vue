@@ -243,7 +243,8 @@
                     </bk-button>
                     <span
                       v-show="!isFavoriteNewSearch && !isFavoriteUpdate"
-                      class="catching-ball"></span>
+                      class="catching-ball">
+                    </span>
                     <bk-button
                       v-show="!isFavoriteNewSearch"
                       ext-cls="favorite-btn"
@@ -251,11 +252,13 @@
                       @click="handleUpdateFavorite">
                       <span v-bk-tooltips="{ content: $t('保存Tips'), disabled: isFavoriteUpdate }">
                         <span class="favorite-btn-text">
-                          <span
-                            :class="`icon
-                          ${ isFavoriteUpdate
-                          ? 'log-icon icon-star-shape'
-                            : 'bk-icon icon-save'}`"></span>
+                          <span :class="[
+                            'icon',
+                            isFavoriteUpdate
+                              ? 'log-icon icon-star-shape'
+                              : 'bk-icon icon-save',
+                          ]">
+                          </span>
                           <span>{{ isFavoriteUpdate ? $t('已收藏') : $t('保存') }}</span>
                         </span>
                       </span>
@@ -611,7 +614,7 @@ export default {
       // eslint-disable-next-line camelcase
       return this.activeFavorite?.params?.search_fields?.length;
     },
-    isFavoriteNewSearch() { // 是否时新检索
+    isFavoriteNewSearch() { // 是否是新检索
       return this.activeFavoriteID === -1;
     },
     getFavoriteName() { // 获取当前点击的收藏名
@@ -2023,8 +2026,9 @@ export default {
             .tab-title {
               font-size: 14px;
             }
+
             .icon-edit-line {
-              color: #979BA5;
+              color: #979ba5;
               cursor: pointer;
             }
 
@@ -2142,16 +2146,19 @@ export default {
 
             .favorite-btn-container {
               position: relative;
+
               .favorite-btn {
                 width: 86px;
                 margin: 0 8px;
                 font-size: 12px
               }
+
               .favorite-btn-text {
                 display: flex;
                 align-items: center;
                 justify-content: center;
               }
+
               .catching-ball {
                 position: absolute;
                 width: 12px;
@@ -2160,15 +2167,18 @@ export default {
                 top: -6px;
                 z-index: 999;
                 border-radius: 50%;
-                background: #EA3636;
+                background: #ea3636;
               }
+
               .icon {
                 margin-right: 2px;
                 font-size: 12px;
               }
+
               .bk-icon, {
                 margin-top: -4px;
               }
+
               .icon-save {
                 transform: translateY(1px);
               }

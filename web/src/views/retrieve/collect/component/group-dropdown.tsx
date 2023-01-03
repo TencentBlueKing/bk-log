@@ -21,7 +21,7 @@
  */
 
 import { Component as tsc } from 'vue-tsx-support';
-import { Component, Prop, Inject, Ref, Watch } from 'vue-property-decorator';
+import { Component, Prop, Inject, Ref } from 'vue-property-decorator';
 import { Input, Button, Popover } from 'bk-magic-vue';
 import { IGroupItem, IFavoriteItem } from '../collect-index';
 import './group-dropdown.scss';
@@ -36,16 +36,16 @@ interface IProps {
 
 @Component
 export default class CollectGroup extends tsc<IProps> {
-  @Inject("handleUserOperate") handleUserOperate;
+  @Inject('handleUserOperate') handleUserOperate;
 
-  @Prop({ type: String, default: "group" }) dropType: string; // 分组类型
-  @Prop({ type: String, default: "" }) groupName: string; // 组名
+  @Prop({ type: String, default: 'group' }) dropType: string; // 分组类型
+  @Prop({ type: String, default: '' }) groupName: string; // 组名
   @Prop({ type: Boolean, default: false }) isHoverTitle: boolean; // 鼠标是否经过表头
   @Prop({ type: Array, default: () => [] }) groupList: IGroupItem[]; // 组列表
   @Prop({ type: Object, required: true }) data: IGroupItem | IFavoriteItem; // 所有数据
-  @Ref("operate") private readonly operatePopoverRef: Popover; // 操作列表实例
-  @Ref("groupMoveList") private readonly groupMoveListPopoverRef: Popover; // 移动到分组实例
-  @Ref("titleDrop") private readonly titlePopoverRef: Popover; // 操作列表实例
+  @Ref('operate') private readonly operatePopoverRef: Popover; // 操作列表实例
+  @Ref('groupMoveList') private readonly groupMoveListPopoverRef: Popover; // 移动到分组实例
+  @Ref('titleDrop') private readonly titlePopoverRef: Popover; // 操作列表实例
 
   isShowNewGroupInput = false; // 是否展示新建分组
   isShowResetGroupName = false; // 是否展示重命名组名
