@@ -134,7 +134,7 @@ export default class CollectIndex extends tsc<IProps> {
   }
 
   get allFavoriteNumber() {
-    return this.favoriteList.reduce((pre, cur) => (pre += cur.favorites.length, pre), 0);
+    return this.favoriteList.reduce((pre: number, cur) => (pre += cur.favorites.length, pre), 0);
   }
 
   @Watch('isShowCollect')
@@ -245,55 +245,52 @@ export default class CollectIndex extends tsc<IProps> {
           },
         });
         break;
-      case 'share':
+      case 'share': {
         let shareUrl = window.SITE_URL;
         if (!shareUrl.startsWith('/')) shareUrl = `/${shareUrl}`;
         if (!shareUrl.endsWith('/')) shareUrl += '/';
         const params = encodeURIComponent(JSON.stringify({ ...value.params }));
         shareUrl = `${window.location.origin + shareUrl}#/retrieve/${value.index_set_id}?spaceUid=${value.space_uid}&retrieveParams=${params}`;
         copyMessage(shareUrl, this.$t('复制成功'));
+      }
         break;
       case 'drag-move-end':
-        try {
-          await $http.request('favorite/groupUpdateOrder', {
-            data: {
-              space_uid: this.spaceUid,
-              group_order: value,
-            },
-          });
-        } catch (error) {}
-        break;
-      case 'create-copy':
-        try {
-          const {
-            index_set_id,
-            params,
-            name,
-            group_id,
-            display_fields,
-            visible_type,
-            is_enable_display_fields,
-          } = value;
-          const { host_scopes, addition, keyword, search_fields } = params;
-          const data = {
-            name: `${name} ${this.$t('副本')}`,
-            group_id,
-            display_fields,
-            visible_type,
-            host_scopes,
-            addition,
-            keyword,
-            search_fields,
-            is_enable_display_fields,
-            index_set_id,
+        $http.request('favorite/groupUpdateOrder', {
+          data: {
             space_uid: this.spaceUid,
-          };
-          await $http.request('favorite/createFavorite', { data });
+            group_order: value,
+          },
+        });
+        break;
+      case 'create-copy': {
+        const {
+          index_set_id,
+          params,
+          name,
+          group_id,
+          display_fields,
+          visible_type,
+          is_enable_display_fields,
+        } = value;
+        const { host_scopes, addition, keyword, search_fields } = params;
+        const data = {
+          name: `${name} ${this.$t('副本')}`,
+          group_id,
+          display_fields,
+          visible_type,
+          host_scopes,
+          addition,
+          keyword,
+          search_fields,
+          is_enable_display_fields,
+          index_set_id,
+          space_uid: this.spaceUid,
+        };
+        $http.request('favorite/createFavorite', { data }).then(() => {
           this.showMessagePop(this.$t('创建成功'));
           this.getFavoriteList();
-        } catch (error) {
-          console.warn(error);
-        }
+        });
+      }
         break;
       default:
     }
@@ -353,13 +350,12 @@ export default class CollectIndex extends tsc<IProps> {
     const params = { group_id };
     const data = { name: group_new_name, space_uid: this.spaceUid };
     const requestStr = isCreate ? 'createGroup' : 'updateGroupName';
-    try {
-      const res = await $http.request(`favorite/${requestStr}`, {
-        params,
-        data,
-      });
-      if (res.result) this.showMessagePop(this.$t('操作成功'));
-    } catch (error) {}
+    await $http.request(`favorite/${requestStr}`, {
+      params,
+      data,
+    }).then(() => {
+      this.showMessagePop(this.$t('操作成功'));
+    });
   }
 
   handleInitFavoriteList(value) {
@@ -391,24 +387,21 @@ export default class CollectIndex extends tsc<IProps> {
 
   /** 解散分组 */
   async deleteGroup(group_id) {
-    try {
-      const res = await $http.request('favorite/deleteGroup', {
-        params: { group_id },
-      });
-      if (res.result) this.showMessagePop(this.$t('操作成功'));
-    } catch (error) {}
+    await $http.request('favorite/deleteGroup', {
+      params: { group_id },
+    }).then(() => {
+      this.showMessagePop(this.$t('操作成功'));
+    });
   }
 
   /** 删除收藏 */
   async deleteFavorite(favorite_id) {
-    try {
-      const res = await $http.request('favorite/deleteFavorite', {
-        params: { favorite_id },
-      });
-      if (res.result) this.showMessagePop(this.$t('删除成功'));
-    } catch (error) {}
+    await $http.request('favorite/deleteFavorite', {
+      params: { favorite_id },
+    }).then(() => {
+      this.showMessagePop(this.$t('删除成功'));
+    });
   }
-
 
   showMessagePop(message, theme = 'success') {
     this.$bkMessage({
@@ -419,34 +412,31 @@ export default class CollectIndex extends tsc<IProps> {
 
   /** 更新收藏 */
   async handleUpdateFavorite(favoriteData) {
-    try {
-      const {
-        params,
-        name,
-        group_id,
-        display_fields,
-        visible_type,
-        id,
-      } = favoriteData;
-      const { host_scopes, addition, keyword, search_fields } = params;
-      const data = {
-        name,
-        group_id,
-        display_fields,
-        visible_type,
-        host_scopes,
-        addition,
-        keyword,
-        search_fields,
-      };
-      const res = await $http.request('favorite/updateFavorite', {
-        params: { id },
-        data,
-      });
-      if (res.result) this.showMessagePop(this.$t('操作成功'));
-    } catch (error) {
-      console.warn(error);
-    }
+    const {
+      params,
+      name,
+      group_id,
+      display_fields,
+      visible_type,
+      id,
+    } = favoriteData;
+    const { host_scopes, addition, keyword, search_fields } = params;
+    const data = {
+      name,
+      group_id,
+      display_fields,
+      visible_type,
+      host_scopes,
+      addition,
+      keyword,
+      search_fields,
+    };
+    await $http.request('favorite/updateFavorite', {
+      params: { id },
+      data,
+    }).then(() => {
+      this.showMessagePop(this.$t('操作成功'));
+    });
   }
 
   /** 控制页面布局宽度 */

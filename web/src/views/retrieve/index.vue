@@ -1748,8 +1748,6 @@ export default {
             this.isAfterRequestFavoriteList = true;
           }
         };
-      } catch (error) {
-        console.warn(error);
       } finally {
         await this.getFavoriteList();
         this.favoriteUpdateLoading = false;
@@ -1790,8 +1788,6 @@ export default {
           },
         });
         this.favoriteList = res.data;
-      } catch (error) {
-        console.warn(error);
       } finally {
         this.favoriteLoading = false;
       }
