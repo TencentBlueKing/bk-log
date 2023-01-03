@@ -373,7 +373,6 @@ export default class MonitorIpSelector extends tsc<IMonitorIpSelectorProps> {
       fetchNodesSetTemplate: this.fetchNodesSetTemplate,
       fetchHostSetTemplate: this.fetchHostSetTemplate,
       fetchHostAgentStatisticsSetTemplate: this.fetchHostAgentStatisticsSetTemplate,
-
       fetchCustomSettings: this.fetchCustomSettings,
       updateCustomSettings: this.updateCustomSettings,
       fetchConfig: this.fetchConfig,
@@ -536,7 +535,7 @@ export default class MonitorIpSelector extends tsc<IMonitorIpSelectorProps> {
     return res?.data || [];
   }
   // 获取集群模板列表
-  async fetchSetTemplates() {
+  async fetchSetTemplates(): Promise<Array<ITemplateItem>[]> {
     const data = {
       scope_list: this.scopeList,
       template_type: 'SET_TEMPLATE',
