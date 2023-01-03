@@ -110,6 +110,7 @@ class CommonEnum(EnhanceEnum):
     SIMPLE_HOST_FIELDS = [
         "bk_host_id",
         "bk_cloud_id",
+        "bk_agent_id",
         "bk_host_innerip",
         "bk_host_innerip_v6",
         "bk_host_name",
@@ -165,6 +166,34 @@ class AgentStatusType(EnhanceEnum):
     @classmethod
     def _get_member__alias_map(cls) -> Dict[Enum, str]:
         return {cls.ALIVE: _("存活"), cls.NO_ALIVE: _("未存活")}
+
+
+class GSEV2AgentStatusType(EnhanceEnum):
+    """GSE2.0 Agent 状态"""
+
+    UNKNOWN = -1
+    INIT = 0
+    STARTING = 1
+    RUNNING = 2
+    BROKEN = 3
+    BUSY = 4
+    UPGRADING = 5
+    STOPPING = 6
+    UNINSTALLED = 7
+
+    @classmethod
+    def _get_member__alias_map(cls) -> Dict[Enum, str]:
+        return {
+            cls.UNKNOWN: _("未知"),
+            cls.INIT: _("初始安装"),
+            cls.STARTING: _("启动中"),
+            cls.RUNNING: _("运行中"),
+            cls.BROKEN: _("有损状态"),
+            cls.BUSY: _("繁忙状态"),
+            cls.UPGRADING: _("升级中"),
+            cls.STOPPING: _("停止中"),
+            cls.UNINSTALLED: _("解除安装"),
+        }
 
 
 class TemplateType(EnhanceEnum):

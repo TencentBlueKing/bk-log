@@ -16,13 +16,18 @@ class TopoTool:
     CACHE_5MIN = 5 * 60
 
     @staticmethod
-    def find_topo_node_paths(bk_biz_id: int, node_list: typing.List[types.TreeNode]):
+    def build_inst_key(object_id: str, instance_id: typing.Any) -> str:
+        return f"{object_id}-{instance_id}"
+
+    @classmethod
+    def find_topo_node_paths(cls, bk_biz_id: int, node_list: typing.List[types.TreeNode]):
         def _find_topo_node_paths(
             _cur_node: types.TreeNode, _cur_path: typing.List[types.TreeNode], _hit_inst_ids: typing.Set
         ):
-            if _cur_node["bk_inst_id"] in inst_id__node_map:
-                inst_id__node_map[_cur_node["bk_inst_id"]]["bk_path"] = deepcopy(_cur_path)
-                _hit_inst_ids.add(_cur_node["bk_inst_id"])
+            inst_key = cls.build_inst_key(_cur_node["bk_obj_id"], _cur_node["bk_inst_id"])
+            if inst_key in inst_id__node_map:
+                inst_id__node_map[inst_key]["bk_path"] = deepcopy(_cur_path)
+                _hit_inst_ids.add(inst_key)
                 # 全部命中后提前返回
                 if len(_hit_inst_ids) == len(inst_id__node_map.keys()):
                     return
@@ -33,8 +38,10 @@ class TopoTool:
                 # 以 del 代替 [:-1]，防止后者产生 list 对象导致路径重复压栈
                 del _cur_path[-1]
 
-        topo_tree: types.TreeNode = resource.ResourceQueryHelper.get_topo_tree(bk_biz_id)
-        inst_id__node_map: typing.Dict[int, types.TreeNode] = {bk_node["bk_inst_id"]: bk_node for bk_node in node_list}
+        topo_tree: types.TreeNode = resource.ResourceQueryHelper.get_topo_tree(bk_biz_id, return_all=True)
+        inst_id__node_map: typing.Dict[str, types.TreeNode] = {
+            cls.build_inst_key(bk_node["bk_obj_id"], bk_node["bk_inst_id"]): bk_node for bk_node in node_list
+        }
         _find_topo_node_paths(topo_tree, [topo_tree], set())
         return node_list
 

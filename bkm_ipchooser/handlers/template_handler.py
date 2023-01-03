@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Any
 
 from bkm_ipchooser import constants, types
 from bkm_ipchooser.api import BkApi
@@ -51,7 +51,7 @@ class Template:
         for template in templates:
             template["count"] = template_host_map.get(template["id"], 0)
 
-    def list_template_nodes(self, start: int, page_size: int) -> List[types.TemplateNode]:
+    def list_template_nodes(self, start: int, page_size: int) -> Dict[str, Any]:
         """获取节点列表"""
         result = {"start": start, "page_size": page_size, "total": 0, "data": []}
         nodes = self.query_template_nodes(start=start, page_size=page_size)
@@ -76,7 +76,7 @@ class Template:
         """统计模板下主机的agent状态"""
         raise NotImplementedError
 
-    def list_template_hosts(self, start: int, page_size: int) -> List[types.TemplateNode]:
+    def list_template_hosts(self, start: int, page_size: int) -> Dict[str, Any]:
         """获取主机列表, 带分页"""
         result = {"start": start, "page_size": page_size, "count": 0, "data": []}
         hosts = self.query_template_hosts(start=start, page_size=page_size)
@@ -220,13 +220,13 @@ class SetTemplate(Template):
             # 此处添加no_request参数，避免多线程调用时, 用户信息被覆盖
             "no_request": True,
         }
-        host_list = BkApi.bulk_find_host_by_set_template(params)
+        host_list = batch_request.batch_request(func=BkApi.find_host_by_set_template, params=params)
         if not host_list:
             return result
         result["data"] = host_list
         return result
 
-    def template_agent_statistics(self, template: Dict) -> List[Dict]:
+    def template_agent_statistics(self, template: Dict) -> Dict[str, Any]:
         """统计模板下主机的agent状态"""
         result = {"set_template": {"id": template["id"], "name": template["name"], "meta": self.meta}}
 
@@ -254,7 +254,7 @@ class SetTemplate(Template):
             },
             "no_request": True,
         }
-        node_list = BkApi.bulk_search_set(params)
+        node_list = batch_request.batch_request(func=BkApi.search_set, params=params)
         if not node_list:
             return result
 
@@ -335,7 +335,7 @@ class ServiceTemplate(Template):
         }
         return BkApi.find_host_by_service_template(params)
 
-    def template_agent_statistics(self, template: Dict) -> List[Dict]:
+    def template_agent_statistics(self, template: Dict) -> Dict[str, Any]:
         """统计模板下主机的agent状态"""
         result = {"service_template": {"id": template["id"], "name": template["name"], "meta": self.meta}}
 
@@ -363,7 +363,7 @@ class ServiceTemplate(Template):
             },
             "no_request": True,
         }
-        node_list = BkApi.bulk_search_module(params)
+        node_list = batch_request.batch_request(func=BkApi.search_module, params=params)
         if not node_list:
             return result
 
@@ -384,7 +384,7 @@ class ServiceTemplate(Template):
             # 此处添加no_request参数，避免多线程调用时, 用户信息被覆盖
             "no_request": True,
         }
-        host_list = BkApi.bulk_find_host_by_service_template(params)
+        host_list = batch_request.batch_request(func=BkApi.find_host_by_service_template, params=params)
         if not host_list:
             return result
         result["data"] = host_list
@@ -420,10 +420,10 @@ class TemplateHandler:
     def list_templates(self, template_id_list: List[int] = None) -> List[types.Template]:
         return self.get_instance().list_templates(template_id_list=template_id_list)
 
-    def list_nodes(self, start: int, page_size: int) -> List[types.TemplateNode]:
+    def list_nodes(self, start: int, page_size: int) -> Dict[str, Any]:
         return self.get_instance().list_template_nodes(start=start, page_size=page_size)
 
-    def list_hosts(self, start: int, page_size: int) -> List[types.HostInfo]:
+    def list_hosts(self, start: int, page_size: int) -> Dict[str, Any]:
         return self.get_instance().list_template_hosts(start=start, page_size=page_size)
 
     def agent_statistics(self, template_id_list: List[int] = None) -> List[Dict]:

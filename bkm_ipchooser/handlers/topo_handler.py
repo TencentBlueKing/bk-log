@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import logging
-from collections import defaultdict
 import typing
 
 from bkm_ipchooser import constants, types
 from bkm_ipchooser.api import BkApi
 from bkm_ipchooser.tools import topo_tool, batch_request
+from bkm_ipchooser.tools.gse_tool import GseTool
 from bkm_ipchooser.handlers.base import BaseHandler
 
 logger = logging.getLogger("bkm_ipchooser")
@@ -67,24 +67,23 @@ class TopoHandler:
         if not node_list:
             return []
         bk_biz_id = scope_list[0]["bk_biz_id"]
-        nodes_gby_biz_id: typing.Dict[int, typing.List[types.TreeNode]] = defaultdict(list)
-        for node in node_list:
-            nodes_gby_biz_id[bk_biz_id].append({"bk_inst_id": node["instance_id"], "bk_obj_id": node["object_id"]})
-
-        params_list: typing.List[typing.Dict[str, typing.Any]] = []
-        for biz_id, bk_nodes in nodes_gby_biz_id.items():
-            params_list.append({"bk_biz_id": biz_id, "node_list": bk_nodes})
-        node_with_paths: typing.List[types.TreeNode] = batch_request.request_multi_thread(
-            func=topo_tool.TopoTool.find_topo_node_paths, params_list=params_list, get_data=lambda x: x
+        node_with_paths = topo_tool.TopoTool.find_topo_node_paths(
+            bk_biz_id=bk_biz_id,
+            node_list=[{"bk_inst_id": node["instance_id"], "bk_obj_id": node["object_id"]} for node in node_list],
         )
 
-        inst_id__path_map: typing.Dict[int, typing.List[types.TreeNode]] = {}
+        inst_id__path_map: typing.Dict[str, typing.List[types.TreeNode]] = {}
         for node_with_path in node_with_paths:
-            inst_id__path_map[node_with_path["bk_inst_id"]] = node_with_path.get("bk_path", [])
+            inst_id__path_map[
+                topo_tool.TopoTool.build_inst_key(
+                    object_id=node_with_path["bk_obj_id"], instance_id=node_with_path["bk_inst_id"]
+                )
+            ] = node_with_path.get("bk_path", [])
 
         node_paths_list: typing.List[typing.List[types.TreeNode]] = []
         for node in node_list:
-            if node["instance_id"] not in inst_id__path_map:
+            inst_key = topo_tool.TopoTool.build_inst_key(object_id=node["object_id"], instance_id=node["instance_id"])
+            if inst_key not in inst_id__path_map:
                 node_paths_list.append([])
                 continue
 
@@ -97,7 +96,7 @@ class TopoHandler:
                         "instance_id": path_node["bk_inst_id"],
                         "instance_name": path_node["bk_inst_name"],
                     }
-                    for path_node in inst_id__path_map[node["instance_id"]]
+                    for path_node in inst_id__path_map[inst_key]
                 ]
             )
         return node_paths_list
@@ -126,14 +125,12 @@ class TopoHandler:
             # 不存在查询节点提前返回，减少非必要 IO
             return {"total": 0, "data": []}
         bk_biz_id = scope_list[0]["bk_biz_id"]
-        tree_node: types.TreeNode = cls.format2tree_node(bk_biz_id, readable_node_list[0])
-
         # 获取主机信息
         resp = cls.query_cc_hosts(
             bk_biz_id, readable_node_list, conditions, start, page_size, fields, return_status=True
         )
 
-        return {"total": resp["count"], "data": BaseHandler.format_hosts(resp["info"], tree_node["bk_biz_id"])}
+        return {"total": resp["count"], "data": BaseHandler.format_hosts(resp["info"], bk_biz_id)}
 
     @classmethod
     def query_host_id_infos(
@@ -176,27 +173,7 @@ class TopoHandler:
 
     @classmethod
     def fill_agent_status(cls, cc_hosts):
-        # TODO: get_agent_status暂只支持 bk_cloud_id:bk_host_innerip 格式
-        if not cc_hosts:
-            return
-
-        index = 0
-        hosts, host_map = [], {}
-        for cc_host in cc_hosts:
-            ip, bk_cloud_id = cc_host["bk_host_innerip"], cc_host["bk_cloud_id"]
-            hosts.append({"ip": ip, "bk_cloud_id": bk_cloud_id})
-
-            host_map[f"{bk_cloud_id}:{ip}"] = index
-            index += 1
-
-        try:
-            # 添加no_request参数, 多线程调用时，保证用户信息不漏传
-            status_map = BkApi.get_agent_status({"hosts": hosts, "no_request": True})
-
-            for ip_cloud, detail in status_map.items():
-                cc_hosts[host_map[ip_cloud]]["status"] = detail["bk_agent_alive"]
-        except KeyError as e:
-            logger.exception("fill_agent_status exception: %s", e)
+        GseTool.get_adapter().fill_agent_status(cc_hosts)
 
     @classmethod
     def count_agent_status(cls, cc_hosts) -> typing.Dict:
@@ -293,8 +270,6 @@ class TopoHandler:
         """
         if not readable_node_list:
             return {"count": 0, "info": []}
-        # 查询主机
-        tree_node: types.TreeNode = cls.format2tree_node(bk_biz_id, readable_node_list[0])
 
         bk_module_ids = []
         bk_set_ids = []
@@ -306,7 +281,7 @@ class TopoHandler:
                 bk_set_ids.append(node["instance_id"])
 
         params = {
-            "bk_biz_id": tree_node["bk_biz_id"],
+            "bk_biz_id": bk_biz_id,
             "fields": fields,
             "page": {"start": start, "limit": page_size, "sort": "bk_host_innerip"},
         }
@@ -361,7 +336,7 @@ class TopoHandler:
             params["bk_set_ids"] = [node["instance_id"]]
         if object_id == constants.ObjectType.MODULE.value:
             params["bk_module_ids"] = [node["instance_id"]]
-        hosts = BkApi.bulk_list_biz_hosts(params)
+        hosts = batch_request.batch_request(func=BkApi.list_biz_hosts, params=params)
         if not hosts:
             return result
         cls.fill_agent_status(hosts)

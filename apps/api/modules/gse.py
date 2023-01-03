@@ -59,6 +59,14 @@ class _GseApi:
             before_request=add_esb_info_before_request,
             after_request=None,
         )
+        self.get_agent_status_raw_v2 = DataAPI(
+            method="POST",
+            url=GSE_APIGATEWAY_ROOT_V2 + "api/v2/cluster/list_agent_state",
+            module=self.MODULE,
+            description=_("V2版本获取agent状态(原始数据)"),
+            before_request=add_esb_info_before_request,
+            after_request=None,
+        )
         self.get_agent_status = DataAPI(
             method="POST",
             url=GSE_APIGATEWAY_ROOT_V2 + "get_agent_status",
