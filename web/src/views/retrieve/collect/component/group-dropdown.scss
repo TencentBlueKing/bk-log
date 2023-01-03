@@ -35,33 +35,8 @@
     position: absolute;
   }
 
-  .group-dropdown-list {
-    min-width: 170px;
-    max-height: 300px;
-    overflow-y: auto;
-
-    /* stylelint-disable-next-line declaration-no-important */
-    padding-bottom: 0 !important;
-
-    /* stylelint-disable-next-line scss/at-extend-no-missing-placeholder */
-    @extend .dropdown-list;
-
-    .add-new-group {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 40px;
-      background: #fafcfe;
-
-      .icon-close-circle {
-        display: inline-block;
-        transform: rotate(45deg);
-        margin-right: 4px;
-      }
-    }
-  }
-
-  .dropdown-list {
+  .dropdown-list,
+  %dropdown-list {
     padding: 4px 0;
     background: #fff;
     border: 1px solid #dcdee5;
@@ -77,6 +52,32 @@
 
       &:hover {
         background: #f5f7fa;
+      }
+    }
+  }
+
+  .group-dropdown-list {
+    min-width: 170px;
+    max-height: 300px;
+    overflow-y: auto;
+
+    /* stylelint-disable-next-line declaration-no-important */
+    padding-bottom: 0 !important;
+
+    /* stylelint-disable-next-line scss/at-extend-no-missing-placeholder */
+    @extend %dropdown-list;
+
+    .add-new-group {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 40px;
+      background: #fafcfe;
+
+      .icon-close-circle {
+        display: inline-block;
+        transform: rotate(45deg);
+        margin-right: 4px;
       }
     }
   }
@@ -97,8 +98,9 @@
 
     .operate-button {
       margin-top: 4px;
-      font-size: 14px;
-
+      .bk-button-text {
+        font-size: 12px;
+      }
       > span {
         margin-left: 6px;
       }

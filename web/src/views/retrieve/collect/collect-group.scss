@@ -16,13 +16,12 @@
     cursor: pointer;
 
     .is-active {
-      transform: scale(.6) rotate(90deg);
+      transform: scale(.5) rotate(90deg);
     }
   }
 
   .group-title {
-    height: 24px;
-    background: #eff1f5;
+    height: 32px;
     padding: 0 16px;
     margin-bottom: 8px;
 
@@ -41,9 +40,15 @@
 
     .title-number {
       display: inline-block;
-      min-width: 16px;
+      min-width: 20px;
       height: 16px;
       text-align: center;
+      background: #fff;
+      transform: translateX(2px);
+    }
+
+    &:hover {
+      background: #eff1f5;
     }
   }
 
@@ -56,7 +61,7 @@
 
     .group-item {
       line-height: 20px;
-      padding: 8px 16px 0;
+      padding: 5px 16px 5px;
       cursor: pointer;
       border: 1px solid transparent;
       border-bottom: none;
@@ -82,15 +87,24 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding-bottom: 8px;
-        border-bottom: 1px solid #eaebf0;
+        padding-left: 28px;
+        border-bottom: 1px solid transparent;
+        position: relative;
+
+        .fav-name {
+          flex: 1;
+        }
 
         .creator {
           color: #979ba5;
         }
 
-        .active-name {
+        &.active-name {
           color: #3a84ff;
+
+          &::before {
+            background: #3a84ff;
+          }
         }
 
         .icon-shixiao {
@@ -99,6 +113,16 @@
           margin-left: 4px;
           color: #ff9c01;
           transform: translateY(-1px);
+        }
+
+        &::before {
+          content: ' ';
+          width: 4px;
+          height: 4px;
+          position: absolute;
+          left: 18px;
+          border-radius: 50%;
+          background: #dcdee5;
         }
       }
 
