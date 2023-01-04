@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
-from typing import List, Dict
+from typing import List, Dict, Any
 
 from bkm_ipchooser import constants, types
 from bkm_ipchooser.api import BkApi
@@ -32,13 +32,13 @@ class DynamicGroupHandler:
         BaseHandler.sort_by_name(groups)
         return self._format_dynamic_groups(groups)
 
-    def _format_dynamic_groups(cls, groups: List[Dict]) -> List[Dict]:
+    def _format_dynamic_groups(self, groups: List[Dict]) -> List[Dict]:
         """格式化获取动态分组列表的返回"""
         groups = [
             {
                 "id": group["id"],
                 "name": group["name"],
-                "meta": cls.meta,
+                "meta": self.meta,
                 "last_time": group["last_time"],
                 # TODO: 当需要支持动态分组为集群时, 去掉这个注释
                 # "object_id": group["bk_obj_id"],
@@ -51,7 +51,7 @@ class DynamicGroupHandler:
         ]
         return groups
 
-    def execute(self, dynamic_group_id: str, start: int, page_size: int) -> List[Dict]:
+    def execute(self, dynamic_group_id: str, start: int, page_size: int) -> Dict[str, Any]:
         """执行动态分组"""
         result = {"start": start, "page_size": page_size, "total": 0}
 
