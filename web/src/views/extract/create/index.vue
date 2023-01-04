@@ -45,6 +45,7 @@
         <log-ip-selector
           mode="dialog"
           extract-scene
+          allow-host-list-miss-host-id
           :height="670"
           :show-dialog.sync="showSelectDialog"
           :value="selectorNodes"
@@ -155,7 +156,7 @@ export default {
       extractLinks: [], // 提取链路
       link_id: null,
       // 编辑态ip选择器初始值
-      ipSelectorOriginalValue: {},
+      ipSelectorOriginalValue: null,
     };
   },
   computed: {

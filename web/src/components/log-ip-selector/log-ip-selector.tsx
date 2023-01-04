@@ -177,7 +177,7 @@ export function toSelectorNode(nodes: ITarget[], nodeType: INodeType) {
         // 增量数据只需使用host_id
         if (item.bk_host_id) return { host_id: item.bk_host_id };
         // 兼容旧数据 没有bk_host_id的情况下 把ip和cloud_id传给组件 提供组件内部定位host_id
-        return { host_id: undefined, ip: item.ip, cloud_id: item.bk_cloud_id };
+        return { host_id: undefined, ip: item.ip, cloud_area: { id: item.bk_cloud_id } };
       });
     case 'TOPO':
       return nodes.map(item => ({
@@ -301,7 +301,8 @@ export interface IMonitorIpSelectorProps {
   viewSearchKey?: string;
   service?: IpSelectorService;
   height?: number;
-  extractScene: boolean
+  extractScene: boolean;
+  allowHostListMissHostId: boolean;
 }
 export interface IMonitorIpSelectorEvents {
   onChange: (v: Record<string, INode[]>) => void
@@ -346,13 +347,19 @@ export default class MonitorIpSelector extends tsc<IMonitorIpSelectorProps> {
   @Prop({ type: Number }) height: number;
   // 字段提取场景 拓扑树与节点主机需要通过定制接口获取
   @Prop({ type: Boolean, default: false }) extractScene: boolean;
+  // 允许 hostList 中缺少 hostId，通过 ip + cloudArea.id 回填选中主机
+  @Prop({ type: Boolean, default: false }) allowHostListMissHostId: boolean;
 
-  scopeList: IScopeItme[] = [{
-    scope_type: 'space',
-    scope_id: this.$store.state.spaceUid,
-  }]
   ipSelectorServices: IpSelectorService = {};
   ipSelectorConfig: IpSelectorConfig = {};
+
+  get scopeList() {
+    return [{
+      scope_type: 'space',
+      scope_id: this.$store.state.spaceUid,
+    }];
+  }
+
   created() {
     this.ipSelectorServices = {
       fetchTopologyHostCount: this.fetchTopologyHostCount, // 拉取topology
@@ -373,7 +380,6 @@ export default class MonitorIpSelector extends tsc<IMonitorIpSelectorProps> {
       fetchNodesSetTemplate: this.fetchNodesSetTemplate,
       fetchHostSetTemplate: this.fetchHostSetTemplate,
       fetchHostAgentStatisticsSetTemplate: this.fetchHostAgentStatisticsSetTemplate,
-
       fetchCustomSettings: this.fetchCustomSettings,
       updateCustomSettings: this.updateCustomSettings,
       fetchConfig: this.fetchConfig,
@@ -451,8 +457,6 @@ export default class MonitorIpSelector extends tsc<IMonitorIpSelectorProps> {
     return res?.data || [];
   }
   async fetchHostsDetails(node) {
-    console.log('detail node----', node);
-
     const data = {
       scope_list: this.scopeList,
       host_list: node.host_list,
@@ -536,7 +540,7 @@ export default class MonitorIpSelector extends tsc<IMonitorIpSelectorProps> {
     return res?.data || [];
   }
   // 获取集群模板列表
-  async fetchSetTemplates() {
+  async fetchSetTemplates(): Promise<Array<ITemplateItem>[]> {
     const data = {
       scope_list: this.scopeList,
       template_type: 'SET_TEMPLATE',
@@ -613,6 +617,7 @@ export default class MonitorIpSelector extends tsc<IMonitorIpSelectorProps> {
       readonly={this.readonly}
       disableDialogSubmitMethod={this.disableDialogSubmitMethod}
       disableHostMethod={this.disableHostMethod}
+      allowHostListMissHostId={this.allowHostListMissHostId}
       height={this.height ?? '100%'}
       service={this.ipSelectorServices}
       config={this.ipSelectorConfig}

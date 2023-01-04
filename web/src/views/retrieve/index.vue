@@ -1708,7 +1708,6 @@ export default {
         this.isShowAddNewCollectDialog = true; // 展示新增弹窗
         this.showFavoritePopperContent = false;
       };
-      console.log(this.addFavoriteData, 2324324);
       if (isAdd) {
         this.addFavoriteData = favoriteData;
       }
