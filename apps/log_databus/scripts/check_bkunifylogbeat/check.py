@@ -257,6 +257,7 @@ def main():
     bkunifylogbeat_checker = BKUnifyLogBeatCheck()
     bkunifylogbeat_checker.check_bin_file()
     bkunifylogbeat_checker.check_process()
+    bkunifylogbeat_checker.check_main_config()
     bkunifylogbeat_checker.check_config()
     bkunifylogbeat_checker.check_gseagent_hosted()
     bkunifylogbeat_checker.check_collector_healthz()
