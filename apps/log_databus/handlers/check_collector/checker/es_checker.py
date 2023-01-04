@@ -22,7 +22,7 @@ the project delivered to anyone in the future.
 import datetime
 
 from apps.api import TransferApi
-from apps.log_databus.constants import RETRY_TIMES, INDEX_WRITE_PREFIX, INDEX_READ_PREFIX
+from apps.log_databus.constants import RETRY_TIMES, INDEX_WRITE_PREFIX, INDEX_READ_SUFFIX
 from apps.log_databus.handlers.check_collector.checker.base_checker import Checker
 from apps.log_databus.handlers.storage import StorageHandler
 from apps.log_esquery.utils.es_client import get_es_client
@@ -86,27 +86,26 @@ class EsChecker(Checker):
             self.append_error_info("获取物理索引为空")
             return
 
+        for i in self.indices:
+            self.append_normal_info("物理索引: {}, 健康: {}, 状态: {}".format(i["index"], i["health"], i["status"]))
+
         hot_node_count = 0
 
         for node in StorageHandler(self.cluster_id).cluster_nodes():
             if node.get("tag") == "hot":
                 hot_node_count += 1
 
+        latest_indices = self.indices[0]
         query_body = {"size": 1}
+        query_data = self.es_client.search(index=latest_indices["index"], body=query_body)
+        latest_data = query_data.get("hits", {}).get("hits", [])
+        latest_data = latest_data[0] if latest_data else None
+        self.append_normal_info("最近物理索引:{} 最新一条数据为:{}".format(latest_indices["index"], latest_data))
 
-        for i in self.indices:
-
-            query_data = self.es_client.search(index=i["index"], body=query_body)
-            latest_data = query_data.get("hits", {}).get("hits", [])
-            latest_data = latest_data[0] if latest_data else None
-
-            self.append_normal_info(
-                "物理索引: {}, 健康: {}, 状态: {}, 最新一条数据为: {}".format(i["index"], i["health"], i["status"], latest_data)
+        if latest_indices["pri"] < hot_node_count:
+            self.append_warning_info(
+                "最近物理索引分片数量小于热节点分片数量, 可能会造成性能问题, 当前索引分片数{}, 热节点分片数{}".format(latest_indices["pri"], hot_node_count)
             )
-            if i["pri"] < hot_node_count:
-                self.append_warning_info(
-                    "当前索引分片数量小于热节点分片数量, 可能会造成性能问题, 当前索引分片数{}, 热节点分片数{}".format(i["pri"], hot_node_count)
-                )
 
     def get_es_client(self):
         es_client = None
@@ -145,7 +144,7 @@ class EsChecker(Checker):
 
         now_datetime = strftime_local(datetime.datetime.now(), "%Y%m%d")
 
-        now_read_index_alias = "{}_{}{}".format(self.index_pattern, now_datetime, INDEX_READ_PREFIX)
+        now_read_index_alias = "{}_{}{}".format(self.index_pattern, now_datetime, INDEX_READ_SUFFIX)
         now_write_index_alias = "{}{}_{}".format(INDEX_WRITE_PREFIX, now_datetime, self.index_pattern)
 
         now_read_index_alias_exist = False
