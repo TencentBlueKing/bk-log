@@ -131,7 +131,10 @@ class IPChooser:
         if not params:
             return host_list
         for node_type, node_value in params.items():
-            host_list.extend(self._get_method(node_type)(node_value))
+            _node_host_list = self._get_method(node_type)(node_value)
+            if not _node_host_list:
+                continue
+            host_list.extend(_node_host_list)
         return host_list
 
     def transfer_host(self, host_list: list):
