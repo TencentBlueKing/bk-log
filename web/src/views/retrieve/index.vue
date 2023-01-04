@@ -1434,16 +1434,20 @@ export default {
           return readBlobRespToJson(res.data);
         });
 
-        this.isNextTime = res.data.list.length < pageSize;
+        if (!res.data && res.message) { // 接口报错提示
+          this.messageError(res.message);
+        }
+
+        this.isNextTime = res.data?.list?.length < pageSize;
         if (this.isNextTime && (this.pollingStartTime <= this.startTimeStamp
         || this.requestInterval === 0)) { // 分片时间已结束
           this.finishPolling = true;
         }
 
         this.retrievedKeyword = this.retrieveParams.keyword;
-        this.tookTime = this.tookTime + Number(res.data.took) || 0;
-        this.tableData = { ...res.data, finishPolling: this.finishPolling };
-        this.logList = this.logList.concat(parseBigNumberList(res.data.list));
+        this.tookTime = this.tookTime + Number(res.data?.took) || 0;
+        this.tableData = { ...(res.data || {}), finishPolling: this.finishPolling };
+        this.logList = this.logList.concat(parseBigNumberList(res.data?.list ?? []));
         this.statisticalFieldsData = this.getStatisticalFieldsData(this.logList);
         this.computeRetrieveDropdownData(this.logList);
       } catch (err) {
