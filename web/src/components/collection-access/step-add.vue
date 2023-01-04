@@ -186,6 +186,7 @@
           <!-- 目标选择器 -->
           <log-ip-selector
             mode="dialog"
+            allow-host-list-miss-host-id
             :height="670"
             :show-dialog.sync="showIpSelectorDialog"
             :value="selectorNodes"
@@ -773,7 +774,7 @@ export default {
         'manualInput',
       ],
       // 编辑态ip选择器初始值
-      ipSelectorOriginalValue: {},
+      ipSelectorOriginalValue: null,
     };
   },
   computed: {
