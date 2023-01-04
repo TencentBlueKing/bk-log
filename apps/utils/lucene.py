@@ -570,8 +570,8 @@ def generate_query_string(params: dict) -> str:
             for _node in node_value:
                 query_string += " AND ({}: {})".format(_node["object_id"], _node["instance_id"])
         else:
-            node_type_name = node_type.split("_list")[0].upper()
-            query_string += " AND ({}: {})".format(node_type_name, ",".join([i["id"] for i in node_value]))
+            node_type_name = node_type.split("_list")[0].lower()
+            query_string += " AND ({}: {})".format(node_type_name, ",".join([str(i["id"]) for i in node_value]))
 
     additions = params.get("addition", [])
     if additions:
