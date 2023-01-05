@@ -23,8 +23,12 @@ STEP_CHECK_BKUNIFYLOGBEAT_HEALTHZ = "healthz"
 
 STEP_CHECK_GSEAGENT_PROCESS = "process"
 STEP_CHECK_GSEAGENT_SOCKET = "socket"
+STEP_CHECK_GSEAGENT_SOCKET_QUEUE_STATUS = "socket queue status"
+STEP_CHECK_GSEAGENT_DATASERVER_PORT = "dataserver port"
 
 COLLECTOR_MAIN_CONFIG_FILE_NAME = "bkunifylogbeat.conf"
+
+DATASERVER_PORT = "58625"
 
 subscription_id = 0
 socket_between_gse_agent_and_beat = "/var/run/ipc.state.report"
@@ -142,6 +146,7 @@ class BKUnifyLogBeatCheck(object):
                 break
         else:
             result.message = "multi_config not have [{}]".format(collector_etc_main_config_path)
+            result.add_to_result()
             return
 
         result.status = True
@@ -193,6 +198,35 @@ class GseAgentCheck(object):
         result = Result(MODULE_GSEAGENT, STEP_CHECK_GSEAGENT_SOCKET)
         if os.path.exists(socket_between_gse_agent_and_beat):
             result.status = True
+        result.add_to_result()
+
+    @staticmethod
+    def check_socket():
+        result = Result(MODULE_GSEAGENT, STEP_CHECK_GSEAGENT_SOCKET_QUEUE_STATUS)
+        output = get_command("ss -x -p | grep -E 'REC|%s' |awk '{print $6}'" % socket_between_gse_agent_and_beat)
+        if not output:
+            result.message = "socket not used"
+            result.add_to_result()
+            return
+        port = output.split("-")[-1]
+        queue_status = get_command("ss -x -p | grep -E 'Rec|%s' |awk 'NR>1{print $3;print $4}'" % port)
+        queue_status = list(map(int, queue_status.split("\n")))
+        if not any(queue_status):
+            result.message = "socket queue blocking"
+            result.add_to_result()
+            return
+        result.status = True
+        result.add_to_result()
+
+    @staticmethod
+    def check_dataserver():
+        result = Result(MODULE_GSEAGENT, STEP_CHECK_GSEAGENT_DATASERVER_PORT)
+        output = get_command("netstat -anplut | grep %s" % DATASERVER_PORT)
+        if not output:
+            result.message = "dataserver not exist"
+            result.add_to_result()
+            return
+        result.status = True
         result.add_to_result()
 
 
@@ -265,6 +299,8 @@ def main():
     gse_agent_checker = GseAgentCheck()
     gse_agent_checker.check_process()
     gse_agent_checker.check_socket_between_gse_agent_and_beat()
+    gse_agent_checker.check_socket()
+    gse_agent_checker.check_dataserver()
 
     global check_result
     if all([i["status"] for i in check_result["data"]]):
