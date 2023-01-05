@@ -250,10 +250,7 @@ class GrafanaQueryHandler:
         search_dict = {
             "start_time": query_dict["start_time"],
             "end_time": query_dict["end_time"],
-            "host_scopes": {
-                "modules": [],
-                "ips": ",".join([host["bk_target_ip"] for host in query_dict.get("target", [])]),
-            },
+            "ip_chooser": query_dict["ip_chooser"],
             "addition": [
                 {
                     "field": cond["key"],
@@ -297,10 +294,7 @@ class GrafanaQueryHandler:
         search_dict = {
             "start_time": query_dict["start_time"],
             "end_time": query_dict["end_time"],
-            "host_scopes": {
-                "modules": [],
-                "ips": ",".join([host["bk_target_ip"] for host in query_dict.get("target", [])]),
-            },
+            "ip_chooser": query_dict["ip_chooser"],
             "addition": [
                 {
                     "field": cond["key"],
