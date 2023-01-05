@@ -1,7 +1,8 @@
 .retrieve-collect-container {
   font-size: 12px;
-  background-color: #f5f7fa;
+  background: #f5f7fa;
   width: 100%;
+  color: #313238;
 
   .bk-icon {
     color: #63656e;
@@ -22,10 +23,11 @@
 
     .favorite-number {
       display: inline-block;
-      margin-left: 8px;
+      margin: 2px 0 0 8px;
       font-size: 12px;
       min-width: 20px;
       height: 16px;
+      border-radius: 2px;
       text-align: center;
       background: #fff;
       color: #979ba5;
@@ -43,6 +45,11 @@
     position: relative;
     z-index: 9;
     border: 1px solid #dcdee5;
+
+    .icon-enlarge-line {
+      color: #63656e;
+      margin-right: 10px;
+    }
 
     &.active {
       color: #3a84ff;

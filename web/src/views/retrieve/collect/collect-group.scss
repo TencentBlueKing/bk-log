@@ -5,7 +5,7 @@
     display: inline-block;
     margin-right: 6px;
     font-size: 12px;
-    transform: scale(.6);
+    transform: scale(.5);
     transition: transform .3s;
   }
 
@@ -25,9 +25,9 @@
     padding: 0 16px;
     margin-bottom: 8px;
 
-    &.is-move-cur {
-      cursor: move;
-    }
+    // &.is-move-cur {
+    //   cursor: move;
+    // }
 
     &.is-active {
       /* stylelint-disable-next-line declaration-no-important */
@@ -42,6 +42,8 @@
       display: inline-block;
       min-width: 20px;
       height: 16px;
+      line-height: 16px;
+      border-radius: 2px;
       text-align: center;
       background: #fff;
       transform: translateX(2px);
@@ -60,11 +62,15 @@
     }
 
     .group-item {
-      line-height: 20px;
-      padding: 5px 16px 5px;
+      line-height: 16px;
+      padding: 7px 16px 7px;
       cursor: pointer;
       border: 1px solid transparent;
       border-bottom: none;
+
+      &.is-disabled {
+        cursor: not-allowed;
+      }
 
       &:hover {
         background: #f0f1f5;

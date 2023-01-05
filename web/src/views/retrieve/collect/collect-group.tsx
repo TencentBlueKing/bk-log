@@ -59,8 +59,7 @@ export default class CollectGroup extends tsc<ICollectProps> {
     setTimeout(() => {
       this.clickDrop = false;
     }, 100);
-    if (this.clickDrop) return;
-    this.clickDrop = false;
+    if (!item.is_active || this.clickDrop) return;
     this.handleUserOperate('click-favorite', item);
   }
   handleHoverTitle(type: boolean) {
@@ -133,7 +132,11 @@ export default class CollectGroup extends tsc<ICollectProps> {
           {this.collectItem.favorites.map((item, index) => (
             <div
               key={index}
-              class={['group-item', { active: item.id === this.activeFavoriteID }]}
+              class={{
+                'group-item': true,
+                'is-disabled': !item.is_active,
+                active: item.id === this.activeFavoriteID,
+              }}
               onClick={() => this.handleClickCollect(item)}>
                 <div class={{
                   'group-item-left': true,

@@ -97,7 +97,7 @@ export default class CollectContainer extends tsc<IProps> {
               handle=".group-title"
               on-end={this.handleMoveEnd}
               move={this.handleMoveIng}
-              disabled={this.isSearchFilter}
+              disabled={true}
             >
               <transition-group>
                 {this.dragList.map(item => (
