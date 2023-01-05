@@ -264,12 +264,10 @@
                       </span>
                     </bk-button>
                   </div>
-                  <bk-button
-                    style="font-size: 12px"
-                    @click="clearCondition"
-                    data-test-id="dataQuery_button_phrasesClear">
-                    {{ $t('清空') }}
-                  </bk-button>
+                  <div class="clear-params-btn" @click="clearCondition">
+                    <bk-button data-test-id="dataQuery_button_phrasesClear"></bk-button>
+                    <span class="log-icon icon-brush"></span>
+                  </div>
                 </div>
               </div>
               <div class="tab-content-item" data-test-id="retrieve_div_fieldFilterBox">
@@ -1828,6 +1826,7 @@ export default {
         this.activeFavoriteID = -1;
         this.activeFavorite = {};
         this.isSqlSearchType = true;
+        this.clearCondition();
         return;
       }
       this.addFavoriteData = {}; // 清空新增收藏的数据
@@ -2182,6 +2181,20 @@ export default {
 
               .icon-save {
                 transform: translateY(1px);
+              }
+            }
+
+            .clear-params-btn {
+              position: relative;
+              cursor: pointer;
+
+              .icon-brush {
+                position: absolute;
+                left: 8px;
+                top: 8px;
+                font-size: 14px;
+                color: #63656e;
+                pointer-events: none;
               }
             }
 
