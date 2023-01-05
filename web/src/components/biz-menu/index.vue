@@ -203,8 +203,8 @@ export default {
     });
     this.spaceTypeIdList = Object.keys(spaceTypeMap).map(key => ({
       id: key,
-      name: SPACE_TYPE_MAP[key].name,
-      styles: this.theme === 'dark' ? SPACE_TYPE_MAP[key].dark : SPACE_TYPE_MAP[key].light,
+      name: SPACE_TYPE_MAP[key]?.name || this.$t('未知'),
+      styles: (this.theme === 'dark' ? SPACE_TYPE_MAP[key]?.dark : SPACE_TYPE_MAP[key]?.light) || {},
     }));
   },
   methods: {
