@@ -242,24 +242,24 @@
                       </span>
                     </bk-button>
                     <span
-                      v-show="!isFavoriteNewSearch && !isFavoriteUpdate"
+                      v-show="!isFavoriteNewSearch && isFavoriteUpdate"
                       class="catching-ball">
                     </span>
                     <bk-button
                       v-show="!isFavoriteNewSearch"
                       ext-cls="favorite-btn"
-                      :disabled="isFavoriteUpdate || favoriteUpdateLoading"
+                      :disabled="!isFavoriteUpdate || favoriteUpdateLoading"
                       @click="handleUpdateFavorite">
-                      <span v-bk-tooltips="{ content: $t('保存Tips'), disabled: isFavoriteUpdate }">
+                      <span v-bk-tooltips="{ content: $t('保存Tips'), disabled: !isFavoriteUpdate }">
                         <span class="favorite-btn-text">
                           <span :class="[
                             'icon',
-                            isFavoriteUpdate
+                            !isFavoriteUpdate
                               ? 'log-icon icon-star-shape'
                               : 'bk-icon icon-save',
                           ]">
                           </span>
-                          <span>{{ isFavoriteUpdate ? $t('已收藏') : $t('保存') }}</span>
+                          <span>{{ !isFavoriteUpdate ? $t('已收藏') : $t('保存') }}</span>
                         </span>
                       </span>
                     </bk-button>
@@ -628,7 +628,7 @@ export default {
         addition: params?.addition,
         keyword: params?.keyword,
       };
-      return JSON.stringify(retrieveParams) === JSON.stringify(favoriteParams);
+      return JSON.stringify(retrieveParams) !== JSON.stringify(favoriteParams);
     },
   },
   provide() {
@@ -1781,13 +1781,18 @@ export default {
       // 第一次显示收藏列表时因路由更变原因 在本页面第一次请求
       try {
         this.favoriteLoading = true;
-        const res = await this.$http.request('favorite/getFavoriteByGroupList', {
+        const { data } = await this.$http.request('favorite/getFavoriteByGroupList', {
           query: {
             space_uid: this.spaceUid,
-            order_type: localStorage.getItem('favoriteSortType'),
+            order_type: localStorage.getItem('favoriteSortType') || 'NAME_ASC',
           },
         });
-        this.favoriteList = res.data;
+        const provideFavorite = data[0];
+        const publicFavorite = data[data.length - 1];
+        const sortFavoriteList = data.slice(1, data.length - 1)
+          .sort((a, b) => a.group_name.localeCompare(b.group_name));
+        const sortAfterList = [provideFavorite, ...sortFavoriteList, publicFavorite];
+        this.favoriteList = sortAfterList;
       } finally {
         this.favoriteLoading = false;
       }

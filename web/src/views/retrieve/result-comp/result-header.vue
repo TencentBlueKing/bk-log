@@ -424,8 +424,8 @@ export default {
           cursor: pointer;
 
           &.light-icon {
-            background: #f1f2f6;
-            color: #979ba5;
+            background: #f0f1f5;
+            color: #63656e;
           }
 
           .icon-jiansuo {
@@ -439,6 +439,10 @@ export default {
 
             /* stylelint-disable-next-line declaration-no-important */
             pointer-events: none !important;
+          }
+
+          &.light-icon:hover {
+            background: #dcdee5;
           }
         }
       }

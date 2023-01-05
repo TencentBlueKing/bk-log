@@ -255,12 +255,12 @@ export default class CollectIndex extends tsc<IProps> {
       }
         break;
       case 'drag-move-end':
-        $http.request('favorite/groupUpdateOrder', {
-          data: {
-            space_uid: this.spaceUid,
-            group_order: value,
-          },
-        });
+        // $http.request('favorite/groupUpdateOrder', {
+        //   data: {
+        //     space_uid: this.spaceUid,
+        //     group_order: value,
+        //   },
+        // });
         break;
       case 'create-copy': {
         const {
