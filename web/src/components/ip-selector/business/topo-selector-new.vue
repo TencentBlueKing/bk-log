@@ -64,6 +64,7 @@
   import { Vue, Component, Prop, Ref, Watch, Emit } from 'vue-property-decorator'
   import IpSelector from '../index.vue'
   import AgentStatus from '../components/agent-status.vue'
+  import store from '@/store';
   import {
     IPanel,
     ITableConfig,
@@ -225,6 +226,10 @@
         return item
       })
     }
+
+    private get bkBizID(): string {
+      return store.getters.bkBizID
+    } 
 
     // 更多操作配置
     private get previewOperateList () {
@@ -692,7 +697,7 @@
           bk_obj_id,
           bk_inst_id,
           bk_inst_name,
-          bk_biz_id: window.localStorage.getItem('bk_biz_id')
+          bk_biz_id: this.bkBizID,
         }
       })
       const newList = await getNodeAgentStatus(nodeList).catch(() => [])
