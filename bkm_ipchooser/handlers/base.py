@@ -7,6 +7,7 @@ from bkm_ipchooser import constants, types
 from bkm_ipchooser.api import BkApi
 from bkm_ipchooser.query import resource
 from bkm_ipchooser.tools.topo_tool import TopoTool
+from bkm_ipchooser.tools.batch_request import batch_request
 
 
 class BaseHandler:
@@ -141,3 +142,49 @@ class BaseHandler:
             node["node_path"] = node_path_map[node_key]
 
         return result
+
+    @classmethod
+    def query_sets(cls, bk_biz_id: int):
+        """
+        查询业务下的所有集群
+        """
+        params = {"bk_biz_id": bk_biz_id, "fields": constants.CommonEnum.DEFAULT_SET_FIELDS.value, "no_request": True}
+        return batch_request(func=BkApi.search_set, params=params)
+
+    @classmethod
+    def query_modules_by_set(cls, bk_biz_id: int, bk_set_ids: typing.List[int] = None):
+        """
+        查询业务指定集群下的所有模块
+        """
+        params = {
+            "bk_biz_id": bk_biz_id,
+            "fields": constants.CommonEnum.DEFAULT_MODULE_FIELDS.value,
+            "no_request": True,
+        }
+        nodes = batch_request(func=BkApi.search_module, params=params)
+        if not bk_set_ids:
+            return nodes
+        # 这样过滤是因为为了减少调用接口的次数, 接口bk_set_id只支持单个
+        return [node for node in nodes if node["bk_set_id"] in bk_set_ids]
+
+    @classmethod
+    def query_hosts_by_set_and_module(
+        cls,
+        bk_biz_id: int,
+        bk_set_ids: typing.List[int] = None,
+        bk_module_ids: typing.List[int] = None,
+        fields: typing.List[str] = None,
+    ):
+        """
+        查询业务指定集群, 指定模块下的所有主机
+        """
+        params = {
+            "bk_biz_id": bk_biz_id,
+            "fields": fields if fields else constants.CommonEnum.SIMPLE_HOST_FIELDS.value,
+            "no_request": True,
+        }
+        if bk_set_ids:
+            params["bk_set_ids"] = bk_set_ids
+        if bk_module_ids:
+            params["bk_module_ids"] = bk_module_ids
+        return batch_request(func=BkApi.list_biz_hosts, params=params)
