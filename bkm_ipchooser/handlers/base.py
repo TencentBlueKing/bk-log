@@ -6,6 +6,7 @@ from pypinyin import lazy_pinyin
 from bkm_ipchooser import constants, types
 from bkm_ipchooser.api import BkApi
 from bkm_ipchooser.query import resource
+from bkm_ipchooser.tools.topo_tool import TopoTool
 
 
 class BaseHandler:
@@ -103,6 +104,40 @@ class BaseHandler:
         datas.sort(key=lambda g: lazy_pinyin(g["name"]))
 
     @classmethod
-    def fill_meta(self, datas: typing.List[typing.Dict], meta: dict):
-        for data in datas:
-            data["meta"] = meta
+    def fill_node_path(cls, bk_biz_id: int, node_list: typing.List[typing.Dict[str, typing.Any]]):
+        """
+        填充前端需要的节点路径格式
+        """
+        result = []
+        if not node_list:
+            return result
+
+        def _build_node_key(object_id, instance_id) -> str:
+            return f"{object_id}-{instance_id}"
+
+        params = {
+            "bk_biz_id": bk_biz_id,
+            "bk_nodes": [
+                {
+                    "bk_obj_id": node["object_id"],
+                    "bk_inst_id": node["instance_id"],
+                }
+                for node in node_list
+            ],
+        }
+        topo_node_paths = BkApi.find_topo_node_paths(params)
+        if not topo_node_paths:
+            return result
+
+        node_path_map = {}
+        for topo_node_path in topo_node_paths:
+            node_key = _build_node_key(topo_node_path["bk_obj_id"], topo_node_path["bk_inst_id"])
+            node_path = [TopoTool.format_topo_node(bk_path) for bk_path in topo_node_path["bk_paths"][0]]
+            node_path.append(TopoTool.format_topo_node(topo_node_path))
+            node_path_map[node_key] = node_path
+
+        for node in node_list:
+            node_key = _build_node_key(node["object_id"], node["instance_id"])
+            node["node_path"] = node_path_map[node_key]
+
+        return result
