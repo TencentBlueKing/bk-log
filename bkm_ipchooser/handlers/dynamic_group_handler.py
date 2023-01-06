@@ -104,10 +104,6 @@ class DynamicGroupHandler:
             "no_request": True,
         }
         hosts = batch_request(func=BkApi.execute_dynamic_group, params=params)
-        if not hosts:
-            return result
-
-        result["host_count"] = len(hosts)
         TopoHandler.fill_agent_status(hosts)
         agent_statistics = TopoHandler.count_agent_status(hosts)
         result.update(agent_statistics)

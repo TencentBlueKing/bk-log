@@ -141,14 +141,41 @@ class IPChooser:
         params = {
             "bk_biz_id": self.bk_biz_id,
             "host_property_filter": {
-                "condition": "AND",
-                "rules": [
-                    {"field": "bk_host_id", "operator": "in", "value": [i["host_id"] for i in host_list]},
-                ],
+                "condition": "OR",
+                "rules": [],
             },
             "fields": self.fields,
             "no_request": True,
         }
+        # 同时兼容有host_id和cloud_id+ip两种情况
+        host_id_rules = {"field": "bk_host_id", "operator": "in", "value": []}
+        for host in host_list:
+            if host.get("bk_host_id"):
+                host_id_rules["value"].append(host["bk_host_id"])
+            else:
+                params["host_property_filter"]["rules"].append(
+                    {
+                        "condition": "AND",
+                        "rules": [
+                            {
+                                "field": "bk_cloud_id",
+                                "operator": "equal",
+                                "value": host["cloud_area"]["id"],
+                            },
+                            {
+                                "field": "bk_host_innerip",
+                                "operator": "equal",
+                                "value": host["ip"],
+                            },
+                        ],
+                    }
+                )
+        # 如果有host_id的情况, 添加条件
+        if not host_id_rules["value"]:
+            params["host_property_filter"]["rules"].append(host_id_rules)
+        # 如果rules为空, 移除host_property_filter
+        if not params["host_property_filter"]["rules"]:
+            params.pop("host_property_filter")
         host_list = BkApi.bulk_list_biz_hosts(params)
         return host_list
 

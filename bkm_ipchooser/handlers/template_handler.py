@@ -4,7 +4,7 @@ from typing import List, Dict, Union, Any
 
 from bkm_ipchooser import constants, types
 from bkm_ipchooser.api import BkApi
-from bkm_ipchooser.tools import batch_request, topo_tool
+from bkm_ipchooser.tools import batch_request
 from bkm_ipchooser.handlers.base import BaseHandler
 from bkm_ipchooser.handlers.topo_handler import TopoHandler
 
@@ -35,22 +35,6 @@ class Template:
     def query_template_hosts(self, start: int, page_size: int):
         raise NotImplementedError
 
-    def fill_host_count(self, templates: List[types.Template]):
-        """填充模板下主机数量"""
-        params_list = [
-            {
-                "template_id": template["id"],
-                "fields": constants.CommonEnum.FETCH_HOST_COUNT_FIELDS.value,
-            }
-            for template in templates
-        ]
-        template_host_result = batch_request.request_multi_thread(
-            func=self.fetch_template_host_total, params_list=params_list, get_data=lambda x: x
-        )
-        template_host_map = {i["id"]: len(i["data"]) for i in template_host_result}
-        for template in templates:
-            template["count"] = template_host_map.get(template["id"], 0)
-
     def list_template_nodes(self, start: int, page_size: int) -> Dict[str, Any]:
         """获取节点列表"""
         result = {"start": start, "page_size": page_size, "total": 0, "data": []}
@@ -59,7 +43,7 @@ class Template:
             return result
         nodes = nodes["info"]
         nodes = [self.format_template_node(node) for node in nodes]
-        self.fill_node_path(nodes)
+        BaseHandler.fill_node_path(self.bk_biz_id, nodes)
         result["data"] = nodes
         return result
 
@@ -113,42 +97,6 @@ class Template:
     def format_template_node(self, node: Dict) -> types.TemplateNode:
         """子类实现模板节点格式化"""
         raise NotImplementedError
-
-    def fill_node_path(self, node_list: List[Dict]):
-        """获取节点路径"""
-        result = []
-        if not node_list:
-            return result
-
-        def _build_node_key(object_id, instance_id) -> str:
-            return f"{object_id}-{instance_id}"
-
-        params = {
-            "bk_biz_id": self.bk_biz_id,
-            "bk_nodes": [
-                {
-                    "bk_obj_id": node["object_id"],
-                    "bk_inst_id": node["instance_id"],
-                }
-                for node in node_list
-            ],
-        }
-        topo_node_paths = BkApi.find_topo_node_paths(params)
-        if not topo_node_paths:
-            return result
-
-        node_path_map = {}
-        for topo_node_path in topo_node_paths:
-            node_key = _build_node_key(topo_node_path["bk_obj_id"], topo_node_path["bk_inst_id"])
-            node_path = [topo_tool.TopoTool.format_topo_node(bk_path) for bk_path in topo_node_path["bk_paths"][0]]
-            node_path.append(topo_tool.TopoTool.format_topo_node(topo_node_path))
-            node_path_map[node_key] = node_path
-
-        for node in node_list:
-            node_key = _build_node_key(node["object_id"], node["instance_id"])
-            node["node_path"] = node_path_map[node_key]
-
-        return result
 
 
 class SetTemplate(Template):
