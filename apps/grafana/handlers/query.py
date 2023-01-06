@@ -558,10 +558,11 @@ class GrafanaQueryHandler:
 
         for _condition in conditions_config:
             # 这里的key为单数形式是因为is_match_condition里会根据key取值来判断是否匹配
+            # _condition里的集群ID和模块ID可能是字符串
             if _condition["key"] == "bk_set_id":
-                params["bk_set_ids"] = _condition["value"]
+                params["bk_set_ids"] = [int(i) for i in _condition["value"]]
             if _condition["key"] == "bk_moduls_id":
-                params["bk_module_ids"] = _condition["value"]
+                params["bk_module_ids"] = [int(i) for i in _condition["value"]]
 
         if variable_type == ObjectType.HOST.value:
             instances = BaseHandler.query_hosts_by_set_and_module(**params)
