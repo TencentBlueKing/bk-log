@@ -103,6 +103,7 @@ class CommonEnum(EnhanceEnum):
         "set_template_id",
     ]
     DEFAULT_MODULE_FIELDS = [
+        "bk_set_id",
         "bk_module_id",
         "bk_module_name",
         "service_template_id",

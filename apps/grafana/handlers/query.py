@@ -35,13 +35,13 @@ from apps.grafana.constants import TIME_SERIES_FIELD_TYPE, LOG_SEARCH_DIMENSION_
 from apps.iam import Permission, ActionEnum, ResourceEnum
 from apps.log_search.constants import GlobalCategoriesEnum
 from apps.log_search.exceptions import BaseSearchIndexSetDataDoseNotExists
-from apps.log_search.handlers.biz import BizHandler
 from apps.log_search.handlers.search.aggs_handlers import AggsViewAdapter
 from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler
 from apps.log_search.models import LogIndexSet, Scenario
 from bk_dataview.grafana import client
 from bkm_space.utils import bk_biz_id_to_space_uid
 from bkm_ipchooser.handlers.base import BaseHandler
+from bkm_ipchooser.constants import ObjectType
 
 
 class GrafanaQueryHandler:
@@ -185,7 +185,7 @@ class GrafanaQueryHandler:
         org_id = self._get_org_id(self.bk_biz_id)
         resp = client.search_dashboard(org_id, dashboard_id)
 
-        if not resp.status_code == 200 or resp.json():
+        if not resp.status_code == 200 or not resp.json():
             # 仪表盘找不到，校验失败
             return False
         dashboards = resp.json()
@@ -554,22 +554,20 @@ class GrafanaQueryHandler:
         label_field = params["label_field"]
         value_field = params["value_field"]
         conditions_config = params.get("where", [])
+        params = {"bk_biz_id": self.bk_biz_id}
 
-        biz_handler = BizHandler(bk_biz_id=self.bk_biz_id)
+        for _condition in conditions_config:
+            if _condition["key"] == "bk_set_ids":
+                params["bk_set_ids"] = _condition["value"]
+            if _condition["key"] == "bk_moduls_ids":
+                params["bk_module_ids"] = _condition["value"]
 
-        if variable_type == "host":
-            host_fields = [c["key"] for c in conditions_config] + [label_field, value_field]
-            if "bk_host_innerip" not in host_fields:
-                host_fields.append("bk_host_innerip")
-            instances = biz_handler.get_hosts(host_fields)
-            for instance in instances:
-                instance.update(instance["host"])
-                instance["bk_set_ids"] = [s["id"] for s in instance["set"]]
-                instance["bk_module_ids"] = [m["id"] for m in instance["module"]]
-        elif variable_type == "module":
-            instances = biz_handler.list_module()
-        elif variable_type == "set":
-            instances = biz_handler.list_set()
+        if variable_type == ObjectType.HOST.value:
+            instances = BaseHandler.query_hosts_by_set_and_module(**params)
+        elif variable_type == ObjectType.MODULE.value:
+            instances = BaseHandler.query_modules_by_set(**params)
+        elif variable_type == ObjectType.SET.value:
+            instances = BaseHandler.query_sets(**params)
         else:
             return []
 
@@ -634,7 +632,6 @@ class GrafanaQueryHandler:
             "host": query_cmdb,
             "module": query_cmdb,
             "set": query_cmdb,
-            "service_instance": query_cmdb,
             "dimension": self._query_dimension,
         }
 
