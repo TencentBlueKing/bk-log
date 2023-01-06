@@ -485,7 +485,7 @@ export default class CollectIndex extends tsc<IProps> {
                 <span class="favorite-number">{this.allFavoriteNumber}</span>
               </span>
               <span
-                class="bk-icon icon-cog"
+                class="bk-icon log-icon icon-wholesale-editor"
                 onClick={() => (this.isShowManageDialog = true)}
               ></span>
             </div>
