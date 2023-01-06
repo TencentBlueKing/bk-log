@@ -227,8 +227,8 @@
       })
     }
 
-    private get bkBizID(): string {
-      return store.getters.bkBizID
+    private get bkBizId(): string {
+      return store.getters.bkBizId
     } 
 
     // 更多操作配置
@@ -697,7 +697,7 @@
           bk_obj_id,
           bk_inst_id,
           bk_inst_name,
-          bk_biz_id: this.bkBizID,
+          bk_biz_id: this.bkBizId,
         }
       })
       const newList = await getNodeAgentStatus(nodeList).catch(() => [])
