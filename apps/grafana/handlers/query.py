@@ -19,6 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import typing
 import copy
 import re
 import time
@@ -40,6 +41,7 @@ from apps.log_search.handlers.search.search_handlers_esquery import SearchHandle
 from apps.log_search.models import LogIndexSet, Scenario
 from bk_dataview.grafana import client
 from bkm_space.utils import bk_biz_id_to_space_uid
+from bkm_ipchooser.handlers.base import BaseHandler
 
 
 class GrafanaQueryHandler:
@@ -228,6 +230,33 @@ class GrafanaQueryHandler:
             raise_exception=True,
         )
 
+    def build_ipchooser_params(self, query_dict: dict) -> typing.Dict[str, typing.Any]:
+        """
+        构建透传到检索模块ip选择器的参数
+        """
+        ip_chooser = defaultdict(list)
+        if not query_dict.get("target", []):
+            return ip_chooser
+
+        for _target in query_dict.get("target", []):
+            object_id = _target.get("bk_obj_id", "host")
+            if object_id in ["set", "module"]:
+                ip_chooser["node_list"].append(
+                    {
+                        "object_id": object_id,
+                        "instance_id": _target["bk_inst_id"],
+                        "meta": BaseHandler.get_meta_data(self.bk_biz_id),
+                    }
+                )
+                continue
+            ip_chooser["host_list"].append(
+                {
+                    "cloud_area": {"id": _target["bk_target_cloud_id"]},
+                    "ip": _target["bk_target_ip"],
+                }
+            )
+        return ip_chooser
+
     def query(self, query_dict: dict):
         """
         数据查询
@@ -250,7 +279,7 @@ class GrafanaQueryHandler:
         search_dict = {
             "start_time": query_dict["start_time"],
             "end_time": query_dict["end_time"],
-            "ip_chooser": query_dict["ip_chooser"],
+            "ip_chooser": self.build_ipchooser_params(query_dict),
             "addition": [
                 {
                     "field": cond["key"],
@@ -294,7 +323,7 @@ class GrafanaQueryHandler:
         search_dict = {
             "start_time": query_dict["start_time"],
             "end_time": query_dict["end_time"],
-            "ip_chooser": query_dict["ip_chooser"],
+            "ip_chooser": self.build_ipchooser_params(query_dict),
             "addition": [
                 {
                     "field": cond["key"],

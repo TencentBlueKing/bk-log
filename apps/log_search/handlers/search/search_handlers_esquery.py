@@ -1399,6 +1399,7 @@ class SearchHandler(object):
             ip_chooser_host_list = IPChooser(
                 bk_biz_id=attrs["bk_biz_id"], fields=CommonEnum.SIMPLE_HOST_FIELDS.value
             ).transfer2host(ip_chooser)
+            # TODO: 暂时只支持IPV4
             ip_chooser_ip_list = [host["bk_host_innerip"] for host in ip_chooser_host_list]
         addition_ip_list, new_addition = self._deal_addition(attrs)
         if addition_ip_list:

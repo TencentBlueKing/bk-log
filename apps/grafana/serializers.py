@@ -64,7 +64,7 @@ class QuerySerializer(serializers.Serializer):
 
     method = serializers.CharField(label=_("聚合方法"))
     interval = serializers.IntegerField(default=60, label=_("时间间隔"))
-    ip_chooser = serializers.DictField(label=_("检索IP条件"), required=False, default={})
+    target = serializers.ListField(default=[], label=_("监控目标"))
 
     start_time = serializers.IntegerField(required=False, label=_("开始时间"))
     end_time = serializers.IntegerField(required=False, label=_("结束时间"))
@@ -78,7 +78,7 @@ class QueryLogSerializer(serializers.Serializer):
     result_table_id = serializers.CharField(label=_("结果表ID"))
     where = serializers.ListField(label=_("过滤条件"))
     query_string = serializers.CharField(label=_("查询字符串"), allow_blank=True, default="")
-    ip_chooser = serializers.DictField(label=_("检索IP条件"), required=False, default={})
+    target = serializers.ListField(default=[], label=_("监控目标"))
     size = serializers.IntegerField(default=10, label=_("日志条数"), max_value=10000)
     start_time = serializers.IntegerField(required=False, label=_("开始时间"))
     end_time = serializers.IntegerField(required=False, label=_("结束时间"))
