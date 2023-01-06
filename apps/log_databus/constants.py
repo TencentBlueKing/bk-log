@@ -530,3 +530,9 @@ TRANSFER_METRICS = [
     "transfer_kafka_request_latency_milliseconds_sum",
     "transfer_kafka_request_latency_milliseconds_count",
 ]
+
+META_DATA_CRON_REFRESH_TASK_NAME_LIST = [
+    "metadata.task.config_refresh.refresh_datasource",
+    "metadata.task.config_refresh.refresh_consul_storage",
+    "metadata.task.config_refresh.refresh_es_storage",
+]
