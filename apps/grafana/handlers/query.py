@@ -459,7 +459,7 @@ class GrafanaQueryHandler:
         """
         校验单个条件匹配
         """
-        field_name = condition_item["field"]
+        field_name = condition_item["key"]
         method = condition_item.get("method", "eq")
         field_values = condition_item["value"]
 
@@ -557,9 +557,10 @@ class GrafanaQueryHandler:
         params = {"bk_biz_id": self.bk_biz_id}
 
         for _condition in conditions_config:
-            if _condition["key"] == "bk_set_ids":
+            # 这里的key为单数形式是因为is_match_condition里会根据key取值来判断是否匹配
+            if _condition["key"] == "bk_set_id":
                 params["bk_set_ids"] = _condition["value"]
-            if _condition["key"] == "bk_moduls_ids":
+            if _condition["key"] == "bk_moduls_id":
                 params["bk_module_ids"] = _condition["value"]
 
         if variable_type == ObjectType.HOST.value:
