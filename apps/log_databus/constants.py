@@ -474,6 +474,7 @@ JOB_STATUS = {
 RETRY_TIMES = 5
 WAIT_FOR_RETRY = 20
 INDEX_WRITE_PREFIX = "write_"
+INDEX_READ_SUFFIX = "_read"
 
 
 class ScriptType(ChoicesEnum):
