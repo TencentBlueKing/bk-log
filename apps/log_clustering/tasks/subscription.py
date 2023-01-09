@@ -202,7 +202,7 @@ def clean_pattern(config: ClusteringSubscription, time_config: dict, data: list,
         },
     }
 
-    if config.log_col_show_type == LogColShowTypeEnum.LOG.value and patterns and new_patterns:
+    if config.log_col_show_type == LogColShowTypeEnum.LOG.value and (patterns or new_patterns):
         # 查询pattern对应的log, 将pattern替换为log
         log_map = {}
         with ThreadPoolExecutor() as ex:
