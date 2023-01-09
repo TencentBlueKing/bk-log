@@ -134,21 +134,18 @@ class ClusteringSubscription(SoftDeleteModel):
         _("订阅类型"),
         max_length=64,
         choices=SubscriptionTypeEnum.get_choices(),
-        db_index=True,
         default=SubscriptionTypeEnum.WECHAT.value,
     )
-    bk_biz_id = models.IntegerField(_("业务ID"), db_index=True, max_length=64)
-    bk_biz_name = models.CharField(_("业务名称"), db_index=True, max_length=128)
+    space_uid = models.CharField(_("空间ID"), db_index=True, max_length=64)
     index_set_id = models.IntegerField(_("索引集id"), db_index=True)
-    index_set_name = models.CharField(_("索引集名称"), db_index=True, max_length=128)
-    title = models.CharField(_("标题"), max_length=128)
+    title = models.TextField(_("标题"))
     receivers = models.JSONField(_("接收人"))
-    admin = models.JSONField(_("管理员"))
+    managers = models.JSONField(_("管理员"))
     frequency = models.JSONField(_("发送频率"))
     pattern_level = models.CharField(
-        _("敏感度"), choices=PatternEnum.model_choice.value, max_length=64, default=PatternEnum.LEVEL_05.value
+        _("敏感度"), choices=PatternEnum.get_choices(), max_length=64, default=PatternEnum.LEVEL_05.value
     )
-    size = models.IntegerField(_("日志条数"), default=5)
+    log_display_count = models.IntegerField(_("日志条数"), default=5)
     log_col_show_type = models.CharField(
         _("日志列显示"), choices=LogColShowTypeEnum.get_choices(), max_length=64, default=LogColShowTypeEnum.PATTERN.value
     )
@@ -159,7 +156,9 @@ class ClusteringSubscription(SoftDeleteModel):
     year_on_year_change = models.CharField(
         _("同比变化"), choices=YearOnYearChangeEnum.get_choices(), default=YearOnYearChangeEnum.ALL.value, max_length=64
     )
-    query_string = models.TextField(_("查询语句"), null=True, blank=True)
+    query_string = models.TextField(_("查询语句"), default="*", null=True, blank=True)
+    addition = models.JSONField(_("查询条件"), default=[], null=True, blank=True)
+    host_scopes = models.JSONField(_("主机范围"), default={}, null=True, blank=True)
     is_show_new_pattern = models.BooleanField(_("是否只要新类"), default=True)
     is_enabled = models.BooleanField(_("是否启用"), default=True)
     last_run_at = models.DateTimeField(_("最后运行时间"), blank=True, null=True)

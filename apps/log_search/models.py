@@ -131,7 +131,7 @@ class GlobalConfig(models.Model):
         # ES日志来源类型
         configs[GlobalTypeEnum.ES_SOURCE_TYPE.value] = EsSourceType.get_choices_list_dict()
         # 日志聚类
-        configs[GlobalTypeEnum.LOG_CLUSTERING_LEVEL.value] = PatternEnum.get_choices()
+        configs[GlobalTypeEnum.LOG_CLUSTERING_LEVEL.value] = PatternEnum.get_dict_choices().keys()
         configs[GlobalTypeEnum.LOG_CLUSTERING_YEAR_ON_YEAR.value] = YearOnYearEnum.get_choices_list_dict()
         # 自定义上报
         configs[GlobalTypeEnum.DATABUS_CUSTOM.value] = CustomTypeEnum.get_choices_list_dict()

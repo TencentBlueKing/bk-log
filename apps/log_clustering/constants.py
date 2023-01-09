@@ -162,22 +162,12 @@ class PatternEnum(ChoicesEnum):
     LEVEL_07 = "07"
     LEVEL_09 = "09"
 
-    @classmethod
-    def get_choices(cls) -> tuple:
-        return (
-            cls.LEVEL_09.value,
-            cls.LEVEL_07.value,
-            cls.LEVEL_05.value,
-            cls.LEVEL_03.value,
-            cls.LEVEL_01.value,
-        )
-
-    model_choice = (
-        (LEVEL_01, "01"),
-        (LEVEL_03, "03"),
-        (LEVEL_05, "05"),
-        (LEVEL_07, "07"),
-        (LEVEL_09, "09"),
+    _choices_labels = (
+        (LEVEL_01, "LEVEL_01"),
+        (LEVEL_03, "LEVEL_03"),
+        (LEVEL_05, "LEVEL_05"),
+        (LEVEL_07, "LEVEL_07"),
+        (LEVEL_09, "LEVEL_09"),
     )
 
 
@@ -227,3 +217,9 @@ class LogColShowTypeEnum(ChoicesEnum):
         (PATTERN, _("PATTERN模式")),
         (LOG, _("采样日志")),
     )
+
+
+class FrequencyTypeEnum(ChoicesEnum):
+    MINUTE = 1
+    DAY = 2
+    WEEK = 3
