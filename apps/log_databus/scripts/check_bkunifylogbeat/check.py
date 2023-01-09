@@ -125,27 +125,18 @@ class BKUnifyLogBeatCheck(object):
     def check_main_config():
         result = Result(MODULE_BKUNIFYLOGBEAT, STEP_CHECK_BKUNIFYLOGBEAT_MAIN_CONFIG)
         if not os.path.exists(collector_etc_main_config_path):
-            result.message = "main config is not exists"
+            result.message = "main config file is not exists"
             result.add_to_result()
             return
-        in_multi_config = False
-        path_lines = []
-        with open(collector_etc_main_config_path) as f:
-            for line in f.readlines():
-                if "bkunifylogbeat.multi_config" in line:
-                    in_multi_config = True
-                    continue
-                if in_multi_config:
-                    if not line.startswith(" "):
-                        break
-                    if line.strip().startswith("- path"):
-                        path_lines.append(line.split(":")[-1])
 
-        for path_line in path_lines:
-            if collector_etc_path in path_line:
-                break
-        else:
-            result.message = "multi_config not have [{}]".format(collector_etc_main_config_path)
+        output = get_command(
+            "sed -n '/^bkunifylogbeat.multi_config/,/^$/p' %s | grep path | awk -F: '{print $2}'"
+            % collector_etc_main_config_path
+        )
+        output = output.replace(" ", "")
+        path_list = output.split("\n")
+        if collector_etc_path not in path_list:
+            result.message = "multi_config not have path [{}]".format(collector_etc_main_config_path)
             result.add_to_result()
             return
 
