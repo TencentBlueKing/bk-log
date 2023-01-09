@@ -247,8 +247,12 @@ def render_template(template: str, params: dict) -> str:
 
 def send_wechat(params: dict, receivers: list):
     content = render_template("clustering_wechat.md", params)
-    send_params = {"chatid": receivers[0]["id"], "msgtype": "markdown", "markdown": {"content": content}}
-    robot_api.send_msg(send_params)
+
+    with ThreadPoolExecutor() as ex:
+        for receiver in receivers:
+            send_params = {"chatid": receiver["id"], "msgtype": "markdown", "markdown": {"content": content}}
+            ex.submit(robot_api.send_msg, send_params)
+
     ClusteringSubscription.objects.filter(id=params["id"]).update(last_run_at=params["time_config"]["last_run_at"])
 
 
