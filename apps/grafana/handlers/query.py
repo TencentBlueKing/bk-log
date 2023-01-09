@@ -244,14 +244,14 @@ class GrafanaQueryHandler:
                 ip_chooser["node_list"].append(
                     {
                         "object_id": object_id,
-                        "instance_id": _target["bk_inst_id"],
+                        "instance_id": int(_target["bk_inst_id"]),
                         "meta": BaseHandler.get_meta_data(self.bk_biz_id),
                     }
                 )
                 continue
             ip_chooser["host_list"].append(
                 {
-                    "cloud_area": {"id": _target["bk_target_cloud_id"]},
+                    "cloud_area": {"id": int(_target["bk_target_cloud_id"])},
                     "ip": _target["bk_target_ip"],
                 }
             )
