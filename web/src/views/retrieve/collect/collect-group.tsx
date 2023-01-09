@@ -51,9 +51,6 @@ export default class CollectGroup extends tsc<ICollectProps> {
   get isCannotChange() {
     return ['private', 'unknown'].includes(this.collectItem.group_type);
   }
-  get isShowTitleIcon() {
-    return this.collectItem.group_type !== 'unknown';
-  }
 
   handleClickCollect(item: IFavoriteItem) {
     setTimeout(() => {

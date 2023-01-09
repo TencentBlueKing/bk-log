@@ -12,7 +12,7 @@
   .group-cur {
     display: flex;
     align-items: center;
-    width: 100px;
+    flex: 1;
     cursor: pointer;
 
     .is-active {

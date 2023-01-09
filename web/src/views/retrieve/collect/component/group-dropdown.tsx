@@ -64,6 +64,10 @@ export default class CollectGroup extends tsc<IProps> {
     return this.$store.state.userMeta;
   }
 
+  get isUnknownGroup() {
+    return this.data.group_id === this.groupList[this.groupList.length - 1]?.group_id;
+  }
+
   get showGroupList() {
     // 根据用户名判断是否时自己创建的收藏 若不是自己的则去除个人组选项
     return this.userMeta.username !== this.data.created_by
@@ -210,20 +214,13 @@ export default class CollectGroup extends tsc<IProps> {
                 maxlength={10}>
               </Input>
               <div class="operate-button">
-                <Button text onClick={e => this.handleResetGroupName(e)}>
-                  {this.$t('确定')}
-                </Button>
+                <Button text onClick={e => this.handleResetGroupName(e)}>{this.$t('确定')}</Button>
               </div>
             </li>
           ) : (
-            <li onClick={() => this.handleResetGroupTitleName()}>
-              {this.$t('重命名')}
-            </li>
+            <li onClick={() => this.handleResetGroupTitleName()}>{this.$t('重命名')}</li>
           )}
-          <li
-            class="eye-catching"
-            onClick={() => this.handleClickLi('dismiss-group')}
-          >
+          <li class="eye-catching" onClick={() => this.handleClickLi('dismiss-group')}>
             {this.$t('解散分组')}
           </li>
         </ul>
@@ -233,23 +230,18 @@ export default class CollectGroup extends tsc<IProps> {
       <div style={{ display: 'none' }}>
         <ul class="dropdown-list" ref="operate">
           <li onClick={() => this.handleClickLi('share')}>{this.$t('分享')}</li>
-          <li onClick={() => this.handleClickLi('edit-favorite')}>
-            {this.$t('编辑')}
-          </li>
-          <li onClick={() => this.handleClickLi('create-copy')}>
-            {this.$t('创建副本')}
-          </li>
+          <li onClick={() => this.handleClickLi('edit-favorite')}>{this.$t('编辑')}</li>
+          <li onClick={() => this.handleClickLi('create-copy')}>{this.$t('创建副本')}</li>
           <li class="move-group" onClick={this.handleClickMoveGroup}>
             {this.$t('移动至分组')}
             <span class="bk-icon icon-angle-right more-icon"></span>
           </li>
-          <li onClick={() => this.handleClickLi('remove-group')}>
-            {this.$t('从该组移除')}
-          </li>
-          <li
-            class="eye-catching"
-            onClick={() => this.handleClickLi('delete-favorite')}
-          >
+          {
+            !this.isUnknownGroup
+              ? <li onClick={() => this.handleClickLi('remove-group')}>{this.$t('从该组移除')}</li>
+              : undefined
+          }
+          <li class="eye-catching" onClick={() => this.handleClickLi('delete-favorite')}>
             {this.$t('删除')}
           </li>
         </ul>
@@ -259,11 +251,7 @@ export default class CollectGroup extends tsc<IProps> {
       <div style={{ display: 'none' }}>
         <ul class="group-dropdown-list" ref="groupMoveList">
           {this.showGroupList.map(item => (
-            <li
-              onClick={() => this.handleClickLi('move-favorite', item.group_id)}
-            >
-              {item.group_name}
-            </li>
+            <li onClick={() => this.handleClickLi('move-favorite', item.group_id)}>{item.group_name}</li>
           ))}
           {this.isShowNewGroupInput ? (
             <li class="add-new-group-input">
@@ -274,12 +262,8 @@ export default class CollectGroup extends tsc<IProps> {
                 maxlength={10}>
               </Input>
               <div class="operate-button">
-                <Button text onClick={e => this.handleChangeGroupInputStatus(e, 'add')}>
-                  {this.$t('确定')}
-                </Button>
-                <span onClick={e => this.handleChangeGroupInputStatus(e, 'cancel')}>
-                  {this.$t('取消')}
-                </span>
+                <Button text onClick={e => this.handleChangeGroupInputStatus(e, 'add')}>{this.$t('确定')}</Button>
+                <span onClick={e => this.handleChangeGroupInputStatus(e, 'cancel')}>{this.$t('取消')}</span>
               </div>
             </li>
           ) : (
@@ -301,9 +285,7 @@ export default class CollectGroup extends tsc<IProps> {
               {!this.isHoverTitle ? (
                 <span class="title-number">{this.data.favorites.length}</span>
               ) : (
-                <div class="more-box">
-                  <span class="bk-icon icon-more"></span>
-                </div>
+                <div class="more-box"><span class="bk-icon icon-more"></span></div>
               )}
             </div>
             {groupDropList()}

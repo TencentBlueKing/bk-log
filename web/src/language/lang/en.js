@@ -1584,5 +1584,10 @@ export default {
   更新人: 'Updater',
   新检索: 'New search',
   收藏名重复: 'Favorite name is exist',
-  更新成功: 'Update success'
+  更新成功: 'Update success',
+  个人组: 'Private group',
+  未分组: 'Unknown group',
+  '保留名称，不可使用': 'Reserve name not available',
+  未完成配置: 'Undead configuration',
+  删除前请先停用: 'Please stop before deleting',
 };

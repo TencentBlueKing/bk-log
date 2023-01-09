@@ -127,7 +127,7 @@
                     class="search-type"
                     @click="handleClickSearchType">
                     <span class="bk-icon icon-sort"></span>
-                    <span>{{isSqlSearchType ? $t('表单') : 'SQL'}}</span>
+                    <span>{{isSqlSearchType ? $t('表单') : 'Source'}}</span>
                   </div>
                   <div slot="content">
                     <span
@@ -161,6 +161,8 @@
                     :is-auto-query="isAutoQuery"
                     :retrieved-keyword="retrievedKeyword"
                     :dropdown-data="retrieveDropdownData"
+                    :is-show-ui-type="isShowUiType"
+                    @inputBlur="handleBlurSearchInput"
                     @retrieve="retrieveLog" />
                 </template>
                 <template v-else>
@@ -168,7 +170,9 @@
                     :is-favorite-search="isFavoriteSearch"
                     :keyword="retrieveParams.keyword"
                     :active-favorite="activeFavorite"
-                    @updateKeyWords="updateKeyWords"></ui-query>
+                    :is-clear-condition="isClearCondition"
+                    @updateKeyWords="updateKeyWords"
+                    @favSearchList="initSearchList" />
                 </template>
                 <!-- 添加过滤条件 -->
                 <div class="tab-item-title flex-item-title">
@@ -264,10 +268,12 @@
                       </span>
                     </bk-button>
                   </div>
-                  <div class="clear-params-btn" @click="clearCondition">
-                    <bk-button data-test-id="dataQuery_button_phrasesClear"></bk-button>
-                    <span class="log-icon icon-brush"></span>
-                  </div>
+                  <span v-bk-tooltips="{ content: $t('清空'), delay: 200 }">
+                    <div class="clear-params-btn" @click="clearCondition">
+                      <bk-button data-test-id="dataQuery_button_phrasesClear"></bk-button>
+                      <span class="log-icon icon-brush"></span>
+                    </div>
+                  </span>
                 </div>
               </div>
               <div class="tab-content-item" data-test-id="retrieve_div_fieldFilterBox">
@@ -548,6 +554,9 @@ export default {
         theme: 'light',
         trigger: 'mouseenter',
       },
+      isClearCondition: false, // 是否清空检索条件
+      favSearchList: [], // 收藏的表单模式列表
+      inputSearchList: [], // 鼠标失焦后的表单模式列表
       filterAllOperators: {},
       addFavoriteData: {}, // 新增收藏所需的参数
       favoriteRequestID: 0, // 参数改变更新收藏
@@ -605,12 +614,16 @@ export default {
       if (this.tableLoading) return this.searchMap.searchIng;
       return this.searchMap[this.isAutoQuery ? 'autoSearch' : 'search'];
     },
-    isCanUseUiType() { // 判断当前的检索语句是否与收藏的相对于 不相等的话不显示表单模式
-      return this.activeFavorite?.params?.keyword === this.retrieveParams.keyword;
+    isCanUseUiType() { // 判断当前的检索语句生成的键名和操作符是否相同 不相等的话不能切换表单模式
+      if (this.inputSearchList.length !== this.favSearchList.length) return false;
+      return this.favSearchList.every((item, index) => {
+        const { name, operator } = this.inputSearchList[index];
+        return (item.name === name && item.operator === operator);
+      });
     },
     isShowUiType() { // 判断当前点击的收藏是否展示表单字段
       // eslint-disable-next-line camelcase
-      return this.activeFavorite?.params?.search_fields?.length;
+      return Boolean(this.activeFavorite?.params?.search_fields?.length);
     },
     isFavoriteNewSearch() { // 是否是新检索
       return this.activeFavoriteID === -1;
@@ -735,9 +748,6 @@ export default {
       this.isHideAutoQueryTips = true;
       this.$refs.queryTipPopover.instance.hide();
     },
-    // switchAutoQuery(data) {
-    //   localStorage.setItem('closeAutoQuery', !data);
-    // },
     // 切换到监控指标检索
     handleCheckMonitor() {
       window.parent.postMessage('datarieval-click', '*');
@@ -1055,6 +1065,7 @@ export default {
         },
         addition: [],
       });
+      this.isClearCondition = !this.isClearCondition;
       this.retrieveLog();
     },
     // 搜索记录
@@ -1721,7 +1732,7 @@ export default {
           visible_type,
           id,
         } = this.activeFavorite;
-        const { search_fields } = params;
+        const { search_fields: favSearchFields } = params;
         const { host_scopes, addition, keyword } = this.retrieveParams;
         const data = {
           name,
@@ -1731,8 +1742,9 @@ export default {
           host_scopes,
           addition,
           keyword,
-          search_fields,
+          search_fields: (!this.isSqlSearchType && keyword !== '') ? favSearchFields : [],
         };
+        if (!data.search_fields.length) this.isSqlSearchType = true;
         const res = await this.$http.request('favorite/updateFavorite', {
           params: { id },
           data,
@@ -1842,6 +1854,29 @@ export default {
     // 收藏列表刷新, 判断当前是否有点击活跃的收藏 如有则进行数据更新
     async updateActiveFavoriteData(value) {
       this.activeFavorite = deepClone(value);
+    },
+    // 根据检索语句 获取表单字段
+    async getSearchFieldsList(keyword) {
+      try {
+        const res = await this.$http.request('favorite/getSearchFields', {
+          data: { keyword },
+        });
+        return res.data.map(item => ({
+          name: item.name,
+          operator: item.operator,
+        }));
+      } catch (err) {
+        return [];
+      }
+    },
+    async handleBlurSearchInput(newKeyword) {
+      newKeyword === '' && (newKeyword = '*');
+      this.inputSearchList = await this.getSearchFieldsList(newKeyword);
+    },
+    // 当点击有表单模式的收藏时 初始化search列表
+    initSearchList(list) {
+      this.favSearchList = list;
+      this.inputSearchList = list;
     },
   },
 };
@@ -2040,7 +2075,7 @@ export default {
               user-select: none;
 
               .search-type {
-                width: 50px;
+                width: 60px;
                 margin-right: 10px;
                 color: #3a84ff;
                 transform: translateY(-1px);
