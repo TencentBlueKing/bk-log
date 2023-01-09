@@ -483,7 +483,8 @@ class GrafanaQueryHandler:
         if method == "eq":
             # 当前等于任一字符串即匹配
             for value in field_values:
-                if instance_value == value:
+                # 因为上面field_values统一转换为str，所以这里也要转换
+                if str(instance_value) == value:
                     return True
             else:
                 return False
@@ -491,7 +492,8 @@ class GrafanaQueryHandler:
         if method == "neq":
             # 当前值等于任一字符串即不匹配
             for value in field_values:
-                if instance_value == value:
+                # 因为上面field_values统一转换为str，所以这里也要转换
+                if str(instance_value) == value:
                     return False
             else:
                 return True
