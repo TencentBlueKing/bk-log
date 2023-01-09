@@ -552,9 +552,25 @@ class GrafanaQueryHandler:
         # 当所有条件组都不满足时，则返回不匹配
         return False
 
+    def _get_seperator(self, field_name):
+        """获取label_field和value_field的分隔符"""
+        supported_seperator = ["|", ","]
+        for _s in supported_seperator:
+            if _s in field_name:
+                return _s
+        return ","
+
     def _query_cmdb(self, variable_type, params):
         label_field = params["label_field"]
         value_field = params["value_field"]
+        label_seperator = self._get_seperator(label_field)
+        value_seperator = self._get_seperator(value_field)
+
+        # get_variable_value中多个value会以通过分隔符的形式拼接
+        if label_seperator in label_field:
+            label_field = label_field.split(label_seperator)
+        if value_seperator in value_field:
+            value_field = value_field.split(value_seperator)
         conditions_config = params.get("where", [])
         params = {"bk_biz_id": self.bk_biz_id}
 
@@ -582,21 +598,34 @@ class GrafanaQueryHandler:
             if not self.is_match_condition(instance, conditions_config):
                 continue
 
-            label = instance.get(label_field, None)
-            value = instance.get(value_field, None)
+            if isinstance(label_field, list):
+                label = []
+                for _field in label_field:
+                    if instance.get(_field, None) is not None:
+                        label.append(instance[_field])
+            else:
+                label = instance.get(label_field, None)
+
+            if isinstance(value_field, list):
+                value = []
+                for _field in value_field:
+                    if instance.get(_field, None) is not None:
+                        value.append(instance[_field])
+            else:
+                value = instance.get(value_field, None)
 
             if not value and value != 0:
                 continue
 
             if isinstance(value, list):
-                value = ",".join([str(x) for x in value])
+                value = value_seperator.join([str(x) for x in value])
             else:
                 value = str(value)
 
             if not label:
                 label = value
             elif isinstance(label, list):
-                label = ",".join([str(x) for x in label])
+                label = label_seperator.join([str(x) for x in label])
             else:
                 label = str(label)
 
