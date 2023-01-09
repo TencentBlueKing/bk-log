@@ -16,17 +16,25 @@ MODULE_GSEAGENT = "gse_agent"
 
 STEP_CHECK_BKUNIFYLOGBEAT_BIN_FILE = "bin_file"
 STEP_CHECK_BKUNIFYLOGBEAT_PROCESS = "process"
+STEP_CHECK_BKUNIFYLOGBEAT_MAIN_CONFIG = "main_config"
 STEP_CHECK_BKUNIFYLOGBEAT_CONFIG = "config"
 STEP_CHECK_BKUNIFYLOGBEAT_HOSTED = "hosted"
 STEP_CHECK_BKUNIFYLOGBEAT_HEALTHZ = "healthz"
 
 STEP_CHECK_GSEAGENT_PROCESS = "process"
 STEP_CHECK_GSEAGENT_SOCKET = "socket"
+STEP_CHECK_GSEAGENT_SOCKET_QUEUE_STATUS = "socket queue status"
+STEP_CHECK_GSEAGENT_DATASERVER_PORT = "dataserver port"
+
+COLLECTOR_MAIN_CONFIG_FILE_NAME = "bkunifylogbeat.conf"
+
+DATASERVER_PORT = "58625"
 
 subscription_id = 0
 socket_between_gse_agent_and_beat = "/var/run/ipc.state.report"
 gse_path = "/usr/local/gse/"
 collector_bin_path = os.path.join(gse_path, "plugins/bin", MODULE_BKUNIFYLOGBEAT)
+collector_etc_main_config_path = os.path.join(gse_path, "plugins/etc", COLLECTOR_MAIN_CONFIG_FILE_NAME)
 collector_etc_path = os.path.join(gse_path, "plugins/etc", MODULE_BKUNIFYLOGBEAT)
 procinfo_file_path = os.path.join(gse_path, "agent/etc/procinfo.json")
 config_name_suffix = "%s_sub_" % MODULE_BKUNIFYLOGBEAT
@@ -114,6 +122,28 @@ class BKUnifyLogBeatCheck(object):
         result.add_to_result()
 
     @staticmethod
+    def check_main_config():
+        result = Result(MODULE_BKUNIFYLOGBEAT, STEP_CHECK_BKUNIFYLOGBEAT_MAIN_CONFIG)
+        if not os.path.exists(collector_etc_main_config_path):
+            result.message = "main config file is not exists"
+            result.add_to_result()
+            return
+
+        output = get_command(
+            "sed -n '/^bkunifylogbeat.multi_config/,/^$/p' %s | grep path | awk -F: '{print $2}'"
+            % collector_etc_main_config_path
+        )
+        output = output.replace(" ", "")
+        path_list = output.split("\n")
+        if collector_etc_path not in path_list:
+            result.message = "multi_config not have path [{}]".format(collector_etc_main_config_path)
+            result.add_to_result()
+            return
+
+        result.status = True
+        result.add_to_result()
+
+    @staticmethod
     def check_config():
         result = Result(MODULE_BKUNIFYLOGBEAT, STEP_CHECK_BKUNIFYLOGBEAT_CONFIG)
         real_config_name = ""
@@ -161,6 +191,35 @@ class GseAgentCheck(object):
             result.status = True
         result.add_to_result()
 
+    @staticmethod
+    def check_socket():
+        result = Result(MODULE_GSEAGENT, STEP_CHECK_GSEAGENT_SOCKET_QUEUE_STATUS)
+        output = get_command("ss -x -p | grep -E 'REC|%s' |awk '{print $6}'" % socket_between_gse_agent_and_beat)
+        if not output:
+            result.message = "socket not used"
+            result.add_to_result()
+            return
+        port = output.split("-")[-1]
+        queue_status = get_command("ss -x -p | grep -E 'Rec|%s' |awk 'NR>1{print $3;print $4}'" % port)
+        queue_status = list(map(int, queue_status.split("\n")))
+        if not any(queue_status):
+            result.message = "socket queue blocking"
+            result.add_to_result()
+            return
+        result.status = True
+        result.add_to_result()
+
+    @staticmethod
+    def check_dataserver():
+        result = Result(MODULE_GSEAGENT, STEP_CHECK_GSEAGENT_DATASERVER_PORT)
+        output = get_command("netstat -anplut | grep %s" % DATASERVER_PORT)
+        if not output:
+            result.message = "dataserver not exist"
+            result.add_to_result()
+            return
+        result.status = True
+        result.add_to_result()
+
 
 def _get_opt_parser():
     """get option parser"""
@@ -198,6 +257,7 @@ def arg_parse():
     global subscription_id
     global socket_between_gse_agent_and_beat
     global collector_bin_path
+    global collector_etc_main_config_path
     global collector_etc_path
     global procinfo_file_path
 
@@ -207,6 +267,7 @@ def arg_parse():
     if options.path:
         gse_path = options.path
         collector_bin_path = os.path.join(gse_path, "plugins/bin", MODULE_BKUNIFYLOGBEAT)
+        collector_etc_main_config_path = os.path.join(gse_path, "plugins/etc", COLLECTOR_MAIN_CONFIG_FILE_NAME)
         collector_etc_path = os.path.join(gse_path, "plugins/etc", MODULE_BKUNIFYLOGBEAT)
         procinfo_file_path = os.path.join(gse_path, "agent/etc/procinfo.json")
     if options.subscription_id:
@@ -221,6 +282,7 @@ def main():
     bkunifylogbeat_checker = BKUnifyLogBeatCheck()
     bkunifylogbeat_checker.check_bin_file()
     bkunifylogbeat_checker.check_process()
+    bkunifylogbeat_checker.check_main_config()
     bkunifylogbeat_checker.check_config()
     bkunifylogbeat_checker.check_gseagent_hosted()
     bkunifylogbeat_checker.check_collector_healthz()
@@ -228,9 +290,11 @@ def main():
     gse_agent_checker = GseAgentCheck()
     gse_agent_checker.check_process()
     gse_agent_checker.check_socket_between_gse_agent_and_beat()
+    gse_agent_checker.check_socket()
+    gse_agent_checker.check_dataserver()
 
     global check_result
-    if [i["status"] for i in check_result["data"]].count(True) == len(check_result["data"]):
+    if all([i["status"] for i in check_result["data"]]):
         check_result["status"] = True
 
     print(json.dumps(check_result))
