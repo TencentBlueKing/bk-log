@@ -202,7 +202,7 @@ def clean_pattern(config: ClusteringSubscription, time_config: dict, data: list,
         },
     }
 
-    if config.log_col_show_type == LogColShowTypeEnum.LOG.value and patterns and new_patterns:
+    if config.log_col_show_type == LogColShowTypeEnum.LOG.value and (patterns or new_patterns):
         # 查询pattern对应的log, 将pattern替换为log
         log_map = {}
         with ThreadPoolExecutor() as ex:
@@ -247,8 +247,12 @@ def render_template(template: str, params: dict) -> str:
 
 def send_wechat(params: dict, receivers: list):
     content = render_template("clustering_wechat.md", params)
-    send_params = {"chatid": receivers[0]["id"], "msgtype": "markdown", "markdown": {"content": content}}
-    robot_api.send_msg(send_params)
+
+    with ThreadPoolExecutor() as ex:
+        for receiver in receivers:
+            send_params = {"chatid": receiver["id"], "msgtype": "markdown", "markdown": {"content": content}}
+            ex.submit(robot_api.send_msg, send_params)
+
     ClusteringSubscription.objects.filter(id=params["id"]).update(last_run_at=params["time_config"]["last_run_at"])
 
 
