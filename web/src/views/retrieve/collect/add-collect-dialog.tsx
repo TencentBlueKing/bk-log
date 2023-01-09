@@ -60,14 +60,14 @@ interface IProps {
 
 @Component
 export default class CollectDialog extends tsc<IProps> {
-  @Model("change", { type: Boolean, default: false }) value: IProps['value'];
+  @Model('change', { type: Boolean, default: false }) value: IProps['value'];
   @Prop({ type: Number, default: -1 }) favoriteID: number; // 编辑收藏ID
   @Prop({ type: Object, default: () => ({}) }) addFavoriteData: object; // 新增收藏的数据
   @Prop({ type: Object, default: () => ({}) }) replaceData: object; // 替换收藏的params数据
   @Prop({ type: Boolean, default: false }) isClickFavoriteEdit: boolean; // 当前编辑的收藏是否是点击活跃的
   @Prop({ type: Array, default: () => [] }) visibleFields: Array<any>; // 字段
   @Prop({ type: Array, default: () => [] }) favoriteList: Array<any>; // 收藏列表
-  @Ref("validateForm") validateFormRef: Form;
+  @Ref('validateForm') validateFormRef: Form;
   searchFieldsList = []; // 表单模式显示字段
   isDisableSelect = false; // 是否禁用 所属组下拉框
   isShowAddGroup = true;
@@ -137,6 +137,11 @@ export default class CollectDialog extends tsc<IProps> {
         message: window.mainComponent.$t('收藏名重复'),
         trigger: 'blur',
       },
+      {
+        validator: this.checkCannotUseName,
+        message: window.mainComponent.$t('保留名称，不可使用'),
+        trigger: 'blur',
+      },
     ],
   };
 
@@ -189,10 +194,14 @@ export default class CollectDialog extends tsc<IProps> {
   checkSpecification() {
     return /^[\u4e00-\u9fa5_a-zA-Z0-9`~!@#$%^&*()_\-+=<>?:"{}|,.\/;'\\[\]·~！@#￥%……&*（）——\-+={}|《》？：“”【】、；‘'，。、]+$/im.test(this.favoriteData.name.trim());
   }
+  /** 检查是否有内置名称不能使用 */
+  checkCannotUseName() {
+    return ![this.$t('个人组'), this.$t('未分组')].includes(this.favoriteData.name.trim());
+  }
 
   handleSelectGroup(nVal: number) {
-    const visible_type = nVal === this.privateGroupID ? 'private' : 'public'
-    this.isDisableSelect = nVal === this.privateGroupID
+    const visible_type = nVal === this.privateGroupID ? 'private' : 'public';
+    this.isDisableSelect = nVal === this.privateGroupID;
     Object.assign(this.favoriteData, { visible_type });
   }
 
@@ -203,6 +212,7 @@ export default class CollectDialog extends tsc<IProps> {
         // 判断是否是新增
         Object.assign(this.favoriteData, this.addFavoriteData); // 合并新增收藏详情
         this.favoriteData.group_id = this.unknownGroupID;
+        this.favoriteData.params.search_fields = [];
       } else {
         await this.getFavoriteData(this.favoriteID); // 获取收藏详情
       }
@@ -266,6 +276,7 @@ export default class CollectDialog extends tsc<IProps> {
   }
 
   async getSearchFieldsList(keyword: string) {
+    keyword === '' && (keyword = '*');
     try {
       const res = await $http.request('favorite/getSearchFields', {
         data: { keyword },
@@ -347,7 +358,8 @@ export default class CollectDialog extends tsc<IProps> {
       } else { // 通过id获取到的收藏
         Object.assign(this.favoriteData, assignData);
       }
-    } catch (error) {} finally {
+      this.favoriteData.params.search_fields = assignData.params.search_fields;
+    } finally {
       this.formLoading = false;
     }
   }

@@ -49,6 +49,10 @@ export default {
       type: String,
       required: true,
     },
+    isClearCondition: {
+      type: Boolean,
+      required: true,
+    },
   },
   data() {
     return {
@@ -57,7 +61,6 @@ export default {
       loading: false,
     };
   },
-  computed: {},
   watch: {
     activeFavorite: {
       immediate: true,
@@ -67,9 +70,13 @@ export default {
         this.getSearchFieldsList(keyword, value?.params?.search_fields);
       },
     },
+    isClearCondition() {
+      this.searchFieldsList.forEach(item => item.value = '');
+    },
   },
   methods: {
     async getSearchFieldsList(keyword, fieldsList = []) {
+      keyword === '' && (keyword = '*');
       this.loading = true;
       try {
         const res = await this.$http.request('favorite/getSearchFields', {
@@ -77,7 +84,12 @@ export default {
         });
         this.searchFieldsList = res.data.filter(item => fieldsList.includes(item.name));
         this.cacheFieldsList = deepClone(this.searchFieldsList); // 赋值缓存的展示字段
-      } catch (error) {} finally {
+        const favSearchList = res.data.map(item => ({
+          name: item.name,
+          operator: item.operator,
+        }));
+        this.$emit('favSearchList', favSearchList);
+      } finally {
         this.loading = false;
       }
     },
@@ -93,15 +105,14 @@ export default {
           value: item.value,
           pos: item.pos,
         }));
-      try {
-        const res = await this.$http.request('favorite/getGenerateQuery', {
-          data: {
-            keyword,
-            params,
-          },
-        });
+      this.$http.request('favorite/getGenerateQuery', {
+        data: {
+          keyword,
+          params,
+        },
+      }).then((res) => {
         this.$emit('updateKeyWords', res.data);
-      } catch (error) {}
+      });
     },
   },
 };
