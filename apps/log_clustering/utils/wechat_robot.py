@@ -27,7 +27,7 @@ from apps.exceptions import ApiRequestError
 
 class WeChatRobot:
     def __init__(self):
-        self.url = settings.BKAPP_WECHAT_WEB_HOOK_URL
+        self.url = settings.WECHAT_WEB_HOOK_URL
 
     def send_msg(self, data):
         try:

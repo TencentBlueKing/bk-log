@@ -1,18 +1,20 @@
 default_stages: [commit]
 repos:
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v1.21.0
-    hooks:
-      - id: pyupgrade
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.1.0
     hooks:
     - id: check-merge-conflict
   - repo: https://github.com/psf/black
-    rev: stable
+    rev: 22.3.0
     hooks:
     - id: black
-      language_version: python3.6
+      name: black
+      language: python
+  - repo: https://github.com/pycqa/isort
+    rev: 5.5.4
+    hooks:
+      - id: isort
+        args: [ "--profile", "black" ]
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.1.0
     hooks:

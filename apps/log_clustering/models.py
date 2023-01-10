@@ -130,13 +130,27 @@ class NoticeGroup(SoftDeleteModel):
 
 
 class ClusteringSubscription(SoftDeleteModel):
+    """
+    # frequency 频率&发送范围存储格式示例
+    {
+        "type": 1,
+        "day_list": [],
+        "run_time": "10",
+        "week_list": [1, 2, 3, 4, 5, 6, 7],
+        "data_range": {
+            "number": 30,
+            "time_level": "minutes"
+        }
+    }
+    """
+
     subscription_type = models.CharField(
         _("订阅类型"),
         max_length=64,
         choices=SubscriptionTypeEnum.get_choices(),
         default=SubscriptionTypeEnum.WECHAT.value,
     )
-    space_uid = models.CharField(_("空间ID"), db_index=True, max_length=64)
+    space_uid = models.CharField(_("空间ID"), db_index=True, max_length=256)
     index_set_id = models.IntegerField(_("索引集id"), db_index=True)
     title = models.TextField(_("标题"))
     receivers = models.JSONField(_("接收人"))

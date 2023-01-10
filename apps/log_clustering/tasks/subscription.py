@@ -54,7 +54,14 @@ from bkm_space import api
 robot_api = WeChatRobot()
 
 
-def get_start_and_end_time(freq: dict, last_run_at: datetime, time_zone: str) -> dict:
+def validate_end_time(freq: dict, end_time: datetime):
+    if end_time.isoweekday() in freq["week_list"]:
+        return end_time
+    end_time = end_time + timedelta(days=1)
+    return validate_end_time(freq, end_time)
+
+
+def get_start_and_end_time(freq: dict, last_run_at: datetime, time_zone: pytz.timezone) -> dict:
     """
     return: {
         "is_run_time": 是否运行时间,
@@ -81,30 +88,44 @@ def get_start_and_end_time(freq: dict, last_run_at: datetime, time_zone: str) ->
         "interval": None,
         "last_run_at": None,
     }
+
     time_fmt = "%Y-%m-%d %H:%M:%S"
-    now = timezone.now().astimezone(pytz.timezone(time_zone))
+    now = timezone.now().astimezone(time_zone)
 
-    if freq["type"] in [FrequencyTypeEnum.DAY.value, FrequencyTypeEnum.WEEK.value]:
-        # 按天, 周
-        # 未到运行时间, 精确到分钟比较
-        if now.isoweekday() not in freq["week_list"] or now.time().strftime("%H:%M") != ":".join(
-            freq["run_time"].split(":")[:2]
-        ):
-            return result
-        end_time = datetime.strptime(f"{now.year}-{now.month}-{now.day} {freq['run_time']}", time_fmt)
+    if not last_run_at:
+        if freq["type"] in [FrequencyTypeEnum.DAY.value, FrequencyTypeEnum.WEEK.value]:
+            run_time = freq["run_time"].split(":")
+            end_time = datetime(now.year, now.month, now.day, tzinfo=time_zone) + timedelta(
+                hours=int(run_time[0]), minutes=int(run_time[1]), seconds=int(run_time[2])
+            )
+            end_time = end_time.astimezone(time_zone)
+            end_time = validate_end_time(freq, end_time)
+        else:
+            run_time = int(freq["run_time"])
+            if now.minute % run_time != 0:
+                m_offset = run_time - now.minute % run_time
+                if now.minute + m_offset == 60:
+                    end_time = now + timedelta(hours=1, seconds=-now.second, microseconds=-now.microsecond)
+                else:
+                    end_time = now + timedelta(minutes=m_offset, seconds=-now.second, microseconds=-now.microsecond)
+            else:
+                end_time = now + timedelta(seconds=-now.second, microseconds=now.microsecond)
     else:
-        # 按分钟
-        # 未到运行时间
-        if now.minute % freq["run_time"] != 0:
-            return result
-        end_time = now.strftime(time_fmt)
+        last_run_at = last_run_at.astimezone(time_zone)
+        if freq["type"] in [FrequencyTypeEnum.DAY.value, FrequencyTypeEnum.WEEK.value]:
+            end_time = last_run_at + timedelta(days=1)
+            end_time = validate_end_time(freq, end_time)
+        else:
+            end_time = last_run_at + timedelta(minutes=int(freq["run_time"]))
 
-    # 按发送频率
     if freq.get("data_range"):
+        # 按发送频率
         start_time = end_time - timedelta(**{freq["data_range"]["time_level"]: freq["data_range"]["number"]})
     elif last_run_at:
+        # 按周期频率
         start_time = timezone.localtime(last_run_at)
     else:
+        # 首次执行
         start_time = end_time - timedelta(minutes=30)
 
     interval = end_time - start_time
@@ -114,11 +135,14 @@ def get_start_and_end_time(freq: dict, last_run_at: datetime, time_zone: str) ->
         hour = interval.seconds / 60 / 60
         interval = _("{}小时").format(int(hour)) if hour > 1 else _("{}分钟").format(int(hour * 60))
 
+    if not now >= end_time:
+        return result
+
     result["is_run_time"] = True
     result["start_time"] = start_time.strftime(time_fmt)
     result["end_time"] = end_time.strftime(time_fmt)
     result["interval"] = interval
-    result["last_run_at"] = end_time.strftime(time_fmt)
+    result["last_run_at"] = end_time
 
     return result
 
@@ -233,12 +257,12 @@ def generate_log_search_url(config: ClusteringSubscription, time_config: dict) -
         "end_time": time_config["end_time"],
     }
 
-    url = f"{settings.BKAPP_LOG_SEARCH_SAAS_URL}/#/retrieve/{config.index_set_id}?{urlencode(params)}"
+    url = f"{settings.LOG_SEARCH_SAAS_URL}/#/retrieve/{config.index_set_id}?{urlencode(params)}"
     return url
 
 
 def render_template(template: str, params: dict) -> str:
-    loader = FileSystemLoader(searchpath=os.path.join(settings.BASE_DIR, "apps", "log_clustering", "templates"))
+    loader = FileSystemLoader(searchpath=os.path.join(settings.BASE_DIR, "templates", "clustering_subscription"))
     env = Environment(loader=loader)
     template = env.get_template(template)
     content = template.render(**params)
@@ -246,18 +270,20 @@ def render_template(template: str, params: dict) -> str:
 
 
 def send_wechat(params: dict, receivers: list):
-    content = render_template("clustering_wechat.md", params)
-
-    with ThreadPoolExecutor() as ex:
-        for receiver in receivers:
-            send_params = {"chatid": receiver["id"], "msgtype": "markdown", "markdown": {"content": content}}
-            ex.submit(robot_api.send_msg, send_params)
-
+    tpl_name = "clustering_wechat_en.md" if params["language"] == "en" else "clustering_wechat.md"
+    content = render_template(tpl_name, params)
+    send_params = {
+        "chatid": "|".join([receiver["id"] for receiver in receivers]),
+        "msgtype": "markdown",
+        "markdown": {"content": content},
+    }
+    robot_api.send_msg(send_params)
     ClusteringSubscription.objects.filter(id=params["id"]).update(last_run_at=params["time_config"]["last_run_at"])
 
 
 def send_mail(params: dict, receivers: list):
-    content = render_template("clustering_mail.html", params)
+    tpl_name = "clustering_mail_en.html" if params["language"] == "en" else "clustering_mail.html"
+    content = render_template(tpl_name, params)
     send_params = {
         "receivers": ",".join([r["id"] for r in receivers]),
         "content": content,
@@ -314,7 +340,7 @@ def send_subscription_task():
             # 查询空间信息
             space = api.SpaceApi.get_space_detail(space_uid=config.space_uid)
 
-            time_zone = space.properties.get("time_zone", "") or settings.TIME_ZONE
+            time_zone = pytz.timezone(space.properties.get("time_zone", "") or settings.TIME_ZONE)
             time_config = get_start_and_end_time(config.frequency, config.last_run_at, time_zone)
             is_run_time = time_config["is_run_time"]
 

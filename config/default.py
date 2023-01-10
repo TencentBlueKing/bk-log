@@ -346,9 +346,9 @@ BK_COMPONENT_API_URL = os.environ.get("BK_COMPONENT_API_URL")
 DEPLOY_MODE = os.environ.get("DEPLOY_MODE", "")
 
 # 企业微信机器人
-BKAPP_WECHAT_WEB_HOOK_URL = os.getenv("BKAPP_WECHAT_WEB_HOOK_URL", "")
+WECHAT_WEB_HOOK_URL = os.getenv("BKAPP_WECHAT_WEB_HOOK_URL", "")
 
-BKAPP_LOG_SEARCH_SAAS_URL = os.getenv("BKAPP_LOG_SEARCH_SAAS_URL", "")
+LOG_SEARCH_SAAS_URL = os.getenv("BKAPP_LOG_SEARCH_SAAS_URL", "")
 
 
 # ===============================================================================
