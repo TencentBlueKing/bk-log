@@ -110,11 +110,11 @@ export default class CollectGroup extends tsc<IProps> {
   }
   /** 点击移动分组操作 */
   handleClickMoveGroup(e) {
+    this.operatePopoverInstance?.set({ hideOnClick: false });
     // 判断当前是否有实例 如果有实例 则给操作列表常驻显示
     if (!this.groupListPopoverInstance) {
       this.groupListPopoverInstance = this.$bkPopover(e.target, {
         content: this.groupMoveListPopoverRef,
-        trigger: 'click',
         interactive: true,
         theme: 'light shield',
         arrow: false,
@@ -127,23 +127,16 @@ export default class CollectGroup extends tsc<IProps> {
         extCls: 'more-container',
         onHidden: () => {
           // 删除实例
-          if (!this.operatePopoverInstance?.props.hideOnClick) {
-            this.operatePopoverInstance?.destroy();
-            this.operatePopoverInstance = null;
-          }
           this.groupListPopoverInstance?.destroy();
           this.groupListPopoverInstance = null;
+          this.clearStatus();
+          this.operatePopoverInstance?.set({ hideOnClick: true });
+        },
+        onShow: () => {
+          this.operatePopoverInstance?.set({ hideOnClick: false });
         },
       });
       this.groupListPopoverInstance.show(100);
-      // 点击移动到其他分组时 操作列表要不受移动到分组的点击影响
-      this.operatePopoverInstance.set({
-        hideOnClick: false,
-      });
-    } else {
-      this.operatePopoverInstance.set({
-        hideOnClick: true,
-      });
     }
   }
   /** 点击收藏的icon  显示更多操作 */
@@ -163,6 +156,8 @@ export default class CollectGroup extends tsc<IProps> {
         onHidden: () => {
           this.operatePopoverInstance?.destroy();
           this.operatePopoverInstance = null;
+          this.groupListPopoverInstance?.destroy();
+          this.groupListPopoverInstance = null;
           this.clearStatus(); // 清空状态
         },
       });
@@ -232,7 +227,7 @@ export default class CollectGroup extends tsc<IProps> {
           <li onClick={() => this.handleClickLi('share')}>{this.$t('分享')}</li>
           <li onClick={() => this.handleClickLi('edit-favorite')}>{this.$t('编辑')}</li>
           <li onClick={() => this.handleClickLi('create-copy')}>{this.$t('创建副本')}</li>
-          <li class="move-group" onClick={this.handleClickMoveGroup}>
+          <li class="move-group" onMouseenter={this.handleClickMoveGroup}>
             {this.$t('移动至分组')}
             <span class="bk-icon icon-angle-right more-icon"></span>
           </li>
@@ -282,11 +277,8 @@ export default class CollectGroup extends tsc<IProps> {
         {this.isGroupDrop ? (
           <div>
             <div class="more-container" onMouseenter={this.handleHoverIcon}>
-              {!this.isHoverTitle ? (
-                <span class="title-number">{this.data.favorites.length}</span>
-              ) : (
-                <div class="more-box"><span class="bk-icon icon-more"></span></div>
-              )}
+                <span v-show={!this.isHoverTitle} class="title-number">{this.data.favorites.length}</span>
+                <div v-show={this.isHoverTitle} class="more-box"><span class="bk-icon icon-more"></span></div>
             </div>
             {groupDropList()}
           </div>

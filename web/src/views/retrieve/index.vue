@@ -1079,12 +1079,15 @@ export default {
         this.messageError(this.$t('没有找到该记录下相关索引集'));
       }
     },
-    // 检索日志
-    async retrieveLog(historyParams) {
-      if (!this.indexId) {
-        return;
-      }
-
+    /**
+     * @desc: 检索日志
+     * @param {Any} historyParams 历史数据
+     * @param {Boolean} isMemoryFields 检索时是否需要记住当前展示的字段
+     * @param {Boolean} isRequestChartsAndHistory 检索时是否请求历史记录和图表
+     */
+    async retrieveLog(historyParams, isMemoryFields = false, isRequestChartsAndHistory = true) {
+      if (!this.indexId) return;
+      const memoryFields = this.visibleFields.map(item => item.field_name);
       await this.$nextTick();
       this.basicLoading = true;
       this.showHistory = false;
@@ -1246,34 +1249,29 @@ export default {
         }
 
         this.retrieveParams.keyword = this.retrieveParams.keyword.trim();
-        this.requestChart();
+        if (isRequestChartsAndHistory) { // 是否请求图表和历史记录
+          this.requestChart();
+          this.requestSearchHistory(this.indexId);
+        }
 
         await this.handleResetTimer();
         await this.requestTable();
-        if (this.isAfterRequestFavoriteList) {
-          await this.getFavoriteList();
-        }
-        this.requestSearchHistory(this.indexId);
+        if (this.isAfterRequestFavoriteList) await this.getFavoriteList();
       } catch (e) {
         console.warn(e);
         if (!e.message.includes('request canceled')) { // 接口出错、非重复请求被取消
           this.tableLoading = false;
         }
       } finally {
-        // 如果是收藏检索并且开启检索显示, 则更新显示字段
+        // 如果是收藏检索并且开启检索显示, 合并当前字段和收藏字段 更新显示字段
         // eslint-disable-next-line camelcase
         if (this.isFavoriteSearch && this.activeFavorite?.is_enable_display_fields) {
           const { display_fields: favoriteDisplayFields } = this.activeFavorite;
-          const visibilityFields = this.visibleFields.map(item => item.field_name);
-          const displayFields = [...new Set([...visibilityFields, ...favoriteDisplayFields])];
-          this.visibleFields = displayFields.map((displayName) => {
-            for (const field of this.totalFields) {
-              if (field.field_name === displayName) {
-                return field;
-              }
-            }
-          }).filter(Boolean);
+          const displayFields = [...new Set([...memoryFields, ...favoriteDisplayFields])];
+          this.handleFieldsUpdated(displayFields, undefined, false);
         };
+        // 检索完后 回显当前展示的字段
+        if (isMemoryFields && memoryFields.length) this.handleFieldsUpdated(memoryFields, undefined, false);
         if (this.isFavoriteSearch) this.isSqlSearchType = !this.isShowUiType; // 判断是否有表单模式的数组值 如果有 则切换为表单模式
         // 搜索完毕后，如果开启了自动刷新，会在 timeout 后自动刷新
         this.$refs.resultHeader && this.$refs.resultHeader.setRefreshTime();

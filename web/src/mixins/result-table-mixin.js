@@ -283,7 +283,7 @@ export default {
           copyMessage(option.value);
           break;
         case 'display':
-          this.$emit('fieldsUpdated', option.displayFieldNames);
+          this.$emit('fieldsUpdated', option.displayFieldNames, undefined, false);
           break;
         default:
           break;

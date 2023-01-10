@@ -438,6 +438,15 @@ export default class CollectIndex extends tsc<IProps> {
       this.showMessagePop(this.$t('操作成功'));
     });
   }
+  handleGroupKeyDown(value: string, event) {
+    if (['Enter', 'Tab', 'NumpadEnter'].includes(event.code) && !!value) {
+      this.handleUserOperate({
+        type: 'add-group',
+        value,
+      });
+      this.popoverGroupRef.hideHandler();
+    }
+  }
 
   /** 控制页面布局宽度 */
   dragBegin(e) {
@@ -508,7 +517,8 @@ export default class CollectIndex extends tsc<IProps> {
                       clearable
                       placeholder={this.$t('请输入组名')}
                       vModel={this.groupName}
-                      maxlength={10}>
+                      maxlength={10}
+                      onKeydown={this.handleGroupKeyDown}>
                     </Input>
                     <div class="operate-button">
                       <Button text onClick={() => this.handleClickGroupBtn('add')}>
