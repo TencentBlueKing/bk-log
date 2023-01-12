@@ -496,10 +496,13 @@ class ScriptType(ChoicesEnum):
 CHECK_AGENT_STEP = {
     "bin_file": _("检查二进制文件是否存在"),
     "process": _("检查进程是否存在"),
+    "main_config": _("检查主配置是否存在及正确"),
     "config": _("检查配置是否正确"),
     "hosted": _("检查采集插件是否被gse_agent托管"),
     "socket": _("检查socket文件是否存在"),
     "healthz": _("执行healthz自检查查看结果"),
+    "socket_queue_status": _("检查socket队列状态"),
+    "dataserver_port": _("检查data server端口是否存在"),
 }
 
 # kafka ssl配置项

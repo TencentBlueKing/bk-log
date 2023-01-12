@@ -82,6 +82,7 @@ class EsChecker(Checker):
             if i["index_pattern"] == self.bk_data_name or i["index_pattern"] == self.table_id.replace(".", "_"):
                 self.index_pattern = i["index_pattern"]
                 self.indices = i["indices"]
+                break
         if not self.indices:
             self.append_error_info("获取物理索引为空")
             return
@@ -171,4 +172,5 @@ class EsChecker(Checker):
                 self.append_normal_info(f"索引: [{self.index_pattern}] 当天[{now_datetime}]读写别名已成功创建")
                 return
 
-        self.append_error_info(f"索引: [{self.index_pattern}] 当天[{now_datetime}]读写别名未成功创建")
+        if self.index_pattern:
+            self.append_error_info(f"索引: [{self.index_pattern}] 当天[{now_datetime}]读写别名未成功创建")
