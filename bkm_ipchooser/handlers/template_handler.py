@@ -26,7 +26,17 @@ class Template:
 
     def format_templates(self, templates: List[Dict]) -> List[types.Template]:
         """格式化CC API接口获取到的模板列表"""
-        raise NotImplementedError
+        BaseHandler.sort_by_name(templates)
+        return [
+            {
+                "id": template.get("id"),
+                "name": template.get("name"),
+                "template_type": self.template_type,
+                "last_time": template.get("last_time"),
+                "meta": self.meta,
+            }
+            for template in templates
+        ]
 
     def query_template_nodes(self, start: int, page_size: int):
         """分页查询模板下的节点列表"""
@@ -114,20 +124,6 @@ class SetTemplate(Template):
         if template_id_list:
             params["set_template_ids"] = template_id_list
         return BkApi.list_set_template(params)
-
-    def format_templates(self, templates: List[Dict]) -> List[types.Template]:
-        """格式化CC API接口获取到的模板列表"""
-        BaseHandler.sort_by_name(templates)
-        return [
-            {
-                "id": template.get("id"),
-                "name": template.get("name"),
-                "template_type": self.template_type,
-                "last_time": template.get("last_time"),
-                "meta": self.meta,
-            }
-            for template in templates
-        ]
 
     def query_template_nodes(self, start: int, page_size: int) -> List[types.TemplateNode]:
         params = {
@@ -237,27 +233,6 @@ class ServiceTemplate(Template):
             params["service_template_ids"] = template_id_list
         return BkApi.list_service_template(params)
 
-    def format_templates(self, templates: List[Dict]) -> List[types.Template]:
-        """格式化CC API接口获取到的模板列表"""
-        service_category_list = BkApi.list_service_category({"bk_biz_id": self.bk_biz_id})
-        service_category_map = {}
-        if service_category_list and service_category_list["info"]:
-            for category in service_category_list["info"]:
-                service_category_map[category["id"]] = category["name"]
-
-        BaseHandler.sort_by_name(templates)
-        return [
-            {
-                "id": template.get("id"),
-                "name": template.get("name"),
-                "template_type": self.template_type,
-                "last_time": template.get("last_time"),
-                "meta": self.meta,
-                "service_category": service_category_map.get(template.get("service_category_id"), ""),
-            }
-            for template in templates
-        ]
-
     def query_template_nodes(self, start: int, page_size: int) -> List[types.TemplateNode]:
         params = {
             "bk_biz_id": self.bk_biz_id,
@@ -270,7 +245,18 @@ class ServiceTemplate(Template):
                 "service_template_id": self.template_id,
             },
         }
-        return BkApi.search_module(params)
+        nodes = BkApi.search_module(params)
+        if not nodes or not nodes["info"]:
+            return nodes
+        service_category_list = BkApi.list_service_category({"bk_biz_id": self.bk_biz_id})
+        service_category_map = {}
+        if service_category_list and service_category_list["info"]:
+            for category in service_category_list["info"]:
+                service_category_map[category["id"]] = category["name"]
+        for node in nodes["info"]:
+            node["service_category"] = service_category_map.get(node.get("service_category_id", ""), "")
+
+        return nodes
 
     def query_template_hosts(self, start: int, page_size: int) -> List[types.FormatHostInfo]:
         params = {
@@ -348,6 +334,7 @@ class ServiceTemplate(Template):
             object_id=constants.ObjectType.MODULE.value,
             object_name=constants.ObjectType.get_member_value__alias_map().get(constants.ObjectType.MODULE.value),
             meta=self.meta,
+            service_category=node.get("service_category", ""),
         )
 
 
