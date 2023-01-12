@@ -80,8 +80,9 @@ export default class CollectGroup extends tsc<IProps> {
     return this.dropType === 'group';
   }
   /** 重命名 */
-  handleResetGroupName(e) {
-    e.stopPropagation();
+  handleResetGroupName(e?) {
+    if (!this.groupEditName) return;
+    e?.stopPropagation();
     this.handleUserOperate('reset-group-name', {
       group_id: this.data.group_id,
       group_new_name: this.groupEditName,
@@ -90,8 +91,8 @@ export default class CollectGroup extends tsc<IProps> {
     this.isShowResetGroupName = false;
   }
   /** 新增组 */
-  handleChangeGroupInputStatus(e, type) {
-    e.stopPropagation();
+  handleChangeGroupInputStatus(type: string, e?) {
+    e?.stopPropagation();
     type === 'add' && this.handleUserOperate('add-group', this.groupEditName);
     this.isShowNewGroupInput = false;
   }
@@ -199,6 +200,13 @@ export default class CollectGroup extends tsc<IProps> {
     this.groupEditName = '';
   }
 
+  handleGroupKeyDown(value: string, event, type = 'add') {
+    if (['Enter', 'NumpadEnter'].includes(event.code) && !!value) {
+      if (type === 'add') this.handleChangeGroupInputStatus('add');
+      if (type === 'reset') this.handleResetGroupName();
+    }
+  }
+
   render() {
     const groupDropList = () => (
       <div style={{ display: 'none' }}>
@@ -209,7 +217,8 @@ export default class CollectGroup extends tsc<IProps> {
                 clearable
                 placeholder={this.$t('请输入组名')}
                 vModel={this.groupName}
-                maxlength={10}>
+                maxlength={10}
+                onKeydown={(e, v) => this.handleGroupKeyDown(e, v, 'reset')}>
               </Input>
               <div class="operate-button">
                 <Button text onClick={e => this.handleResetGroupName(e)}>{this.$t('确定')}</Button>
@@ -257,11 +266,12 @@ export default class CollectGroup extends tsc<IProps> {
                 clearable
                 placeholder={this.$t('请输入组名')}
                 vModel={this.groupEditName}
-                maxlength={10}>
+                maxlength={10}
+                onKeydown={(e, v) => this.handleGroupKeyDown(e, v, 'add')}>
               </Input>
               <div class="operate-button">
-                <Button text onClick={e => this.handleChangeGroupInputStatus(e, 'add')}>{this.$t('确定')}</Button>
-                <span onClick={e => this.handleChangeGroupInputStatus(e, 'cancel')}>{this.$t('取消')}</span>
+                <Button text onClick={e => this.handleChangeGroupInputStatus('add', e)}>{this.$t('确定')}</Button>
+                <span onClick={e => this.handleChangeGroupInputStatus('cancel', e)}>{this.$t('取消')}</span>
               </div>
             </li>
           ) : (

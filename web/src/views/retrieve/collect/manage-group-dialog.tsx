@@ -439,7 +439,7 @@ export default class GroupDialog extends tsc<IProps> {
 
   handleDeleteFavorite(row) {
     this.$bkInfo({
-      subTitle: `${this.$t('当前收藏名为')}${row.name}，${this.$t('是否删除')}？`,
+      subTitle: `${this.$t('当前收藏名为')} ${row.name} ，${this.$t('是否删除')}？`,
       type: 'warning',
       confirmFn: () => {
         this.deleteTableIDList.push(row.id);

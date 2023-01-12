@@ -197,7 +197,7 @@ export default class CollectIndex extends tsc<IProps> {
         this.getFavoriteList();
         break;
       case 'reset-group-name': // 重命名
-        const isCanRename = /^[\u4e00-\u9fa5_a-zA-Z0-9`~!@#$%^&*()_\-+=<>?:"{}|,.\/;'\\[\]·~！@#￥%……&*（）——\-+={}|《》？：“”【】、；‘'，。、]+$/im.test(value);
+        const isCanRename = /^[\u4e00-\u9fa5_a-zA-Z0-9`~!@#$%^&*()_\-+=<>?:"{}|,.\/;'\\[\]·~！@#￥%……&*（）——\-+={}|《》？：“”【】、；‘'，。、]+$/im.test(value.trim());
         if (!isCanRename) {
           this.showMessagePop(this.$t('组名不规范'), 'error');
           return;
@@ -447,6 +447,9 @@ export default class CollectIndex extends tsc<IProps> {
         value,
       });
       this.popoverGroupRef.hideHandler();
+      setTimeout(() => {
+        this.groupName = '';
+      }, 500);
     }
   }
 
