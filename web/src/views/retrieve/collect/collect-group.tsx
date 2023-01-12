@@ -31,7 +31,6 @@ interface ICollectProps {
   collectItem: IGroupItem;
   groupList: IGroupItem[];
   activeFavoriteID: number;
-  isShowGroupTitle: boolean;
   isSearchFilter: boolean;
 }
 
@@ -39,7 +38,6 @@ interface ICollectProps {
 export default class CollectGroup extends tsc<ICollectProps> {
   @Prop({ type: Object, required: true }) collectItem: IGroupItem; // 组的收藏列表
   @Prop({ type: Number, required: true }) activeFavoriteID: number; // 点击的活跃ID
-  @Prop({ type: Boolean, default: true }) isShowGroupTitle: boolean; // 是否展示组标题
   @Prop({ type: Boolean, default: false }) isSearchFilter: boolean; // 是否搜索过
   @Prop({ type: Array, default: () => [] }) groupList: IGroupItem[]; // 组列表
   @Inject('handleUserOperate') handleUserOperate;
@@ -107,24 +105,22 @@ export default class CollectGroup extends tsc<ICollectProps> {
     );
     return (
       <div class="retrieve-collect-group">
-        {this.isShowGroupTitle ? (
-          <div
-            class={[
-              'group-title fl-jcsb',
-              {
-                'is-active': !this.isHiddenList,
-                'is-move-cur': !this.isSearchFilter && !this.isCannotChange,
-              },
-            ]}
-            onMouseenter={() => this.handleHoverTitle(true)}
-            onMouseleave={() => this.handleHoverTitle(false)}>
-            <span class="group-cur" onClick={() => (this.isHiddenList = !this.isHiddenList)}>
-              <span class={['bk-icon icon-play-shape', { 'is-active': !this.isHiddenList }]}></span>
-              <span>{this.collectItem.group_name}</span>
-            </span>
-            {groupDropdownSlot(this.collectItem.group_name)}
-          </div>
-        ) : undefined}
+        <div
+          class={[
+            'group-title fl-jcsb',
+            {
+              'is-active': !this.isHiddenList,
+              'is-move-cur': !this.isSearchFilter && !this.isCannotChange,
+            },
+          ]}
+          onMouseenter={() => this.handleHoverTitle(true)}
+          onMouseleave={() => this.handleHoverTitle(false)}>
+          <span class="group-cur" onClick={() => (this.isHiddenList = !this.isHiddenList)}>
+            <span class={['bk-icon icon-play-shape', { 'is-active': !this.isHiddenList }]}></span>
+            <span>{this.collectItem.group_name}</span>
+          </span>
+          {groupDropdownSlot(this.collectItem.group_name)}
+        </div>
         <div class={['group-list', { 'list-hidden': this.isHiddenList }]}>
           {this.collectItem.favorites.map((item, index) => (
             <div

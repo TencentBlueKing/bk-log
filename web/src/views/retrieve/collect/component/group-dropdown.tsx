@@ -55,7 +55,7 @@ export default class CollectGroup extends tsc<IProps> {
   titlePopoverInstance = null; // 表头列表实例
 
   get unPrivateGroupList() {
-    // 去掉个人组的组列表
+    // 去掉个人收藏的组列表
     return this.groupList.slice(1);
   }
 
@@ -69,7 +69,7 @@ export default class CollectGroup extends tsc<IProps> {
   }
 
   get showGroupList() {
-    // 根据用户名判断是否时自己创建的收藏 若不是自己的则去除个人组选项
+    // 根据用户名判断是否时自己创建的收藏 若不是自己的则去除个人收藏选项
     return this.userMeta.username !== this.data.created_by
       ? this.unPrivateGroupList
       : this.groupList;
@@ -125,6 +125,7 @@ export default class CollectGroup extends tsc<IProps> {
         sticky: true,
         placement: 'right-start',
         extCls: 'more-container',
+        zIndex: 999,
         onHidden: () => {
           // 删除实例
           this.groupListPopoverInstance?.destroy();
@@ -153,6 +154,7 @@ export default class CollectGroup extends tsc<IProps> {
         sticky: true,
         placement: 'bottom-start',
         extCls: 'more-container',
+        zIndex: 999,
         onHidden: () => {
           this.operatePopoverInstance?.destroy();
           this.operatePopoverInstance = null;
@@ -175,6 +177,7 @@ export default class CollectGroup extends tsc<IProps> {
         boundary: 'viewport',
         extCls: 'more-container',
         distance: 4,
+        zIndex: 999,
         onHidden: () => {
           this.titlePopoverInstance?.destroy();
           this.titlePopoverInstance = null;

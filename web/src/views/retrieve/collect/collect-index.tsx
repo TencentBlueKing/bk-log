@@ -93,7 +93,6 @@ export default class CollectIndex extends tsc<IProps> {
   isSearchFilter = false; // 是否搜索过滤
   isShowAddNewFavoriteDialog = false; // 是否展示编辑收藏弹窗
   collectLoading = false; // 分组容器loading
-  isShowGroupTitle = true; // 是否展示分组头部
   searchVal = ''; // 搜索
   groupName = ''; // 新增组
   privateGroupID = 0; // 私人组ID
@@ -226,7 +225,7 @@ export default class CollectIndex extends tsc<IProps> {
         break;
       case 'delete-favorite': // 删除收藏
         this.$bkInfo({
-          subTitle: `${this.$t('当前收藏为')}${value.name}，${this.$t('是否删除')}？`,
+          subTitle: `${this.$t('当前收藏名为')} ${value.name} ，${this.$t('确认')}${this.$t('是否删除')}？`,
           type: 'warning',
           confirmFn: async () => {
             await this.deleteFavorite(value.id);
@@ -236,7 +235,7 @@ export default class CollectIndex extends tsc<IProps> {
         break;
       case 'dismiss-group': // 解散分组
         this.$bkInfo({
-          title: `${this.$t('当前分组为')}${value.group_name}，${this.$t('是否解散')}？`,
+          title: `${this.$t('当前分组名为')} ${value.group_name} ，${this.$t('确认')}${this.$t('是否解散')}？`,
           subTitle: `${this.$t('解散文案')}`,
           type: 'warning',
           confirmFn: async () => {
@@ -368,7 +367,10 @@ export default class CollectIndex extends tsc<IProps> {
     this.unknownGroupID = this.groupList[this.groupList.length - 1]?.group_id;
     this.privateGroupID = this.groupList[0]?.group_id;
     this.handleSearchFavorite();
-    this.isShowGroupTitle = !(this.collectList.length === 2 && !this.collectList[0].favorites.length);
+    // 当前只有未分组和个人收藏时 判断未分组是否有数据 如果没有 则不展示未分组
+    if (this.collectList.length === 2 && !this.collectList[1].favorites.length) {
+      this.collectList = [this.collectList[0]];
+    }
     this.filterCollectList = deepClone(this.collectList);
     if (this.activeFavoriteID >= 0) { // 获取列表后 判断当前是否有点击的活跃收藏 如果有 则进行数据更新
       let isFind = false;
@@ -482,7 +484,6 @@ export default class CollectIndex extends tsc<IProps> {
         <CollectContainer
           dataList={this.filterCollectList}
           groupList={this.groupList}
-          isShowGroupTitle={this.isShowGroupTitle}
           activeFavoriteID={this.activeFavoriteID}
           isSearchFilter={this.isSearchFilter}
           collectLoading={this.collectLoading || this.favoriteLoading}
@@ -502,6 +503,7 @@ export default class CollectIndex extends tsc<IProps> {
               <Input
                 right-icon="bk-icon icon-search"
                 vModel={this.searchVal}
+                placeholder={this.$t('搜索收藏名')}
                 on-enter={this.handleSearchFavorite}
                 on-right-icon-click={this.handleSearchFavorite}
               ></Input>

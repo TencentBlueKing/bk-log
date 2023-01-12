@@ -322,9 +322,7 @@ export default {
         if (this.shouldHandleBlur) this.handleCheckKeywords(val.trim()); // 检查语句是否有错误;
       }, 200);
       // 如果当前有点击收藏且有选择表单模式的key时 监听新输入的检索语句判断
-      if (this.isShowUiType && val.trim()) {
-        this.$emit('inputBlur', val);
-      }
+      if (this.isShowUiType) this.$emit('inputBlur', val);
 
       if (this.isSearchRecord || !this.isAutoQuery) return;
       // blur 时检索

@@ -30,6 +30,7 @@ import OperatorTools from '@/views/retrieve/result-table-panel/original-log/oper
 import RetrieveLoader from '@/skeleton/retrieve-loader';
 import TableColumn from '@/views/retrieve/result-comp/table-column';
 import ExpandView from '@/views/retrieve/result-table-panel/original-log/expand-view.vue';
+import EmptyView from '@/views/retrieve/result-table-panel/original-log/empty-view';
 
 export default {
   components: {
@@ -40,6 +41,7 @@ export default {
     TableColumn,
     ExpandView,
     RegisterColumn,
+    EmptyView,
   },
   mixins: [tableRowDeepViewMixin],
   props: {
