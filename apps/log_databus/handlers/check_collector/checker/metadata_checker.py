@@ -69,7 +69,7 @@ class MetaDataChecker(Checker):
                     ).feature_config.get("meta_data_custom_config")
                     monitor_url = meta_data_custom_config.get("monitor_url") or monitor_url
                 url = f"{monitor_url}/rest/v2/grafana/time_series/unify_query/"
-                response = requests.post(url=url, data=json.dumps(params), headers=self.request_headers)
+                response = requests.post(url=url, data=json.dumps(params), headers=self.request_headers, verify=False)
                 if response.status_code != 200:
                     self.append_error_info(f"task name: {task_name} have error : {response.text}")
                     continue
