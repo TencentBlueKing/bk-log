@@ -1770,6 +1770,7 @@ export default {
     },
     // 检索头部点击编辑收藏
     handleEditFavorite() {
+      if (this.basicLoading) return;
       // 获取检索页面的数据替换当前收藏详情参数
       this.replaceFavoriteData = this.getRetrieveFavoriteData();
       this.isShowAddNewCollectDialog = true;

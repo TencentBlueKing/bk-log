@@ -60,11 +60,11 @@
             <div class="suggest-list">
               <span>
                 1. {{$t('检查')}}
-                <span class="blue-btn" @click="handleBtnClick('indexConfig')">{{$t('索引配置')}}</span>，
-                {{$t('索引配置是使用日志服务进行检索分析的必要条件')}}
+                <span class="blue-btn" @click="handleBtnClick('indexConfig')">{{$t('数据源配置')}}</span>
+                {{$t('情况')}}
               </span>
-              <span>2. {{$t('修改检索时间范围')}}</span>
-              <span>3. {{$t('优化查询语法')}}</span>
+              <span>2. {{$t('检查右上角的索时间范围')}}</span>
+              <span>3. {{$t('优化查询语句')}}</span>
               <div class="grammar-list">
                 <span v-for="(item, index) in grammarMap" :key="index">
                   <span>{{ item.key }}</span> : <span>{{ item.value }}</span>
@@ -99,24 +99,28 @@ export default {
     return {
       grammarMap: [
         {
-          key: this.$t('全文检索'),
-          value: 'abc',
+          key: this.$t('带字段全文检索更高效'),
+          value: 'log:abc',
         },
         {
-          key: this.$t('模糊检索'),
+          key: this.$t('模糊检索使用通配符'),
           value: `abc* ${this.$t('或')} ab?c`,
         },
         {
-          key: this.$t('键值检索'),
-          value: 'info : abc',
+          key: this.$t('双引号匹配完整字符串'),
+          value: 'log:"ERROR MSG"',
         },
         {
-          key: this.$t('范围检索'),
-          value: 'status :> 400',
+          key: this.$t('数值字段范围匹配'),
+          value: 'count:[1 TO 5]',
         },
         {
-          key: this.$t('组合检索'),
-          value: 'info:abc AND status:>400',
+          key: this.$t('正则匹配'),
+          value: 'name:/joh?n(ath[oa]n/',
+        },
+        {
+          key: this.$t('组合检索注意大写'),
+          value: 'log: (error OR info)',
         },
       ],
     };
