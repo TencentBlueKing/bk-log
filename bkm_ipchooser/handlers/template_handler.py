@@ -45,6 +45,7 @@ class Template:
         nodes = [self.format_template_node(node) for node in nodes]
         BaseHandler.fill_node_path(self.bk_biz_id, nodes)
         result["data"] = nodes
+        result["total"] = len(self.fetch_template_node_total(self.template_id)["data"])
         return result
 
     def agent_statistics(self, template_id_list: List[int]) -> List[Dict]:
@@ -198,7 +199,7 @@ class SetTemplate(Template):
             "bk_biz_id": self.bk_biz_id,
             "fields": constants.CommonEnum.DEFAULT_SET_FIELDS.value,
             "condition": {
-                "set_template_id": self.template_id,
+                "set_template_id": template_id,
             },
             "no_request": True,
         }
@@ -307,7 +308,7 @@ class ServiceTemplate(Template):
             "bk_biz_id": self.bk_biz_id,
             "fields": constants.CommonEnum.DEFAULT_MODULE_FIELDS.value,
             "condition": {
-                "service_template_id": self.template_id,
+                "service_template_id": template_id,
             },
             "no_request": True,
         }
