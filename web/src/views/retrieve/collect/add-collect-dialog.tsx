@@ -371,9 +371,8 @@ export default class CollectDialog extends tsc<IProps> {
     return (
       <Dialog
         value={this.value}
-        title={
-          this.isCreateFavorite ? this.$t('新增收藏') : this.$t('编辑收藏')
-        }
+        title={ this.isCreateFavorite ? this.$t('新增收藏') : this.$t('编辑收藏') }
+        ok-text={ this.isCreateFavorite ? this.$t('确定') : this.$t('保存') }
         header-position="left"
         ext-cls="add-collect-dialog"
         render-directive="if"
