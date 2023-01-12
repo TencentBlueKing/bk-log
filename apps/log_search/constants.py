@@ -1227,7 +1227,7 @@ class FavoriteGroupType(ChoicesEnum):
     UNGROUPED = "unknown"
 
     _choices_labels = (
-        (PRIVATE, _("个人组")),
+        (PRIVATE, _("个人收藏")),
         (PUBLIC, _("公共组")),
         (UNGROUPED, _("未分组")),
     )

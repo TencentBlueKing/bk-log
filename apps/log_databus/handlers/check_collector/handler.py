@@ -28,6 +28,7 @@ from apps.log_databus.handlers.check_collector.base import CheckCollectorRecord
 from apps.log_databus.handlers.check_collector.checker.agent_checker import AgentChecker
 from apps.log_databus.handlers.check_collector.checker.es_checker import EsChecker
 from apps.log_databus.handlers.check_collector.checker.kafka_checker import KafkaChecker
+from apps.log_databus.handlers.check_collector.checker.metadata_checker import MetaDataChecker
 from apps.log_databus.handlers.check_collector.checker.route_checker import RouteChecker
 from apps.log_databus.handlers.check_collector.checker.transfer_checker import TransferChecker
 from apps.log_databus.models import CollectorConfig
@@ -36,7 +37,7 @@ from apps.log_databus.models import CollectorConfig
 class CheckCollectorHandler:
     HANDLER_NAME = "启动入口"
 
-    def __init__(self, collector_config_id: int, hosts: str = None, gse_path=None, ipc_path=None):
+    def __init__(self, collector_config_id: int, hosts: str = None, gse_path=None, ipc_path=None, bk_token=None):
         self.collector_config_id = collector_config_id
         self.hosts = hosts
 
@@ -50,6 +51,7 @@ class CheckCollectorHandler:
         self.collector_config = None
         self.gse_path = gse_path or os.environ.get("GSE_ROOT_PATH", GSE_PATH)
         self.ipc_path = ipc_path or os.environ.get("GSE_IPC_PATH", IPC_PATH)
+        self.bk_token = bk_token
 
         self.story_report = []
         self.kafka = []
@@ -139,13 +141,16 @@ class CheckCollectorHandler:
         es_checker = EsChecker(self.table_id, self.bk_data_name, check_collector_record=self.record)
         es_checker.run()
 
+        meta_data_checker = MetaDataChecker(bk_token=self.bk_token, check_collector_record=self.record)
+        meta_data_checker.run()
+
     def get_record_infos(self) -> str:
         return self.record.get_infos()
 
 
 @task(ignore_result=True)
-def async_run_check(collector_config_id: int, hosts: str = None):
-    handler = CheckCollectorHandler(collector_config_id, hosts)
+def async_run_check(collector_config_id: int, hosts: str = None, bk_token: str = None):
+    handler = CheckCollectorHandler(collector_config_id=collector_config_id, hosts=hosts, bk_token=bk_token)
     handler.record.append_normal_info("check start", handler.HANDLER_NAME)
     handler.record.change_status(CheckStatusEnum.STARTED.value)
     handler.run()
