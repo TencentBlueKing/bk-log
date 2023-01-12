@@ -3,7 +3,7 @@
   .icon-play-shape {
     color: #63656e;
     display: inline-block;
-    margin-right: 6px;
+    margin-right: 2px;
     font-size: 12px;
     transform: scale(.5);
     transition: transform .3s;
@@ -23,7 +23,6 @@
   .group-title {
     height: 32px;
     padding: 0 16px;
-    margin-bottom: 8px;
 
     // &.is-move-cur {
     //   cursor: move;
@@ -55,8 +54,6 @@
   }
 
   .group-list {
-    margin-bottom: 8px;
-
     &.list-hidden {
       display: none;
     }
@@ -93,7 +90,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding-left: 28px;
+        padding-left: 24px;
         border-bottom: 1px solid transparent;
         position: relative;
 
@@ -126,7 +123,7 @@
           width: 4px;
           height: 4px;
           position: absolute;
-          left: 18px;
+          left: 14px;
           border-radius: 50%;
           background: #dcdee5;
         }
