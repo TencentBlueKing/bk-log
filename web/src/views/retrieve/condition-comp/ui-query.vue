@@ -84,11 +84,6 @@ export default {
         });
         this.searchFieldsList = res.data.filter(item => fieldsList.includes(item.name));
         this.cacheFieldsList = deepClone(this.searchFieldsList); // 赋值缓存的展示字段
-        const favSearchList = res.data.map(item => ({
-          name: item.name,
-          operator: item.operator,
-        }));
-        this.$emit('favSearchList', favSearchList);
       } finally {
         this.loading = false;
       }
@@ -98,7 +93,6 @@ export default {
       const searchValueStr = this.searchFieldsList.map(item => item.value).join(',');
       if (cacheValueStr === searchValueStr) return; // 鼠标失焦后判断每个值是否和缓存的一样 如果一样 则不请求
       this.cacheFieldsList = deepClone(this.searchFieldsList); // 重新赋值缓存的展示字段
-      const keyword = this.activeFavorite.params.keyword;
       const params = this.searchFieldsList
         .filter(item => Boolean(item.value))
         .map(item => ({
@@ -107,7 +101,7 @@ export default {
         }));
       this.$http.request('favorite/getGenerateQuery', {
         data: {
-          keyword,
+          keyword: this.keyword,
           params,
         },
       }).then((res) => {

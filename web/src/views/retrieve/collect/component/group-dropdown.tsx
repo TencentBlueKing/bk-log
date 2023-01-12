@@ -55,7 +55,7 @@ export default class CollectGroup extends tsc<IProps> {
   titlePopoverInstance = null; // 表头列表实例
 
   get unPrivateGroupList() {
-    // 去掉个人组的组列表
+    // 去掉个人收藏的组列表
     return this.groupList.slice(1);
   }
 
@@ -69,7 +69,7 @@ export default class CollectGroup extends tsc<IProps> {
   }
 
   get showGroupList() {
-    // 根据用户名判断是否时自己创建的收藏 若不是自己的则去除个人组选项
+    // 根据用户名判断是否时自己创建的收藏 若不是自己的则去除个人收藏选项
     return this.userMeta.username !== this.data.created_by
       ? this.unPrivateGroupList
       : this.groupList;
@@ -110,11 +110,11 @@ export default class CollectGroup extends tsc<IProps> {
   }
   /** 点击移动分组操作 */
   handleClickMoveGroup(e) {
+    this.operatePopoverInstance?.set({ hideOnClick: false });
     // 判断当前是否有实例 如果有实例 则给操作列表常驻显示
     if (!this.groupListPopoverInstance) {
       this.groupListPopoverInstance = this.$bkPopover(e.target, {
         content: this.groupMoveListPopoverRef,
-        trigger: 'click',
         interactive: true,
         theme: 'light shield',
         arrow: false,
@@ -125,25 +125,19 @@ export default class CollectGroup extends tsc<IProps> {
         sticky: true,
         placement: 'right-start',
         extCls: 'more-container',
+        zIndex: 999,
         onHidden: () => {
           // 删除实例
-          if (!this.operatePopoverInstance?.props.hideOnClick) {
-            this.operatePopoverInstance?.destroy();
-            this.operatePopoverInstance = null;
-          }
           this.groupListPopoverInstance?.destroy();
           this.groupListPopoverInstance = null;
+          this.clearStatus();
+          this.operatePopoverInstance?.set({ hideOnClick: true });
+        },
+        onShow: () => {
+          this.operatePopoverInstance?.set({ hideOnClick: false });
         },
       });
       this.groupListPopoverInstance.show(100);
-      // 点击移动到其他分组时 操作列表要不受移动到分组的点击影响
-      this.operatePopoverInstance.set({
-        hideOnClick: false,
-      });
-    } else {
-      this.operatePopoverInstance.set({
-        hideOnClick: true,
-      });
     }
   }
   /** 点击收藏的icon  显示更多操作 */
@@ -160,9 +154,12 @@ export default class CollectGroup extends tsc<IProps> {
         sticky: true,
         placement: 'bottom-start',
         extCls: 'more-container',
+        zIndex: 999,
         onHidden: () => {
           this.operatePopoverInstance?.destroy();
           this.operatePopoverInstance = null;
+          this.groupListPopoverInstance?.destroy();
+          this.groupListPopoverInstance = null;
           this.clearStatus(); // 清空状态
         },
       });
@@ -180,6 +177,7 @@ export default class CollectGroup extends tsc<IProps> {
         boundary: 'viewport',
         extCls: 'more-container',
         distance: 4,
+        zIndex: 999,
         onHidden: () => {
           this.titlePopoverInstance?.destroy();
           this.titlePopoverInstance = null;
@@ -232,7 +230,7 @@ export default class CollectGroup extends tsc<IProps> {
           <li onClick={() => this.handleClickLi('share')}>{this.$t('分享')}</li>
           <li onClick={() => this.handleClickLi('edit-favorite')}>{this.$t('编辑')}</li>
           <li onClick={() => this.handleClickLi('create-copy')}>{this.$t('创建副本')}</li>
-          <li class="move-group" onClick={this.handleClickMoveGroup}>
+          <li class="move-group" onMouseenter={this.handleClickMoveGroup}>
             {this.$t('移动至分组')}
             <span class="bk-icon icon-angle-right more-icon"></span>
           </li>
@@ -282,11 +280,8 @@ export default class CollectGroup extends tsc<IProps> {
         {this.isGroupDrop ? (
           <div>
             <div class="more-container" onMouseenter={this.handleHoverIcon}>
-              {!this.isHoverTitle ? (
-                <span class="title-number">{this.data.favorites.length}</span>
-              ) : (
-                <div class="more-box"><span class="bk-icon icon-more"></span></div>
-              )}
+                <span v-show={!this.isHoverTitle} class="title-number">{this.data.favorites.length}</span>
+                <div v-show={this.isHoverTitle} class="more-box"><span class="bk-icon icon-more"></span></div>
             </div>
             {groupDropList()}
           </div>

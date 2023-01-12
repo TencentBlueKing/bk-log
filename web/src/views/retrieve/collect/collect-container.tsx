@@ -28,6 +28,7 @@ import {
   Prop,
   Watch,
 } from 'vue-property-decorator';
+import { Exception } from 'bk-magic-vue';
 import { IGroupItem } from './collect-index';
 import CollectGroup from './collect-group';
 import VueDraggable from 'vuedraggable';
@@ -38,7 +39,6 @@ interface IProps {
   groupList: IGroupItem[];
   isSearchFilter: boolean;
   collectLoading: boolean;
-  isShowGroupTitle: boolean;
   activeFavoriteID: number;
 }
 
@@ -48,10 +48,13 @@ export default class CollectContainer extends tsc<IProps> {
   @Prop({ type: Array, required: true }) groupList: IGroupItem[];
   @Prop({ type: Boolean, default: false }) isSearchFilter: boolean;
   @Prop({ type: Boolean, default: false }) collectLoading: boolean;
-  @Prop({ type: Boolean, default: true }) isShowGroupTitle: boolean;
   @Prop({ type: Number }) activeFavoriteID: number;
 
   dragList: IGroupItem[] = []; // 可拖拽的收藏列表
+
+  get isSearchEmpty() {
+    return this.isSearchFilter && !this.dataList.length;
+  }
 
   @Watch('dataList', { deep: true, immediate: true })
   private handleWatchDataList() {
@@ -90,7 +93,7 @@ export default class CollectContainer extends tsc<IProps> {
           class="group-container"
           v-bkloading={{ isLoading: this.collectLoading }}
         >
-          {this.dragList.length ? (
+          {!this.isSearchEmpty ? (
             <VueDraggable
               vModel={this.dragList}
               animation="150"
@@ -106,7 +109,6 @@ export default class CollectContainer extends tsc<IProps> {
                       collectItem={item}
                       groupList={this.groupList}
                       isSearchFilter={this.isSearchFilter}
-                      isShowGroupTitle={this.isShowGroupTitle}
                       activeFavoriteID={this.activeFavoriteID}
                     ></CollectGroup>
                   </div>
@@ -116,8 +118,9 @@ export default class CollectContainer extends tsc<IProps> {
           ) : (
             <div class="data-empty">
               <div class="empty-box">
-                <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-                <span>{this.$t('暂无数据')}</span>
+                <Exception class="exception-wrap-item exception-part" type="search-empty" scene="part">
+                  <span class="empty-text">{this.$t('无符合条件收藏')}</span>
+                </Exception>
               </div>
             </div>
           )}
