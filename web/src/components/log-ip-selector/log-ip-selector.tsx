@@ -500,10 +500,12 @@ export default class MonitorIpSelector extends tsc<IMonitorIpSelectorProps> {
     return res?.data || [];
   }
   // 获取服务模板列表
-  async fetchServiceTemplates(): Promise<Array<ITemplateItem>[]> {
+  async fetchServiceTemplates(query): Promise<Array<ITemplateItem>[]> {
+    const serviceTemplateList = query || {};
     const data = {
       scope_list: this.scopeList,
       template_type: 'SERVICE_TEMPLATE',
+      ...serviceTemplateList,
     };
     const res = await $http.request('ipChooser/templates', { data });
     return res?.data || [];
@@ -540,10 +542,12 @@ export default class MonitorIpSelector extends tsc<IMonitorIpSelectorProps> {
     return res?.data || [];
   }
   // 获取集群模板列表
-  async fetchSetTemplates(): Promise<Array<ITemplateItem>[]> {
+  async fetchSetTemplates(query): Promise<Array<ITemplateItem>[]> {
+    const setTemplateList = query || {};
     const data = {
       scope_list: this.scopeList,
       template_type: 'SET_TEMPLATE',
+      ...setTemplateList,
     };
     const res = await $http.request('ipChooser/templates', { data });
     return res?.data || [];
