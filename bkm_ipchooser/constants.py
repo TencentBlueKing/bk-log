@@ -107,6 +107,7 @@ class CommonEnum(EnhanceEnum):
         "bk_module_id",
         "bk_module_name",
         "service_template_id",
+        "service_category_id",
     ]
     SIMPLE_HOST_FIELDS = [
         "bk_host_id",
