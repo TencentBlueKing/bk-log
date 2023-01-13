@@ -54,7 +54,7 @@
         scene="part"
       >
         <div class="empty-card">
-          <div class="empty-message">{{$t('当前检索为结果为空')}}</div>
+          <div class="empty-message">{{$t('查询无数据')}}</div>
           <div class="empty-main">
             <div class="suggest-title">{{$t('您可以按照以下方式优化检索结果')}}</div>
             <div class="suggest-list">
@@ -205,7 +205,7 @@ export default {
 
       .log-icon {
         display: inline-block;
-        transform: scale(.8);
+        transform: scale(.8) translate3d(-2px, -1px, 0);
       }
     }
   }

@@ -1602,7 +1602,7 @@ export default {
   '检查查询条件是否完整，是否有报错': 'Check whether the query conditions are complete and whether there is an error',
   '当前可能是手动查询，请': 'Currently it may be a manual query, please',
   点击查询: 'click query',
-  当前检索为结果为空: 'The current search result is empty',
+  查询无数据: 'The current search result is empty',
   您可以按照以下方式优化检索结果: 'You can refine your search results in the following ways',
   数据源配置: 'Data source configuration',
   情况: 'Condition',
