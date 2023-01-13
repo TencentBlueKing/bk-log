@@ -19,15 +19,11 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-import json
 import logging
 import time
 
-import requests
 from django.conf import settings
 
-from apps.feature_toggle.handlers.toggle import FeatureToggleObject
-from apps.feature_toggle.plugins.constants import CHECK_COLLECTOR_CUSTOM_CONFIG
 from apps.log_databus.constants import META_DATA_CRON_REFRESH_TASK_NAME_LIST
 from apps.log_databus.handlers.check_collector.checker.base_checker import Checker
 from apps.log_search.constants import TimeEnum
@@ -40,10 +36,8 @@ logger = logging.getLogger()
 class MetaDataChecker(Checker):
     CHECKER_NAME = "meta data checker"
 
-    def __init__(self, bk_token, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.bk_token = bk_token
-        self.request_headers = {"Content-Type": "application/json", "Cookie": f"bk_token={self.bk_token}"}
         app_code = settings.APP_CODE
         app_secret = settings.SECRET_KEY
         monitor_host = MONITOR_APIGATEWAY_ROOT
@@ -62,18 +56,11 @@ class MetaDataChecker(Checker):
         for task_name in META_DATA_CRON_REFRESH_TASK_NAME_LIST:
             params = self._build_unify_query_params(task_name)
             try:
-                monitor_url = settings.MONITOR_URL
-                if FeatureToggleObject.switch(CHECK_COLLECTOR_CUSTOM_CONFIG):
-                    meta_data_custom_config = FeatureToggleObject.toggle(
-                        CHECK_COLLECTOR_CUSTOM_CONFIG
-                    ).feature_config.get("meta_data_custom_config")
-                    monitor_url = meta_data_custom_config.get("monitor_url") or monitor_url
-                url = f"{monitor_url}/rest/v2/grafana/time_series/unify_query/"
-                response = requests.post(url=url, data=json.dumps(params), headers=self.request_headers, verify=False)
-                if response.status_code != 200:
-                    self.append_error_info(f"task name: {task_name} have error : {response.text}")
+                result = self.bk_monitor_client.unify_query(data=params)
+                if result.get("result"):
+                    self.append_error_info(f"task name: {task_name} have error : {result.get('message')}")
                     continue
-                series = response.json().get("series", [])
+                series = result.get("series", [])
                 if not series:
                     self.append_error_info(f"task name: {task_name} not have execute history")
                     continue
