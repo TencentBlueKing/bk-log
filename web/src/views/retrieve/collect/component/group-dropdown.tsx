@@ -182,7 +182,6 @@ export default class CollectGroup extends tsc<IProps> {
         onHidden: () => {
           this.titlePopoverInstance?.destroy();
           this.titlePopoverInstance = null;
-          this.clearStatus(); // 清空状态
         },
       });
       this.titlePopoverInstance.show(100);
@@ -190,8 +189,8 @@ export default class CollectGroup extends tsc<IProps> {
   }
 
   handleResetGroupTitleName() {
-    this.isShowResetGroupName = true;
     this.groupEditName = this.groupName;
+    this.isShowResetGroupName = true;
   }
 
   clearStatus() {
@@ -216,9 +215,9 @@ export default class CollectGroup extends tsc<IProps> {
               <Input
                 clearable
                 placeholder={this.$t('请输入组名')}
-                vModel={this.groupName}
+                vModel={this.groupEditName}
                 maxlength={10}
-                onKeydown={(e, v) => this.handleGroupKeyDown(e, v, 'reset')}>
+                onKeydown={(v, e) => this.handleGroupKeyDown(v, e, 'reset')}>
               </Input>
               <div class="operate-button">
                 <Button text onClick={e => this.handleResetGroupName(e)}>{this.$t('确定')}</Button>
@@ -267,7 +266,7 @@ export default class CollectGroup extends tsc<IProps> {
                 placeholder={this.$t('请输入组名')}
                 vModel={this.groupEditName}
                 maxlength={10}
-                onKeydown={(e, v) => this.handleGroupKeyDown(e, v, 'add')}>
+                onKeydown={(v, e) => this.handleGroupKeyDown(v, e, 'add')}>
               </Input>
               <div class="operate-button">
                 <Button text onClick={e => this.handleChangeGroupInputStatus('add', e)}>{this.$t('确定')}</Button>
