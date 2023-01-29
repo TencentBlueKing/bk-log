@@ -109,7 +109,7 @@ class TransferEtlHandler(EtlHandler):
             view_roles = []
 
         # 2. 创建索引集
-        index_set = self._update_or_create_index_set(etl_config, storage_cluster_id, view_roles, username=username)
+        index_set = self.update_or_create_index_set(etl_config, storage_cluster_id, view_roles, username=username)
 
         # add user_operation_record
         operation_record = {

@@ -32,6 +32,7 @@ from apps.log_databus.exceptions import (
     CollectorPluginNotExistException,
 )
 from apps.log_databus.handlers.collector import CollectorHandler
+from apps.log_databus.handlers.etl import EtlHandler
 from apps.log_databus.models import CollectorConfig, CollectorPlugin, DataLinkConfig
 from apps.log_search.constants import CustomTypeEnum
 from apps.models import model_to_dict
@@ -231,10 +232,10 @@ class CollectorPluginHandler:
             self._create_metadata_result_table()
             self.collector_plugin.refresh_from_db()
 
-        # 创建或更新虚拟采集项
-        self._update_or_create_virtual_collector()
-
         self.collector_plugin.save()
+
+        # 创建或更新虚拟采集项
+        self._update_or_create_virtual_collector(self.collector_plugin)
 
         return is_create
 
@@ -249,6 +250,7 @@ class CollectorPluginHandler:
         ).first()
         if collector is None:
             collector = CollectorConfig(
+                bk_biz_id=collector_plugin.bk_biz_id,
                 collector_config_name=f"{collector_plugin.collector_plugin_name}(VC)",
                 collector_config_name_en=f"{collector_plugin.collector_plugin_name_en}_vc",
                 collector_plugin_id=collector_plugin.collector_plugin_id,
@@ -271,6 +273,10 @@ class CollectorPluginHandler:
         collector.storage_shards_size = collector_plugin.storage_shards_size
         collector.storage_replies = collector_plugin.storage_replies
         collector.save()
+
+        # 创建索引集
+        erl_handler = EtlHandler.get_instance(collector.collector_config_id, etl_processor=collector.etl_processor)
+        erl_handler.update_or_create_index_set(collector.etl_config, collector.storage_cluster_id)
 
     def update_or_create(self, params: dict) -> dict:
         """

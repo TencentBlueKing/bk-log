@@ -414,7 +414,7 @@ class TestEtl(TestCase):
     @patch("apps.api.TransferApi.get_result_table", lambda _: {"table_id": TABLE_ID})
     @patch("apps.api.TransferApi.get_cluster_info", lambda _: [CLUSTER_INFO])
     @FakeRedis("apps.utils.cache.cache")
-    @patch("apps.log_databus.handlers.etl.EtlHandler._update_or_create_index_set")
+    @patch("apps.log_databus.handlers.etl.EtlHandler.update_or_create_index_set")
     def test_bk_log_text(self, mock_index_set):
         collector_config = CollectorConfig.objects.create(**COLLECTOR_CONFIG)
         mock_index_set.return_value = LOG_INDEX_DATA
@@ -447,7 +447,7 @@ class TestEtl(TestCase):
     @patch("apps.api.TransferApi.get_result_table", lambda _: {"table_id": TABLE_ID})
     @patch("apps.api.TransferApi.get_cluster_info", lambda _: [CLUSTER_INFO])
     @FakeRedis("apps.utils.cache.cache")
-    @patch("apps.log_databus.handlers.etl.EtlHandler._update_or_create_index_set")
+    @patch("apps.log_databus.handlers.etl.EtlHandler.update_or_create_index_set")
     def test_bk_log_json(self, mock_index_set):
         """
         JSON清洗
@@ -509,7 +509,7 @@ class TestEtl(TestCase):
     @patch("apps.api.TransferApi.get_cluster_info", lambda _: [CLUSTER_INFO])
     @FakeRedis("apps.utils.cache.cache")
     @patch("apps.log_databus.handlers.etl_storage.utils.transfer.preview")
-    @patch("apps.log_databus.handlers.etl.EtlHandler._update_or_create_index_set")
+    @patch("apps.log_databus.handlers.etl.EtlHandler.update_or_create_index_set")
     def test_bk_log_regexp(self, mock_index_set, mock_preview):
         """
         正则清洗
@@ -566,7 +566,7 @@ class TestEtl(TestCase):
     @patch("apps.api.TransferApi.get_cluster_info", lambda _: [CLUSTER_INFO])
     @FakeRedis("apps.utils.cache.cache")
     @patch("apps.log_databus.handlers.etl_storage.utils.transfer.preview")
-    @patch("apps.log_databus.handlers.etl.EtlHandler._update_or_create_index_set")
+    @patch("apps.log_databus.handlers.etl.EtlHandler.update_or_create_index_set")
     def test_bk_log_delimiter(self, mock_index_set, mock_preview):
         """
         分隔符清洗
