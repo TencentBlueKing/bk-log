@@ -38,8 +38,8 @@ from apps.log_search.models import (
     LogIndexSet,
     LogIndexSetData,
     Scenario,
-    UserIndexSetConfig,
     UserIndexSetSearchHistory,
+    UserIndexSetFieldsConfig,
 )
 from apps.log_search.constants import (
     TimeEnum,
@@ -49,9 +49,12 @@ from apps.log_search.constants import (
     ASYNC_SORTED,
     FieldDataTypeEnum,
     MAX_EXPORT_REQUEST_RETRY,
-    DEFAULT_BK_CLOUD_ID,
     ERROR_MSG_CHECK_FIELDS_FROM_BKDATA,
     ERROR_MSG_CHECK_FIELDS_FROM_LOG,
+    TimeFieldTypeEnum,
+    TimeFieldUnitEnum,
+    OperatorEnum,
+    REAL_OPERATORS_MAP,
 )
 from apps.log_search.exceptions import (
     BaseSearchIndexSetException,
@@ -80,10 +83,9 @@ from apps.log_search.handlers.es.indices_optimizer_context_tail import IndicesOp
 from apps.utils.local import get_local_param
 from apps.log_search.handlers.biz import BizHandler
 from apps.log_search.handlers.search.mapping_handlers import MappingHandlers
-from apps.log_search.handlers.search.search_sort_builder import SearchSortBuilder
 from apps.log_search.handlers.search.pre_search_handlers import PreSearchHandlers
-from apps.log_search.constants import TimeFieldTypeEnum, TimeFieldUnitEnum
 from apps.utils.log import logger
+from apps.utils.lucene import generate_query_string
 
 max_len_dict = Dict[str, int]  # pylint: disable=invalid-name
 
@@ -226,8 +228,6 @@ class SearchHandler(object):
         self.request_username = get_request_username()
 
     def fields(self, scope="default"):
-        # field_result, display_fields = self._get_all_fields_by_index_id(scope)
-        # sort_list: list = self._get_sort_list_by_index_id(scope)
         mapping_handlers = MappingHandlers(
             self.indices,
             self.index_set_id,
@@ -238,7 +238,7 @@ class SearchHandler(object):
             end_time=self.end_time,
         )
         field_result, display_fields = mapping_handlers.get_all_fields_by_index_id(scope)
-        sort_list: list = MappingHandlers.get_sort_list_by_index_id(self.index_set_id, scope)
+        sort_list: list = MappingHandlers.get_sort_list_by_index_id(self.index_set_id)
 
         # 校验sort_list字段是否存在
         field_result_list = [i["field_name"] for i in field_result]
@@ -268,6 +268,10 @@ class SearchHandler(object):
             self.clean_config(),
         ]:
             result_dict["config"].append(fields_config)
+        # 将用户当前使用的配置id传递给前端
+        result_dict["config_id"] = UserIndexSetFieldsConfig.get_config(
+            index_set_id=self.index_set_id, username=self.request_username
+        ).id
 
         return result_dict
 
@@ -563,7 +567,7 @@ class SearchHandler(object):
                     "collapse": self.collapse,
                 },
                 data_api_retry_cls=DataApiRetryClass.create_retry_obj(
-                    BaseException,
+                    exceptions=[BaseException],
                     stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY,
                 ),
             )
@@ -595,7 +599,7 @@ class SearchHandler(object):
                 "collapse": self.collapse,
             },
             data_api_retry_cls=DataApiRetryClass.create_retry_obj(
-                BaseException, stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
+                exceptions=[BaseException], stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
             ),
         )
         return result
@@ -639,7 +643,7 @@ class SearchHandler(object):
                     "search_after": search_after,
                 },
                 data_api_retry_cls=DataApiRetryClass.create_retry_obj(
-                    BaseException, stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
+                    exceptions=[BaseException], stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
                 ),
             )
 
@@ -666,22 +670,12 @@ class SearchHandler(object):
                     "scroll_id": _scroll_id,
                 },
                 data_api_retry_cls=DataApiRetryClass.create_retry_obj(
-                    BaseException, stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
+                    exceptions=[BaseException], stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
                 ),
             )
             scroll_size = len(scroll_result["hits"]["hits"])
             result_size += scroll_size
             yield self._deal_query_result(scroll_result)
-
-    def _get_sort_list_by_index_id(self, scope="default"):
-        index_config_obj = UserIndexSetConfig.objects.filter(
-            index_set_id=self.index_set_id, created_by=self.request_username, scope=scope, is_deleted=False
-        )
-        if not index_config_obj.exists():
-            return list()
-
-        sort_list = index_config_obj.first().sort_list
-        return sort_list if isinstance(sort_list, list) else list()
 
     @staticmethod
     def get_bcs_manage_url(cluster_id, container_id):
@@ -744,56 +738,7 @@ class SearchHandler(object):
 
     @staticmethod
     def _build_query_string(history):
-        key_word = history["params"].get("keyword", "")
-        if key_word is None:
-            key_word = ""
-        query_string = key_word
-        # IP快选、过滤条件
-        host_scopes = history["params"].get("host_scopes", {})
-
-        target_nodes = host_scopes.get("target_nodes", [])
-
-        if target_nodes:
-            if host_scopes["target_node_type"] == TargetNodeTypeEnum.INSTANCE.value:
-                query_string += " AND ({})".format(
-                    ",".join([f"{target_node['bk_cloud_id']}:{target_node['ip']}" for target_node in target_nodes])
-                )
-            elif host_scopes["target_node_type"] == TargetNodeTypeEnum.DYNAMIC_GROUP.value:
-                # target_nodes: [
-                #   "11c290dc-66e8-11ec-84ba-1e84cfcf753a",
-                #   "11c290dc-66e8-11ec-84ba-1e84cfcf753a"
-                # ]
-                dynamic_name_list = [str(target_node["name"]) for target_node in target_nodes]
-                query_string += " AND (dynamic_group_name:" + ",".join(dynamic_name_list) + ")"
-            else:
-                first_node, *_ = target_nodes
-                target_list = [str(target_node["bk_inst_id"]) for target_node in target_nodes]
-                query_string += f" AND ({first_node['bk_obj_id']}:" + ",".join(target_list) + ")"
-
-        if host_scopes.get("modules"):
-            modules_list = [str(_module["bk_inst_id"]) for _module in host_scopes["modules"]]
-            query_string += " ADN (modules:" + ",".join(modules_list) + ")"
-            host_scopes["target_node_type"] = TargetNodeTypeEnum.TOPO.value
-            host_scopes["target_nodes"] = host_scopes["modules"]
-
-        if host_scopes.get("ips"):
-            query_string += " AND (ips:" + host_scopes["ips"] + ")"
-            host_scopes["target_node_type"] = TargetNodeTypeEnum.INSTANCE.value
-            host_scopes["target_nodes"] = [
-                {"ip": ip, "bk_cloud_id": DEFAULT_BK_CLOUD_ID} for ip in host_scopes["ips"].split(",")
-            ]
-
-        additions = history["params"].get("addition", [])
-
-        if additions:
-            query_string += (
-                " AND ("
-                + " AND ".join(
-                    [f'{addition["field"]} {addition["operator"]} {addition["value"]}' for addition in additions]
-                )
-                + ")"
-            )
-        history["query_string"] = query_string
+        history["query_string"] = generate_query_string(history["params"])
         return history
 
     @staticmethod
@@ -809,10 +754,14 @@ class SearchHandler(object):
                 return False
             host_scopes_op1: dict = op1_params["host_scopes"]
             host_scopes_op2: dict = op2_params["host_scopes"]
-            if host_scopes_op1["ips"] != host_scopes_op2["ips"]:
+
+            if host_scopes_op1.keys() != host_scopes_op2.keys():
                 return False
-            if host_scopes_op1["modules"] != host_scopes_op2["modules"]:
-                return False
+
+            for k in host_scopes_op1:
+                if host_scopes_op1[k] != host_scopes_op2[k]:
+                    return False
+
             return True
 
         def _not_repeat(history):
@@ -1066,8 +1015,25 @@ class SearchHandler(object):
             return time_field, TimeFieldTypeEnum.DATE.value, TimeFieldUnitEnum.SECOND.value
 
     def _init_sort(self) -> list:
-        sort_list = SearchSortBuilder.sort_list(**self.search_dict)
-        return sort_list
+        index_set_id = self.search_dict.get("index_set_id")
+        # 获取用户对sort的排序需求
+        sort_list: List = self.search_dict.get("sort_list", [])
+        if sort_list:
+            return sort_list
+        # 用户已设置排序规则
+        username = get_request_username()
+        scope = self.search_dict.get("search_type", "default")
+        config_obj = UserIndexSetFieldsConfig.get_config(index_set_id=index_set_id, username=username)
+        if config_obj:
+            sort_list = config_obj.sort_list
+            if sort_list:
+                return sort_list
+        # 安全措施, 用户未设置排序规则，且未创建默认配置时, 使用默认排序规则
+        from apps.log_search.handlers.search.mapping_handlers import MappingHandlers
+
+        return MappingHandlers.get_default_sort_list(
+            index_set_id=index_set_id, scenario_id=self.scenario_id, scope=scope
+        )
 
     # 过滤filter
     def _init_filter(self):
@@ -1079,6 +1045,9 @@ class SearchHandler(object):
             scenario_id=self.scenario_id,
             storage_cluster_id=self.storage_cluster_id,
         )
+        # 获取各个字段类型
+        final_fields_list, __ = mapping_handlers.get_all_fields_by_index_id()
+        field_type_map = {i["field_name"]: i["field_type"] for i in final_fields_list}
         filter_list: list = new_attrs.get("addition", [])
         new_filter_list: list = []
         for item in filter_list:
@@ -1089,6 +1058,9 @@ class SearchHandler(object):
             value = item.get("value")
             operator: str = item.get("method") if item.get("method") else item.get("operator")
             condition: str = item.get("condition", "and")
+            if operator in REAL_OPERATORS_MAP.keys():
+                operator = REAL_OPERATORS_MAP[operator]
+
             if operator in ["exists", "does not exists"]:
                 new_filter_list.append(
                     {"field": field, "value": "0", "operator": operator, "condition": condition, "type": _type}
@@ -1097,6 +1069,11 @@ class SearchHandler(object):
             # 此处对于前端传递filter为空字符串需要放行
             if (not field or not value or not operator) and not isinstance(value, str):
                 continue
+            # bool类型的字段且操作符为 is true 和 is false的时候做转换
+            if field_type_map.get(field, "") == "bool":
+                if operator in [OperatorEnum.IS_TRUE["operator"], OperatorEnum.IS_FALSE["operator"]]:
+                    operator = "is"
+                    value = operator.split(" ")[-1]
 
             new_filter_list.append(
                 {"field": field, "value": value, "operator": operator, "condition": condition, "type": _type}
@@ -1179,27 +1156,16 @@ class SearchHandler(object):
         else:
             require_field_match = False
 
-        if self.scenario_id == Scenario.BKDATA:
-            highlight = {
-                "pre_tags": ["<mark>"],
-                "post_tags": ["</mark>"],
-                "fields": {
-                    "log": {
-                        # "type": "fvh"
-                        "number_of_fragments": 0
-                    }
-                },
-                "require_field_match": require_field_match,
-            }
-            if self.query_string == "":
-                highlight = {}
-            return highlight
         highlight = {
             "pre_tags": ["<mark>"],
             "post_tags": ["</mark>"],
             "fields": {"*": {"number_of_fragments": 0}},
             "require_field_match": require_field_match,
         }
+
+        if self.query_string == "":
+            highlight = {}
+
         return highlight
 
     def _add_cmdb_fields(self, log):
@@ -1557,14 +1523,10 @@ class SearchHandler(object):
             return ERROR_MSG_CHECK_FIELDS_FROM_LOG
 
     def _get_user_sorted_list(self, sorted_fields):
-        user_sort_list = (
-            UserIndexSetConfig.objects.filter(index_set_id=self.index_set_id, created_by=self.request_username)
-            .values("sort_list")
-            .first()
-        )
-        if not user_sort_list:
+        config = UserIndexSetFieldsConfig.get_config(index_set_id=self.index_set_id, username=self.request_username)
+        if not config:
             return [[sorted_field, ASYNC_SORTED] for sorted_field in sorted_fields]
-        user_sort_list = user_sort_list["sort_list"]
+        user_sort_list = config.sort_list
         user_sort_fields = [i[0] for i in user_sort_list]
         for sorted_field in sorted_fields:
             if sorted_field in user_sort_fields:

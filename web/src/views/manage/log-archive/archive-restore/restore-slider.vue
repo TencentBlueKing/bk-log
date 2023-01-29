@@ -62,7 +62,7 @@
                 :key="option.archive_config_id"
                 :id="option.archive_config_id"
                 :name="option.collector_config_name"
-                :disabled="!option.permission.manage_collection">
+                :disabled="!option.permission[authorityMap.MANAGE_COLLECTION_AUTH]">
               </bk-option>
             </bk-select>
           </bk-form-item>
@@ -118,6 +118,7 @@
 <script>
 import { mapGetters } from 'vuex';
 import ValidateUserSelector from '../../manage-extract/manage-extract-permission/validate-user-selector';
+import * as authorityMap from '../../../../common/authority-map';
 
 export default {
   components: {
@@ -173,6 +174,9 @@ export default {
       user: 'uesr',
       globalsData: 'globals/globalsData',
     }),
+    authorityMap() {
+      return authorityMap;
+    },
     isEdit() {
       return this.editRestore !== null;
     },

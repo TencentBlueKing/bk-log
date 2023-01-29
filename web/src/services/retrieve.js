@@ -111,6 +111,22 @@ const getExportHistoryList = {
   url: '/search/index_set/:index_set_id/export_history/?bk_biz_id=:bk_biz_id&page=:page&pagesize=:pagesize&show_all=:show_all',
   method: 'get',
 };
+const getFieldsListConfig = {
+  url: '/search/index_set/:index_set_id/list_config/',
+  method: 'get',
+};
+const createFieldsConfig = {
+  url: '/search/index_set/:index_set_id/create_config/',
+  method: 'post',
+};
+const updateFieldsConfig = {
+  url: '/search/index_set/:index_set_id/update_config/',
+  method: 'post',
+};
+const deleteFieldsConfig = {
+  url: '/search/index_set/:index_set_id/delete_config/',
+  method: 'post',
+};
 
 export {
   getIndexSetList,
@@ -135,4 +151,8 @@ export {
   getWebConsoleUrl,
   getSearchHistory,
   getExportHistoryList,
+  getFieldsListConfig,
+  createFieldsConfig,
+  updateFieldsConfig,
+  deleteFieldsConfig,
 };

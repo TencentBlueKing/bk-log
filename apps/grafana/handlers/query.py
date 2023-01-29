@@ -37,8 +37,9 @@ from apps.log_search.exceptions import BaseSearchIndexSetDataDoseNotExists
 from apps.log_search.handlers.biz import BizHandler
 from apps.log_search.handlers.search.aggs_handlers import AggsViewAdapter
 from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler
-from apps.log_search.models import LogIndexSet, ProjectInfo, Scenario
+from apps.log_search.models import LogIndexSet, Scenario
 from bk_dataview.grafana import client
+from bkm_space.utils import bk_biz_id_to_space_uid
 
 
 class GrafanaQueryHandler:
@@ -53,10 +54,10 @@ class GrafanaQueryHandler:
     ]
 
     CONDITION_CHOICES = [
-        {"id": "is", "name": "is", "placeholder": _("请输入，注意空格符号")},
-        {"id": "is one of", "name": "is one of", "placeholder": _("逗号分隔")},
-        {"id": "is not", "name": "is not", "placeholder": _("请输入，注意空格符号")},
-        {"id": "is not one of", "name": "is not one of", "placeholder": _("逗号分隔")},
+        {"id": "is", "name": "is", "placeholder": _("请选择或直接输入")},
+        {"id": "is one of", "name": "is one of", "placeholder": _("请选择或直接输入，逗号分隔")},
+        {"id": "is not", "name": "is not", "placeholder": _("请选择或直接输入")},
+        {"id": "is not one of", "name": "is not one of", "placeholder": _("请选择或直接输入，逗号分隔")},
         {"id": "gt", "name": ">", "placeholder": _("请选择或直接输入")},
         {"id": "gte", "name": ">=", "placeholder": _("请选择或直接输入")},
         {"id": "lt", "name": "<", "placeholder": _("请选择或直接输入")},
@@ -67,9 +68,8 @@ class GrafanaQueryHandler:
         self.bk_biz_id = bk_biz_id
 
     @property
-    def project_id(self):
-        project = ProjectInfo.objects.filter(bk_biz_id=self.bk_biz_id).first()
-        return project.project_id if project else None
+    def space_uid(self):
+        return bk_biz_id_to_space_uid(self.bk_biz_id)
 
     def _get_aggregations(self, metric_field, agg_method, dimensions, time_field, interval):
         """
@@ -352,10 +352,10 @@ class GrafanaQueryHandler:
         return new_value
 
     def get_metric_list(self, category_id=None):
-        project_id = self.project_id
-        if not project_id:
+        space_uid = self.space_uid
+        if not space_uid:
             return []
-        index_set_list = LogIndexSet.objects.filter(project_id=project_id)
+        index_set_list = LogIndexSet.objects.filter(space_uid=space_uid)
 
         if category_id:
             index_set_list = index_set_list.filter(category_id=category_id)

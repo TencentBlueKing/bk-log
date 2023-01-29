@@ -58,6 +58,11 @@
         <span>{{ $t('configDetails.logType') }}</span>
         <span>{{ collectorData.collector_scenario_name || '-' }}</span>
       </div>
+      <!-- 容器集群 -->
+      <div>
+        <span>{{ $t('容器集群') }}</span>
+        <span>{{ bcsClusterName }}</span>
+      </div>
       <!-- 配置项 -->
       <div>
         <span>{{$t('配置项')}}</span>
@@ -67,6 +72,11 @@
                class="config-box">
             <div class="config-title">{{getFromCharCode(configIndex)}}</div>
             <div class="deploy-sub">
+              <!-- 容器环境 -->
+              <div>
+                <span>{{ $t('容器环境') }}</span>
+                <span>{{ configItem.collectorName }}</span>
+              </div>
               <!-- Namespace -->
               <div>
                 <span>Namespace</span>
@@ -90,9 +100,7 @@
                     </div>
                   </template>
                 </div>
-                <span v-else>
-                  {{$t('所有')}}
-                </span>
+                <span v-else>{{$t('所有')}}</span>
               </div>
               <!-- 关联标签 -->
               <div>
@@ -112,21 +120,15 @@
                     </div>
                   </template>
                 </div>
-                <span v-else>
-                  {{$t('所有')}}
-                </span>
+                <span v-else>{{$t('所有')}}</span>
               </div>
               <!-- 日志路径 -->
               <div>
-                <span>
-                  {{ $t('configDetails.logPath') }}
-                </span>
+                <span>{{ $t('configDetails.logPath') }}</span>
                 <div v-if=" configItem.params.paths.length" class="deploy-path">
                   <p v-for="(val, key) in configItem.params.paths" :key="key">{{ val }}</p>
                 </div>
-                <span v-else>
-                  --
-                </span>
+                <span v-else>--</span>
               </div>
               <!-- 日志字符集 -->
               <div>
@@ -142,8 +144,7 @@
                 <span>{{ $t('configDetails.filterContent') }}</span>
                 <div>
                   <p>{{ $t('configDetails.strMatching') }}</p>
-                  <p
-                    v-if="configItem.params.conditions.match_content">
+                  <p v-if="configItem.params.conditions.match_content">
                     {{ configItem.params.conditions.match_content }}
                   </p>
                   <p>
@@ -193,10 +194,22 @@
               </div>
               <div class="content-style" v-else>
                 <span>{{ $t('configDetails.filterContent') }}</span>
-                <div>
-                  --
-                </div>
+                <div>--</div>
               </div>
+              <!-- 段日志 -->
+              <template v-if="collectorData.collector_scenario_id === 'section'">
+                <div class="content-style">
+                  <span>{{ $t('段日志参数') }}</span>
+                  <div class="section-box">
+                    <p>{{$t('行首正则')}}: <span>{{configItem.params.multiline_pattern}}</span></p> <br>
+                    <p>
+                      {{$t('最多匹配')}}<span>{{configItem.params.multiline_max_lines}}</span>
+                      {{$t('行，最大耗时')}}<span>{{configItem.params.multiline_timeout}}</span>
+                      {{$t('秒')}}
+                    </p>
+                  </div>
+                </div>
+              </template>
             </div>
           </div>
         </div>
@@ -254,7 +267,13 @@ export default {
         workload_name: this.$t('应用名称'),
         container_name: this.$t('容器名称'),
       },
+      collectorNameMap: {
+        container_log_config: 'Container',
+        node_log_config: 'Node',
+        std_log_config: this.$t('标准输出'),
+      },
       dataLinkName: '--',
+      bcsClusterName: '--', // 容器环境集群名
     };
   },
   computed: {
@@ -291,6 +310,7 @@ export default {
     async initContainerConfigData(data) {
       // 分yaml模式和ui模式下的config展示
       try {
+        this.bcsClusterName = await this.getBcsClusterName(data.bcs_cluster_id);
         const showData = data.yaml_config_enabled ? await this.getYamlConfigData(data.yaml_config) : data;
         this.extraLabelList = showData.extra_labels;
         this.collectorConfigs = showData.configs.map((item) => {
@@ -305,6 +325,7 @@ export default {
             container: yamlContainer,
             label_selector: yamlSelector,
             namespaces,
+            collector_type,
           } = item;
           let container;
           let labelSelector;
@@ -322,10 +343,12 @@ export default {
               match_expressions,
             };
           }
+          const collectorName = this.collectorNameMap[collector_type] || '--';
           return {
             namespaces,
             data_encoding,
             container,
+            collectorName,
             label_selector: labelSelector,
             params,
           };
@@ -355,7 +378,13 @@ export default {
         extra_labels: [],
       };
       try {
-        const res = await this.$http.request('container/yamlJudgement', { data: { yaml_config: yamlConfig } });
+        const res = await this.$http.request('container/yamlJudgement', {
+          data: {
+            bk_biz_id: this.$store.state.bkBizId,
+            bcs_cluster_id: this.collectorData.bcs_cluster_id,
+            yaml_config: yamlConfig,
+          },
+        });
         const { parse_result: parseResult, parse_status: parseStatus } = res.data;
         if (Array.isArray(parseResult) && !parseStatus) return defaultConfigData; // 返回值若是数组则表示yaml解析出错
         if (parseStatus) return {
@@ -375,6 +404,18 @@ export default {
     },
     isContainerHaveValue(container) {
       return Object.values(container)?.some(item => !!item) || false;
+    },
+    /**
+     * @desc: 获取bcs集群列表名
+     */
+    async getBcsClusterName(bcsID) {
+      try {
+        const query = { bk_biz_id: this.$store.state.bkBizId };
+        const res = await this.$http.request('container/getBcsList', { query });
+        return res.data.find(item => item.id === bcsID)?.name || '--';
+      } catch (error) {
+        return '--';
+      }
     },
   },
 };
@@ -424,6 +465,12 @@ export default {
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+    }
+
+    .section-box {
+      > :last-child {
+        margin-top: 4px;
+      }
     }
 
     > div {

@@ -397,7 +397,7 @@ export default {
   computed: {
     ...mapGetters({
       bkBizId: 'bkBizId',
-      projectId: 'projectId',
+      spaceUid: 'spaceUid',
       curCollect: 'collect/curCollect',
       globalsData: 'globals/globalsData',
       accessUserManage: 'accessUserManage',
@@ -659,7 +659,7 @@ export default {
       this.$router.push({
         name: 'collection-item',
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
     },

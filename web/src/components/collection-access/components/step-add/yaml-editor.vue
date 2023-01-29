@@ -28,10 +28,10 @@
       :warning-list="warningList"
       @get-problem-state="getProblemState">
       <div class="load" slot="right">
-        <span v-bk-tooltips="{ distance: 20, content: $t('上传') }" class="load-tips">
+        <span v-bk-tooltips="{ distance: 20, content: $t('上传'), delay: 300 }" class="load-tips">
           <span class="bk-icon icon-upload-cloud" @click="updateYAMLDocument"></span>
         </span>
-        <span v-bk-tooltips="{ distance: 20, content: $t('下载'), }" class="load-tips">
+        <span v-bk-tooltips="{ distance: 20, content: $t('下载'), delay: 300 }" class="load-tips">
           <span class="bk-icon icon-download" @click="downloadYAMLDocument('monaco-text.yaml')"></span>
         </span>
       </div>
@@ -64,6 +64,10 @@ export default {
     yamlFormData: {
       type: Object,
       default: () => ({}),
+    },
+    clusterId: {
+      type: String,
+      default: '',
     },
   },
   data() {
@@ -161,7 +165,13 @@ export default {
         this.warningList = [];
         return;
       };
-      this.$http.request('container/yamlJudgement', { data: { yaml_config: yaml } }).then((res) => {
+      this.$http.request('container/yamlJudgement', {
+        data: {
+          bk_biz_id: this.$store.state.bkBizId,
+          bcs_cluster_id: this.clusterId,
+          yaml_config: yaml,
+        },
+      }).then((res) => {
         if (res.code === 0) {
           const { parse_result: parseResult, parse_status: parseStatus } = res.data;
           if (Array.isArray(parseResult) && !parseStatus) {

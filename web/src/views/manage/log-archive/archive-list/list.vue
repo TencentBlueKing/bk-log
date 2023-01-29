@@ -98,7 +98,9 @@
               theme="primary"
               text
               class="mr10 king-button"
-              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+              v-cursor="{
+                active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
+              }"
               @click.stop="operateHandler(props.row, 'restore')">
               {{ $t('logArchive.restore') }}
             </bk-button>
@@ -107,7 +109,9 @@
               theme="primary"
               text
               class="mr10 king-button"
-              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+              v-cursor="{
+                active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
+              }"
               @click.stop="operateHandler(props.row, 'edit')">
               {{ $t('编辑') }}
             </bk-button>
@@ -116,7 +120,9 @@
               theme="primary"
               text
               class="mr10 king-button"
-              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+              v-cursor="{
+                active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
+              }"
               @click.stop="operateHandler(props.row, 'delete')">
               {{ $t('btn.delete') }}
             </bk-button>
@@ -147,6 +153,7 @@ import StateTable from './components/state-table.vue';
 import ArchiveSlider from './components/archive-slider';
 import RestoreSlider from '../archive-restore/restore-slider.vue';
 import { formatFileSize } from '@/common/util';
+import * as authorityMap from '../../../../common/authority-map';
 
 export default {
   name: 'ArchiveList',
@@ -178,6 +185,9 @@ export default {
     ...mapGetters({
       bkBizId: 'bkBizId',
     }),
+    authorityMap() {
+      return authorityMap;
+    },
     repositoryFilters() {
       return [];
     },
@@ -249,9 +259,9 @@ export default {
       this.editArchiveId = null;
     },
     operateHandler(row, operateType) {
-      if (!(row.permission?.manage_collection)) {
+      if (!(row.permission?.[authorityMap.MANAGE_COLLECTION_AUTH])) {
         return this.getOptionApplyData({
-          action_ids: ['manage_collection'],
+          action_ids: [authorityMap.MANAGE_COLLECTION_AUTH],
           resources: [{
             type: 'collection',
             id: row.collector_config_id,

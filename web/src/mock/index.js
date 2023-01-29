@@ -73,8 +73,8 @@ const getMyProjectList = {
   code: 0,
   data: [
     {
-      project_id: 1,
-      project_name: '业务名称',
+      space_uid: 1,
+      space_name: '业务名称',
       bk_biz_id: 1,
       bk_app_code: 'bk_log',
       time_zone: 'Asia/Shanghai',

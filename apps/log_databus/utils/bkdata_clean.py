@@ -25,10 +25,10 @@ from django.core.cache import cache
 from apps.api import BkDataDatabusApi
 from apps.utils.log import logger
 from apps.log_databus.constants import DEFAULT_TIME_FORMAT, DEFAULT_CATEGORY_ID, MAX_SYNC_CLEAN_TTL
-from apps.log_databus.exceptions import ProjectNoteExistException
 from apps.log_databus.models import BKDataClean
 from apps.log_search.handlers.index_set import IndexSetHandler
-from apps.log_search.models import ProjectInfo, Scenario
+from apps.log_search.models import Scenario
+from bkm_space.utils import bk_biz_id_to_space_uid
 
 
 class BKDataCleanUtils:
@@ -96,14 +96,11 @@ class BKDataCleanUtils:
 
     @classmethod
     def create_index_set(cls, insert_objs, bk_biz_id: int, category_id=DEFAULT_CATEGORY_ID):
-        project_info = ProjectInfo.objects.filter(bk_biz_id=bk_biz_id).first()
-        if not project_info:
-            raise ProjectNoteExistException(ProjectNoteExistException.MESSAGE.format(bk_biz_id=bk_biz_id))
         index_set_dict = {}
         for insert_obj in insert_objs:
             index_set = IndexSetHandler.create(
                 index_set_name=insert_obj["result_table_name"],
-                project_id=project_info.project_id,
+                space_uid=bk_biz_id_to_space_uid(bk_biz_id),
                 storage_cluster_id=None,
                 scenario_id=Scenario.BKDATA,
                 indexes=[

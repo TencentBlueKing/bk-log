@@ -92,7 +92,7 @@ export default class ChartTitle extends Vue {
     flex: 1;
 
     .chart-title {
-      padding: 5px 10px;
+      padding: 4px 10px;
       margin-left: -10px;
       border-radius: 2px;
       color: #63656e;
@@ -122,9 +122,7 @@ export default class ChartTitle extends Vue {
         }
 
         .icon-down-shape {
-          font-size: 16px;
           margin-right: 8px;
-          color: #c4c6cc;
           transition: transform .3s;
 
           &.is-flip {

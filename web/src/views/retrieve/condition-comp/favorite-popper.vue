@@ -22,18 +22,11 @@
 
 <template>
   <div
-    class="favorite-popper-content"
-    :style="popperStyle"
-    v-bkloading="{ isLoading }">
-    <div class="title">{{ $t('收藏描述：') }}</div>
+    class="favorite-popper-content">
+    <div class="title">{{ $t('是否替换当前收藏') }}({{activeFavorite.name}})？</div>
     <div class="content">
-      <bk-input v-model.trim="value" maxlength="50"></bk-input>
-      <div class="icon-container" @click="add">
-        <span class="bk-icon icon-check-line"></span>
-      </div>
-      <div class="icon-container" @click="$emit('close')">
-        <span class="bk-icon icon-close-line-2"></span>
-      </div>
+      <bk-button text size="small" @click="handleOperate('replace')">{{ $t('替换当前') }}</bk-button>
+      <bk-button text size="small" @click="handleOperate('add')">{{ $t('新建') }}</bk-button>
     </div>
   </div>
 </template>
@@ -41,12 +34,8 @@
 <script>
 export default {
   props: {
-    isLoading: {
-      type: Boolean,
-      required: true,
-    },
-    panelWidth: {
-      type: Number,
+    activeFavorite: {
+      type: Object,
       required: true,
     },
   },
@@ -56,18 +45,13 @@ export default {
     };
   },
   computed: {
-    popperStyle() {
-      return {
-        width: `${this.panelWidth - 37}px`,
-      };
-    },
   },
   methods: {
-    add() {
-      if (this.value) {
-        this.$emit('add', this.value);
+    handleOperate(type) {
+      if (type === 'add') {
+        this.$emit('favoriteTipsOperate', 'add-new');
       } else {
-        this.messageWarn(this.$t('请输入内容'));
+        this.$emit('favoriteTipsOperate', 'replace');
       }
     },
   },
@@ -76,49 +60,22 @@ export default {
 
 <style lang="scss" scoped>
   .favorite-popper-content {
-    width: 363px;
-    padding: 9px 2px;
+    min-width: 200px;
+    padding: 2px;
+    // word-wrap: ;
 
     .title {
-      margin-bottom: 7px;
+      margin-bottom: 10px;
       font-size: 12px;
       line-height: 20px;
       color: #63656e;
     }
 
     .content {
-      display: flex;
-      align-items: center;
+      text-align: right;
 
-      .icon-container {
-        flex-shrink: 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 32px;
-        height: 32px;
-        margin-left: 4px;
-        border: 1px solid #c4c6cc;
-        cursor: pointer;
-        transition: border-color .3s;
-
-        &:hover {
-          border-color: #3a84ff;
-          transition: border-color .3s;
-        }
-
-        .bk-icon {
-          font-size: 20px;
-          font-weight: bold;
-
-          &.icon-check-line {
-            color: #2dcb56;
-          }
-
-          &.icon-close-line-2 {
-            color: #ea3636;
-          }
-        }
+      .bk-button-text {
+        padding: 0 6px;
       }
     }
   }

@@ -92,13 +92,14 @@ class CollectorScenario(object):
         change bk_data_id result_table_id
         :return:
         """
+        from apps.log_databus.handlers.collector import build_bk_data_name
+
         new_bk_data_id = cls.update_or_create_data_id(
             data_link_id=collector_config.data_link_id,
             mq_config={"topic": mq_topic, "partition": mq_partition},
-            data_name=f"{collector_config.bk_biz_id}"
-            f"_{settings.TABLE_ID_PREFIX}"
-            f"_clustering_"
-            f"{collector_config.collector_config_name_en}",
+            data_name=build_bk_data_name(
+                collector_config.bk_biz_id, f"clustering_{collector_config.collector_config_name_en}"
+            ),
             description=collector_config.description,
             encoding=META_DATA_ENCODING,
         )

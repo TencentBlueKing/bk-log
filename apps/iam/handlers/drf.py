@@ -19,6 +19,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+from bkm_space.utils import space_uid_to_bk_biz_id
+
 """
 DRF 插件
 """
@@ -28,7 +30,6 @@ from typing import List, Callable  # noqa
 from django.conf import settings  # noqa
 from rest_framework import permissions  # noqa
 
-from apps.log_search.models import ProjectInfo  # noqa
 from iam import Resource  # noqa
 from . import Permission  # noqa
 from .actions import ActionMeta, ActionEnum  # noqa
@@ -55,9 +56,7 @@ class IAMPermission(permissions.BasePermission):
         client = Permission()
         for action in self.actions:
             client.is_allowed(
-                action=action,
-                resources=self.resources,
-                raise_exception=True,
+                action=action, resources=self.resources, raise_exception=True,
             )
         return True
 
@@ -80,23 +79,8 @@ class BusinessActionPermission(IAMPermission):
         super(BusinessActionPermission, self).__init__(actions)
 
     @classmethod
-    def convert_project_id_to_biz_id(cls, project_id):
-        if not project_id:
-            return None
-        try:
-            project = ProjectInfo.objects.get(project_id=project_id)
-            bk_biz_id = project.bk_biz_id
-        except ProjectInfo.DoesNotExist:
-            bk_biz_id = None
-        return bk_biz_id
-
-    @classmethod
     def fetch_biz_id_by_request(cls, request):
         bk_biz_id = request.data.get("bk_biz_id", 0) or request.query_params.get("bk_biz_id", 0)
-        project_id = request.data.get("project_id") or request.query_params.get("project_id")
-
-        if not bk_biz_id:
-            bk_biz_id = cls.convert_project_id_to_biz_id(project_id)
         return bk_biz_id
 
     def has_permission(self, request, view):
@@ -109,8 +93,8 @@ class BusinessActionPermission(IAMPermission):
     def has_object_permission(self, request, view, obj):
         # 先查询对象中有没有业务ID相关属性
         bk_biz_id = None
-        if hasattr(obj, "project_id"):
-            bk_biz_id = self.convert_project_id_to_biz_id(obj.project_id)
+        if hasattr(obj, "space_uid"):
+            bk_biz_id = space_uid_to_bk_biz_id(obj.space_uid)
         elif hasattr(obj, "bk_biz_id"):
             bk_biz_id = obj.bk_biz_id
         if bk_biz_id:
@@ -161,10 +145,7 @@ class InstanceActionPermission(IAMPermission):
 
 class InstanceActionForDataPermission(InstanceActionPermission):
     def __init__(
-        self,
-        iam_instance_id_key,
-        *args,
-        get_instance_id: Callable = lambda _id: _id,
+        self, iam_instance_id_key, *args, get_instance_id: Callable = lambda _id: _id,
     ):
         self.iam_instance_id_key = iam_instance_id_key
         self.get_instance_id = get_instance_id
@@ -210,16 +191,19 @@ def insert_permission_field(
             if not many:
                 result_list = [result_list]
 
-            resources = [
-                [
-                    resource_meta.create_simple_instance(
-                        instance_id=id_field(item),
-                        attribute={"bk_biz_id": item["bk_biz_id"]} if "bk_biz_id" in item else None,
-                    )
-                ]
-                for item in result_list
-                if id_field(item)
-            ]
+            resources = []
+            for item in result_list:
+                if not id_field(item):
+                    continue
+                attribute = {}
+                if "bk_biz_id" in item:
+                    attribute["bk_biz_id"] = item["bk_biz_id"]
+                if "space_uid" in item:
+                    attribute["space_uid"] = item["space_uid"]
+
+                resources.append(
+                    [resource_meta.create_simple_instance(instance_id=id_field(item), attribute=attribute)]
+                )
 
             if not resources:
                 return response

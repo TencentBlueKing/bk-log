@@ -185,7 +185,7 @@ export default {
     };
   },
   computed: {
-    ...mapState(['projectId', 'bkBizId']),
+    ...mapState(['spaceUid', 'bkBizId']),
   },
   methods: {
     openDialog() {

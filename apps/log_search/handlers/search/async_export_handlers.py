@@ -30,6 +30,7 @@ from django.utils.http import urlencode
 
 from apps.log_databus.models import CollectorConfig
 from apps.models import model_to_dict
+from apps.utils.log import logger
 from apps.utils.db import array_chunk
 from apps.utils.local import get_request, get_request_language_code
 from apps.log_search.constants import (
@@ -39,11 +40,13 @@ from apps.log_search.constants import (
     MAX_GET_ATTENTION_SIZE,
     ExportStatus,
 )
-from apps.log_search.exceptions import MissAsyncExportException
+from apps.log_search.exceptions import MissAsyncExportException, PreCheckAsyncExportException
 from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler
-from apps.log_search.models import AsyncTask, ProjectInfo, LogIndexSet
+from apps.log_search.models import AsyncTask, LogIndexSet
 from apps.log_search.tasks.async_export import async_export
 from apps.utils.drf import DataPageNumberPagination
+
+from bkm_space.utils import bk_biz_id_to_space_uid
 
 
 class AsyncExportHandlers(object):
@@ -61,6 +64,11 @@ class AsyncExportHandlers(object):
         fields = self._pre_check_fields()
         # 判断result是否符合要求
         result = self.search_handler.pre_get_result(sorted_fields=fields["async_export_fields"], size=ASYNC_COUNT_SIZE)
+        # 判断是否成功
+        if result["_shards"]["total"] != result["_shards"]["successful"]:
+            logger.error("can not create async_export task, reason: {}".format(result["_shards"]["failures"]))
+            raise PreCheckAsyncExportException()
+
         # 判断是否超过支持异步的最大次数
         if result["hits"]["total"] > MAX_ASYNC_COUNT:
             self.search_handler.size = MAX_ASYNC_COUNT
@@ -105,9 +113,7 @@ class AsyncExportHandlers(object):
 
     def _get_search_url(self):
         request = get_request()
-        project_id = ProjectInfo.objects.filter(bk_biz_id=self.search_dict["bk_biz_id"]).first().project_id
         search_dict = copy.deepcopy(self.search_dict)
-        search_dict["projectId"] = project_id
         if "host_scopes" in search_dict:
             search_dict["host_scopes"] = json.dumps(search_dict["host_scopes"])
 
@@ -116,6 +122,7 @@ class AsyncExportHandlers(object):
 
         if "bk_biz_id" in search_dict:
             search_dict["bizId"] = search_dict["bk_biz_id"]
+            search_dict["spaceUid"] = bk_biz_id_to_space_uid(search_dict["bk_biz_id"])
 
         url_params = urlencode(search_dict)
         # 这里是为了拼接前端检索请求

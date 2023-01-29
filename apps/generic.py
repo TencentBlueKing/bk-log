@@ -44,7 +44,6 @@ from apps.iam.exceptions import PermissionDeniedError
 from apps.iam.handlers.actions import ActionMeta
 from apps.log_esquery.exceptions import EsTimeoutException
 from apps.log_esquery.qos import esquery_qos
-from apps.log_search.models import ProjectInfo
 from apps.utils.drf import DataPageNumberPagination, GeneralSerializer, custom_params_valid
 from iam import Resource
 
@@ -170,14 +169,6 @@ class IAMPermissionMixin:
 
     def assert_business_action_allowed(self, action: ActionMeta):
         bk_biz_id = self.request.data.get("bk_biz_id", 0) or self.request.query_params.get("bk_biz_id", 0)
-        project_id = self.request.data.get("project_id") or self.request.query_params.get("project_id")
-
-        if project_id:
-            try:
-                project = ProjectInfo.objects.get(project_id=project_id)
-                bk_biz_id = project.bk_biz_id
-            except ProjectInfo.DoesNotExist:
-                pass
 
         self.assert_allowed(action, [self.ResourceEnum.BUSINESS.create_instance(bk_biz_id)])
 
@@ -369,7 +360,7 @@ def _notify(request, msg):
         with ignored(Exception):
             username = request.user.username
         NOTIFY_EVENT(
-            content=msg,
+            content=str(msg),
             dimensions={
                 "trace_id": format_trace_id(trace.get_current_span().get_span_context().trace_id),
                 "username": username,

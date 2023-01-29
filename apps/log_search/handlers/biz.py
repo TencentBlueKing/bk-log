@@ -47,7 +47,7 @@ from apps.log_search.constants import (
 )
 from apps.utils import APIModel
 from apps.utils.cache import cache_five_minute, cache_one_hour, cache_half_hour
-from apps.log_search.models import ProjectInfo, BizProperty
+from apps.log_search.models import BizProperty, Space
 from apps.utils.db import array_hash, array_chunk
 from apps.utils.function import ignored
 from apps.utils.thread import MultiExecuteFunc
@@ -58,6 +58,11 @@ class BizHandler(APIModel):
 
     def __init__(self, bk_biz_id=None):
         super().__init__()
+
+        if bk_biz_id and int(bk_biz_id) < 0:
+            # 业务ID为负数的情况，直接转为0
+            raise ValueError(_("当前空间类型不支持查询业务资源"))
+
         self.bk_biz_id = bk_biz_id
 
     @classmethod
@@ -140,11 +145,6 @@ class BizHandler(APIModel):
         """
         获取CC各个层级构成TOPO，不仅仅支持 set、moudlehas_auth
         """
-        # 根据biz id取得拓扑开关
-        project_info = ProjectInfo.objects.filter(bk_biz_id=self.bk_biz_id).first()
-        if project_info and not project_info.ip_topo_switch and not is_inner:
-            return []
-
         # 缓存
         if not params:
             params = {}
@@ -267,7 +267,6 @@ class BizHandler(APIModel):
                 )
             else:
                 filtered_host_list.extend([item for item in host_info_list if item["bk_host_innerip"] == ip["ip"]])
-
         biz_to_host = defaultdict(list)
         for host in filtered_host_list:
             biz_to_host[self.bk_biz_id].append(host)
@@ -600,7 +599,10 @@ class BizHandler(APIModel):
         host_list, node, node_mapping = params
         map_key = "{}|{}".format(str(node[1]), str(node[2]))
         node_path = "/".join(
-            [node_mapping.get(node, {}).get("bk_inst_name") for node in node_mapping.get(map_key, {}).get("node_link", [])]
+            [
+                node_mapping.get(node, {}).get("bk_inst_name")
+                for node in node_mapping.get(map_key, {}).get("node_link", [])
+            ]
         )
         agent_error_count = 0
         if host_list:
@@ -933,10 +935,7 @@ class BizHandler(APIModel):
             tmp_host = {"bk_host_innerip": host["host"]["bk_host_innerip"], "bk_cloud_id": host["host"]["bk_cloud_id"]}
             if bk_obj_id in (CCInstanceType.BUSINESS.value):
                 tmp_host["parent_inst_id"] = [self.bk_biz_id]
-            if bk_obj_id in (
-                CCInstanceType.MODULE.value,
-                TemplateType.SERIVCE_TEMPLATE.value,
-            ):
+            if bk_obj_id in (CCInstanceType.MODULE.value, TemplateType.SERIVCE_TEMPLATE.value,):
                 tmp_host["parent_inst_id"] = [
                     module["bk_module_id"] for topo in host["topo"] for module in topo["module"]
                 ]
@@ -1103,11 +1102,11 @@ class BizHandler(APIModel):
             response_data = CCApi.list_service_template.bulk_request(params)
         if template_type == TemplateType.SET_TEMPLATE.value:
             response_data = CCApi.list_set_template.bulk_request(params)
-        project = ProjectInfo.objects.filter(bk_biz_id=self.bk_biz_id).first()
+        space = Space.objects.get(bk_biz_id=self.bk_biz_id)
         response_data = sorted(response_data, key=lambda e: lazy_pinyin(e.get("name", "")))
         result = {
             "bk_biz_id": self.bk_biz_id,
-            "bk_biz_name": project.project_name,
+            "bk_biz_name": space.space_name,
             "children": [
                 {
                     "bk_biz_id": self.bk_biz_id,

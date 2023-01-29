@@ -34,7 +34,7 @@
       class="king-select"
       :clearable="false"
       :prefix-icon="fieldTypeMap[fieldType].icon">
-      <template v-for="item in fieldTypeList">
+      <template v-for="item in showFieldTypeList">
         <bk-option
           :key="item"
           :id="item"
@@ -52,7 +52,8 @@
     <div class="button-container">
       <bk-button
         class="king-button"
-        text size="small"
+        text
+        size="small"
         @click="handleConfirm">
         {{ $t('确定') }}
       </bk-button>
@@ -81,7 +82,7 @@ export default {
     return {
       polymerizable: '0', // 可聚合 0 不限 1 聚合 2 不可聚合
       fieldType: 'any',
-      fieldTypeList: ['any', 'number', 'keyword', 'text', 'date'],
+      fieldTypeList: ['any', 'number', 'keyword', 'text', 'date', '__virtual__'],
       fieldTypeMap: {
         any: {
           name: this.$t('不限'),
@@ -103,8 +104,18 @@ export default {
           name: this.$t('时间'),
           icon: 'bk-icon icon-clock',
         },
+        __virtual__: {
+          name: this.$t('虚拟字段'),
+          icon: 'log-icon icon-ext',
+        },
       },
     };
+  },
+  computed: {
+    showFieldTypeList() {
+      if (this.polymerizable === '1') return this.fieldTypeList.filter(item => item !== 'date');
+      return this.fieldTypeList;
+    },
   },
   watch: {
     '$route.params.indexId'() { // 切换索引集重置状态
@@ -192,5 +203,12 @@ export default {
     &.is-selected .field-filter-option-icon {
       color: #3a84ff;
     }
+  }
+
+  .icon-ext {
+    width: 13px;
+    display: inline-block;
+    font-size: 12px;
+    transform: translateX(-1px) scale(.8);
   }
 </style>

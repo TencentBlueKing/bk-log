@@ -65,7 +65,7 @@
           </bk-button> -->
           <span
             class="indexSet-name"
-            v-cursor="{ active: !(row.permission && row.permission.manage_indices) }"
+            v-cursor="{ active: !(row.permission && row.permission[authorityMap.MANAGE_INDICES_AUTH]) }"
             :title="row.index_set_name"
             @click="manageIndexSet('manage', row)">
             {{ row.index_set_name }}
@@ -103,18 +103,28 @@
         <template slot-scope="props">
           <bk-button
             theme="primary" text style="margin-right: 4px;"
-            v-cursor="{ active: !(props.row.permission && props.row.permission.manage_indices) }"
+            v-cursor="{ active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_INDICES_AUTH]) }"
             @click="manageIndexSet('search', props.row)">{{ $t('nav.retrieve') }}
           </bk-button>
           <bk-button
             theme="primary" text style="margin-right: 4px;"
-            v-cursor="{ active: !(props.row.permission && props.row.permission.manage_indices) }"
-            @click="manageIndexSet('edit', props.row)">{{ $t('编辑') }}
+            v-cursor="{ active: !(props.row.permission && props.row.permission.manage_indices_v2) }"
+            :disabled="!props.row.is_editable"
+            @click="manageIndexSet('edit', props.row)">
+            <span v-bk-tooltips.top="{
+              content: `${$t('内置索引集')}, ${$t('不可编辑')}`,
+              disabled: props.row.is_editable
+            }">{{ $t('编辑') }}</span>
           </bk-button>
           <bk-button
             theme="primary" text
-            v-cursor="{ active: !(props.row.permission && props.row.permission.manage_indices) }"
-            @click="manageIndexSet('delete', props.row)" :disabled="!collectProject">{{ $t('删除') }}
+            v-cursor="{ active: !(props.row.permission && props.row.permission.manage_indices_v2) }"
+            :disabled="!props.row.is_editable || !collectProject"
+            @click="manageIndexSet('delete', props.row)">
+            <span v-bk-tooltips.top="{
+              content: `${$t('内置索引集')}, ${$t('不可删除')}`,
+              disabled: props.row.is_editable
+            }">{{ $t('删除') }}</span>
           </bk-button>
         </template>
       </bk-table-column>
@@ -125,6 +135,7 @@
 <script>
 import { projectManages } from '@/common/util';
 import { mapGetters } from 'vuex';
+import * as authorityMap from '../../../../../../common/authority-map';
 
 export default {
   name: 'IndexSetList',
@@ -152,8 +163,11 @@ export default {
   computed: {
     ...mapGetters({
       bkBizId: 'bkBizId',
-      projectId: 'projectId',
+      spaceUid: 'spaceUid',
     }),
+    authorityMap() {
+      return authorityMap;
+    },
     collectProject() {
       return projectManages(this.$store.state.topMenu, 'collection-item');
     },
@@ -174,10 +188,10 @@ export default {
     async checkCreateAuth() {
       try {
         const res = await this.$store.dispatch('checkAllowed', {
-          action_ids: ['create_indices'],
+          action_ids: [authorityMap.CREATE_INDICES_AUTH],
           resources: [{
-            type: 'biz',
-            id: this.bkBizId,
+            type: 'space',
+            id: this.spaceUid,
           }],
         });
         this.isAllowedCreate = res.isAllowed;
@@ -193,7 +207,7 @@ export default {
       const query = JSON.parse(JSON.stringify(this.searchParams));
       query.page = this.pagination.current;
       query.pagesize = this.pagination.limit;
-      query.project_id = this.projectId;
+      query.space_uid = this.spaceUid;
       this.$http.request('/indexSet/list', {
         query,
       }).then((res) => {
@@ -241,10 +255,10 @@ export default {
         try {
           this.isCreateLoading = true;
           const res = await this.$store.dispatch('getApplyData', {
-            action_ids: ['create_indices'],
+            action_ids: [authorityMap.CREATE_INDICES_AUTH],
             resources: [{
-              type: 'biz',
-              id: this.bkBizId,
+              type: 'space',
+              id: this.spaceUid,
             }],
           });
           this.$store.commit('updateAuthDialogData', res.data);
@@ -259,16 +273,16 @@ export default {
       this.$router.push({
         name: this.$route.name.replace('list', 'create'),
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
     },
     async manageIndexSet(type, row) {
-      if (!(row.permission?.manage_indices)) {
+      if (!(row.permission?.[authorityMap.MANAGE_INDICES_AUTH])) {
         try {
           this.isTableLoading = true;
           const res = await this.$store.dispatch('getApplyData', {
-            action_ids: ['manage_indices'],
+            action_ids: [authorityMap.MANAGE_INDICES_AUTH],
             resources: [{
               type: 'indices',
               id: row.index_set_id,
@@ -291,7 +305,7 @@ export default {
             indexSetId: row.index_set_id,
           },
           query: {
-            projectId: window.localStorage.getItem('project_id'),
+            spaceUid: this.$store.state.spaceUid,
           },
         });
       } else if (type === 'search') { // 检索
@@ -301,7 +315,7 @@ export default {
             indexId: row.index_set_id ? row.index_set_id : row.bkdata_index_set_ids[0],
           },
           query: {
-            projectId: window.localStorage.getItem('project_id'),
+            spaceUid: this.$store.state.spaceUid,
           },
         });
       }  else if (type === 'edit') { // 编辑索引集
@@ -312,7 +326,7 @@ export default {
             indexSetId: row.index_set_id,
           },
           query: {
-            projectId: window.localStorage.getItem('project_id'),
+            spaceUid: this.$store.state.spaceUid,
           },
         });
       } else if (type === 'delete') { // 删除索引集

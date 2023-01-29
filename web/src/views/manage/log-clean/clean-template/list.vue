@@ -117,7 +117,7 @@ export default {
   },
   computed: {
     ...mapGetters({
-      projectId: 'projectId',
+      spaceUid: 'spaceUid',
       bkBizId: 'bkBizId',
       globalsData: 'globals/globalsData',
     }),
@@ -147,7 +147,7 @@ export default {
       this.$router.push({
         name: 'clean-template-create',
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
     },
@@ -209,7 +209,7 @@ export default {
             templateId: row.clean_template_id,
           },
           query: {
-            projectId: window.localStorage.getItem('project_id'),
+            spaceUid: this.$store.state.spaceUid,
           },
         });
         return;

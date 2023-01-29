@@ -116,14 +116,16 @@
                 theme="primary"
                 text
                 :disabled="!props.row.is_active || (!props.row.index_set_id && !props.row.bkdata_index_set_ids.length)"
-                v-cursor="{ active: !(props.row.permission && props.row.permission.search_log) }"
+                v-cursor="{ active: !(props.row.permission && props.row.permission[authorityMap.SEARCH_LOG_AUTH]) }"
                 @click="operateHandler(props.row, 'search')">
                 {{ $t('nav.retrieve') }}</bk-button>
               <bk-button
                 class="king-button"
                 theme="primary"
                 text
-                v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+                v-cursor="{
+                  active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
+                }"
                 @click="operateHandler(props.row, 'edit')">
                 {{ $t('编辑') }}</bk-button>
               <bk-button
@@ -131,7 +133,9 @@
                 theme="primary"
                 text
                 :disabled="!props.row.table_id"
-                v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+                v-cursor="{
+                  active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
+                }"
                 @click="operateHandler(props.row, 'clean')">
                 {{ $t('logClean.goToClean') }}</bk-button>
               <bk-dropdown-menu ref="dropdown" align="right">
@@ -145,7 +149,9 @@
                   <li>
                     <a
                       href="javascript:;"
-                      v-cursor="{ active: !(props.row.permission && props.row.permission.view_collection) }"
+                      v-cursor="{
+                        active: !(props.row.permission && props.row.permission[authorityMap.VIEW_COLLECTION_AUTH])
+                      }"
                       @click="operateHandler(props.row, 'view')">
                       {{ $t('详情') }}
                     </a>
@@ -160,7 +166,9 @@
                     <a
                       href="javascript:;"
                       v-else
-                      v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+                      v-cursor="{
+                        active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
+                      }"
                       @click.stop="operateHandler(props.row, 'stop')">
                       {{$t('btn.block')}}
                     </a>
@@ -175,7 +183,9 @@
                     <a
                       href="javascript:;"
                       v-else
-                      v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+                      v-cursor="{
+                        active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
+                      }"
                       @click.stop="operateHandler(props.row, 'start')">
                       {{$t('btn.start')}}
                     </a>
@@ -190,7 +200,9 @@
                     <a
                       href="javascript:;"
                       v-else
-                      v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+                      v-cursor="{
+                        active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
+                      }"
                       @click="deleteCollect(props.row)">
                       {{$t('btn.delete')}}
                     </a>
@@ -209,6 +221,7 @@
 import { projectManages } from '@/common/util';
 import collectedItemsMixin from '@/mixins/collected-items-mixin';
 import { mapGetters } from 'vuex';
+import * as authorityMap from '../../../../common/authority-map';
 
 export default {
   name: 'CustomReportList',
@@ -233,10 +246,13 @@ export default {
   },
   computed: {
     ...mapGetters({
-      projectId: 'projectId',
+      spaceUid: 'spaceUid',
       bkBizId: 'bkBizId',
       authGlobalInfo: 'globals/authContainerInfo',
     }),
+    authorityMap() {
+      return authorityMap;
+    },
   },
   created() {
     !this.authGlobalInfo && this.checkCreateAuth();
@@ -298,7 +314,7 @@ export default {
         params,
         query: {
           ...query,
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: this.$store.state.spaceUid,
           backRoute,
         },
       });

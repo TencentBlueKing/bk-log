@@ -67,14 +67,15 @@
         <div class="filed-select-box">
           <span v-if="isShowAsyncDownload">{{$t('下载范围选择')}}</span>
           <bk-radio-group class="filed-radio-box" v-model="selectFiledType">
-            <bk-radio v-for="[key,val] in Object.entries(radioMap)" :key="key" :value="key">{{val}}</bk-radio>
+            <bk-radio v-for="[key, val] in Object.entries(radioMap)" :key="key" :value="key">{{val}}</bk-radio>
           </bk-radio-group>
           <bk-select
             v-if="selectFiledType === 'specify'"
             v-model="selectFiledList"
             searchable
             display-tag
-            multiple>
+            multiple
+            :placeholder="$t('未选择则默认为全部字段')">
             <bk-option
               v-for="option in totalFields"
               :key="option.field_name"
@@ -86,7 +87,7 @@
         </div>
         <template v-if="!asyncExportUsable">
           <span>{{`${$t('retrieve.reasonFor')}${asyncExportUsableReason}${$t('retrieve.reasonDesc')}`}}</span>
-          <div style="margin-top: 10px;">
+          <div class="cannot-async-btn">
             <bk-button theme="primary" @click="openDownloadUrl">{{ $t('retrieve.immediateExport') }}</bk-button>
             <bk-button style="margin-left: 10px;" @click="() => isShowExportDialog = false">{{ $t('取消') }}</bk-button>
           </div>
@@ -309,6 +310,13 @@ export default {
       font-size: 16px;
       color: #979ba5;
     }
+  }
+
+  .cannot-async-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
   }
 
   .disabled-icon {

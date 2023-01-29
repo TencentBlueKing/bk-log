@@ -21,6 +21,7 @@
  */
 
 import http from '@/api';
+import store from '@/store';
 
 function getResData(httpPromise) {
   return new Promise((resolve, reject) => {
@@ -36,7 +37,7 @@ function getResData(httpPromise) {
 export function getTopoTree() {
   const originPromise = http.request('collect/getBizTopo', {
     params: {
-      bk_biz_id: window.localStorage.getItem('bk_biz_id'),
+      bk_biz_id: store.getters.bkBizId,
     },
     query: {
       instance_type: 'host',
@@ -50,7 +51,7 @@ export function getTopoTree() {
 export function getHostInstanceByIp(params) {
   const originPromise = http.request('collect/getHostByIp', {
     params: {
-      bk_biz_id: window.localStorage.getItem('bk_biz_id'),
+      bk_biz_id: store.getters.bkBizId,
     },
     data: {
       ip_list: params.ip_list,
@@ -63,7 +64,7 @@ export function getHostInstanceByIp(params) {
 export function getHostInstanceByNode(params) {
   const originPromise = http.request('collect/getHostByNode', {
     params: {
-      bk_biz_id: window.localStorage.getItem('bk_biz_id'),
+      bk_biz_id: store.getters.bkBizId,
     },
     data: {
       node_list: params.node_list,
@@ -81,7 +82,7 @@ export function getServiceInstanceByNode() {
 export function getTemplate(params) {
   const originPromise = http.request('collect/getTemplateTopo', {
     params: {
-      bk_biz_id: window.localStorage.getItem('bk_biz_id'),
+      bk_biz_id: store.getters.bkBizId,
     },
     query: {
       template_type: params.bk_obj_id, // SERVICE_TEMPLATE SET_TEMPLATE
@@ -94,7 +95,7 @@ export function getTemplate(params) {
 export function getNodesByTemplate(params) {
   const originPromise = http.request('collect/getHostByTemplate', {
     params: {
-      bk_biz_id: window.localStorage.getItem('bk_biz_id'),
+      bk_biz_id: store.getters.bkBizId,
     },
     query: {
       bk_inst_ids: params.bk_inst_ids.join(','), // [1,2,3]
@@ -108,7 +109,7 @@ export function getNodesByTemplate(params) {
 export function getNodeAgentStatus(data) {
   const originPromise = http.request('collect/getNodeAgentStatus', {
     params: {
-      bk_biz_id: window.localStorage.getItem('bk_biz_id'),
+      bk_biz_id: store.getters.bkBizId,
     },
     data: {
       node_list: data,
@@ -121,7 +122,7 @@ export function getNodeAgentStatus(data) {
 export function getDynamicGroupList() {
   const originPromise = http.request('collect/getDynamicGroupList', {
     params: {
-      bk_biz_id: window.localStorage.getItem('bk_biz_id'),
+      bk_biz_id: store.getters.bkBizId,
     },
   });
   return getResData(originPromise);
@@ -131,7 +132,7 @@ export function getDynamicGroupList() {
 export function getDynamicGroup(data) {
   const originPromise = http.request('collect/getDynamicGroup', {
     params: {
-      bk_biz_id: window.localStorage.getItem('bk_biz_id'),
+      bk_biz_id: store.getters.bkBizId,
     },
     data: {
       dynamic_group_id_list: data,

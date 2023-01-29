@@ -29,6 +29,34 @@
           <span>{{ $t('dataSource.dataId') }}</span>
           <span>{{ collectorData.bk_data_id || '-' }}</span>
         </div>
+        <!-- otlp_log Token -->
+        <div v-if="collectorData.custom_type === 'otlp_log'">
+          <span>Token</span>
+          <section class="token-view">
+            <span v-if="!tokenStr" :class="['mask-content', { 'btn-loading': tokenLoading }]">
+              <span class="placeholder">●●●●●●●●●●</span>
+              <span v-if="tokenLoading" class="loading"></span>
+              <bk-button
+                text
+                class="view-btn"
+                v-cursor="{ active: !tokenReviewAuth }"
+                :loading="tokenLoading"
+                @click="handleGetToken">{{ tokenLoading ? '' : $t('点击查看')}}</bk-button>
+            </span>
+            <span v-else class="password-content">
+              <span :class="{ 'placeholder': true, 'password-value': !showPassword }">
+                {{showPassword ? (tokenStr || '-') : '********'}}
+              </span>
+              <span class="operate-box">
+                <span v-if="showPassword" class="icon log-icon icon-copy" @click="handleCopy(tokenStr)"></span>
+                <span
+                  :class="`bk-icon toggle-icon ${showPassword ? 'icon-eye-slash' : 'icon-eye'}`"
+                  @click="showPassword = !showPassword">
+                </span>
+              </span>
+            </span>
+          </section>
+        </div>
         <!-- 名称 -->
         <div>
           <span>{{ $t('configDetails.name') }}</span>
@@ -121,6 +149,20 @@
               </p>
             </div>
           </div>
+          <!-- 段日志 -->
+          <template v-if="collectorData.collector_scenario_id === 'section'">
+            <div class="content-style">
+              <span>{{ $t('段日志参数') }}</span>
+              <div class="section-box">
+                <p>{{$t('行首正则')}}: <span>{{collectorData.params.multiline_pattern}}</span></p> <br>
+                <p>
+                  {{$t('最多匹配')}}<span>{{collectorData.params.multiline_max_lines}}</span>
+                  {{$t('行，最大耗时')}}<span>{{collectorData.params.multiline_timeout}}</span>
+                  {{$t('秒')}}
+                </p>
+              </div>
+            </div>
+          </template>
           <div
             class="content-style"
             v-else-if="collectorData.params.conditions &&
@@ -216,8 +258,9 @@
 
 <script>
 import { mapState } from 'vuex';
-import { formatDate } from '@/common/util';
+import { formatDate, copyMessage } from '@/common/util';
 import containerBase from './components/container-base';
+import * as authorityMap from '../../../../../../common/authority-map';
 
 export default {
   components: {
@@ -236,10 +279,15 @@ export default {
       editAuth: false,
       authData: null,
       basicLoading: false,
+      isShowToken: false, // 是否展示 oltp_log Token
+      showPassword: true, // 是否展示Token值
+      tokenReviewAuth: false, // 是否有查看token的权限
+      tokenLoading: false,
+      tokenStr: '', // token 的值
     };
   },
   computed: {
-    ...mapState(['projectId']),
+    ...mapState(['spaceUid']),
     getEventIDStr() {
       return this.collectorData.params.winlog_event_id?.join(',') || '';
     },
@@ -324,14 +372,14 @@ export default {
         name: routeName,
         params,
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
     },
     async getEditAuth() {
       try {
         const paramData = {
-          action_ids: ['manage_collection'],
+          action_ids: [authorityMap.MANAGE_COLLECTION_AUTH],
           resources: [{
             type: 'collection',
             id: this.$route.params.collectorId,
@@ -340,9 +388,34 @@ export default {
         const res = await this.$store.dispatch('checkAndGetData', paramData);
         if (!res.isAllowed) this.authData = res.data;
         this.editAuth = res.isAllowed;
+        this.tokenReviewAuth = res.isAllowed;
       } catch (error) {
         this.editAuth = false;
+        this.tokenReviewAuth = false;
       }
+    },
+    async handleGetToken() {
+      if (!this.tokenReviewAuth && this.authData) {
+        this.$store.commit('updateAuthDialogData', this.authData);
+        return;
+      };
+      try {
+        this.tokenLoading = true;
+        const res = await this.$http.request('collect/reviewToken', {
+          params: {
+            collector_config_id: this.$route.params.collectorId,
+          },
+        });
+        this.tokenStr = res.data?.bk_data_token || '-';
+      } catch (error) {
+        console.warn(error);
+        this.tokenStr = '';
+      } finally {
+        this.tokenLoading = false;
+      }
+    },
+    handleCopy(text) {
+      copyMessage(text);
     },
   },
 };
@@ -350,6 +423,7 @@ export default {
 
 <style lang="scss" scoped>
 @import '@/scss/basic.scss';
+@import '@/scss/mixins/flex.scss';
 
 .basic-info-container {
   display: flex;
@@ -359,7 +433,7 @@ export default {
     display: flex;
     margin-bottom: 33px;
 
-    span:nth-child(1) {
+    > span:nth-child(1) {
       display: block;
       width: 98px;
       color: #979ba5;
@@ -367,7 +441,7 @@ export default {
       font-size: 14px;
     }
 
-    span:nth-child(2) {
+    > span:nth-child(2) {
       margin-left: 24px;
       color: #63656e;
       font-size: 14px;
@@ -399,6 +473,17 @@ export default {
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+    }
+
+    .section-box {
+      > :last-child {
+        margin-top: 4px;
+      }
+
+      span {
+        /* stylelint-disable-next-line declaration-no-important */
+        display: inline !important;
+      }
     }
 
     > div {
@@ -451,5 +536,68 @@ export default {
       }
     }
   }
+
+  .token-view {
+    margin: -2px 0 0 24px;
+    color: #63656e;
+
+    .mask-content {
+      .view-btn {
+        font-size: 12px;
+        margin-left: 8px;
+        color: #3a84ff;
+        cursor: pointer;
+      }
+
+      &.btn-loading {
+        color: #c4c6cc;
+        cursor: not-allowed;
+
+        .view-btn {
+          color: #c4c6cc;
+        }
+      }
+    }
+
+    .password-content {
+      height: 24px;
+      font-size: 14px;
+
+      @include flex-align;
+
+      .toggle-icon {
+        margin-left: 8px;
+        cursor: pointer;
+      }
+
+      .operate-box {
+        display: inline-block;
+        position: relative;
+        top: -2px;
+      }
+
+      .icon-copy {
+        position: absolute;
+        top: -2px;
+        font-size: 26px;
+        margin-left: 8px;
+        cursor: pointer;
+
+        &:hover {
+          color: #3a84ff;
+        }
+      }
+
+      .icon-eye-slash {
+        margin-left: 36px;
+      }
+
+      .password-value {
+        padding-top: 6px;
+      }
+    }
+  }
+
+
 }
 </style>

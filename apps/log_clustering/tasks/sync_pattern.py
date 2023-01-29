@@ -27,6 +27,7 @@ from apps.log_clustering.constants import (
     PATTERN_INDEX,
     CONTENT_PATTERN_INDEX,
     PATTERN_SIGNATURE_INDEX,
+    ORIGIN_LOG_INDEX,
 )
 from apps.log_clustering.exceptions import ModelReleaseNotFoundException
 from apps.log_clustering.handlers.aiops.aiops_model.aiops_model_handler import AiopsModelHandler
@@ -93,13 +94,35 @@ def get_pattern(model_id, release_id) -> list:
     for _, sensitive_patterns in content[CONTENT_PATTERN_INDEX].items():
         for sensitive_pattern in sensitive_patterns:
             signature = sensitive_pattern[PATTERN_SIGNATURE_INDEX]
-            pattern_list = []
+
+            if not sensitive_pattern[ORIGIN_LOG_INDEX]:
+                pattern_list = []
+                for pattern in sensitive_pattern[PATTERN_INDEX]:
+                    if hasattr(pattern, "name"):
+                        pattern_list.append("#{}#".format(pattern.name))
+                        continue
+                    pattern_list.append(str(pattern))
+                patterns.append({"signature": str(signature), "pattern": " ".join(pattern_list)})
+                continue
+
+            origin_log = sensitive_pattern[ORIGIN_LOG_INDEX][0]
+            pattern_str = ""
             for pattern in sensitive_pattern[PATTERN_INDEX]:
+
                 if hasattr(pattern, "name"):
-                    pattern_list.append("#{}#".format(pattern.name))
-                    continue
-                pattern_list.append(str(pattern))
-            patterns.append({"signature": str(signature), "pattern": " ".join(pattern_list)})
+                    value = pattern.value
+                    name = f"#{pattern.name}#"
+                else:
+                    value = pattern
+                    name = pattern
+                idx = origin_log.find(value)
+                if idx == -1:
+                    break
+                pattern_str += origin_log[0:idx]
+                pattern_str += name
+                origin_log = origin_log[idx + len(value) :]
+            pattern_str += origin_log
+            patterns.append({"signature": str(signature), "pattern": pattern_str})
     return patterns
 
 

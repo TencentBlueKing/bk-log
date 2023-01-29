@@ -49,11 +49,12 @@ from apps.log_databus.handlers.storage import StorageHandler
 from apps.log_databus.models import CollectorConfig, ItsmEtlConfig, StorageCapacity, StorageUsed, CleanStash
 from apps.log_search.constants import FieldDateFormatEnum, ISO_8601_TIME_FORMAT_NAME, CollectorScenarioEnum
 from apps.log_search.handlers.index_set import IndexSetHandler
-from apps.log_search.models import ProjectInfo, Scenario
+from apps.log_search.models import Scenario
 from apps.models import model_to_dict
 from apps.utils.db import array_group
 from apps.utils.local import get_request_username
 from apps.utils.log import logger
+from bkm_space.utils import bk_biz_id_to_space_uid
 
 
 class EtlHandler(object):
@@ -295,12 +296,11 @@ class EtlHandler(object):
                 username=username,
             )
         else:
-            project_id = ProjectInfo.objects.filter(bk_biz_id=self.data.bk_biz_id).first().project_id
             if not view_roles:
                 view_roles = []
             index_set = IndexSetHandler.create(
                 index_set_name=index_set_name,
-                project_id=project_id,
+                space_uid=bk_biz_id_to_space_uid(self.data.bk_biz_id),
                 storage_cluster_id=storage_cluster_id,
                 scenario_id=Scenario.LOG,
                 view_roles=view_roles,

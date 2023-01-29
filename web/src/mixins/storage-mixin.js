@@ -20,6 +20,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
  */
 
+import * as authorityMap from '../common/authority-map';
 
 export default {
   watch: {
@@ -73,7 +74,7 @@ export default {
           const s1 = [];
           const s2 = [];
           for (const item of res.data) {
-            if (item.permission?.manage_es_source) {
+            if (item.permission?.[authorityMap.MANAGE_ES_SOURCE_AUTH]) {
               s1.push(item);
             } else {
               s2.push(item);
@@ -146,7 +147,7 @@ export default {
       window.open(this.$router.resolve({
         name: 'es-cluster-manage',
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: this.$store.state.spaceUid,
         },
       }).href, '_blank');
     },
@@ -156,7 +157,7 @@ export default {
       try {
         this.basicLoading = true;
         const res = await this.$store.dispatch('getApplyData', {
-          action_ids: ['manage_es_source'],
+          action_ids: [authorityMap.MANAGE_ES_SOURCE_AUTH],
           resources: [{
             type: 'es_source',
             id: item.storage_cluster_id,

@@ -71,7 +71,7 @@ export default {
       this.$router.push({
         name: this.backRouter,
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
     },

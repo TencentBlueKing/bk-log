@@ -633,13 +633,13 @@ export default {
       align-items: center;
 
       .row-left-index {
-        width: 120px;
+        width: 80px;
         margin-left: 14px;
       }
 
       .regular-container {
         width: 600px;
-        padding: 2px;
+        padding: 2px 10px 2px 2px;
         word-break: break-all;
 
         .row-left-regular {
@@ -649,10 +649,9 @@ export default {
     }
 
     .row-right > div {
-      width: 150px;
+      width: 100px;
 
       .row-right-item {
-        width: 120px;
         display: inline-block;
         word-break: break-all;
       }

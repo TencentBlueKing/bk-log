@@ -78,6 +78,10 @@ export default {
         return formatDate(Number(data)) || data || '--';
       }
 
+      if (Array.isArray(data)) {
+        return data.toString();
+      }
+
       if (typeof data === 'object' && data !== null) {
         return JSON.stringify(data);
       }

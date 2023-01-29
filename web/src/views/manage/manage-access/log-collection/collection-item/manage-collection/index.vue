@@ -46,6 +46,7 @@ import CollectionStatus from './collection-status';
 import DataStorage from './data-storage';
 import DataStatus from './data-status';
 import UsageDetails from '@/views/manage/manage-access/components/usage-details';
+import * as authorityMap from '../../../../../../common/authority-map';
 
 export default {
   name: 'CollectionItem',
@@ -92,7 +93,7 @@ export default {
       // 进入路由需要先判断权限
       try {
         const paramData = {
-          action_ids: ['view_collection'],
+          action_ids: [authorityMap.VIEW_COLLECTION_AUTH],
           resources: [{
             type: 'collection',
             id: this.$route.params.collectorId,

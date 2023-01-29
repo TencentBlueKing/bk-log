@@ -64,6 +64,9 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
+import * as authorityMap from '../../../../common/authority-map';
+
 export default {
   name: 'ExtractLinkList',
   data() {
@@ -79,6 +82,9 @@ export default {
       },
     };
   },
+  computed: {
+    ...mapGetters(['spaceUid']),
+  },
   created() {
     this.checkManageAuth();
   },
@@ -86,10 +92,10 @@ export default {
     async checkManageAuth() {
       try {
         const res = await this.$store.dispatch('checkAllowed', {
-          action_ids: ['manage_extract_config'],
+          action_ids: [authorityMap.MANAGE_EXTRACT_AUTH],
           resources: [{
-            type: 'biz',
-            id: this.$store.state.bkBizId,
+            type: 'space',
+            id: this.spaceUid,
           }],
         });
         this.isAllowedManage = res.isAllowed;
@@ -121,10 +127,10 @@ export default {
         try {
           this.isButtonLoading = true;
           const res = await this.$store.dispatch('getApplyData', {
-            action_ids: ['manage_extract_config'],
+            action_ids: [authorityMap.MANAGE_EXTRACT_AUTH],
             resources: [{
-              type: 'biz',
-              id: this.$store.state.bkBizId,
+              type: 'space',
+              id: this.spaceUid,
             }],
           });
           this.$store.commit('updateAuthDialogData', res.data);
@@ -137,7 +143,7 @@ export default {
         this.$router.push({
           name: 'extract-link-create',
           query: {
-            projectId: window.localStorage.getItem('project_id'),
+            spaceUid: this.$store.state.spaceUid,
           },
         });
       }
@@ -150,7 +156,7 @@ export default {
           linkId: row.link_id,
         },
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
     },

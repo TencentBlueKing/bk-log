@@ -30,12 +30,12 @@ from django.core.cache import cache
 from django.utils.translation import ugettext as _
 from elasticsearch import Elasticsearch
 
-from apps.api import TransferApi, NodeApi, CCApi
+from apps.api import TransferApi, NodeApi
 from apps.utils.log import logger
 from apps.log_databus.constants import STORAGE_CLUSTER_TYPE
 from apps.log_databus.models import CollectorConfig
 from apps.log_measure.exceptions import EsConnectFailException
-from apps.log_search.models import ProjectInfo
+from apps.log_search.models import Space
 
 
 class Metric(object):
@@ -95,14 +95,13 @@ def register_metric(namespace, description="", cache_time=0):
 
 class BaseMetricCollector(object):
     def __init__(self, collect_interval=300):
+        spaces = Space.objects.all()
         # 业务缓存
-        biz_list = CCApi.get_app_list({"fields": ["bk_biz_id", "bk_biz_name"], "no_request": True}).get("info", [])
-        self.biz_info = {int(business["bk_biz_id"]): business for business in biz_list}
+        self.biz_info = {
+            space.bk_biz_id: {"bk_biz_id": space.bk_biz_id, "bk_biz_name": space.space_name} for space in spaces
+        }
 
-        self.project_biz_info = {}
-
-        for project in ProjectInfo.objects.all():
-            self.project_biz_info[project.project_id] = self.biz_info.get(project.bk_biz_id)
+        self.space_info = {space.space_uid: space for space in spaces}
 
         # 上报时间
         self.collect_interval = collect_interval
@@ -291,8 +290,8 @@ class MetricCollector(BaseMetricCollector):
                 metric_name="count",
                 metric_value=len(group["instances"]),
                 dimensions={
-                    "target_biz_id": biz_mapping[group["subscription_id"]]["bk_biz_id"],
-                    "target_biz_name": self.get_biz_name(biz_mapping[group["subscription_id"]]["bk_biz_id"]),
+                    "bk_biz_id": biz_mapping[group["subscription_id"]]["bk_biz_id"],
+                    "bk_biz_name": self.get_biz_name(biz_mapping[group["subscription_id"]]["bk_biz_id"]),
                     "category_id": biz_mapping[group["subscription_id"]]["category_id"],
                     "collector_config_id": biz_mapping[group["subscription_id"]]["collector_config_id"],
                 },

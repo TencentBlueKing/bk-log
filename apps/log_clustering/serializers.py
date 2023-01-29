@@ -46,7 +46,7 @@ class PatternSearchSerlaizer(serializers.Serializer):
     filter_not_clustering = serializers.BooleanField(required=False, default=True)
 
     def validate(self, attrs):
-        super().validate(attrs)
+        attrs = super().validate(attrs)
         if attrs["filter_not_clustering"]:
             attrs["addition"].append(
                 {
@@ -125,6 +125,8 @@ class UpdateNewClsStrategySerializer(serializers.Serializer):
     strategy_id = serializers.IntegerField(required=False)
 
     def validate(self, attrs):
+        attrs = super().validate(attrs)
+
         if attrs["action"] == ActionEnum.DELETE.value and not attrs.get("strategy_id"):
             raise ValidationError(_("删除操作时需要提供对应strategy_id"))
         return attrs

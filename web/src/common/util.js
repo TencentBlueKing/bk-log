@@ -557,13 +557,13 @@ export function bigNumberToString(value) {
 }
 
 export function formatBigNumListValue(value) {
-  if (typeof value === 'object' && value !== null && !value._isBigNumber) {
+  if (Object.prototype.toString.call(value) === '[object Object]' && value !== null && !value._isBigNumber) {
     const obj = {};
     if (value instanceof Array) {
       return obj[value] = parseBigNumberList(value);
     }
     Object.keys(value).forEach((opt) => {
-      obj[opt] = typeof obj[opt] === 'object' && obj[opt] !== null && !obj[opt]._isBigNumber
+      obj[opt] = Object.prototype.toString.call(obj[opt]) === '[object Object]' && obj[opt] !== null && !obj[opt]._isBigNumber
         ? formatBigNumListValue(obj[opt]) : bigNumberToString(value[opt] || '');
     });
     return obj;
@@ -634,7 +634,7 @@ export const base64Decode = (str) => {
 
 export const makeMessage = (message, traceId) => {
   const resMsg = `
-    ${traceId || '--'} ：                                               
+    ${traceId || '--'} ：
     ${message}
   `;
   message && console.log(`
@@ -644,4 +644,61 @@ export const makeMessage = (message, traceId) => {
   ----------------------------------------------
   `);
   return resMsg;
+};
+
+export class Storage {
+  /** 过期时长 */
+  express = null;
+  constructor(express) {
+    this.express = express;
+  }
+  /** 设置缓存 */
+  set(key, value, express = this.express) {
+    const data = {
+      value,
+      updateTime: Date.now(),
+      express,
+    };
+    localStorage.setItem(key, JSON.stringify(data));
+  }
+  /** 获取缓存 */
+  get(key) {
+    const dataStr = localStorage.getItem(key);
+    if (!dataStr) return null;
+    const data = JSON.parse(dataStr);
+    const nowTime = Date.now();
+    if (data.express && data.express < (nowTime - data.updateTime)) {
+      this.remove(key);
+      return null;
+    }
+    return data.value;
+  }
+  /** 移除缓存 */
+  remove(key) {
+    localStorage.removeItem(key);
+  }
+}
+
+
+/**
+ * 深拷贝
+ * @param {Object} obj
+ * @param {Map} hash
+ */
+export const deepClone = (obj, hash = new WeakMap()) => {
+  if (Object(obj) !== obj) return obj;
+  if (obj instanceof Set) return new Set(obj);
+  if (hash.has(obj)) return hash.get(obj);
+  const result =    obj instanceof Date
+    ? new Date(obj)
+    : obj instanceof RegExp
+      ? new RegExp(obj.source, obj.flags)
+      : obj.constructor
+        ? new obj.constructor()
+        : Object.create(null);
+  hash.set(obj, result);
+  if (obj instanceof Map) {
+    Array.from(obj, ([key, val]) => result.set(key, deepClone(val, hash)));
+  }
+  return Object.assign(result, ...Object.keys(obj).map(key => ({ [key]: deepClone(obj[key], hash) })));
 };

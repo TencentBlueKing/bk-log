@@ -43,7 +43,7 @@ from apps.iam.handlers.drf import (
 from apps.log_search.exceptions import BaseSearchIndexSetException
 from apps.log_search.handlers.search.async_export_handlers import AsyncExportHandlers
 from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler as SearchHandlerEsquery
-from apps.log_search.handlers.index_set import IndexSetHandler
+from apps.log_search.handlers.index_set import IndexSetHandler, IndexSetFieldsConfigHandler
 from apps.log_search.models import LogIndexSet, AsyncTask
 from apps.log_search.permission import Permission
 from apps.utils.drf import detail_route, list_route
@@ -55,6 +55,8 @@ from apps.log_search.serializers import (
     BcsWebConsoleSerializer,
     SearchAsyncExportSerializer,
     GetExportHistorySerializer,
+    CreateIndexSetFieldsConfigSerializer,
+    UpdateIndexSetFieldsConfigSerializer,
 )
 from apps.decorators import user_operation_record
 from apps.log_search.constants import (
@@ -65,6 +67,7 @@ from apps.log_search.constants import (
     ExportType,
     MAX_RESULT_WINDOW,
     RESULT_WINDOW_COST_TIME,
+    OPERATORS,
 )
 from apps.constants import NotifyType
 from apps.exceptions import ValidationError
@@ -103,11 +106,11 @@ class SearchViewSet(APIViewSet):
     )
     def list(self, request, *args, **kwargs):
         """
-        @api {get} /search/index_set/?project_id=$project_id 01_搜索-索引集列表
+        @api {get} /search/index_set/?space_uid=$space_uid 01_搜索-索引集列表
         @apiDescription 用户有权限的索引集列表
         @apiName search_index_set
         @apiGroup 11_Search
-        @apiParam {Int} project_id 项目id
+        @apiParam {String} space_uid 空间唯一标识
         @apiSuccess {Int} index_set_id 索引集ID
         @apiSuccess {String} index_set_name 索引集名称
         @apiSuccess {Boolean} is_favorite 索引集为收藏索引集
@@ -140,7 +143,7 @@ class SearchViewSet(APIViewSet):
         }
         """
         data = self.params_valid(SearchIndexSetScopeSerializer)
-        return Response(IndexSetHandler().get_user_index_set(data.get("project_id")))
+        return Response(IndexSetHandler().get_user_index_set(data["space_uid"]))
 
     @detail_route(methods=["GET"], url_path="bizs")
     def bizs(self, request, *args, **kwargs):
@@ -445,8 +448,7 @@ class SearchViewSet(APIViewSet):
         # add user_operation_record
         operation_record = {
             "username": get_request_username(),
-            "biz_id": 0,
-            "project_id": tmp_index_obj.project_id,
+            "space_uid": tmp_index_obj.space_uid,
             "record_type": UserOperationTypeEnum.EXPORT,
             "record_object_id": index_set_id,
             "action": UserOperationActionEnum.START,
@@ -726,11 +728,36 @@ class SearchViewSet(APIViewSet):
     def config(self, request, *args, **kwargs):
         """
         @api {post} /search/index_set/$index_set_id/config/?scope=search_context 03_搜索-索引集配置
-        @apiDescription 创建或更新用户在某个索引集的配置
-        @apiName search_index_set_user_config
+        @apiDescription 更新用户在某个索引集的配置
+        @apiName update_user_index_set_config
         @apiGroup 11_Search
         @apiParamExample {Json} 请求参数
         {
+            "config_id": 1
+        }
+        @apiSuccessExample {json} 成功返回:
+        {
+            "message": "",
+            "code": 0,
+            "data": null,
+            "result": true
+        }
+        """
+        index_set_id = kwargs.get("index_set_id", "")
+        data = self.params_valid(SearchUserIndexSetConfigSerializer)
+        result = IndexSetHandler(index_set_id=index_set_id).config(config_id=data["config_id"])
+        return Response(result)
+
+    @detail_route(methods=["POST"], url_path="create_config")
+    def create_config(self, request, *args, **kwargs):
+        """
+        @api {post} /search/index_set/$index_set_id/create_config/ 03_搜索-创建索引集配置
+        @apiDescription 创建索引集的字段配置
+        @apiName create_index_set_config
+        @apiGroup 11_Search
+        @apiParamExample {Json} 请求参数
+        {
+            "name": xxx,
             "display_fields": ["aaa", "bbb"]
             "sort_list": [
                 ["aaa", "desc"],
@@ -746,15 +773,91 @@ class SearchViewSet(APIViewSet):
         }
         """
         index_set_id = kwargs.get("index_set_id", "")
-        scope = request.GET.get("scope", "default")
-        if scope is not None and scope not in SEARCH_SCOPE_VALUE:
-            raise ValidationError(_("scope取值范围：default、search_context"))
-        # display_fields = request.data.get("display_fields", list())
-        data = self.params_valid(SearchUserIndexSetConfigSerializer)
+        data = self.params_valid(CreateIndexSetFieldsConfigSerializer)
         SearchHandlerEsquery(index_set_id, {}).verify_sort_list_item(data["sort_list"])
-        result = IndexSetHandler.add_field_config_record(
-            index_set_id, data["display_fields"], data["sort_list"], scope=scope
+        result = IndexSetFieldsConfigHandler(index_set_id=index_set_id).create_or_update(
+            name=data["name"], display_fields=data["display_fields"], sort_list=data["sort_list"]
         )
+        return Response(result)
+
+    @detail_route(methods=["POST"], url_path="update_config")
+    def update_config(self, request, *args, **kwargs):
+        """
+        @api {post} /search/index_set/$index_set_id/update_config/ 03_搜索-修改索引集配置
+        @apiDescription 更新某个索引集的字段配置
+        @apiName update_index_set_config
+        @apiGroup 11_Search
+        @apiParamExample {Json} 请求参数
+        {
+            "name": xxx,
+            "display_fields": ["aaa", "bbb"]
+            "sort_list": [
+                ["aaa", "desc"],
+                ["bbb", "asc"]
+            ]
+        }
+        @apiSuccessExample {json} 成功返回:
+        {
+            "message": "",
+            "code": 0,
+            "data": null,
+            "result": true
+        }
+        """
+        index_set_id = kwargs.get("index_set_id", "")
+        data = self.params_valid(UpdateIndexSetFieldsConfigSerializer)
+        SearchHandlerEsquery(index_set_id, {}).verify_sort_list_item(data["sort_list"])
+        result = IndexSetFieldsConfigHandler(index_set_id=index_set_id, config_id=data["config_id"]).create_or_update(
+            name=data["name"], display_fields=data["display_fields"], sort_list=data["sort_list"]
+        )
+        return Response(result)
+
+    @detail_route(methods=["GET"], url_path="list_config")
+    def list_config(self, request, *args, **kwargs):
+        """
+        @api {get} /search/index_set/$index_set_id/list_config/ 03_搜索-获取索引集配置列表
+        @apiDescription 获取某个索引集的字段配置列表
+        @apiName list_index_set_config
+        @apiGroup 11_Search
+        @apiParamExample {Json} 请求参数
+        @apiSuccessExample {json} 成功返回:
+        {
+            "message": "",
+            "code": 0,
+            "data": [
+                {
+                    "id": 1,
+                    "name": "1",
+                    "index_set_id": 1,
+                    "display_fields": [],
+                    "sort_list": []
+                }
+            ],
+            "result": true
+        }
+        """
+        index_set_id = kwargs.get("index_set_id", "")
+        return Response(IndexSetFieldsConfigHandler(index_set_id=index_set_id).list())
+
+    @detail_route(methods=["POST"], url_path="delete_config")
+    def delete_config(self, request, *args, **kwargs):
+        """
+        @api {post} /search/index_set/$index_set_id/delete_config/ 03_搜索-删除索引集配置
+        @apiDescription 删除某个索引集的字段配置
+        @apiName delete_index_set_config
+        @apiGroup 11_Search
+        @apiParamExample {Json} 请求参数
+        @apiSuccessExample {json} 成功返回:
+        {
+            "message": "",
+            "code": 0,
+            "data": null,
+            "result": true
+        }
+        """
+        index_set_id = kwargs.get("index_set_id", "")
+        data = self.params_valid(SearchUserIndexSetConfigSerializer)
+        result = IndexSetFieldsConfigHandler(index_set_id=index_set_id, config_id=data["config_id"]).delete()
         return Response(result)
 
     @list_route(methods=["get"], url_path="operators")
@@ -768,34 +871,24 @@ class SearchViewSet(APIViewSet):
         {
             "message": "",
             "code": 0,
-            "data": [
-                {
-                    "operator": "is",
-                    "label": "is",
-                    "placeholder": _("请输入，注意空格符号")
-                },
-                {
-                    "operator": "is one of",
-                    "label": "is one of "，
-                    "placeholder": _("逗号分隔")
-                },
-            ],
+            "data": {
+                "keyword": [
+                    {
+                        "operator": "is",
+                        "label": "is",
+                        "placeholder": _("请选择或直接输入")
+                    },
+                    {
+                        "operator": "is one of",
+                        "label": "is one of "，
+                        "placeholder": _("请选择或直接输入，逗号分隔")
+                    },
+                ],
+            }
             "result": true
         }
         """
-        data = [
-            {"operator": "is", "label": _("is"), "placeholder": _("请输入，注意空格符号")},
-            {"operator": "is one of", "label": _("is one of"), "placeholder": _("逗号分隔")},
-            {"operator": "is not", "label": _("is not"), "placeholder": _("请输入，注意空格符号")},
-            {"operator": "is not one of", "label": _("is not one of"), "placeholder": _("逗号分隔")},
-            {"operator": "gt", "label": _("大于"), "placeholder": _("请选择或直接输入")},
-            {"operator": "gte", "label": _("大于等于"), "placeholder": _("请选择或直接输入")},
-            {"operator": "lt", "label": _("小于"), "placeholder": _("请选择或直接输入")},
-            {"operator": "lte", "label": _("小于等于"), "placeholder": _("请选择或直接输入")},
-            {"operator": "exists", "label": _("exists"), "placeholder": _("确认字段已存在")},
-            {"operator": "does not exists", "label": _("does not exists"), "placeholder": _("确认字段不存在")},
-        ]
-        return Response(data)
+        return Response(OPERATORS)
 
     @detail_route(methods=["GET"], url_path="history")
     def history(self, request, *args, **kwargs):

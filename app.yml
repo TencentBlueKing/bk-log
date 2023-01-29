@@ -5,7 +5,7 @@ is_use_celery: True
 author: 蓝鲸智云
 introduction: 蓝鲸智云日志平台是为了解决运维场景中查询日志难的问题而推出的一款Saas，基于业界主流的全文检索引擎，通过蓝鲸智云的专属agent进行日志采集，无需登录各台机器，集中管理所有日志。
 introduction_en: BlueKing Log System is a SaaS to solve the problem that it is difficult to query logs in operation and maintenance scenarios, With full-text search engine based on the mainstream in the industry. It collects logs through BlueKing's exclusive agent without logging in to each machine and manages all logs centrally.
-version: 4.3.5
+version: 4.5.1
 category: 运维工具
 desktop:
   width: 1300

@@ -82,6 +82,7 @@ INSTALLED_APPS += (
     "apps.log_extract",
     "apps.feature_toggle",
     "apps.log_clustering",
+    "bkm_space",
 )
 
 # BKLOG后台接口：默认否，后台接口session不写入本地数据库
@@ -123,6 +124,8 @@ MIDDLEWARE = (
     "apps.middlewares.CommonMid",
     "apps.middleware.user_middleware.UserLocalMiddleware",
     "apps.middleware.user_middleware.BkLogMetricsAfterMiddleware",
+    # 项目空间参数注入
+    "bkm_space.middleware.ParamInjectMiddleware",
 )
 
 # 所有环境的日志级别可以在这里配置
@@ -167,6 +170,14 @@ if SENTRY_DSN:
 # 不使用时，请修改为 False，并删除项目目录下的 Procfile 文件中 celery 配置
 IS_USE_CELERY = True
 
+IS_CELERY = False
+IS_CELERY_BEAT = False
+if "celery" in sys.argv:
+    IS_CELERY = True
+    if "beat" in sys.argv:
+        IS_CELERY_BEAT = True
+
+
 # CELERY 并发数，默认为 2，可以通过环境变量或者 Procfile 设置
 CELERYD_CONCURRENCY = os.getenv("BK_CELERYD_CONCURRENCY", 2)
 
@@ -179,6 +190,7 @@ CELERY_IMPORTS = (
     "apps.log_search.tasks.bkdata",
     "apps.log_search.tasks.async_export",
     "apps.log_search.tasks.project",
+    "apps.log_search.tasks.space",
     "apps.log_search.tasks.cmdb",
     "apps.log_search.handlers.index_set",
     "apps.log_search.tasks.mapping",
@@ -192,6 +204,17 @@ CELERY_IMPORTS = (
     "apps.log_clustering.tasks.sync_pattern",
     "apps.log_extract.tasks.extract",
 )
+
+
+# OTLP Service Name
+SERVICE_NAME = APP_CODE
+if BKAPP_IS_BKLOG_API:
+    SERVICE_NAME = APP_CODE + "_api"
+if IS_CELERY:
+    SERVICE_NAME = APP_CODE + "_worker"
+if IS_CELERY_BEAT:
+    SERVICE_NAME = APP_CODE + "_beat"
+
 
 # load logging settings
 if RUN_VER != "open":
@@ -222,7 +245,7 @@ if IS_K8S_DEPLOY_MODE:
                     "%(funcName)s %(process)d %(thread)d %(message)s "
                     "$(otelTraceID)s $(otelSpanID)s %(otelServiceName)s"
                 ),
-            }
+            },
         },
         "handlers": {
             "stdout": {
@@ -275,10 +298,20 @@ if IS_K8S_DEPLOY_MODE:
             "bk_monitor": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
         },
     }
+    #
+    # 可选，开启OT日志上报
+    if os.getenv("BKAPP_OTLP_LOG", "off") == "on":
+        LOGGING["handlers"]["otlp"] = {
+            "class": "apps.utils.log.OTLPLogHandler",
+        }
+        for v in LOGGING["loggers"].values():
+            v["handlers"].append("otlp")
 
 OTLP_TRACE = os.getenv("BKAPP_OTLP_TRACE", "off") == "on"
 OTLP_GRPC_HOST = os.getenv("BKAPP_OTLP_GRPC_HOST", "http://localhost:4317")
 OTLP_BK_DATA_ID = int(os.getenv("BKAPP_OTLP_BK_DATA_ID", -1))
+OTLP_BK_DATA_TOKEN = os.getenv("BKAPP_OTLP_BK_DATA_TOKEN", "")
+OTLP_BK_LOG_TOKEN = os.getenv("BKAPP_OTLP_BK_LOG_TOKEN", "")
 # ===============================================================================
 # 项目配置
 # ===============================================================================
@@ -365,19 +398,19 @@ META_ESB_FORWARD_CONFIG = {
     "create_es_snapshot_repository": {
         "iam_key": "cluster_id",
         "target_call": "create_es_snapshot_repository",
-        "iam_actions": ["manage_es_source"],
+        "iam_actions": ["manage_es_source_v2"],
         "iam_resource": "es_source",
     },
     "modify_es_snapshot_repository": {
         "iam_key": "cluster_id",
         "target_call": "modify_es_snapshot_repository",
-        "iam_actions": ["manage_es_source"],
+        "iam_actions": ["manage_es_source_v2"],
         "iam_resource": "es_source",
     },
     "delete_es_snapshot_repository": {
         "iam_key": "cluster_id",
         "target_call": "delete_es_snapshot_repository",
-        "iam_actions": ["manage_es_source"],
+        "iam_actions": ["manage_es_source_v2"],
         "iam_resource": "es_source",
     },
     "verify_es_snapshot_repository": {"is_view_permission": True, "target_call": "verify_es_snapshot_repository"},
@@ -482,6 +515,8 @@ FEATURE_TOGGLE = {
     # 自定义指标上报
     "monitor_report": os.environ.get("BKAPP_MONITOR_REPORT", "on"),
     "bklog_es_config": "on",
+    # 一键检测工具自定义配置
+    "check_collector_custom_config": "",
 }
 
 SAAS_MONITOR = "bk_monitorv3"
@@ -721,6 +756,7 @@ CELERY_QUEUES = PIPELINE_CELERY_QUEUES
 # databus
 # ===============================================================================
 TABLE_ID_PREFIX = "bklog"
+TABLE_SPACE_PREFIX = "space"
 
 DEFAULT_OPERATOR = os.environ.get("BKAPP_ES_OPERATOR", "admin")
 ES_DATE_FORMAT = os.environ.get("BKAPP_ES_DATE_FORMAT", "%Y%m%d")
@@ -744,7 +780,7 @@ FEATURE_EXPORT_SCROLL = os.environ.get("BKAPP_FEATURE_EXPORT_SCROLL", False)
 
 # BCS
 BCS_API_GATEWAY_TOKEN = os.getenv("BKAPP_BCS_API_GATEWAY_TOKEN", "")
-BCS_CC_SSM_SWITCH = os.getenv("BKAPP_BCS_CC_SSM_SWITCH", "off") == "on"
+BCS_CC_SSM_SWITCH = os.getenv("BKAPP_BCS_CC_SSM_SWITCH", "off")
 BCS_APIGATEWAY_HOST = os.getenv("BKAPP_BCS_APIGATEWAY_HOST", "")
 BCS_CC_APIGATEWAY_HOST = os.getenv("BKAPP_BCS_CC_APIGATEWAY_HOST", "")
 SSM_HOST = os.getenv("BKAPP_SSM_HOST", "")
@@ -889,6 +925,12 @@ BKLOG_QOS_LIMIT_TIME = int(os.getenv("BK_BKLOG_QOS_LIMIT_TIME", 5))
 # ajax请求401返回plain信息
 IS_AJAX_PLAIN_MODE = True
 
+# ===============
+# 项目空间配置
+# ===============
+BKM_SPACE_API_CLASS = "apps.log_search.models.SpaceApi"
+
+
 # ==============================================================================
 # Templates
 # ==============================================================================
@@ -994,12 +1036,6 @@ SERVICE_LISTENING_DOMAIN = os.environ.get("SERVICE_LISTENING_DOMAIN", "")
 """
 以下为框架代码 请勿修改
 """
-IS_CELERY = False
-IS_CELERY_BEAT = False
-if "celery" in sys.argv:
-    IS_CELERY = True
-    if "beat" in sys.argv:
-        IS_CELERY_BEAT = True
 
 # celery settings
 if IS_USE_CELERY:

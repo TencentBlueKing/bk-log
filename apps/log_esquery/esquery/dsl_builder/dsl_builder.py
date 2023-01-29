@@ -44,6 +44,7 @@ class DslBuilder(object):
         collapse={},
         search_after=[],
         use_time_range=True,
+        mappings: list = [],
     ):  # pylint: disable=dangerous-default-value
         """
 
@@ -86,7 +87,10 @@ class DslBuilder(object):
         self.search = Search()
 
         query_bool_obj: type_query_bool_dict = Dsl(
-            query_string=search_string, filter_dict_list=self.filter_dict_list, range_field_dict=self.time_range_dict
+            query_string=search_string,
+            filter_dict_list=self.filter_dict_list,
+            range_field_dict=self.time_range_dict,
+            mappings=mappings,
         ).dsl_dict
         if not query_bool_obj:
             raise BaseSearchQueryBuilderException

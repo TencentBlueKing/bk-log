@@ -29,7 +29,6 @@ from rest_framework.response import Response
 
 from apps.exceptions import ValidationError
 from apps.log_databus.constants import EtlConfig, Environment
-from apps.log_databus.exceptions import NeedBcsClusterIdException
 from apps.log_search.exceptions import BkJwtVerifyException
 from apps.generic import ModelViewSet
 from apps.iam import ActionEnum, ResourceEnum
@@ -71,6 +70,7 @@ from apps.log_databus.serializers import (
     FastCollectorCreateSerializer,
     FastCollectorUpdateSerializer,
     ContainerCollectorConfigToYamlSerializer,
+    ListBCSCollectorSerializer,
 )
 from apps.log_search.constants import (
     BKDATA_OPEN,
@@ -127,6 +127,7 @@ class CollectorViewSet(ModelViewSet):
             "etl_time",
             "update_or_create_clean_config",
             "custom_update",
+            "report_token",
         ]:
             return [InstanceActionPermission([ActionEnum.MANAGE_COLLECTION], ResourceEnum.COLLECTION)]
         return [ViewBusinessPermission()]
@@ -1989,11 +1990,13 @@ class CollectorViewSet(ModelViewSet):
         auth_info = Permission.get_auth_info(request, raise_exception=False)
         if not auth_info:
             raise BkJwtVerifyException()
-        bcs_cluster_id = request.GET.get("bcs_cluster_id")
-        if not bcs_cluster_id:
-            raise NeedBcsClusterIdException()
+        data = self.params_valid(ListBCSCollectorSerializer)
         return Response(
-            CollectorHandler().list_bcs_collector(bcs_cluster_id=bcs_cluster_id, bk_app_code=auth_info["bk_app_code"])
+            CollectorHandler().list_bcs_collector(
+                bcs_cluster_id=data["bcs_cluster_id"],
+                bk_biz_id=data.get("bk_biz_id"),
+                bk_app_code=auth_info["bk_app_code"],
+            )
         )
 
     @list_route(methods=["POST"], url_path="create_bcs_collector")
@@ -2012,7 +2015,7 @@ class CollectorViewSet(ModelViewSet):
         if not auth_info:
             raise BkJwtVerifyException()
         data = self.params_valid(BCSCollectorSerializer)
-        rule_id = collector_config_id
+        rule_id = int(collector_config_id)
         return Response(CollectorHandler().update_bcs_container_config(data=data, rule_id=rule_id))
 
     @detail_route(methods=["DELETE"], url_path="delete_bcs_collector")
@@ -2034,16 +2037,20 @@ class CollectorViewSet(ModelViewSet):
 
     @list_route(methods=["GET"], url_path="list_namespace")
     def list_namespace(self, request):
-        cluster_id = request.GET.get("cluster_id")
-        return Response(CollectorHandler().list_namespace(bcs_cluster_id=cluster_id))
+        bcs_cluster_id = request.GET.get("bcs_cluster_id")
+        bk_biz_id = request.GET.get("bk_biz_id")
+        return Response(CollectorHandler().list_namespace(bk_biz_id=bk_biz_id, bcs_cluster_id=bcs_cluster_id))
 
     @list_route(methods=["GET"], url_path="list_topo")
     def list_topo(self, request):
         topo_type = request.GET.get("type")
+        bk_biz_id = request.GET.get("bk_biz_id")
         bcs_cluster_id = request.GET.get("bcs_cluster_id")
         namespace = request.GET.get("namespace", "")
         return Response(
-            CollectorHandler().list_topo(topo_type=topo_type, bcs_cluster_id=bcs_cluster_id, namespace=namespace)
+            CollectorHandler().list_topo(
+                topo_type=topo_type, bk_biz_id=bk_biz_id, bcs_cluster_id=bcs_cluster_id, namespace=namespace
+            )
         )
 
     @list_route(methods=["GET"], url_path="get_labels")
@@ -2085,7 +2092,11 @@ class CollectorViewSet(ModelViewSet):
     @list_route(methods=["POST"], url_path="validate_container_config_yaml")
     def validate_container_config_yaml(self, request):
         data = self.params_valid(ValidateContainerCollectorYamlSerializer)
-        return Response(CollectorHandler().validate_container_config_yaml(data["yaml_config"]))
+        return Response(
+            CollectorHandler().validate_container_config_yaml(
+                data["bk_biz_id"], data["bcs_cluster_id"], data["yaml_config"]
+            )
+        )
 
     @list_route(methods=["POST"])
     def fast_create(self, request):
@@ -2242,7 +2253,16 @@ class CollectorViewSet(ModelViewSet):
             base64.b64encode(
                 CollectorHandler.container_dict_configs_to_yaml(
                     container_configs=data["configs"],
-                    add_pod_label=data["add_pod_label"], extra_labels=data["extra_labels"]
+                    add_pod_label=data["add_pod_label"],
+                    extra_labels=data["extra_labels"],
                 ).encode("utf-8")
             )
         )
+
+    @detail_route(methods=["GET"], url_path="report_token")
+    def report_token(self, request, collector_config_id=None):
+        return Response(CollectorHandler(collector_config_id).get_report_token())
+
+    @list_route(methods=["GET"], url_path="report_host")
+    def report_host(self, request):
+        return Response(CollectorHandler().get_report_host())

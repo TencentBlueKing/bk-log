@@ -380,7 +380,7 @@ export default {
                 }
                 return pre;
               }, [])
-              .map(item => ({ ...item, value: ['Notin', 'In'].includes(item.operator) ? `(${item.value})` : item.value }));
+              .map(item => ({ ...item, value: ['NotIn', 'In'].includes(item.operator) ? `(${item.value})` : item.value }));
             selectorVal.match_expressions = handleFilterExpressions;
           }
           const data = {

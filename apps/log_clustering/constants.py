@@ -28,7 +28,8 @@ DEFAULT_NEW_CLS_HOURS = 24
 CONTENT_PATTERN_INDEX = 1
 LATEST_PUBLISH_STATUS = "latest"
 PATTERN_SIGNATURE_INDEX = 5
-PATTERN_INDEX = 2
+PATTERN_INDEX = 0
+ORIGIN_LOG_INDEX = 3
 
 HOUR_MINUTES = 60
 PERCENTAGE_RATE = 100
@@ -182,3 +183,7 @@ class ActionEnum(ChoicesEnum):
             cls.CREATE.value,
             cls.DELETE.value,
         )
+
+
+# 日志聚类失败重试次数
+MAX_FAILED_REQUEST_RETRY = 3

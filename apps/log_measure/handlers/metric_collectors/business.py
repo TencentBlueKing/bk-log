@@ -73,8 +73,8 @@ class BusinessMetricCollector(object):
             created_at__range=[start_time, end_time],
         ).values_list("index_set_id", flat=True)
 
-        project_ids = set(
-            LogIndexSet.objects.filter(index_set_id__in=set(history_ids)).values_list("project_id", flat=True)
+        space_uids = set(
+            LogIndexSet.objects.filter(index_set_id__in=set(history_ids)).values_list("space_uid", flat=True)
         )
 
         metrics = [
@@ -82,19 +82,19 @@ class BusinessMetricCollector(object):
                 metric_name="count",
                 metric_value=1,
                 dimensions={
-                    "target_biz_id": MetricUtils.get_instance().project_biz_info[project_id]["bk_biz_id"],
-                    "target_biz_name": MetricUtils.get_instance().project_biz_info[project_id]["bk_biz_name"],
+                    "bk_biz_id": MetricUtils.get_instance().space_info[space_uid].bk_biz_id,
+                    "bk_biz_name": MetricUtils.get_instance().space_info[space_uid].space_name,
                     "time_range": timedelta,
                 },
                 timestamp=MetricUtils.get_instance().report_ts,
             )
-            for project_id in project_ids
-            if MetricUtils.get_instance().project_biz_info.get(project_id)
+            for space_uid in space_uids
+            if MetricUtils.get_instance().space_info.get(space_uid)
         ]
         metrics.append(
             Metric(
                 metric_name="total",
-                metric_value=len(project_ids),
+                metric_value=len(space_uids),
                 dimensions={"time_range": timedelta},
                 timestamp=MetricUtils.get_instance().report_ts,
             )
@@ -105,11 +105,11 @@ class BusinessMetricCollector(object):
     @staticmethod
     @register_metric("business", description=_("业务"), data_name="metric", time_filter=TimeFilterEnum.MINUTE5)
     def business():
-        project_biz_info = MetricUtils.get_instance().project_biz_info
+        biz_info = MetricUtils.get_instance().biz_info
         metrics = [
             Metric(
                 metric_name="total",
-                metric_value=len(project_biz_info),
+                metric_value=len(biz_info),
                 dimensions=None,
                 timestamp=MetricUtils.get_instance().report_ts,
             )
@@ -120,8 +120,8 @@ class BusinessMetricCollector(object):
                     metric_name="bk_biz_info",
                     metric_value=1,
                     dimensions={
-                        "target_biz_id": bk_biz_id,
-                        "target_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                        "bk_biz_id": bk_biz_id,
+                        "bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
                     },
                     timestamp=MetricUtils.get_instance().report_ts,
                 )
@@ -145,8 +145,8 @@ class BusinessMetricCollector(object):
                     metric_name="count",
                     metric_value=collector_config["total"],
                     dimensions={
-                        "target_biz_id": collector_config["bk_biz_id"],
-                        "target_biz_name": MetricUtils.get_instance().get_biz_name(collector_config["bk_biz_id"]),
+                        "bk_biz_id": collector_config["bk_biz_id"],
+                        "bk_biz_name": MetricUtils.get_instance().get_biz_name(collector_config["bk_biz_id"]),
                     },
                     timestamp=MetricUtils.get_instance().report_ts,
                 )
@@ -203,7 +203,7 @@ class BusinessMetricCollector(object):
             LogIndexSet.objects.values("scenario_id")
             .distinct()
             .order_by("scenario_id")
-            .annotate(count=Count("project_id", distinct=True))
+            .annotate(count=Count("space_uid", distinct=True))
         )
         for group in groups:
             if group["scenario_id"] == Scenario.LOG:
@@ -222,18 +222,16 @@ class BusinessMetricCollector(object):
     @staticmethod
     def trace_biz_usage():
         groups = (
-            LogIndexSet.objects.values("project_id")
+            LogIndexSet.objects.values("space_uid")
             .filter(is_trace_log=True)
-            .order_by("project_id")
-            .annotate(count=Count("project_id", distinct=True))
+            .order_by("space_uid")
+            .annotate(count=Count("space_uid", distinct=True))
         )
         metrics = [
             Metric(
                 metric_name="count",
                 metric_value=len(groups),
-                dimensions={
-                    "function": "log_trace",
-                },
+                dimensions={"function": "log_trace"},
                 timestamp=MetricUtils.get_instance().report_ts,
             )
         ]
@@ -245,9 +243,7 @@ class BusinessMetricCollector(object):
             Metric(
                 metric_name="count",
                 metric_value=BusinessMetricCollector().get_clean_biz_usage(),
-                dimensions={
-                    "function": "log_clean",
-                },
+                dimensions={"function": "log_clean"},
                 timestamp=MetricUtils.get_instance().report_ts,
             )
         ]

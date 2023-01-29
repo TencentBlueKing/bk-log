@@ -26,8 +26,8 @@
                 "description_en":"",
                 "parents":[
                     {
-                        "system_id":"bk_cmdb",
-                        "id":"biz"
+                        "system_id":"bk_monitorv3",
+                        "id":"space"
                     }
                 ],
                 "provider_config":{
@@ -46,8 +46,8 @@
                 "description_en":"",
                 "parents":[
                     {
-                        "system_id":"bk_cmdb",
-                        "id":"biz"
+                        "system_id":"bk_monitorv3",
+                        "id":"space"
                     }
                 ],
                 "provider_config":{
@@ -66,8 +66,8 @@
                 "description_en":"",
                 "parents":[
                     {
-                        "system_id":"bk_cmdb",
-                        "id":"biz"
+                        "system_id":"bk_monitorv3",
+                        "id":"space"
                     }
                 ],
                 "provider_config":{
@@ -79,13 +79,13 @@
         {
             "operation":"upsert_instance_selection",
             "data":{
-                "id":"collection_list",
+                "id":"collection_list_v2",
                 "name":"采集项列表",
                 "name_en":"Collection List",
                 "resource_type_chain":[
                     {
-                        "system_id":"bk_cmdb",
-                        "id":"biz"
+                        "system_id":"bk_monitorv3",
+                        "id":"space"
                     },
                     {
                         "system_id":"bk_log_search",
@@ -97,13 +97,13 @@
         {
             "operation":"upsert_instance_selection",
             "data":{
-                "id":"es_source_list",
+                "id":"es_source_list_v2",
                 "name":"ES源列表",
                 "name_en":"ES Source List",
                 "resource_type_chain":[
                     {
-                        "system_id":"bk_cmdb",
-                        "id":"biz"
+                        "system_id":"bk_monitorv3",
+                        "id":"space"
                     },
                     {
                         "system_id":"bk_log_search",
@@ -115,13 +115,13 @@
         {
             "operation":"upsert_instance_selection",
             "data":{
-                "id":"indices_list",
+                "id":"indices_list_v2",
                 "name":"索引集列表",
                 "name_en":"Indices List",
                 "resource_type_chain":[
                     {
-                        "system_id":"bk_cmdb",
-                        "id":"biz"
+                        "system_id":"bk_monitorv3",
+                        "id":"space"
                     },
                     {
                         "system_id":"bk_log_search",
@@ -130,23 +130,24 @@
                 ]
             }
         },
+
         {
             "operation":"upsert_action",
             "data":{
-                "id":"view_business",
+                "id":"view_business_v2",
                 "name":"业务访问",
                 "name_en":"View Business",
                 "type":"view",
                 "version":1,
                 "related_resource_types":[
                     {
-                        "id":"biz",
-                        "system_id":"bk_cmdb",
+                        "system_id":"bk_monitorv3",
+                        "id":"space",
                         "selection_mode":"instance",
                         "related_instance_selections":[
                             {
-                                "system_id":"bk_cmdb",
-                                "id":"business"
+                                "system_id":"bk_monitorv3",
+                                "id":"space_list"
                             }
                         ],
                         "ignore_iam_path":true
@@ -162,7 +163,7 @@
         {
             "operation":"upsert_action",
             "data":{
-                "id":"search_log",
+                "id":"search_log_v2",
                 "name":"日志检索",
                 "name_en":"Search Log",
                 "type":"view",
@@ -175,7 +176,7 @@
                         "related_instance_selections":[
                             {
                                 "system_id":"bk_log_search",
-                                "id":"indices_list",
+                                "id":"indices_list_v2",
                                 "ignore_iam_path":true
                             }
                         ]
@@ -191,7 +192,7 @@
         {
             "operation":"upsert_action",
             "data":{
-                "id":"view_collection",
+                "id":"view_collection_v2",
                 "name":"采集查看",
                 "name_en":"View Collection",
                 "type":"view",
@@ -204,7 +205,7 @@
                         "related_instance_selections":[
                             {
                                 "system_id":"bk_log_search",
-                                "id":"collection_list",
+                                "id":"collection_list_v2",
                                 "ignore_iam_path":true
                             }
                         ]
@@ -220,27 +221,27 @@
         {
             "operation":"upsert_action",
             "data":{
-                "id":"create_collection",
+                "id":"create_collection_v2",
                 "name":"采集新建",
                 "name_en":"Create Collection",
                 "type":"create",
                 "version":1,
                 "related_resource_types":[
                     {
-                        "id":"biz",
-                        "system_id":"bk_cmdb",
+                        "system_id":"bk_monitorv3",
+                        "id":"space",
                         "selection_mode":"instance",
                         "related_instance_selections":[
                             {
-                                "system_id":"bk_cmdb",
-                                "id":"business",
-                                "ignore_iam_path":true
+                                "system_id":"bk_monitorv3",
+                                "id":"space_list"
                             }
-                        ]
+                        ],
+                        "ignore_iam_path":true
                     }
                 ],
                 "related_actions":[
-                    "view_business"
+                    "view_business_v2"
                 ],
                 "description":"",
                 "description_en":""
@@ -249,7 +250,7 @@
         {
             "operation":"upsert_action",
             "data":{
-                "id":"manage_collection",
+                "id":"manage_collection_v2",
                 "name":"采集管理",
                 "name_en":"Manage Collection",
                 "type":"manage",
@@ -262,14 +263,14 @@
                         "related_instance_selections":[
                             {
                                 "system_id":"bk_log_search",
-                                "id":"collection_list",
+                                "id":"collection_list_v2",
                                 "ignore_iam_path":true
                             }
                         ]
                     }
                 ],
                 "related_actions":[
-                    "view_collection"
+                    "view_collection_v2"
                 ],
                 "description":"",
                 "description_en":""
@@ -278,27 +279,27 @@
         {
             "operation":"upsert_action",
             "data":{
-                "id":"create_es_source",
+                "id":"create_es_source_v2",
                 "name":"ES源配置新建",
                 "name_en":"Create ES Source",
                 "type":"create",
                 "version":1,
                 "related_resource_types":[
                     {
-                        "id":"biz",
-                        "system_id":"bk_cmdb",
+                        "system_id":"bk_monitorv3",
+                        "id":"space",
                         "selection_mode":"instance",
                         "related_instance_selections":[
                             {
-                                "system_id":"bk_cmdb",
-                                "id":"business",
-                                "ignore_iam_path":true
+                                "system_id":"bk_monitorv3",
+                                "id":"space_list"
                             }
-                        ]
+                        ],
+                        "ignore_iam_path":true
                     }
                 ],
                 "related_actions":[
-                    "view_business"
+                    "view_business_v2"
                 ],
                 "description":"",
                 "description_en":""
@@ -307,7 +308,7 @@
         {
             "operation":"upsert_action",
             "data":{
-                "id":"manage_es_source",
+                "id":"manage_es_source_v2",
                 "name":"ES源配置管理",
                 "name_en":"Manage ES Source",
                 "type":"manage",
@@ -320,7 +321,7 @@
                         "related_instance_selections":[
                             {
                                 "system_id":"bk_log_search",
-                                "id":"es_source_list",
+                                "id":"es_source_list_v2",
                                 "ignore_iam_path":true
                             }
                         ]
@@ -336,27 +337,27 @@
         {
             "operation":"upsert_action",
             "data":{
-                "id":"create_indices",
+                "id":"create_indices_v2",
                 "name":"索引集配置新建",
                 "name_en":"Create Indices",
                 "type":"create",
                 "version":1,
                 "related_resource_types":[
                     {
-                        "id":"biz",
-                        "system_id":"bk_cmdb",
+                        "system_id":"bk_monitorv3",
+                        "id":"space",
                         "selection_mode":"instance",
                         "related_instance_selections":[
                             {
-                                "system_id":"bk_cmdb",
-                                "id":"business",
-                                "ignore_iam_path":true
+                                "system_id":"bk_monitorv3",
+                                "id":"space_list"
                             }
-                        ]
+                        ],
+                        "ignore_iam_path":true
                     }
                 ],
                 "related_actions":[
-                    "view_business"
+                    "view_business_v2"
                 ],
                 "description":"",
                 "description_en":""
@@ -365,7 +366,7 @@
         {
             "operation":"upsert_action",
             "data":{
-                "id":"manage_indices",
+                "id":"manage_indices_v2",
                 "name":"索引集配置管理",
                 "name_en":"Manage Indices",
                 "type":"manage",
@@ -378,7 +379,7 @@
                         "related_instance_selections":[
                             {
                                 "system_id":"bk_log_search",
-                                "id":"indices_list",
+                                "id":"indices_list_v2",
                                 "ignore_iam_path":true
                             }
                         ]
@@ -394,27 +395,27 @@
         {
             "operation":"upsert_action",
             "data":{
-                "id":"view_dashboard",
+                "id":"view_dashboard_v2",
                 "name":"仪表盘查看",
                 "name_en":"View Dashboard",
                 "type":"view",
                 "version":1,
                 "related_resource_types":[
                     {
-                        "id":"biz",
-                        "system_id":"bk_cmdb",
+                        "system_id":"bk_monitorv3",
+                        "id":"space",
                         "selection_mode":"instance",
                         "related_instance_selections":[
                             {
-                                "system_id":"bk_cmdb",
-                                "id":"business",
-                                "ignore_iam_path":true
+                                "system_id":"bk_monitorv3",
+                                "id":"space_list"
                             }
-                        ]
+                        ],
+                        "ignore_iam_path":true
                     }
                 ],
                 "related_actions":[
-                    "view_business"
+                    "view_business_v2"
                 ],
                 "description":"",
                 "description_en":""
@@ -423,28 +424,28 @@
         {
             "operation":"upsert_action",
             "data":{
-                "id":"manage_dashboard",
+                "id":"manage_dashboard_v2",
                 "name":"仪表盘管理",
                 "name_en":"Manage Dashboard",
                 "type":"manage",
                 "version":1,
                 "related_resource_types":[
                     {
-                        "id":"biz",
-                        "system_id":"bk_cmdb",
+                        "system_id":"bk_monitorv3",
+                        "id":"space",
                         "selection_mode":"instance",
                         "related_instance_selections":[
                             {
-                                "system_id":"bk_cmdb",
-                                "id":"business",
-                                "ignore_iam_path":true
+                                "system_id":"bk_monitorv3",
+                                "id":"space_list"
                             }
-                        ]
+                        ],
+                        "ignore_iam_path":true
                     }
                 ],
                 "related_actions":[
-                    "view_dashboard",
-                    "view_business"
+                    "view_business_v2",
+                    "view_dashboard_v2"
                 ],
                 "description":"",
                 "description_en":""
@@ -453,23 +454,23 @@
         {
             "operation":"upsert_action",
             "data":{
-                "id":"manage_extract_config",
+                "id":"manage_extract_config_v2",
                 "name":"日志提取配置管理",
                 "name_en":"Manage Extract Config",
                 "type":"manage",
                 "version":1,
                 "related_resource_types":[
                     {
-                        "id":"biz",
-                        "system_id":"bk_cmdb",
+                        "system_id":"bk_monitorv3",
+                        "id":"space",
                         "selection_mode":"instance",
                         "related_instance_selections":[
                             {
-                                "system_id":"bk_cmdb",
-                                "id":"business",
-                                "ignore_iam_path":true
+                                "system_id":"bk_monitorv3",
+                                "id":"space_list"
                             }
-                        ]
+                        ],
+                        "ignore_iam_path":true
                     }
                 ],
                 "related_actions":[
@@ -479,6 +480,7 @@
                 "description_en":""
             }
         },
+
         {
             "operation":"upsert_action_groups",
             "data":[
@@ -487,7 +489,7 @@
                     "name_en":"Business",
                     "actions":[
                         {
-                            "id":"view_business"
+                            "id":"view_business_v2"
                         }
                     ],
                     "sub_groups":[
@@ -496,13 +498,13 @@
                             "name_en":"Indices",
                             "actions":[
                                 {
-                                    "id":"search_log"
+                                    "id":"search_log_v2"
                                 },
                                 {
-                                    "id":"create_indices"
+                                    "id":"create_indices_v2"
                                 },
                                 {
-                                    "id":"manage_indices"
+                                    "id":"manage_indices_v2"
                                 }
                             ]
                         },
@@ -511,13 +513,13 @@
                             "name_en":"Collection",
                             "actions":[
                                 {
-                                    "id":"create_collection"
+                                    "id":"create_collection_v2"
                                 },
                                 {
-                                    "id":"view_collection"
+                                    "id":"view_collection_v2"
                                 },
                                 {
-                                    "id":"manage_collection"
+                                    "id":"manage_collection_v2"
                                 }
                             ]
                         },
@@ -526,10 +528,10 @@
                             "name_en":"ES Source",
                             "actions":[
                                 {
-                                    "id":"create_es_source"
+                                    "id":"create_es_source_v2"
                                 },
                                 {
-                                    "id":"manage_es_source"
+                                    "id":"manage_es_source_v2"
                                 }
                             ]
                         },
@@ -538,10 +540,10 @@
                             "name_en":"Dashboard",
                             "actions":[
                                 {
-                                    "id":"view_dashboard"
+                                    "id":"view_dashboard_v2"
                                 },
                                 {
-                                    "id":"manage_dashboard"
+                                    "id":"manage_dashboard_v2"
                                 }
                             ]
                         },
@@ -550,7 +552,7 @@
                             "name_en":"Log Extract",
                             "actions":[
                                 {
-                                    "id":"manage_extract_config"
+                                    "id":"manage_extract_config_v2"
                                 }
                             ]
                         }
@@ -566,11 +568,11 @@
                         "id":"collection",
                         "actions":[
                             {
-                                "id":"view_collection",
+                                "id":"view_collection_v2",
                                 "required":true
                             },
                             {
-                                "id":"manage_collection",
+                                "id":"manage_collection_v2",
                                 "required":true
                             }
                         ]
@@ -579,11 +581,11 @@
                         "id":"indices",
                         "actions":[
                             {
-                                "id":"manage_indices",
+                                "id":"manage_indices_v2",
                                 "required":true
                             },
                             {
-                                "id":"search_log",
+                                "id":"search_log_v2",
                                 "required":false
                             }
                         ]
@@ -592,7 +594,7 @@
                         "id":"es_source",
                         "actions":[
                             {
-                                "id":"manage_es_source",
+                                "id":"manage_es_source_v2",
                                 "required":false
                             }
                         ]
@@ -608,40 +610,40 @@
                     "name_en":"Ops Actions",
                     "actions":[
                         {
-                            "id":"view_business"
+                            "id":"view_business_v2"
                         },
                         {
-                            "id":"search_log"
+                            "id":"search_log_v2"
                         },
                         {
-                            "id":"view_collection"
+                            "id":"view_collection_v2"
                         },
                         {
-                            "id":"create_collection"
+                            "id":"create_collection_v2"
                         },
                         {
-                            "id":"manage_collection"
+                            "id":"manage_collection_v2"
                         },
                         {
-                            "id":"create_es_source"
+                            "id":"create_es_source_v2"
                         },
                         {
-                            "id":"manage_es_source"
+                            "id":"manage_es_source_v2"
                         },
                         {
-                            "id":"create_indices"
+                            "id":"create_indices_v2"
                         },
                         {
-                            "id":"manage_indices"
+                            "id":"manage_indices_v2"
                         },
                         {
-                            "id":"view_dashboard"
+                            "id":"view_dashboard_v2"
                         },
                         {
-                            "id":"manage_dashboard"
+                            "id":"manage_dashboard_v2"
                         },
                         {
-                            "id":"manage_extract_config"
+                            "id":"manage_extract_config_v2"
                         }
                     ]
                 },
@@ -650,16 +652,16 @@
                     "name_en":"Read-only Actions",
                     "actions":[
                         {
-                            "id":"view_business"
+                            "id":"view_business_v2"
                         },
                         {
-                            "id":"search_log"
+                            "id":"search_log_v2"
                         },
                         {
-                            "id":"view_collection"
+                            "id":"view_collection_v2"
                         },
                         {
-                            "id":"view_dashboard"
+                            "id":"view_dashboard_v2"
                         }
                     ]
                 }

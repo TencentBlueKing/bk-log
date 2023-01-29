@@ -168,7 +168,7 @@ export default {
     this.language = jsCookie.get('blueking_language') || 'zh-cn';
     this.$store.commit('updateMenuList', menuArr);
     await this.getUserInfo();
-    setTimeout(() => this.requestMyProjectList(), 100);
+    setTimeout(() => this.requestMySpaceList(), 100);
   },
   methods: {
     async getUserInfo() {
@@ -191,7 +191,7 @@ export default {
       this.$router.push({
         name: 'retrieve',
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
       setTimeout(() => {
@@ -204,7 +204,7 @@ export default {
           this.$router.push({
             name: menu.id,
             query: {
-              projectId: window.localStorage.getItem('project_id'),
+              spaceUid: this.$store.state.spaceUid,
             },
           });
           this.$emit('reloadRouter');
@@ -214,7 +214,7 @@ export default {
             this.$router.push({
               name: 'extract',
               query: {
-                projectId: window.localStorage.getItem('project_id'),
+                spaceUid: this.$store.state.spaceUid,
               },
             });
           } else {
@@ -226,7 +226,7 @@ export default {
             this.$router.push({
               name: 'trace-list',
               query: {
-                projectId: window.localStorage.getItem('project_id'),
+                spaceUid: this.$store.state.spaceUid,
               },
             });
           } else {
@@ -247,7 +247,7 @@ export default {
           this.$router.push({
             name: menu.id,
             query: {
-              projectId: window.localStorage.getItem('project_id'),
+              spaceUid: this.$store.state.spaceUid,
             },
           });
           this.$emit('reloadRouter');
@@ -257,7 +257,7 @@ export default {
             this.$router.push({
               name: 'manage',
               query: {
-                projectId: window.localStorage.getItem('project_id'),
+                spaceUid: this.$store.state.spaceUid,
               },
             });
           } else {
@@ -274,14 +274,14 @@ export default {
         this.$router.push({
           name: 'trace-list',
           query: {
-            projectId: window.localStorage.getItem('project_id'),
+            spaceUid: this.$store.state.spaceUid,
           },
         });
       } else {
         this.$router.push({
           name: menu.id,
           query: {
-            projectId: window.localStorage.getItem('project_id'),
+            spaceUid: this.$store.state.spaceUid,
           },
         });
       }

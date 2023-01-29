@@ -355,10 +355,10 @@ export default {
       return formatDate(time);
     },
     handleRetrieve($row) {
-      const projectId = window.localStorage.getItem('project_id');
+      const spaceUid = this.$store.state.spaceUid;
       const { log_index_set_id: indexSetID, search_dict: dict } = $row;
       const params = encodeURIComponent(JSON.stringify({ ...dict }));
-      const jumpUrl = `${window.SITE_URL}#/retrieve/${indexSetID}?projectId=${projectId}&bizId=${dict.bk_biz_id}&retrieveParams=${params}`;
+      const jumpUrl = `${window.SITE_URL}#/retrieve/${indexSetID}?spaceUid=${spaceUid}&bizId=${dict.bk_biz_id}&retrieveParams=${params}`;
       window.open(jumpUrl, '_blank');
     },
     /**

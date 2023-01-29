@@ -332,10 +332,10 @@ export default {
     handleClickDetail() {
       const { extra: { collector_config_id: collectorID, collector_scenario_id: scenarioID } } = this.cleanConfig;
       if (!collectorID) return;
-      const projectId = window.localStorage.getItem('project_id');
+      const spaceUid = this.$store.state.spaceUid;
       const jumpUrl = scenarioID === 'custom'
-        ? `/#/manage/custom-report/detail/${collectorID}?projectId=${projectId}`
-        : `/#/manage/log-collection/collection-item/manage/${collectorID}?projectId=${projectId}`;
+        ? `/#/manage/custom-report/detail/${collectorID}?spaceUid=${spaceUid}`
+        : `/#/manage/log-collection/collection-item/manage/${collectorID}?spaceUid=${spaceUid}`;
       window.open(jumpUrl, '_blank');
     },
     setIsShowExtract(state) {
@@ -432,7 +432,6 @@ export default {
       }
 
       .setting-right {
-        width: 1200px;
         margin-left: 20px;
 
         .more-details {

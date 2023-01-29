@@ -22,101 +22,138 @@
 
 <template>
   <div class="result-header">
-    <!-- 重新展开 -->
-    <template v-if="!showRetrieveCondition">
-      <div
-        v-if="showExpandInitTips"
-        key="1"
-        v-bk-tooltips="expandInitTips"
-        class="open-condition"
-        @click="$emit('open')">
-        <span class="bk-icon icon-angle-double-right"></span>
+    <!-- 检索左侧 -->
+    <div class="result-left">
+      <div class="icon-container">
+        <bk-popover
+          ref="showFavoriteBtnRef"
+          :disabled="showCollectIntroGuide"
+          :tippy-options="expandTips">
+          <div
+            :class="[
+              'result-icon-box',
+              {
+                'light-icon': !isShowCollect,
+                'disabled': showCollectIntroGuide
+              }
+            ]"
+            @click="handleClickResultIcon('collect')">
+            <span class="bk-icon icon-star"></span>
+          </div>
+          <div slot="content">
+            {{`${isShowCollect ? $t('点击收起') : $t('点击展开')}${$t('收藏')}`}}
+          </div>
+        </bk-popover>
+        <bk-popover
+          ref="showSearchBtnRef"
+          :tippy-options="collectTips">
+          <div
+            :class="['result-icon-box',{ 'light-icon': !showRetrieveCondition }]"
+            @click="handleClickResultIcon('search')">
+            <span class="bk-icon log-icon icon-jiansuo"></span>
+          </div>
+          <div slot="content">
+            {{`${showRetrieveCondition ? $t('点击收起') : $t('点击展开')}${$t('检索')}`}}
+          </div>
+        </bk-popover>
       </div>
-      <div v-else v-bk-tooltips="expandTips" key="2" class="open-condition" @click="$emit('open')">
-        <span class="bk-icon icon-angle-double-right"></span>
+      <div class="biz-menu-box" id="bizSelectorGuide" v-if="!isAsIframe">
+        <biz-menu-select theme="light"></biz-menu-select>
       </div>
-    </template>
-    <!-- 收藏查询 -->
-    <favorite-card
-      :favorite-list="favoriteList"
-      :latest-favorite-id="latestFavoriteId"
-      @remove="removeFavorite"
-      @shouldRetrieve="retrieveFavorite" />
+    </div>
     <!-- 检索结果 -->
     <!-- <div class="result-text"></div> -->
     <!-- 检索日期 -->
-    <time-range :value="datePickerValue" @change="handleTimeRangeChange" />
-    <!-- 自动刷新 -->
-    <bk-popover
-      ref="autoRefreshPopper"
-      trigger="click"
-      placement="bottom-start"
-      theme="light bk-select-dropdown"
-      animation="slide-toggle"
-      :offset="0"
-      :distance="15"
-      :on-show="handleDropdownShow"
-      :on-hide="handleDropdownHide">
-      <slot name="trigger">
-        <div class="auto-refresh-trigger">
-          <span
-            :class="['log-icon', isAutoRefresh ? 'icon-auto-refresh' : 'icon-refresh-icon']"
-            data-test-id="retrieve_span_periodicRefresh"
-            @click.stop="$emit('shouldRetrieve')"></span>
-          <span :class="isAutoRefresh && 'active-text'">{{refreshTimeText}}</span>
-          <span class="bk-icon icon-angle-down" :class="refreshActive && 'active'"></span>
+    <div class="result-right">
+      <time-range :value="datePickerValue" @change="handleTimeRangeChange" />
+      <!-- 自动刷新 -->
+      <bk-popover
+        ref="autoRefreshPopper"
+        trigger="click"
+        placement="bottom-start"
+        theme="light bk-select-dropdown"
+        animation="slide-toggle"
+        :offset="0"
+        :distance="15"
+        :on-show="handleDropdownShow"
+        :on-hide="handleDropdownHide">
+        <slot name="trigger">
+          <div class="auto-refresh-trigger">
+            <span
+              :class="['log-icon', isAutoRefresh ? 'icon-auto-refresh' : 'icon-refresh-icon']"
+              data-test-id="retrieve_span_periodicRefresh"
+              @click.stop="$emit('shouldRetrieve')"></span>
+            <span :class="isAutoRefresh && 'active-text'">{{refreshTimeText}}</span>
+            <span class="bk-icon icon-angle-down" :class="refreshActive && 'active'"></span>
+          </div>
+        </slot>
+        <div slot="content" class="bk-select-dropdown-content auto-refresh-content">
+          <div class="bk-options-wrapper">
+            <ul class="bk-options bk-options-single">
+              <li v-for="item in refreshTimeList"
+                  :key="item.id"
+                  :class="['bk-option', refreshTimeout === item.id && 'is-selected']"
+                  @click="handleSelectRefreshTimeout(item.id)">
+                <div class="bk-option-content">{{item.name}}</div>
+              </li>
+            </ul>
+          </div>
         </div>
-      </slot>
-      <div slot="content" class="bk-select-dropdown-content auto-refresh-content">
-        <div class="bk-options-wrapper">
-          <ul class="bk-options bk-options-single">
-            <li v-for="item in refreshTimeList"
-                :key="item.id"
-                :class="['bk-option', refreshTimeout === item.id && 'is-selected']"
-                @click="handleSelectRefreshTimeout(item.id)">
-              <div class="bk-option-content">{{item.name}}</div>
+      </bk-popover>
+      <bk-popover
+        v-if="isAiopsToggle"
+        trigger="click"
+        placement="bottom-end"
+        theme="light bk-select-dropdown"
+        animation="slide-toggle"
+        :offset="0"
+        :distance="15">
+        <slot name="trigger">
+          <div class="more-operation">
+            <i class="bk-icon icon-more"></i>
+          </div>
+        </slot>
+        <div slot="content" class="retrieve-setting-container">
+          <ul class="list-menu" ref="menu">
+            <li
+              v-for="menu in showSettingMenuList"
+              class="list-menu-item"
+              :key="menu.id"
+              @click="handleMenuClick(menu.id)">
+              {{ menu.name }}
             </li>
           </ul>
         </div>
-      </div>
-    </bk-popover>
-    <bk-popover
-      v-if="isAiopsToggle"
-      trigger="click"
-      placement="bottom-end"
-      theme="light bk-select-dropdown"
-      animation="slide-toggle"
-      :offset="0"
-      :distance="15">
-      <slot name="trigger">
-        <div class="more-operation">
-          <i class="bk-icon icon-more"></i>
-        </div>
-      </slot>
-      <div slot="content" class="retrieve-setting-container">
-        <ul class="list-menu" ref="menu">
-          <li
-            v-for="menu in showSettingMenuList"
-            class="list-menu-item"
-            :key="menu.id"
-            @click="handleMenuClick(menu.id)">
-            {{ menu.name }}
-          </li>
-        </ul>
-      </div>
-    </bk-popover>
+      </bk-popover>
+    </div>
+    <step-box
+      v-if="showCollectIntroGuide"
+      placement="bottom"
+      :has-border="true"
+      :tip-styles="{
+        top: '50px',
+        left: '14px',
+      }"
+    >
+      <div slot="title">{{ $t('检索收藏功能支持分组和管理') }}</div>
+      <template slot="action">
+        <div class="action-text" @click="handleCloseGuide">{{ $t('知道了') }}</div>
+      </template>
+    </step-box>
   </div>
 </template>
 
 <script>
 import { mapState } from 'vuex';
-import FavoriteCard from '../condition-comp/favorite-card';
+import BizMenuSelect from '@/components/biz-menu';
 import TimeRange from '../../../components/time-range/time-range';
+import StepBox from '@/components/step-box';
 
 export default {
   components: {
-    FavoriteCard,
+    BizMenuSelect,
     TimeRange,
+    StepBox,
   },
   props: {
     showRetrieveCondition: {
@@ -139,10 +176,6 @@ export default {
       type: Array,
       required: true,
     },
-    favoriteList: {
-      type: Array,
-      required: true,
-    },
     latestFavoriteId: {
       type: [Number, String],
       default: '',
@@ -151,23 +184,32 @@ export default {
       type: Object,
       required: true,
     },
+    isAsIframe: {
+      type: Boolean,
+      required: true,
+    },
+    isShowCollect: {
+      type: Boolean,
+      required: true,
+    },
   },
   data() {
     return {
-      expandInitTips: {
-        content: this.$t('点击重新展开'),
-        trigger: 'click',
-        showOnInit: true,
+      expandTips: {
         placement: 'bottom',
+        trigger: 'mouseenter',
         onHidden: () => {
           this.$emit('initTipsHidden');
         },
       },
-      expandTips: {
-        content: this.$t('点击重新展开'),
+      expandText: '',
+      collectTips: {
         placement: 'bottom',
+        trigger: 'mouseenter',
+        onHidden: () => {
+          this.isFirstCloseCollect = true;
+        },
       },
-
       refreshActive: false, // 自动刷新下拉激活
       refreshTimer: null, // 自动刷新定时器
       refreshTimeout: 0, // 0 这里表示关闭自动刷新
@@ -193,12 +235,15 @@ export default {
         { id: 'extract', name: '字段清洗' },
         { id: 'clustering', name: '日志聚类' },
       ],
+      isFirstCloseCollect: false,
       showSettingMenuList: [],
+      showCollectIntroGuide: false,
     };
   },
   computed: {
     ...mapState({
       bkBizId: state => state.bkBizId,
+      userGuideData: state => state.userGuideData,
     }),
     refreshTimeText() {
       return this.refreshTimeList.find(item => item.id === this.refreshTimeout).name;
@@ -221,6 +266,9 @@ export default {
       },
     },
   },
+  created() {
+    this.showCollectIntroGuide = this.userGuideData?.function_guide?.search_favorite ?? false;
+  },
   mounted() {
     document.addEventListener('visibilitychange', this.handleVisibilityChange);
     window.bus.$on('changeTimeByChart', this.handleChangeTimeByChart);
@@ -233,9 +281,9 @@ export default {
     removeFavorite(id) {
       this.$emit('remove', id);
     },
-    retrieveFavorite(data) {
-      this.$emit('retrieveFavorite', data);
-    },
+    // retrieveFavorite(data) {
+    //   this.$emit('retrieveFavorite', data);
+    // },
     // 日期变化
     handleTimeRangeChange(val) {
       this.$emit('update:datePickerValue', val);
@@ -287,22 +335,127 @@ export default {
         this.showSettingMenuList = sliceSettingMenuList;
       }
     },
+    handleClickResultIcon(type) {
+      if (type === 'collect') {
+        this.$emit('updateCollectCondition', !this.isShowCollect);
+      } else {
+        this.showRetrieveCondition ? this.$emit('closeRetrieveCondition') : this.$emit('open');
+      }
+    },
+    handleCloseGuide() {
+      this.$http.request('meta/updateUserGuide', {
+        data: { function_guide: 'search_favorite' },
+      })
+        .then(() => {
+          this.showCollectIntroGuide = false;
+          this.updateUserGuide();
+        })
+        .catch((e) => {
+          console.warn(e);
+        });
+    },
+    /** 更新用户指引 */
+    updateUserGuide() {
+      this.$http.request('meta/getUserGuide').then((res) => {
+        this.$store.commit('setUserGuideData', res.data);
+      });
+    },
   },
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
   .result-header {
-    position: absolute;
     display: flex;
+    justify-content: space-between;
     // align-items: center;
     width: 100%;
-    height: 52px;
+    height: 48px;
     color: #63656e;
     background: #fff;
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .1);
     font-size: 12px;
-    z-index: 3000;
+    position: relative;
+
+    &:after {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 4px;
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .1);
+      content: '';
+      z-index: 1000;
+    }
+
+    .result-left {
+      display: flex;
+      align-items: center;
+
+      .icon-container {
+        position: relative;
+        margin: 17px 25px 17px 14px;
+        background: #f0f1f5;
+        border-radius: 2px;
+        display: flex;
+
+        > :first-child {
+          margin-right: 2px;
+        }
+
+        &::after {
+          content: '';
+          width: 1px;
+          height: 14px;
+          background-color: #dcdee5;
+          position: absolute;
+          right: -25px;
+          top: 6px;
+        }
+
+        .result-icon-box {
+          width: 32px;
+          height: 24px;
+          line-height: 20px;
+          text-align: center;
+          font-size: 14px;
+          color: #fff;
+          background: #699df4;
+          border-radius: 2px;
+          cursor: pointer;
+
+          &.light-icon {
+            background: #f0f1f5;
+            color: #63656e;
+          }
+
+          .icon-jiansuo {
+            display: inline-block;
+            transform: translateY(2px);
+            font-size: 18px;
+          }
+
+          &.disabled {
+            cursor: not-allowed;
+
+            /* stylelint-disable-next-line declaration-no-important */
+            pointer-events: none !important;
+          }
+
+          &.light-icon:hover {
+            background: #dcdee5;
+          }
+        }
+      }
+
+      .biz-menu-box {
+        position: relative;
+      }
+    }
+
+    .result-right {
+      display: flex;
+      align-items: center;
+    }
 
     .open-condition {
       flex-shrink: 0;
@@ -337,7 +490,7 @@ export default {
         background-color: #dcdee5;
         position: absolute;
         left: 0;
-        top: 20px;
+        top: 8px;
       }
     }
 
@@ -420,6 +573,21 @@ export default {
         position: absolute;
         left: 0;
         top: 20px;
+      }
+    }
+
+    .step-box {
+      min-height: 60px;
+      z-index: 1001;
+
+      .target-arrow {
+        /* stylelint-disable-next-line declaration-no-important */
+        top: -5px !important;
+
+        /* stylelint-disable-next-line declaration-no-important */
+        left: 10px !important;
+        border-top: 1px solid #dcdee5;
+        border-left: 1px solid #dcdee5;
       }
     }
   }

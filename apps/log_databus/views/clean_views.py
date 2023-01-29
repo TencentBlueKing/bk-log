@@ -39,6 +39,7 @@ from apps.log_databus.serializers import (
     CleanSerializer,
     CleanSyncSerializer,
     CleanTemplateDestroySerializer,
+    CleanTemplateListFilterSerializer,
 )
 from apps.log_databus.utils.clean import CleanFilterUtils
 from apps.utils.drf import detail_route, list_route
@@ -269,6 +270,16 @@ class CleanTemplateViewSet(ModelViewSet):
         }
         """
         queryset = self.get_queryset()
+
+        data = self.params_valid(CleanTemplateListFilterSerializer)
+        name_filter = data.get("keyword")
+        if name_filter:
+            queryset = queryset.filter(name__contains=name_filter)
+
+        clean_type = data.get("clean_type")
+        if clean_type:
+            queryset = queryset.filter(clean_type=clean_type)
+
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)

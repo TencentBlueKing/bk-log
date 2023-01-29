@@ -82,72 +82,75 @@
           <bk-radio value="match" style="margin-right: 8px">{{$t('retrieve.String_filtering')}}</bk-radio>
           <bk-radio value="separator">{{$t('retrieve.Separator_filtering')}}</bk-radio>
         </bk-radio-group>
-        <div class="flex-ac filter-select">
-          <bk-select
-            :clearable="false"
-            v-if="isString" v-model="subFormData.params.conditions.match_type">
-            <bk-option id="include" :name="$t('retrieve.Keep_string')"></bk-option>
-            <bk-option id="exclude" :name="$t('retrieve.Keep_filtering')" disabled>
-              <span v-bk-tooltips.right="$t('正在开发中')">{{ $t('retrieve.Keep_filtering') }}</span>
-            </bk-option>
-          </bk-select>
-          <bk-input
-            v-show="isString"
-            v-model="subFormData.params.conditions.match_content"
-            style="margin-left: 8px;"></bk-input>
-          <bk-select
-            style="width: 320px; height: 32px"
-            v-if="!isString"
-            v-model="subFormData.params.conditions.separator">
-            <bk-option
-              v-for="(option, index) in globalsData.data_delimiter"
-              :key="index"
-              :id="option.id"
-              :name="option.name">
-            </bk-option>
-          </bk-select>
-        </div>
-        <div class="tips" v-show="!isString">{{ $t('retrieve.Complex_filtering') }}</div>
-        <div class="form-div" v-if="!isString">
-          <div class="choose-table">
-            <div class="choose-table-item choose-table-item-head">
-              <div class="left">{{ $t('retrieve.How_columns') }}</div>
-              <div class="main">{{ $t('retrieve.equal_to') }}</div>
-              <div class="right">{{ $t('retrieve.To_add_delete') }}</div>
-            </div>
-            <div class="choose-table-item-body">
-              <div class="choose-table-item" v-for="(item, index) in separatorFilters" :key="index">
-                <div class="left">
-                  <bk-form-item
-                    label="" :rules="rules.separator_filters"
-                    :property="'params.conditions.separator_filters.' + index + '.fieldindex'">
-                    <bk-input style="width: 100px;" v-model="item.fieldindex"></bk-input>
-                  </bk-form-item>
-                </div>
-                <div :class="['main', { line: separatorFilters.length > 1 }] ">
-                  <bk-form-item
-                    label="" :rules="rules.separator_filters"
-                    :property="'params.conditions.separator_filters.' + index + '.word'">
-                    <bk-input v-model="item.word"></bk-input>
-                  </bk-form-item>
-                </div>
-                <div class="right">
-                  <i class="bk-icon icon-plus-circle-yuan icons" @click="addItem"></i>
-                  <i
-                    :class="['bk-icon icon-minus-circle-shape icons ml9', { disable: separatorFilters.length === 1 }] "
-                    @click="delItem(index)">
-                  </i>
-                </div>
+        <template v-if="isClickTypeRadio">
+          <div class="flex-ac filter-select">
+            <bk-select
+              :clearable="false"
+              v-if="isString" v-model="subFormData.params.conditions.match_type">
+              <bk-option id="include" :name="$t('retrieve.Keep_string')"></bk-option>
+              <bk-option id="exclude" :name="$t('retrieve.Keep_filtering')" disabled>
+                <span v-bk-tooltips.right="$t('正在开发中')">{{ $t('retrieve.Keep_filtering') }}</span>
+              </bk-option>
+            </bk-select>
+            <bk-input
+              v-show="isString"
+              v-model="subFormData.params.conditions.match_content"
+              style="margin-left: 8px;"></bk-input>
+            <bk-select
+              style="width: 320px; height: 32px"
+              v-if="!isString"
+              v-model="subFormData.params.conditions.separator">
+              <bk-option
+                v-for="(option, index) in globalsData.data_delimiter"
+                :key="index"
+                :id="option.id"
+                :name="option.name">
+              </bk-option>
+            </bk-select>
+          </div>
+          <div class="tips" v-show="!isString">{{ $t('retrieve.Complex_filtering') }}</div>
+          <div class="form-div" v-if="!isString">
+            <div class="choose-table">
+              <div class="choose-table-item choose-table-item-head">
+                <div class="left">{{ $t('retrieve.How_columns') }}</div>
+                <div class="main">{{ $t('retrieve.equal_to') }}</div>
+                <div class="right">{{ $t('retrieve.To_add_delete') }}</div>
               </div>
-              <div class="choose-select" v-if="separatorFilters && separatorFilters.length > 1">
-                <bk-select class="select-div" v-model="type" @selected="changeType">
-                  <bk-option id="and" :name="$t('configDetails.and')"></bk-option>
-                  <bk-option id="or" :name="$t('configDetails.or')"></bk-option>
-                </bk-select>
+              <div class="choose-table-item-body">
+                <div class="choose-table-item" v-for="(item, index) in separatorFilters" :key="index">
+                  <div class="left">
+                    <bk-form-item
+                      label="" :rules="rules.separator_filters"
+                      :property="'params.conditions.separator_filters.' + index + '.fieldindex'">
+                      <bk-input style="width: 100px;" v-model="item.fieldindex"></bk-input>
+                    </bk-form-item>
+                  </div>
+                  <div :class="['main', { line: separatorFilters.length > 1 }] ">
+                    <bk-form-item
+                      label="" :rules="rules.separator_filters"
+                      :property="'params.conditions.separator_filters.' + index + '.word'">
+                      <bk-input v-model="item.word"></bk-input>
+                    </bk-form-item>
+                  </div>
+                  <div class="right">
+                    <i class="bk-icon icon-plus-circle-yuan icons" @click="addItem"></i>
+                    <i
+                      :class="['bk-icon icon-minus-circle-shape icons ml9',
+                               { disable: separatorFilters.length === 1 }]"
+                      @click="delItem(index)">
+                    </i>
+                  </div>
+                </div>
+                <div class="choose-select" v-if="separatorFilters && separatorFilters.length > 1">
+                  <bk-select class="select-div" v-model="type" @selected="changeType">
+                    <bk-option id="and" :name="$t('configDetails.and')"></bk-option>
+                    <bk-option id="or" :name="$t('configDetails.or')"></bk-option>
+                  </bk-select>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </template>
       </div>
       <!-- 段日志正则调试 -->
       <div v-if="hasMultilineReg" class="multiline-log-container">
@@ -453,6 +456,10 @@ export default {
     // 是否为字符串过滤
     isString() {
       return this.subFormData.params.conditions.type === 'match';
+    },
+    // 是否点击过过滤内容单选框
+    isClickTypeRadio() {
+      return this.subFormData.params.conditions.type !== '';
     },
     // 获取label宽度
     getLabelWidth() {

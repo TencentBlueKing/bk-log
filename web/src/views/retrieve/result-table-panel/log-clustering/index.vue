@@ -401,7 +401,7 @@ export default {
           name: 'clean-edit',
           params: { collectorId: this.configID },
           query: {
-            projectId: window.localStorage.getItem('project_id'),
+            spaceUid: this.$store.state.spaceUid,
             backRoute: this.$route.name,
           },
         });

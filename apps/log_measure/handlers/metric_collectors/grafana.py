@@ -56,8 +56,8 @@ class GrafanaMetricCollector(object):
                     metric_name="count",
                     metric_value=len(dashboards),
                     dimensions={
-                        "target_biz_id": int(org_name),
-                        "target_biz_name": MetricUtils.get_instance().get_biz_name(org_name),
+                        "bk_biz_id": int(org_name),
+                        "bk_biz_name": MetricUtils.get_instance().get_biz_name(org_name),
                     },
                     timestamp=MetricUtils.get_instance().report_ts,
                 )
@@ -87,8 +87,8 @@ class GrafanaMetricCollector(object):
                         metric_name="panel_count",
                         metric_value=panel_count[dashboard_id],
                         dimensions={
-                            "target_biz_id": int(org_name),
-                            "target_biz_name": MetricUtils.get_instance().get_biz_name(org_name),
+                            "bk_biz_id": int(org_name),
+                            "bk_biz_name": MetricUtils.get_instance().get_biz_name(org_name),
                             "dashboard_id": dashboard_id,
                             "dashboard_name": dashboard_id_to_name_dict[dashboard_id],
                         },
@@ -101,8 +101,8 @@ class GrafanaMetricCollector(object):
                     metric_name="panel_total",
                     metric_value=sum(panel_count.values()),
                     dimensions={
-                        "target_biz_id": int(org_name),
-                        "target_biz_name": MetricUtils.get_instance().get_biz_name(org_name),
+                        "bk_biz_id": int(org_name),
+                        "bk_biz_name": MetricUtils.get_instance().get_biz_name(org_name),
                     },
                     timestamp=MetricUtils.get_instance().report_ts,
                 )

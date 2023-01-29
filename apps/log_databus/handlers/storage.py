@@ -59,12 +59,13 @@ from apps.log_databus.models import StorageCapacity, StorageUsed
 from apps.log_databus.utils.es_config import get_es_config
 from apps.log_esquery.utils.es_client import get_es_client
 from apps.log_esquery.utils.es_route import EsRoute
-from apps.log_search.models import BizProperty, ProjectInfo, Scenario
+from apps.log_search.models import BizProperty, Scenario
 from apps.utils.cache import cache_five_minute
 from apps.utils.local import get_local_param, get_request_username
 from apps.utils.log import logger
 from apps.utils.thread import MultiExecuteFunc
 from apps.utils.time_handler import format_user_time_zone
+from bkm_space.utils import bk_biz_id_to_space_uid
 
 CACHE_EXPIRE_TIME = 300
 
@@ -215,7 +216,6 @@ class StorageHandler(object):
         :return:
         """
         cluster_data = list()
-        projects = ProjectInfo.get_cmdb_projects()
         # 筛选集群 & 判断是否可编辑
         es_config = get_es_config(bk_biz_id)
 
@@ -276,9 +276,7 @@ class StorageHandler(object):
                 cluster_obj["priority"] = 1 if cluster_obj["cluster_config"].get("is_default_cluster") else 2
                 if not cluster_obj["cluster_config"].get("custom_option", {}).get("visible_config"):
                     custom_option = {
-                        "visible_config": {
-                            "visible_type": VisibleEnum.ALL_BIZ.value,
-                        },
+                        "visible_config": {"visible_type": VisibleEnum.ALL_BIZ.value},
                         "admin": [cluster_obj["cluster_config"]["creator"]],
                         "setup_config": {
                             "retention_days_max": es_config["ES_PUBLIC_STORAGE_DURATION"],
@@ -307,7 +305,9 @@ class StorageHandler(object):
                     cluster_obj["cluster_config"]["custom_option"]["visible_config"]["visible_bk_biz"] = [
                         {
                             "bk_biz_id": bk_biz_id,
-                            "is_use": index_sets.filter(project_id=projects.get(bk_biz_id), is_active=True).exists(),
+                            "is_use": index_sets.filter(
+                                space_uid=bk_biz_id_to_space_uid(bk_biz_id), is_active=True
+                            ).exists(),
                         }
                         for bk_biz_id in cluster_obj["cluster_config"]["custom_option"]["visible_config"][
                             "visible_bk_biz"
@@ -361,7 +361,7 @@ class StorageHandler(object):
             cluster_obj["visible_bk_biz"] = [
                 {
                     "bk_biz_id": bk_biz_id,
-                    "is_use": index_sets.filter(project_id=projects.get(bk_biz_id), is_active=True).exists(),
+                    "is_use": index_sets.filter(space_uid=bk_biz_id_to_space_uid(bk_biz_id), is_active=True).exists(),
                 }
                 for bk_biz_id in custom_visible_bk_biz
             ]
@@ -373,7 +373,9 @@ class StorageHandler(object):
                     "visible_bk_biz": [
                         {
                             "bk_biz_id": bk_biz_id,
-                            "is_use": index_sets.filter(project_id=projects.get(bk_biz_id), is_active=True).exists(),
+                            "is_use": index_sets.filter(
+                                space_uid=bk_biz_id_to_space_uid(bk_biz_id), is_active=True
+                            ).exists(),
                         }
                         for bk_biz_id in custom_visible_bk_biz
                     ],
@@ -397,7 +399,9 @@ class StorageHandler(object):
                 custom_option["visible_config"]["visible_bk_biz"] = [
                     {
                         "bk_biz_id": bk_biz_id,
-                        "is_use": index_sets.filter(project_id=projects.get(bk_biz_id), is_active=True).exists(),
+                        "is_use": index_sets.filter(
+                            space_uid=bk_biz_id_to_space_uid(bk_biz_id), is_active=True
+                        ).exists(),
                     }
                     for bk_biz_id in custom_option["visible_config"]["visible_bk_biz"]
                 ]
@@ -536,6 +540,10 @@ class StorageHandler(object):
         cluster_name = params.get("cluster_name", cluster_en_name)
         # 获取节点信息
         hot_node_num, warm_node_num = self.get_hot_warm_node_info(params)
+        # 获取管理员信息
+        admin = params.get("admin", [])
+        if username not in admin:
+            admin.append(username)
         # 构造请求参数
         bkbase_params = {
             "bk_username": username,
@@ -547,7 +555,7 @@ class StorageHandler(object):
             "provider": "user",
             "purpose": "BKLog集群同步",
             "share": False,
-            "admin": [username],
+            "admin": admin,
             "tag": params.get("bkbase_tags", []) or DEFAULT_ES_TAGS,
             "connection_info": {
                 "username": params["auth_info"]["username"],

@@ -80,7 +80,7 @@ class ActionMeta(Action):
 class ActionEnum:
 
     VIEW_BUSINESS = ActionMeta(
-        id="view_business",
+        id="view_business_v2",
         name="业务访问",
         name_en="View Business",
         type="view",
@@ -90,7 +90,7 @@ class ActionEnum:
     )
 
     SEARCH_LOG = ActionMeta(
-        id="search_log",
+        id="search_log_v2",
         name="日志检索",
         name_en="Search Log",
         type="view",
@@ -100,7 +100,7 @@ class ActionEnum:
     )
 
     VIEW_COLLECTION = ActionMeta(
-        id="view_collection",
+        id="view_collection_v2",
         name="采集查看",
         name_en="View Collection",
         type="view",
@@ -110,7 +110,7 @@ class ActionEnum:
     )
 
     CREATE_COLLECTION = ActionMeta(
-        id="create_collection",
+        id="create_collection_v2",
         name="采集新建",
         name_en="Create Collection",
         type="create",
@@ -120,7 +120,7 @@ class ActionEnum:
     )
 
     MANAGE_COLLECTION = ActionMeta(
-        id="manage_collection",
+        id="manage_collection_v2",
         name="采集管理",
         name_en="Manage Collection",
         type="manage",
@@ -130,7 +130,7 @@ class ActionEnum:
     )
 
     CREATE_ES_SOURCE = ActionMeta(
-        id="create_es_source",
+        id="create_es_source_v2",
         name="ES源配置新建",
         name_en="Create ES Source",
         type="create",
@@ -140,7 +140,7 @@ class ActionEnum:
     )
 
     MANAGE_ES_SOURCE = ActionMeta(
-        id="manage_es_source",
+        id="manage_es_source_v2",
         name="ES源配置管理",
         name_en="Manage ES Source",
         type="manage",
@@ -150,7 +150,7 @@ class ActionEnum:
     )
 
     CREATE_INDICES = ActionMeta(
-        id="create_indices",
+        id="create_indices_v2",
         name="索引集配置新建",
         name_en="Create Indices",
         type="create",
@@ -160,7 +160,7 @@ class ActionEnum:
     )
 
     MANAGE_INDICES = ActionMeta(
-        id="manage_indices",
+        id="manage_indices_v2",
         name="索引集配置管理",
         name_en="Manage Indices",
         type="manage",
@@ -170,7 +170,7 @@ class ActionEnum:
     )
 
     MANAGE_EXTRACT_CONFIG = ActionMeta(
-        id="manage_extract_config",
+        id="manage_extract_config_v2",
         name="提取配置管理",
         name_en="Manage Extract Config",
         type="manage",
@@ -180,7 +180,7 @@ class ActionEnum:
     )
 
     VIEW_DASHBOARD = ActionMeta(
-        id="view_dashboard",
+        id="view_dashboard_v2",
         name="仪表盘查看",
         name_en="View Dashboard",
         type="view",
@@ -190,7 +190,7 @@ class ActionEnum:
     )
 
     MANAGE_DASHBOARD = ActionMeta(
-        id="manage_dashboard",
+        id="manage_dashboard_v2",
         name="仪表盘管理",
         name_en="Manage Dashboard",
         type="manage",

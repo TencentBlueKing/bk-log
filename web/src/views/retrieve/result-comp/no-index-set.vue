@@ -25,7 +25,7 @@
     <span class="icon log-icon icon-index-set"></span>
     <h2 class="main-tip">{{ $t('nav.notIndex') }}</h2>
     <!-- 要使用检索功能，请先创建索引集 -->
-    <div class="index-manage-container" v-if="project.project_manage">
+    <div class="index-manage-container" v-if="space.project_manage">
       <!-- 日志数据已进入数据平台或ES 关联已入库的数据 -->
       <div class="index-manage">
         <div class="index-manage-tips">
@@ -66,7 +66,7 @@ import { mapGetters } from 'vuex';
 export default {
   computed: {
     ...mapGetters({
-      project: 'project',
+      space: 'space',
     }),
   },
   methods: {
@@ -74,7 +74,7 @@ export default {
       this.$router.push({
         path: '/manage/log-collection/log-index-set',
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
     },
@@ -83,7 +83,7 @@ export default {
         this.$router.push({
           path: '/manage/log-collection',
           query: {
-            projectId: window.localStorage.getItem('project_id'),
+            spaceUid: this.$store.state.spaceUid,
           },
         });
       } else {

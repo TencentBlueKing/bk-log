@@ -34,11 +34,12 @@ from apps.log_databus.exceptions import (
 from apps.log_databus.models import ArchiveConfig, RestoreConfig, CollectorConfig
 from apps.log_search.constants import DEFAULT_TIME_FIELD, TimeFieldTypeEnum, TimeFieldUnitEnum, InnerTag
 from apps.log_search.handlers.index_set import IndexSetHandler
-from apps.log_search.models import ProjectInfo, Scenario
+from apps.log_search.models import Scenario
 from apps.utils.db import array_group, array_hash
 from apps.utils.function import ignored
 from apps.utils.time_handler import format_user_time_zone, format_user_time_zone_humanize
 from apps.utils.local import get_local_param
+from bkm_space.utils import bk_biz_id_to_space_uid
 
 
 class ArchiveHandler:
@@ -181,7 +182,6 @@ class ArchiveHandler:
                 "time_field": DEFAULT_TIME_FIELD,
             }
         ]
-        project_id = ProjectInfo.objects.filter(bk_biz_id=self.archive.bk_biz_id).first().project_id
 
         cluster_infos = TransferApi.get_result_table_storage(
             {"result_table_list": self.archive.table_id, "storage_type": "elasticsearch"}
@@ -190,7 +190,7 @@ class ArchiveHandler:
         storage_cluster_id = cluster_info["cluster_config"]["cluster_id"]
         index_set = IndexSetHandler.create(
             index_set_name=index_set_name,
-            project_id=project_id,
+            space_uid=bk_biz_id_to_space_uid(self.archive.bk_biz_id),
             storage_cluster_id=storage_cluster_id,
             scenario_id=Scenario.ES,
             view_roles=[],

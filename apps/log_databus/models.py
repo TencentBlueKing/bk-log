@@ -56,7 +56,7 @@ from apps.log_databus.constants import (  # noqa
     Environment,
 )
 from apps.log_search.constants import CollectorScenarioEnum, GlobalCategoriesEnum, InnerTag, CustomTypeEnum  # noqa
-from apps.log_search.models import ProjectInfo, LogIndexSet  # noqa
+from apps.log_search.models import LogIndexSet, Space  # noqa
 from apps.models import MultiStrSplitByCommaField, JsonField, SoftDeleteModel, OperateRecordModel  # noqa
 
 
@@ -162,6 +162,7 @@ class CollectorConfig(CollectorBase):
     yaml_config = models.TextField(_("yaml配置内容"), default="")
     rule_id = models.IntegerField(_("bcs规则集id"), default=0)
     is_display = models.BooleanField(_("采集项是否对用户可见"), default=True)
+    log_group_id = models.BigIntegerField(_("自定义日志组ID"), null=True, blank=True)
 
     def get_name(self):
         return self.collector_config_name
@@ -194,7 +195,7 @@ class CollectorConfig(CollectorBase):
         result = multi_execute_func.run()
         from apps.log_databus.handlers.etl_storage import EtlStorage
 
-        self.etl_config = EtlStorage.get_etl_config(result["result_table_config"])
+        self.etl_config = EtlStorage.get_etl_config(result["result_table_config"], default=self.etl_config)
         etl_storage = EtlStorage.get_instance(etl_config=self.etl_config)
         etl_config = etl_storage.parse_result_table_config(
             result_table_config=result["result_table_config"],
@@ -262,6 +263,7 @@ class CollectorConfig(CollectorBase):
         verbose_name_plural = _("用户采集配置")
         ordering = ("-updated_at",)
         unique_together = [("collector_config_name", "bk_biz_id")]
+        index_together = [["custom_type", "log_group_id"]]
 
     def has_apply_itsm(self):
         if self.itsm_ticket_status:
@@ -299,9 +301,9 @@ class CollectorConfig(CollectorBase):
         self.save()
 
     def generate_itsm_title(self):
-        bk_biz_name = ProjectInfo.objects.filter(bk_biz_id=self.bk_biz_id).first().project_name
+        space = Space.objects.get(bk_biz_id=self.bk_biz_id)
         return str(
-            _("【日志采集】{}-{}-{}".format(bk_biz_name, self.collector_config_name, self.created_at.strftime("%Y%m%d")))
+            _("【日志采集】{}-{}-{}".format(space.space_name, self.collector_config_name, self.created_at.strftime("%Y%m%d")))
         )
 
     def get_cur_cap(self, bytes="mb"):
@@ -327,6 +329,13 @@ class CollectorConfig(CollectorBase):
         是否为容器类型
         """
         return self.environment == Environment.CONTAINER
+
+    @property
+    def is_custom_scenario(self):
+        """
+        是否为自定义上报场景
+        """
+        return self.collector_scenario_id == CollectorScenarioEnum.CUSTOM.value
 
 
 class ContainerCollectorConfig(SoftDeleteModel):

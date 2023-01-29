@@ -133,7 +133,7 @@ export default {
           indexId: type === 'search' && this.indexSetId ? this.indexSetId : '',
         },
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
     },

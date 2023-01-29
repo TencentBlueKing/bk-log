@@ -58,7 +58,7 @@
                 :id="option.storage_cluster_id"
                 :name="option.storage_cluster_name">
                 <div
-                  v-if="!(option.permission && option.permission.manage_es_source)"
+                  v-if="!(option.permission && option.permission[authorityMap.MANAGE_ES_SOURCE_AUTH])"
                   class="option-slot-container no-authority"
                   @click.stop>
                   <span class="text">
@@ -242,6 +242,7 @@
 
 <script>
 import { mapGetters } from 'vuex';
+import * as authorityMap from '../../../../common/authority-map';
 
 const cosConfigForm = () => {
   return {
@@ -315,6 +316,9 @@ export default {
     ...mapGetters({
       bkBizId: 'bkBizId',
     }),
+    authorityMap() {
+      return authorityMap;
+    },
     isEdit() {
       return this.editClusterId !== null;
     },
@@ -463,7 +467,7 @@ export default {
       try {
         this.$bkLoading();
         const res = await this.$store.dispatch('getApplyData', {
-          action_ids: ['manage_es_source'],
+          action_ids: [authorityMap.MANAGE_ES_SOURCE_AUTH],
           resources: [{
             type: 'es_source',
             id: option.cluster_config.cluster_id,

@@ -93,7 +93,7 @@ export default {
         this.$router.push({
           name: 'log-clean-list',
           query: {
-            projectId: window.localStorage.getItem('project_id'),
+            spaceUid: this.$store.state.spaceUid,
           },
         });
         return;

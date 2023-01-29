@@ -30,8 +30,10 @@ from apps.api.base import DataAPI
 
 def bcs_cc_before_request(params):
     params = add_esb_info_before_request(params)
-    if settings.BCS_CC_SSM_SWITCH:
-        bkssm_access_token = BkSSMApi.get_access_token({"grant_type": "client_credentials", "id_provider": "client"})
+    if settings.BCS_CC_SSM_SWITCH == "on":
+        bkssm_access_token = BkSSMApi.get_access_token(
+            {"grant_type": "client_credentials", "id_provider": "client", "env_name": "prod"}
+        )
         access_token = bkssm_access_token["access_token"]
         params["X-BKAPI-AUTHORIZATION"] = json.dumps({"access_token": access_token})
     return params
@@ -93,4 +95,14 @@ class _BcsCcApi(object):
             before_request=bcs_cc_before_request,
             after_request=list_project_after,
             header_keys=["X-BKAPI-AUTHORIZATION"],
+            cache_time=60,
+        )
+        self.list_shared_clusters_ns = DataAPI(
+            method="GET",
+            url=bcs_cc_url + "shared_clusters/{cluster_id}/",
+            module=self.MODULE,
+            url_keys=["cluster_id"],
+            description="获取公共集群下的命名空间信息",
+            header_keys=["X-BKAPI-AUTHORIZATION"],
+            before_request=bcs_cc_before_request,
         )

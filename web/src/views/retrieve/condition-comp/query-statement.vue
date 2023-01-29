@@ -30,7 +30,7 @@
       <div id="retrieve-help-tips-content">
         <div>
           {{$t('可输入SQL语句进行快速查询')}}
-          <a v-if="docCenterUrl" :href="docCenterUrl" target="_blank" class="tips-link">
+          <a class="tips-link" @click="handleGotoLink('queryString')">
             {{$t('查看语法')}}<span class="log-icon icon-lianjie"></span>
           </a>
         </div>
@@ -252,6 +252,7 @@ export default {
   .tips-link {
     color: #3a84ff;
     margin-left: 5px;
+    cursor: pointer;
 
     .icon-lianjie {
       margin-left: 3px;

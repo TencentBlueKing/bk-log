@@ -45,7 +45,7 @@
             :id="option.collector_config_id"
             :name="option.collector_config_name">
             <div
-              v-if="!(option.permission && option.permission.manage_collection)"
+              v-if="!(option.permission && option.permission[authorityMap.MANAGE_COLLECTION_AUTH])"
               class="option-slot-container no-authority"
               @click.stop>
               <span class="text">
@@ -273,28 +273,21 @@
                   v-show="scopeValueType"
                   searchable
                   multiple
-                  display-tag
-                  @toggle="handleToggleVisible">
-                  <template #trigger>
-                    <div class="visible-scope-box">
-                      <div class="selected-tag">
-                        <bk-tag
-                          v-for="(tag, index) in visibleList"
-                          :key="tag.id"
-                          closable
-                          @close="handleDeleteTag(index)">
-                          {{ tag.name }}
-                        </bk-tag>
-                      </div>
-                      <span class="please-select" v-if="!visibleList.length">{{$t('请选择')}}</span>
-                      <span :class="['bk-icon','icon-angle-down',!visibleIsToggle ? '' : 'icon-rotate']"></span>
-                    </div>
-                  </template>
+                  display-tag>
                   <bk-option
-                    v-for="item in myProjectList"
-                    :key="item.project_id"
+                    v-for="item in mySpaceList"
+                    :key="item.space_uid"
                     :id="item.bk_biz_id"
-                    :name="item.project_name">
+                    :name="item.space_full_code_name">
+                    <div class="space-code-option">
+                      <span class="code-name" :title="item.space_full_code_name">{{item.space_full_code_name}}</span>
+                      <div class="list-item-right">
+                        <span :class="['list-item-tag', 'light-theme', item.space_type_id || 'other-type']">
+                          {{item.space_type_name}}
+                        </span>
+                        <span :class="`${visibleBkBiz.includes(item.bk_biz_id) && 'bk-icon icon-check-1'}`"></span>
+                      </div>
+                    </div>
                   </bk-option>
                 </bk-select>
               </div>
@@ -471,6 +464,7 @@ import { mapGetters, mapState } from 'vuex';
 import fieldTable from './field-table';
 import AuthContainerPage from '@/components/common/auth-container-page';
 import { projectManages } from '@/common/util';
+import * as authorityMap from '../../common/authority-map';
 
 export default {
   components: {
@@ -576,12 +570,11 @@ export default {
       authPageInfo: null,
       docCenterUrl: window.BK_DOC_DATA_URL,
       visibleScopeSelectList: [ // 可见范围单选列表
-        { id: 'current_biz', name: this.$t('当前业务可见') },
-        { id: 'multi_biz', name: this.$t('多业务选择') },
+        { id: 'current_biz', name: this.$t('当前空间可见') },
+        { id: 'multi_biz', name: this.$t('多空间选择') },
         { id: 'all_biz', name: this.$t('全平台') },
       ],
-      visibleBkBiz: [],
-      visibleList: [], // 多业务选择下拉框
+      visibleBkBiz: [], // 多业务选择id列表
       cacheVisibleList: [], // 缓存多业务选择下拉框
       visibleIsToggle: false,
       docUrl: window.BK_ETL_DOC_URL,
@@ -589,14 +582,17 @@ export default {
   },
   computed: {
     ...mapState({
-      myProjectList: state => state.myProjectList,
+      mySpaceList: state => state.mySpaceList,
     }),
     ...mapGetters({
       bkBizId: 'bkBizId',
-      projectId: 'projectId',
+      spaceUid: 'spaceUid',
       curCollect: 'collect/curCollect',
       globalsData: 'globals/globalsData',
     }),
+    authorityMap() {
+      return authorityMap;
+    },
     isJsonOrOperator() {
       return this.params.etl_config === 'bk_log_json' || this.params.etl_config === 'bk_log_delimiter';
     },
@@ -665,11 +661,7 @@ export default {
     // 切换可见范围时 恢复缓存或清空业务选择
     'formData.visible_type': {
       handler(val) {
-        if (val !== 'multi_biz') {
-          this.visibleList = [];
-        } else {
-          this.visibleList = JSON.parse(JSON.stringify(this.cacheVisibleList));
-        };
+        this.visibleBkBiz = val !== 'multi_biz' ? [] : JSON.parse(JSON.stringify(this.cacheVisibleList));
       },
     },
   },
@@ -798,20 +790,8 @@ export default {
         separator_regexp: etl_params.separator_regexp || '',
         separator: etl_params.separator || ''
       })
-      if(Array.isArray(visibleBkBizList) && visibleBkBizList.length){
-        // 多业务 业务列表获取名字回显
-        visibleBkBizList.forEach((val) => {
-          const target = this.myProjectList.find(project => project.bk_biz_id === String(val));
-          if (target) {
-            const targetObj = {
-              id: target.bk_biz_id,
-              name: target.project_name,
-            };
-            this.visibleList.push(targetObj);
-            this.cacheVisibleList.push(targetObj);
-          }
-        });
-      }
+      this.visibleBkBiz = visibleBkBizList;
+      this.cacheVisibleList = visibleBkBizList;
       this.fieldType = clean_type
       /* eslint-enable */
       Object.assign(this.formData, {
@@ -920,7 +900,7 @@ export default {
         data.name = this.saveTempName
         data.bk_biz_id = this.bkBizId
         // 可见范围非多业务选择时删除visible_bk_biz_id
-        data.visible_bk_biz_id = this.visibleList.map(item => item.id);
+        data.visible_bk_biz_id = this.visibleBkBiz;
         data.visible_type !== 'multi_biz' && (delete data.visible_bk_biz_id);
         if (this.isEditTemp) urlParams.clean_template_id = this.$route.params.templateId
         requestUrl = this.isEditTemp ? 'clean/updateTemplate' : 'clean/createTemplate';
@@ -997,9 +977,8 @@ export default {
           message: this.$t('dataManage.select_field'),
         });
       }
-      const visibleList = this.visibleList.map(item => item.id);
       // 清洗模板选择多业务时不能为空
-      if (this.formData.visible_type === 'multi_biz' && !visibleList.length && this.isClearTemplate) {
+      if (this.formData.visible_type === 'multi_biz' && !this.visibleBkBiz.length && this.isClearTemplate) {
         this.messageError(this.$t('multiBizTip'));
         return
       }
@@ -1038,7 +1017,7 @@ export default {
       this.$router.push({
         name: routeName,
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
     },
@@ -1458,7 +1437,7 @@ export default {
       this.basicLoading = true;
       // 先校验有无采集项管理权限
       const paramData = {
-        action_ids: ['manage_collection'],
+        action_ids: [authorityMap.MANAGE_COLLECTION_AUTH],
         resources: [{
           type: 'collection',
           id,
@@ -1489,7 +1468,7 @@ export default {
       try {
         this.$bkLoading();
         const res = await this.$store.dispatch('getApplyData', {
-          action_ids: ['manage_collection'],
+          action_ids: [authorityMap.MANAGE_COLLECTION_AUTH],
           resources: [{
             type: 'collection',
             id: item.collector_config_id,
@@ -1502,24 +1481,6 @@ export default {
         this.$bkLoading.hide();
       }
     },
-    handleToggleVisible(data) {
-      this.visibleIsToggle = data;
-      if (!data) {
-        this.visibleBkBiz.forEach((val) => {
-          if (!this.visibleList.some(item => String(item.id) === val)) {
-            const target = this.myProjectList.find(project => project.bk_biz_id === val);
-            this.visibleList.push({
-              id: val,
-              name: target.project_name,
-            });
-          }
-        });
-        this.visibleBkBiz = [];
-      }
-    },
-    handleDeleteTag(index) {
-      this.visibleList.splice(index, 1);
-    },
     handleOpenDocument() {
       window.open(this.docUrl, '_blank');
     },
@@ -1529,6 +1490,7 @@ export default {
 
 <style lang="scss">
   @import '@/scss/mixins/clearfix';
+  @import '@/scss/space-tag-option';
 
   .step-field-container {
     min-width: 950px;

@@ -344,3 +344,35 @@
 .icon-lishijilu:before {
   content: '\e176';
 }
+
+.icon-bofang:before {
+  content: '\e178';
+}
+
+.icon-jiansuo:before {
+  content: '\e177';
+}
+
+.icon-shixiao:before {
+  content: '\e179';
+}
+
+.icon-zanting:before {
+  content: '\e17a';
+}
+
+.icon-zhedie:before {
+  content: '\e17b';
+}
+
+.icon-zhankai:before {
+  content: '\e17c';
+}
+
+.icon-brush:before {
+  content: '\e17d';
+}
+
+.icon-wholesale-editor:before {
+  content: '\e17e';
+}

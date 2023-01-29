@@ -31,7 +31,7 @@ from apps.log_clustering.exceptions import ClusteringClosedException
 from apps.log_clustering.models import ClusteringConfig
 from apps.log_measure.events import NOTIFY_EVENT
 from apps.log_search.handlers.search.aggs_handlers import AggsViewAdapter
-from apps.log_search.models import LogIndexSet, ProjectInfo
+from apps.log_search.models import LogIndexSet, Space
 from apps.utils.local import set_local_param
 
 
@@ -40,7 +40,7 @@ def send(index_set_id):
     clustering_config = ClusteringConfig.objects.get(index_set_id=index_set_id)
     log_index_set = LogIndexSet.objects.get(index_set_id=index_set_id)
     doc_count = get_doc_count(index_set_id=index_set_id, bk_biz_id=clustering_config.bk_biz_id)
-    project = ProjectInfo.objects.get(bk_biz_id=clustering_config.bk_biz_id)
+    space = Space.objects.get(bk_biz_id=clustering_config.bk_biz_id)
 
     if not FeatureToggleObject.switch(BKDATA_CLUSTERING_TOGGLE):
         raise ClusteringClosedException()
@@ -52,7 +52,7 @@ def send(index_set_id):
             index_set_id,
             log_index_set.index_set_name,
             clustering_config.bk_biz_id,
-            project.project_name,
+            space.space_name,
             clustering_config.created_by,
             doc_count,
         )
@@ -66,7 +66,7 @@ def send(index_set_id):
             index_set_id,
             log_index_set.index_set_name,
             clustering_config.bk_biz_id,
-            project.project_name,
+            space.space_name,
             clustering_config.created_by,
             doc_count,
             pipeline_id,

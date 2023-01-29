@@ -70,7 +70,7 @@
         :name="item.indexName + item.lightenName"
         :data-test-id="`ul_li_${item.indexName}`">
         <div
-          v-if="!(item.permission && item.permission.search_log)"
+          v-if="!(item.permission && item.permission[authorityMap.SEARCH_LOG_AUTH])"
           class="option-slot-container no-authority" @click.stop>
           <span class="text">{{ item.indexName + item.lightenName }}</span>
           <span class="apply-text" @click="applySearchAccess(item)">{{$t('申请权限')}}</span>
@@ -106,6 +106,8 @@
 </template>
 
 <script>
+import * as authorityMap from '../../../common/authority-map';
+
 export default {
   props: {
     indexId: {
@@ -127,6 +129,9 @@ export default {
     };
   },
   computed: {
+    authorityMap() {
+      return authorityMap;
+    },
     selectedItem() {
       return this.indexSetList.find(item => item.index_set_id === this.indexId) || {};
     },
@@ -157,7 +162,7 @@ export default {
       try {
         this.$emit('update:basicLoading', true);
         const res = await this.$store.dispatch('getApplyData', {
-          action_ids: ['search_log'],
+          action_ids: [authorityMap.SEARCH_LOG_AUTH],
           resources: [{
             type: 'indices',
             id: item.index_set_id,
