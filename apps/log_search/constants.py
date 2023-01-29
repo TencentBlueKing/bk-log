@@ -336,6 +336,7 @@ class CustomTypeEnum(ChoicesEnum):
     LOG = "log"
     OTLP_TRACE = "otlp_trace"
     OTLP_LOG = "otlp_log"
+    PLUGIN = "plugin"
 
     @classmethod
     def get_choices_list_dict(cls) -> list:
@@ -354,6 +355,7 @@ class CustomTypeEnum(ChoicesEnum):
         (LOG, _("容器日志上报")),
         (OTLP_TRACE, _("otlpTrace上报")),
         (OTLP_LOG, _("otlp日志上报")),
+        (PLUGIN, _("采集插件")),
     )
 
     """

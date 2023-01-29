@@ -26,15 +26,14 @@ from django.utils.module_loading import import_string
 
 from apps.constants import UserOperationActionEnum, UserOperationTypeEnum
 from apps.decorators import user_operation_record
-from apps.log_databus.constants import (
-    ETLProcessorChoices,
-)
+from apps.log_databus.constants import DEFAULT_CATEGORY_ID, ETLProcessorChoices
 from apps.log_databus.exceptions import (
     CollectorPluginNameDuplicateException,
     CollectorPluginNotExistException,
 )
 from apps.log_databus.handlers.collector import CollectorHandler
 from apps.log_databus.models import CollectorConfig, CollectorPlugin, DataLinkConfig
+from apps.log_search.constants import CustomTypeEnum
 from apps.models import model_to_dict
 from apps.utils.local import get_request_username
 
@@ -225,14 +224,53 @@ class CollectorPluginHandler:
         # 清洗
         if not is_allow_alone_etl_config:
             self._update_or_create_etl_storage(params, is_create)
+            self.collector_plugin.refresh_from_db()
 
         # 独立存储
         if not is_allow_alone_storage:
             self._create_metadata_result_table()
+            self.collector_plugin.refresh_from_db()
+
+        # 创建或更新虚拟采集项
+        self._update_or_create_virtual_collector()
 
         self.collector_plugin.save()
 
         return is_create
+
+    @classmethod
+    def _update_or_create_virtual_collector(cls, collector_plugin: CollectorPlugin) -> None:
+        """
+        创建或跟更新虚拟采集项
+        """
+
+        collector = CollectorConfig.objects.filter(
+            custom_type=CustomTypeEnum.PLUGIN.value, collector_plugin_id=collector_plugin.collector_plugin_id
+        ).first()
+        if collector is None:
+            collector = CollectorConfig(
+                collector_config_name=f"{collector_plugin.collector_plugin_name}(VC)",
+                collector_config_name_en=f"{collector_plugin.collector_plugin_name_en}_vc",
+                collector_plugin_id=collector_plugin.collector_plugin_id,
+                collector_scenario_id=collector_plugin.collector_scenario_id,
+                custom_type=CustomTypeEnum.PLUGIN.value,
+                category_id=DEFAULT_CATEGORY_ID,
+            )
+
+        collector.description = collector_plugin.description
+        collector.bk_data_id = collector_plugin.bk_data_id
+        collector.data_link_id = collector_plugin.data_link_id
+        collector.table_id = collector_plugin.table_id
+        collector.bkbase_table_id = collector_plugin.bkbase_table_id
+        collector.processing_id = collector_plugin.processing_id
+        collector.etl_processor = collector_plugin.etl_processor
+        collector.etl_config = collector_plugin.etl_config
+        collector.bkdata_data_id = collector_plugin.bk_data_id
+        collector.data_encoding = collector_plugin.data_encoding
+        collector.storage_shards_nums = collector_plugin.storage_shards_nums
+        collector.storage_shards_size = collector_plugin.storage_shards_size
+        collector.storage_replies = collector_plugin.storage_replies
+        collector.save()
 
     def update_or_create(self, params: dict) -> dict:
         """
