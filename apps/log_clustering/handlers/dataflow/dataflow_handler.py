@@ -427,7 +427,8 @@ class DataFlowHandler(BaseAiopsHandler):
                                 "from_result_table_ids": [after_treat_flow_dict["judge_new_class"]["result_table_id"]],
                             }
                         ],
-                        "node_type": TSPIDER_STORAGE_NODE_TYPE,
+                        # "node_type": TSPIDER_STORAGE_NODE_TYPE,
+                        "node_type": "mysql_storage",
                         "frontend_info": {"x": 2231, "y": 73},
                     }
                 )
@@ -777,10 +778,15 @@ class DataFlowHandler(BaseAiopsHandler):
         update_model_instance_request = UpdateModelInstanceCls(
             filter_id=model_instance_id,
             execute_config={
-                "spark.executor.instances": self.conf.get("spark.executor.instances", DEFAULT_SPARK_EXECUTOR_INSTANCES),
-                "spark.executor.cores": self.conf.get("spark.executor.cores", DEFAULT_SPARK_EXECUTOR_CORES),
+                # "spark.executor.instances": self.conf.get("spark.executor.instances", DEFAULT_SPARK_EXECUTOR_INSTANCES),
+                # "spark.executor.cores": self.conf.get("spark.executor.cores", DEFAULT_SPARK_EXECUTOR_CORES),
                 "pseudo_shuffle": self.conf.get("pseudo_shuffle", DEFAULT_PSEUDO_SHUFFLE),
                 "spark.locality.wait": self.conf.get("spark.locality.wait", DEFAULT_SPARK_LOCALITY_WAIT),
+                "batch_size": 1,
+                "job_configuration": {
+                    "kubernetes.taskmanager.cpu": 2,
+                    "taskmanager.memory.process.size": 2048
+                },
                 "dropna_enabled": False,
             },
         )
