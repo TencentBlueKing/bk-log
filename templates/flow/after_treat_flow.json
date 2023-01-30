@@ -106,6 +106,7 @@
             }
         ],
         "node_type":"model_ts_custom",
+        "serving_env":"flink",
         "frontend_info":{
             "x":355,
             "y":171
