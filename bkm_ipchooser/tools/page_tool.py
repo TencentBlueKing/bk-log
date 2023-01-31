@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bkm_ipchooser.constants import CommonEnum
-from bkm_ipchooser.tools.batch_request import batch_request
+from bkm_ipchooser.tools.batch_request import batch_request, QUERY_CMDB_LIMIT
 
 
 def get_pagination_data(func, params: dict) -> dict:
@@ -10,18 +10,12 @@ def get_pagination_data(func, params: dict) -> dict:
     return: {}
     """
     # 判断是否全部获取
-    if (
-        params.get("page", {}).get("limit", CommonEnum.PAGE_RETURN_ALL_FLAG.value)
-        == CommonEnum.PAGE_RETURN_ALL_FLAG.value
-    ):
+    if params.get("page", {}).get("limit", QUERY_CMDB_LIMIT) == CommonEnum.PAGE_RETURN_ALL_FLAG.value:
         # 多线程补充no_request参数
         params["no_request"] = True
         sort = params.get("page", {}).get("sort")
         params.pop("page", None)
-        info = batch_request(func, params)
-        # 多线程返回结果append之后无序, 需要重新排序
-        if sort:
-            info = sorted(info, key=lambda x: x[sort])
+        info = batch_request(func=func, params=params, sort=sort)
         return {"count": len(info), "info": info}
 
     return func(params)
