@@ -106,7 +106,7 @@
             }
         ],
         "node_type":"model_ts_custom",
-        "serving_env":"flink",
+        {% if after_treat.is_flink_env %}"serving_env":"flink",{% endif %}
         "frontend_info":{
             "x":355,
             "y":171
