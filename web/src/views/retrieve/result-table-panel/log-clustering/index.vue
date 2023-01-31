@@ -92,7 +92,7 @@
         <div slot="empty">
           <div class="empty-text">
             <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-            <p v-if="!isHaveAnalyzed">
+            <p v-if="indexSetItem.scenario_id !== 'log' && !isHaveAnalyzed">
               {{$t('canNotFieldMessage1')}}
               <span class="empty-leave" @click="handleLeaveCurrent">{{$t('计算平台')}}</span>
               {{$t('canNotFieldMessage2')}}
@@ -391,7 +391,7 @@ export default {
     },
     handleLeaveCurrent() {
       // 不显示字段提取时跳转计算平台
-      if (!this.isHaveAnalyzed) {
+      if (this.indexSetItem.scenario_id !== 'log' && !this.isHaveAnalyzed) {
         const jumpUrl = `${window.BKDATA_URL}`;
         window.open(jumpUrl, '_blank');
         return;
