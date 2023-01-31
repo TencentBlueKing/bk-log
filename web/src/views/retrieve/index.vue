@@ -762,7 +762,8 @@ export default {
     async fetchPageData() {
       // 有spaceUid且有业务权限时 才去请求索引集列表
       if (!this.authMainPageInfo && this.spaceUid) {
-        await this.getFavoriteList(); // 先获取到收藏列表再获取索引集列表
+        // 收藏侧边栏打开且 则先获取到收藏列表再获取索引集列表
+        this.isShowCollect && await this.getFavoriteList();
         this.requestOperateList();
         this.requestIndexSetList();
       } else {
@@ -1814,6 +1815,8 @@ export default {
           .sort((a, b) => a.group_name.localeCompare(b.group_name));
         const sortAfterList = [provideFavorite, ...sortFavoriteList, publicFavorite];
         this.favoriteList = sortAfterList;
+      } catch (err) {
+        this.favoriteLoading = false;
       } finally {
         this.favoriteLoading = false;
       }
