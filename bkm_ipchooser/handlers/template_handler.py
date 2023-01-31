@@ -7,6 +7,7 @@ from bkm_ipchooser.api import BkApi
 from bkm_ipchooser.tools import batch_request
 from bkm_ipchooser.handlers.base import BaseHandler
 from bkm_ipchooser.handlers.topo_handler import TopoHandler
+from bkm_ipchooser.tools.page_tool import get_pagination_data
 
 logger = logging.getLogger("bkm_ipchooser")
 
@@ -38,11 +39,11 @@ class Template:
             for template in templates
         ]
 
-    def query_template_nodes(self, start: int, page_size: int):
+    def query_template_nodes(self, start: int, page_size: int) -> Dict[str, Any]:
         """分页查询模板下的节点列表"""
         raise NotImplementedError
 
-    def query_template_hosts(self, start: int, page_size: int):
+    def query_template_hosts(self, start: int, page_size: int) -> Dict[str, Any]:
         raise NotImplementedError
 
     def list_template_nodes(self, start: int, page_size: int) -> Dict[str, Any]:
@@ -125,7 +126,7 @@ class SetTemplate(Template):
             params["set_template_ids"] = template_id_list
         return BkApi.list_set_template(params)
 
-    def query_template_nodes(self, start: int, page_size: int) -> List[types.TemplateNode]:
+    def query_template_nodes(self, start: int, page_size: int) -> Dict[str, Any]:
         params = {
             "bk_biz_id": self.bk_biz_id,
             "fields": constants.CommonEnum.DEFAULT_SET_FIELDS.value,
@@ -137,9 +138,9 @@ class SetTemplate(Template):
                 "set_template_id": self.template_id,
             },
         }
-        return BkApi.search_set(params)
+        return get_pagination_data(BkApi.search_set, params)
 
-    def query_template_hosts(self, start: int, page_size: int) -> List[types.FormatHostInfo]:
+    def query_template_hosts(self, start: int, page_size: int) -> Dict[str, Any]:
         params = {
             "bk_biz_id": self.bk_biz_id,
             "bk_set_template_ids": [self.template_id],
@@ -149,7 +150,7 @@ class SetTemplate(Template):
                 "limit": page_size,
             },
         }
-        return BkApi.find_host_by_set_template(params)
+        return get_pagination_data(BkApi.find_host_by_set_template, params)
 
     def fetch_template_host_total(
         self, template_id: int, fields: List[str] = constants.CommonEnum.SIMPLE_HOST_FIELDS.value
@@ -233,7 +234,7 @@ class ServiceTemplate(Template):
             params["service_template_ids"] = template_id_list
         return BkApi.list_service_template(params)
 
-    def query_template_nodes(self, start: int, page_size: int) -> List[types.TemplateNode]:
+    def query_template_nodes(self, start: int, page_size: int) -> Dict[str, Any]:
         params = {
             "bk_biz_id": self.bk_biz_id,
             "fields": constants.CommonEnum.DEFAULT_MODULE_FIELDS.value,
@@ -245,7 +246,7 @@ class ServiceTemplate(Template):
                 "service_template_id": self.template_id,
             },
         }
-        nodes = BkApi.search_module(params)
+        nodes = get_pagination_data(BkApi.search_module, params)
         if not nodes or not nodes["info"]:
             return nodes
         service_category_list = BkApi.list_service_category({"bk_biz_id": self.bk_biz_id})
@@ -258,7 +259,7 @@ class ServiceTemplate(Template):
 
         return nodes
 
-    def query_template_hosts(self, start: int, page_size: int) -> List[types.FormatHostInfo]:
+    def query_template_hosts(self, start: int, page_size: int) -> Dict[str, Any]:
         params = {
             "bk_biz_id": self.bk_biz_id,
             "bk_service_template_ids": [self.template_id],
@@ -268,7 +269,7 @@ class ServiceTemplate(Template):
                 "limit": page_size,
             },
         }
-        return BkApi.find_host_by_service_template(params)
+        return get_pagination_data(BkApi.find_host_by_service_template, params)
 
     def template_agent_statistics(self, template: Dict) -> Dict[str, Any]:
         """统计模板下主机的agent状态"""
