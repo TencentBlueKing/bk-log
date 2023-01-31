@@ -50,10 +50,8 @@ DEFAULT_FLINK_MEMORY = 2048
 STREAM_SOURCE_NODE_TYPE = "stream_source"
 DIVERSION_NODE_NAME = _("回流数据")
 TSPIDER_STORAGE_NODE_TYPE = "tspider_storage"
-TSPIDER_STORAGE_NODE_NAME = _("回流数据(tspider_storage)")
 TSPIDER_STORAGE_INDEX_FIELDS = ["history_time", "event_time"]
 MYSQL_STORAGE_NODE_TYPE = "mysql_storage"
-MYSQL_STORAGE_NODE_NAME = _("回流数据(mysql_storage)")
 
 SPLIT_TYPE = "split"
 
