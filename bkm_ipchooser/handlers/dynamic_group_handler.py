@@ -7,6 +7,7 @@ from bkm_ipchooser.api import BkApi
 from bkm_ipchooser.tools.batch_request import request_multi_thread, batch_request
 from bkm_ipchooser.handlers.base import BaseHandler
 from bkm_ipchooser.handlers.topo_handler import TopoHandler
+from bkm_ipchooser.tools.page_tool import get_pagination_data
 
 logger = logging.getLogger("bkm_ipchooser")
 
@@ -54,15 +55,13 @@ class DynamicGroupHandler:
     def execute(self, dynamic_group_id: str, start: int, page_size: int) -> Dict[str, Any]:
         """执行动态分组"""
         result = {"start": start, "page_size": page_size, "total": 0}
-
-        execute_dynamic_group_result = BkApi.execute_dynamic_group(
-            {
-                "bk_biz_id": self.bk_biz_id,
-                "id": dynamic_group_id,
-                "fields": constants.CommonEnum.DEFAULT_HOST_FIELDS.value,
-                "page": {"start": start, "limit": page_size},
-            }
-        )
+        params = {
+            "bk_biz_id": self.bk_biz_id,
+            "id": dynamic_group_id,
+            "fields": constants.CommonEnum.DEFAULT_HOST_FIELDS.value,
+            "page": {"start": start, "limit": page_size},
+        }
+        execute_dynamic_group_result = get_pagination_data(BkApi.execute_dynamic_group, params)
         if not execute_dynamic_group_result or not execute_dynamic_group_result["info"]:
             return result
         # count预留给分页使用

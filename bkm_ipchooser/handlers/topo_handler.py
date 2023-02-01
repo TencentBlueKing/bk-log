@@ -6,6 +6,7 @@ from bkm_ipchooser import constants, types
 from bkm_ipchooser.api import BkApi
 from bkm_ipchooser.tools import topo_tool, batch_request
 from bkm_ipchooser.tools.gse_tool import GseTool
+from bkm_ipchooser.tools.page_tool import get_pagination_data
 from bkm_ipchooser.handlers.base import BaseHandler
 
 logger = logging.getLogger("bkm_ipchooser")
@@ -297,7 +298,7 @@ class TopoHandler:
             params.update(bk_set_ids=bk_set_ids)
 
         # 获取主机信息
-        resp = BkApi.list_biz_hosts(params)
+        resp = get_pagination_data(BkApi.list_biz_hosts, params)
 
         if resp["info"] and return_status:
             cls.fill_agent_status(resp["info"])
