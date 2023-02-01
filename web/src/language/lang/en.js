@@ -1607,7 +1607,7 @@ export default {
   数据源配置: 'Data source configuration',
   情况: 'Condition',
   检查右上角的索时间范围: 'Check the search time range in the upper right corner',
-  优化查询语法: 'Optimize query statement',
+  优化查询语句: 'Optimize query statement',
   查看更多语法规则: 'View more grammar rules',
   带字段全文检索更高效: 'Full-text search with fields is more efficient',
   模糊检索使用通配符: 'Fuzzy search using wildcards',
@@ -1616,4 +1616,5 @@ export default {
   正则匹配: 'Regular match',
   组合检索注意大写: 'Combination search pay attention to capitalization',
   未找到对应的采集项: 'The corresponding collection item was not found',
+  检查: 'Examination',
 };
