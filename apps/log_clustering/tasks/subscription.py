@@ -49,6 +49,7 @@ from apps.log_search.handlers.search.search_handlers_esquery import (
     SearchHandler as SearchHandlerEsquery,
 )
 from apps.log_search.models import LogIndexSet
+from apps.utils.log import logger
 from bkm_space import api
 
 robot_api = WeChatRobot()
@@ -95,7 +96,7 @@ def get_start_and_end_time(freq: dict, last_run_at: datetime, time_zone: pytz.ti
     if not last_run_at:
         if freq["type"] in [FrequencyTypeEnum.DAY.value, FrequencyTypeEnum.WEEK.value]:
             run_time = freq["run_time"].split(":")
-            end_time = datetime(now.year, now.month, now.day, tzinfo=time_zone) + timedelta(
+            end_time = datetime(now.year, now.month, now.day) + timedelta(
                 hours=int(run_time[0]), minutes=int(run_time[1]), seconds=int(run_time[2])
             )
             end_time = end_time.astimezone(time_zone)
@@ -214,15 +215,15 @@ def clean_pattern(config: ClusteringSubscription, time_config: dict, data: list,
             "pattern_count": len(patterns),
             "log_count": sum(pattern_count) if pattern_count else 0,
             "data": patterns[: config.log_display_count],
-            "max_num": max(new_pattern_count) if new_pattern_count else 0,
-            "percentage": round(max([p["percentage"] for p in patterns]), 2),
+            "max_num": max(pattern_count) if pattern_count else 0,
+            "percentage": round(max([p["percentage"] for p in patterns] or [0]), 2),
         },
         "new_patterns": {
             "pattern_count": len(new_patterns),
-            "log_count": sum(new_pattern_count) if pattern_count else 0,
+            "log_count": sum(new_pattern_count) if new_pattern_count else 0,
             "data": new_patterns[: config.log_display_count],
             "max_num": max(new_pattern_count) if new_pattern_count else 0,
-            "percentage": round(max([p["percentage"] for p in new_patterns]), 2),
+            "percentage": round(max([p["percentage"] for p in new_patterns] or [0]), 2),
         },
     }
 
@@ -278,7 +279,7 @@ def send_wechat(params: dict, receivers: list):
         "markdown": {"content": content},
     }
     robot_api.send_msg(send_params)
-    ClusteringSubscription.objects.filter(id=params["id"]).update(last_run_at=params["time_config"]["last_run_at"])
+    ClusteringSubscription.objects.filter(id=params["subscription_id"]).update(last_run_at=params["time_config"]["last_run_at"])
 
 
 def send_mail(params: dict, receivers: list):
@@ -290,11 +291,14 @@ def send_mail(params: dict, receivers: list):
         "title": params["title"],
     }
     CmsiApi.send_mail(send_params)
-    ClusteringSubscription.objects.filter(id=params["id"]).update(last_run_at=params["time_config"]["last_run_at"])
+    ClusteringSubscription.objects.filter(id=params["subscription_id"]).update(last_run_at=params["time_config"]["last_run_at"])
 
 
 def send(config: ClusteringSubscription, time_config: dict, bk_biz_name: str, language: str):
     result = query_patterns(config, time_config)
+    if not result:
+        logger.info(f"Query pattern is empty. space_uid: {config.space_uid}, index_set_id: {config.index_set_id}")
+        return None
 
     clustering_config = ClusteringConfig.objects.filter(index_set_id=config.index_set_id).first()
     if not clustering_config:
@@ -323,11 +327,11 @@ def send(config: ClusteringSubscription, time_config: dict, bk_biz_name: str, la
     }
 
     if config.subscription_type == SubscriptionTypeEnum.WECHAT.value:
-        if all_patterns["new_patterns"]:
+        if all_patterns["new_patterns"]["data"]:
             send_wechat(params, config.receivers)
 
     elif config.subscription_type == SubscriptionTypeEnum.EMAIL.value:
-        if all_patterns["patterns"] or all_patterns["new_patterns"]:
+        if all_patterns["patterns"]["data"] or all_patterns["new_patterns"]["data"]:
             send_mail(params, config.receivers)
 
 

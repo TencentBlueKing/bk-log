@@ -1,10 +1,10 @@
 【Log Platform】{{ title }}  
-Notice content：近{{ time_config.interval }}新增 pattern 统计  
-Biz Name：{{ bk_biz_name }}  
-Index Set Name：{{ index_set_name }}  
-Log analysis：New pattern ({{ all_patterns.new_patterns.pattern_count }})个，日志总共出现 ({{ all_patterns.new_patterns.log_count }}) 条, 最多的 pattern 日志数量为 {{ all_patterns.new_patterns.max_num }} 条({{ percentage }}%)   
+**Notice content**：<font color="info">{{ time_config.interval }}</font> new pattern statistics  
+**Biz Name**：{{ bk_biz_name }}  
+**Index Set Name**：{{ index_set_name }}  
+**Log analysis**：New pattern <font color="info">({{ all_patterns.new_patterns.pattern_count }})</font>，Total Logs <font color="info">({{ all_patterns.new_patterns.log_count }})</font>, The max number of pattern logs: <font color="info">({{ all_patterns.new_patterns.max_num }})</font> <font color="info">({{ all_patterns.new_patterns.percentage }}%)</font>   
 New {{ log_col_show_type }} Example:  
-{% for pattern in new_patterns %}
-{{ pattern.pattern }}  
+{% for pattern in all_patterns.new_patterns.data %}
+>{{ pattern.pattern }}  
 {% endfor %}
 [Log Detail]({{ log_search_url }})  
