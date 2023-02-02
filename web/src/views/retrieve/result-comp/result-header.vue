@@ -396,12 +396,7 @@ export default {
       } else {
         this.detailJumpRouteKey = detailStr;
       }
-      if (isFilterExtract) {
-        const spliceIndex = this.settingMenuList.findIndex(item => item.id === 'extract');
-        this.showSettingMenuList = this.settingMenuList.slice(spliceIndex, 1);
-      } else {
-        this.showSettingMenuList = this.settingMenuList;
-      }
+      this.showSettingMenuList = this.settingMenuList.filter(item => (isFilterExtract ? item.id !== 'extract' : true));
       const extraRouteList = this[`${detailStr}DetailKey`].reduce((pre, cur) => {
         pre.push({
           id: cur,
