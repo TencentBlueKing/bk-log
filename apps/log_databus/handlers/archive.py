@@ -112,14 +112,16 @@ class ArchiveHandler:
             meta_update_params = {"table_id": self.archive.table_id, "snapshot_days": self.archive.snapshot_days}
             TransferApi.modify_result_table_snapshot(meta_update_params)
             return
-        try:
-            collector: CollectorConfig = CollectorConfig.objects.get(
-                collector_config_id=params.get("collector_config_id")
-            )
-        except CollectorConfig.DoesNotExist:
-            raise CollectorConfigNotExistException
-        if not collector.is_active:
-            raise CollectorActiveException
+        # 只有采集项类型需要确认结果表状态
+        if params.get("collector_config_id"):
+            try:
+                collector: CollectorConfig = CollectorConfig.objects.get(
+                    collector_config_id=params.get("collector_config_id")
+                )
+            except CollectorConfig.DoesNotExist:
+                raise CollectorConfigNotExistException
+            if not collector.is_active:
+                raise CollectorActiveException
         create_obj = ArchiveConfig.objects.create(**params)
         meta_create_params = {
             "table_id": create_obj.table_id,

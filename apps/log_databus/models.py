@@ -479,7 +479,8 @@ class CleanStash(SoftDeleteModel):
 
 class ArchiveConfig(SoftDeleteModel):
     archive_config_id = models.AutoField(_("归档配置id"), primary_key=True)
-    collector_config_id = models.IntegerField(_("关联采集项id"))
+    collector_config_id = models.IntegerField(_("关联采集项id"), null=True)
+    collector_plugin_id = models.IntegerField(_("关联采集插件id"), null=True)
     bk_biz_id = models.IntegerField(_("业务id"))
     # 快照存储天数
     snapshot_days = models.IntegerField(_("快照天数"), default=0)
@@ -495,20 +496,36 @@ class ArchiveConfig(SoftDeleteModel):
     def collector_config(self) -> "CollectorConfig":
         return CollectorConfig.objects.get(collector_config_id=self.collector_config_id)
 
+    @cached_property
+    def collector_plugin(self) -> "CollectorPlugin":
+        return CollectorPlugin.objects.get(collector_plugin_id=self.collector_plugin_id)
+
     @property
     def table_id(self):
+        if self.collector_plugin_id:
+            return self.collector_plugin.table_id
         return self.collector_config.table_id
 
     @property
     def collector_config_name(self):
+        if self.collector_plugin_id:
+            return self.collector_plugin.collector_plugin_name
         return self.collector_config.collector_config_name
 
     @classmethod
     def get_collector_config_id(cls, archive_config_id):
         try:
-            return cls.objects.get(archive_config_id=archive_config_id).collector_config.collector_config_id
+            archive_config: cls = cls.objects.get(archive_config_id=archive_config_id)
         except cls.DoesNotExist:
             raise ArchiveNotFound
+        # 对采集插件归档时，获取采集插件下首个采集项ID
+        if archive_config.collector_plugin_id:
+            collector = CollectorConfig.objects.filter(collector_plugin_id=archive_config.collector_plugin_id).first()
+            # 采集项不存在直接报错
+            if collector is None:
+                raise CollectorConfig.DoesNotExist
+            return collector.collector_config_id
+        return archive_config.collector_config.collector_config_id
 
 
 class RestoreConfig(SoftDeleteModel):
