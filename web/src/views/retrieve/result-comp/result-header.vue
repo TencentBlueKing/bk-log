@@ -398,7 +398,9 @@ export default {
       }
       if (isFilterExtract) {
         const spliceIndex = this.settingMenuList.findIndex(item => item.id === 'extract');
-        this.showSettingMenuList = this.settingMenuList.slice(spliceIndex, 1);
+        const sliceSettingMenuList = JSON.parse(JSON.stringify(this.settingMenuList));
+        sliceSettingMenuList.splice(spliceIndex, 1);
+        this.showSettingMenuList = sliceSettingMenuList;
       } else {
         this.showSettingMenuList = this.settingMenuList;
       }
