@@ -23,6 +23,17 @@
 import * as authorityMap from '../common/authority-map';
 
 export default {
+  data() {
+    return {
+      disabledTips: {
+        terminated: {
+          operateType: ['clone', 'storage', 'search', 'clean'],
+          tips: this.$t('未完成配置'),
+        },
+        delete: this.$t('删除前请先停用'),
+      },
+    };
+  },
   methods: {
     async operateHandler(row, operateType) { // type: [view, status , search, edit, field, start, stop, delete]
       if (operateType === 'add') { // 新建权限控制
@@ -138,6 +149,14 @@ export default {
         console.warn(err);
         this.isAllowedCreate = false;
       }
+    },
+    getDisabledTipsMessage(item, operateType) {
+      if (operateType === 'delete') return this.disabledTips.delete;
+      if (!this.disabledTips[item.status]) return '--';
+      if (this.disabledTips[item.status].operateType?.includes(operateType)) {
+        return this.disabledTips[item.status].tips;
+      };
+      return '--';
     },
   },
 };

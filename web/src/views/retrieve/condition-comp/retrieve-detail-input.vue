@@ -148,17 +148,13 @@ export default {
       type: Object,
       required: true,
     },
-    historyRecords: {
-      type: Array,
-      default: () => ([]),
-    },
     isAutoQuery: {
       type: Boolean,
       default: false,
     },
-    checkKeywordData: {
-      type: Object,
-      default: () => ({}),
+    isShowUiType: {
+      type: Boolean,
+      default: false,
     },
   },
   data() {
@@ -325,9 +321,10 @@ export default {
       this.blurTimer = setTimeout(() => {
         if (this.shouldHandleBlur) this.handleCheckKeywords(val.trim()); // 检查语句是否有错误;
       }, 200);
+      // 如果当前有点击收藏且有选择表单模式的key时 监听新输入的检索语句判断
+      if (this.isShowUiType) this.$emit('inputBlur', val);
 
       if (this.isSearchRecord || !this.isAutoQuery) return;
-
       // blur 时检索
       // 下拉菜单 click 时也会触发 blur 事件，但是不执行检索相关逻辑
       // 下拉菜单 click 事件在 blur 事件触发后 100+ms 后触发

@@ -3,16 +3,16 @@
   .icon-play-shape {
     color: #63656e;
     display: inline-block;
-    margin-right: 6px;
+    margin-right: 2px;
     font-size: 12px;
-    transform: scale(.6);
+    transform: scale(.5);
     transition: transform .3s;
   }
 
   .group-cur {
     display: flex;
     align-items: center;
-    width: 100px;
+    flex: 1;
     cursor: pointer;
 
     .is-active {
@@ -23,11 +23,10 @@
   .group-title {
     height: 32px;
     padding: 0 16px;
-    margin-bottom: 8px;
 
-    &.is-move-cur {
-      cursor: move;
-    }
+    // &.is-move-cur {
+    //   cursor: move;
+    // }
 
     &.is-active {
       /* stylelint-disable-next-line declaration-no-important */
@@ -42,6 +41,8 @@
       display: inline-block;
       min-width: 20px;
       height: 16px;
+      line-height: 16px;
+      border-radius: 2px;
       text-align: center;
       background: #fff;
       transform: translateX(2px);
@@ -53,18 +54,20 @@
   }
 
   .group-list {
-    margin-bottom: 8px;
-
     &.list-hidden {
       display: none;
     }
 
     .group-item {
-      line-height: 20px;
-      padding: 5px 16px 5px;
+      line-height: 16px;
+      padding: 7px 16px 7px;
       cursor: pointer;
       border: 1px solid transparent;
       border-bottom: none;
+
+      &.is-disabled {
+        cursor: not-allowed;
+      }
 
       &:hover {
         background: #f0f1f5;
@@ -87,7 +90,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding-left: 28px;
+        padding-left: 24px;
         border-bottom: 1px solid transparent;
         position: relative;
 
@@ -120,7 +123,7 @@
           width: 4px;
           height: 4px;
           position: absolute;
-          left: 18px;
+          left: 14px;
           border-radius: 50%;
           background: #dcdee5;
         }

@@ -121,13 +121,17 @@
                 <bk-popover
                   v-show="isShowUiType"
                   ref="formTipsRef"
-                  :tippy-options="formTippyOptions"
+                  :tippy-options="{
+                    placement: 'top',
+                    theme: 'light',
+                    trigger: 'mouseenter',
+                  }"
                   :disabled="isCanUseUiType || !isSqlSearchType">
                   <div
                     class="search-type"
                     @click="handleClickSearchType">
                     <span class="bk-icon icon-sort"></span>
-                    <span>{{isSqlSearchType ? $t('表单') : 'SQL'}}</span>
+                    <span>{{isSqlSearchType ? $t('表单') : 'Source'}}</span>
                   </div>
                   <div slot="content">
                     <span
@@ -161,6 +165,8 @@
                     :is-auto-query="isAutoQuery"
                     :retrieved-keyword="retrievedKeyword"
                     :dropdown-data="retrieveDropdownData"
+                    :is-show-ui-type="isShowUiType"
+                    @inputBlur="handleBlurSearchInput"
                     @retrieve="retrieveLog" />
                 </template>
                 <template v-else>
@@ -168,7 +174,8 @@
                     :is-favorite-search="isFavoriteSearch"
                     :keyword="retrieveParams.keyword"
                     :active-favorite="activeFavorite"
-                    @updateKeyWords="updateKeyWords"></ui-query>
+                    :is-clear-condition="isClearCondition"
+                    @updateKeyWords="updateKeyWords" />
                 </template>
                 <!-- 添加过滤条件 -->
                 <div class="tab-item-title flex-item-title">
@@ -217,6 +224,7 @@
                   </div>
                   <bk-button
                     v-else
+                    v-bk-tooltips="{ content: getSearchType.changeBtnTips }"
                     class="query-btn"
                     :icon="getSearchType.icon"
                     @click="handleChangeSearchType">
@@ -242,34 +250,34 @@
                       </span>
                     </bk-button>
                     <span
-                      v-show="!isFavoriteNewSearch && !isFavoriteUpdate"
+                      v-show="!isFavoriteNewSearch && isFavoriteUpdate"
                       class="catching-ball">
                     </span>
                     <bk-button
                       v-show="!isFavoriteNewSearch"
                       ext-cls="favorite-btn"
-                      :disabled="isFavoriteUpdate || favoriteUpdateLoading"
+                      :disabled="!isFavoriteUpdate || favoriteUpdateLoading"
                       @click="handleUpdateFavorite">
-                      <span v-bk-tooltips="{ content: $t('保存Tips'), disabled: isFavoriteUpdate }">
+                      <span v-bk-tooltips="{ content: $t('保存Tips'), disabled: !isFavoriteUpdate }">
                         <span class="favorite-btn-text">
                           <span :class="[
                             'icon',
-                            isFavoriteUpdate
+                            !isFavoriteUpdate
                               ? 'log-icon icon-star-shape'
                               : 'bk-icon icon-save',
                           ]">
                           </span>
-                          <span>{{ isFavoriteUpdate ? $t('已收藏') : $t('保存') }}</span>
+                          <span>{{ !isFavoriteUpdate ? $t('已收藏') : $t('保存') }}</span>
                         </span>
                       </span>
                     </bk-button>
                   </div>
-                  <bk-button
-                    style="font-size: 12px"
-                    @click="clearCondition"
-                    data-test-id="dataQuery_button_phrasesClear">
-                    {{ $t('清空') }}
-                  </bk-button>
+                  <span v-bk-tooltips="{ content: $t('清空'), delay: 200 }">
+                    <div class="clear-params-btn" @click="clearCondition">
+                      <bk-button data-test-id="dataQuery_button_phrasesClear"></bk-button>
+                      <span class="log-icon icon-brush"></span>
+                    </div>
+                  </span>
                 </div>
               </div>
               <div class="tab-content-item" data-test-id="retrieve_div_fieldFilterBox">
@@ -324,6 +332,8 @@
               :date-picker-value="datePickerValue"
               :index-set-item="indexSetItem"
               :operator-config="operatorConfig"
+              :retrieve-search-number="retrieveSearchNumber"
+              :retrieve-config-id="retrieveConfigId"
               @request-table-data="requestTableData"
               @fieldsUpdated="handleFieldsUpdated"
               @shouldRetrieve="retrieveLog"
@@ -545,11 +555,9 @@ export default {
       favoriteUpdateLoading: false,
       favoriteList: [],
       favoriteLoading: false,
-      formTippyOptions: {
-        placement: 'top',
-        theme: 'light',
-        trigger: 'mouseenter',
-      },
+      isClearCondition: false, // 是否清空检索条件
+      favSearchList: [], // 收藏的表单模式列表
+      inputSearchList: [], // 鼠标失焦后的表单模式列表
       filterAllOperators: {},
       addFavoriteData: {}, // 新增收藏所需的参数
       favoriteRequestID: 0, // 参数改变更新收藏
@@ -558,6 +566,7 @@ export default {
         search: { // 查询
           icon: 'bk-icon log-icon icon-bofang',
           text: this.$t('查询'),
+          changeBtnTips: this.$t('切换自动查询'),
         },
         searchIng: { // 查询中
           icon: 'loading',
@@ -566,8 +575,11 @@ export default {
         autoSearch: { // 自动查询
           icon: 'bk-icon log-icon icon-zanting',
           text: this.$t('自动查询'),
+          changeBtnTips: this.$t('切换手动查询'),
         },
       },
+      retrieveSearchNumber: 0, // 切换采集项或初始进入页面时 检索次数初始化为0 检索一次次数+1;
+      retrieveConfigId: null, // 当前索引集关联的采集项ID
     };
   },
   computed: {
@@ -607,12 +619,12 @@ export default {
       if (this.tableLoading) return this.searchMap.searchIng;
       return this.searchMap[this.isAutoQuery ? 'autoSearch' : 'search'];
     },
-    isCanUseUiType() { // 判断当前的检索语句是否与收藏的相对于 不相等的话不显示表单模式
-      return this.activeFavorite?.params?.keyword === this.retrieveParams.keyword;
+    isCanUseUiType() { // 判断当前的检索语句生成的键名和操作符是否相同 不相等的话不能切换表单模式
+      return this.inputSearchList.some(v => this.favSearchList.includes(v));
     },
     isShowUiType() { // 判断当前点击的收藏是否展示表单字段
       // eslint-disable-next-line camelcase
-      return this.activeFavorite?.params?.search_fields?.length;
+      return Boolean(this.activeFavorite?.params?.search_fields?.length);
     },
     isFavoriteNewSearch() { // 是否是新检索
       return this.activeFavoriteID === -1;
@@ -628,7 +640,7 @@ export default {
         addition: params?.addition,
         keyword: params?.keyword,
       };
-      return JSON.stringify(retrieveParams) === JSON.stringify(favoriteParams);
+      return JSON.stringify(retrieveParams) !== JSON.stringify(favoriteParams);
     },
   },
   provide() {
@@ -642,6 +654,7 @@ export default {
       this.indexSetItem = option ? option : { index_set_name: '', indexName: '', scenario_name: '', scenario_id: '' };
       // eslint-disable-next-line camelcase
       this.isSearchAllowed = !!option?.permission?.[authorityMap.SEARCH_LOG_AUTH];
+      this.retrieveConfigId = option?.collector_config_id;
       if (this.isSearchAllowed) {
         this.authPageInfo = null;
         this.hasAuth = true;
@@ -649,6 +662,7 @@ export default {
       this.isSqlSearchType = true;
       this.resetRetrieveCondition();
       this.$store.commit('updateIndexId', val);
+      this.retrieveSearchNumber = 0; // 切换索引集 检索次数设置为0;
       val && this.requestSearchHistory(val);
     },
     spaceUid: {
@@ -661,7 +675,7 @@ export default {
         this.retrieveParams.bk_biz_id = this.bkBizId;
         this.isSqlSearchType = true;
         this.fetchPageData();
-        this.getFavoriteList();
+        this.retrieveSearchNumber = 0; // 切换业务 检索次数设置为0;
       },
       immediate: true,
     },
@@ -737,9 +751,6 @@ export default {
       this.isHideAutoQueryTips = true;
       this.$refs.queryTipPopover.instance.hide();
     },
-    // switchAutoQuery(data) {
-    //   localStorage.setItem('closeAutoQuery', !data);
-    // },
     // 切换到监控指标检索
     handleCheckMonitor() {
       window.parent.postMessage('datarieval-click', '*');
@@ -1057,6 +1068,7 @@ export default {
         },
         addition: [],
       });
+      this.isClearCondition = !this.isClearCondition;
       this.retrieveLog();
     },
     // 搜索记录
@@ -1070,12 +1082,15 @@ export default {
         this.messageError(this.$t('没有找到该记录下相关索引集'));
       }
     },
-    // 检索日志
-    async retrieveLog(historyParams) {
-      if (!this.indexId) {
-        return;
-      }
-
+    /**
+     * @desc: 检索日志
+     * @param {Any} historyParams 历史数据
+     * @param {Boolean} isMemoryFields 检索时是否需要记住当前展示的字段
+     * @param {Boolean} isRequestChartsAndHistory 检索时是否请求历史记录和图表
+     */
+    async retrieveLog(historyParams, isMemoryFields = false, isRequestChartsAndHistory = true) {
+      if (!this.indexId) return;
+      const memoryFields = this.visibleFields.map(item => item.field_name);
       await this.$nextTick();
       this.basicLoading = true;
       this.showHistory = false;
@@ -1237,34 +1252,33 @@ export default {
         }
 
         this.retrieveParams.keyword = this.retrieveParams.keyword.trim();
-        this.requestChart();
+        if (isRequestChartsAndHistory) { // 是否请求图表和历史记录
+          this.requestChart();
+          this.requestSearchHistory(this.indexId);
+        }
 
         await this.handleResetTimer();
         await this.requestTable();
-        if (this.isAfterRequestFavoriteList) {
-          await this.getFavoriteList();
-        }
-        this.requestSearchHistory(this.indexId);
+        if (this.isAfterRequestFavoriteList) await this.getFavoriteList();
+
+        // 已检索 判断当前检索是否是初始化的收藏检索 添检索次数
+        const beAddedNumber = (!this.retrieveSearchNumber && this.isFavoriteSearch) ? 2 : 1;
+        this.retrieveSearchNumber += beAddedNumber;
       } catch (e) {
         console.warn(e);
         if (!e.message.includes('request canceled')) { // 接口出错、非重复请求被取消
           this.tableLoading = false;
         }
       } finally {
-        // 如果是收藏检索并且开启检索显示, 则更新显示字段
+        // 如果是收藏检索并且开启检索显示, 合并当前字段和收藏字段 更新显示字段
         // eslint-disable-next-line camelcase
         if (this.isFavoriteSearch && this.activeFavorite?.is_enable_display_fields) {
           const { display_fields: favoriteDisplayFields } = this.activeFavorite;
-          const visibilityFields = this.visibleFields.map(item => item.field_name);
-          const displayFields = [...new Set([...visibilityFields, ...favoriteDisplayFields])];
-          this.visibleFields = displayFields.map((displayName) => {
-            for (const field of this.totalFields) {
-              if (field.field_name === displayName) {
-                return field;
-              }
-            }
-          }).filter(Boolean);
+          const displayFields = [...new Set([...memoryFields, ...favoriteDisplayFields])];
+          this.handleFieldsUpdated(displayFields, undefined, false);
         };
+        // 检索完后 回显当前展示的字段
+        if (isMemoryFields && memoryFields.length) this.handleFieldsUpdated(memoryFields, undefined, false);
         if (this.isFavoriteSearch) this.isSqlSearchType = !this.isShowUiType; // 判断是否有表单模式的数组值 如果有 则切换为表单模式
         // 搜索完毕后，如果开启了自动刷新，会在 timeout 后自动刷新
         this.$refs.resultHeader && this.$refs.resultHeader.setRefreshTime();
@@ -1735,6 +1749,7 @@ export default {
           keyword,
           search_fields,
         };
+        if (!data.search_fields.length) this.isSqlSearchType = true;
         const res = await this.$http.request('favorite/updateFavorite', {
           params: { id },
           data,
@@ -1755,6 +1770,7 @@ export default {
     },
     // 检索头部点击编辑收藏
     handleEditFavorite() {
+      if (this.basicLoading) return;
       // 获取检索页面的数据替换当前收藏详情参数
       this.replaceFavoriteData = this.getRetrieveFavoriteData();
       this.isShowAddNewCollectDialog = true;
@@ -1781,13 +1797,18 @@ export default {
       // 第一次显示收藏列表时因路由更变原因 在本页面第一次请求
       try {
         this.favoriteLoading = true;
-        const res = await this.$http.request('favorite/getFavoriteByGroupList', {
+        const { data } = await this.$http.request('favorite/getFavoriteByGroupList', {
           query: {
             space_uid: this.spaceUid,
-            order_type: localStorage.getItem('favoriteSortType'),
+            order_type: localStorage.getItem('favoriteSortType') || 'NAME_ASC',
           },
         });
-        this.favoriteList = res.data;
+        const provideFavorite = data[0];
+        const publicFavorite = data[data.length - 1];
+        const sortFavoriteList = data.slice(1, data.length - 1)
+          .sort((a, b) => a.group_name.localeCompare(b.group_name));
+        const sortAfterList = [provideFavorite, ...sortFavoriteList, publicFavorite];
+        this.favoriteList = sortAfterList;
       } finally {
         this.favoriteLoading = false;
       }
@@ -1815,29 +1836,59 @@ export default {
         this.handleClickFavoriteItem(resValue);
         if (!this.isShowCollect) this.collectWidth = 240;
         this.isShowCollect = true;
+      } else {
+        this.initSearchList();
       };
     },
     // 点击收藏列表的收藏
-    handleClickFavoriteItem(value) {
+    async handleClickFavoriteItem(value) {
       if (value === undefined) { // 点击为新检索时 清空收藏
         this.activeFavoriteID = -1;
         this.activeFavorite = {};
         this.isSqlSearchType = true;
+        this.isFavoriteSearch = false;
+        this.clearCondition();
         return;
       }
-      this.addFavoriteData = {}; // 清空新增收藏的数据
-      this.isFavoriteSearch = true;
-      if (!value.params.host_scopes.target_node_type) {
+      // 无host_scopes补充空的 host_scopes
+      if (!value.params?.host_scopes?.target_node_type) {
+        value.params.host_scopes = {};
         value.params.host_scopes.target_node_type = '';
         value.params.host_scopes.target_nodes = [];
       }
+      this.addFavoriteData = {}; // 清空新增收藏的数据
+      this.isFavoriteSearch = true;
       this.activeFavorite = deepClone(value);
       this.activeFavoriteID = value.id;
+      await this.initSearchList();
       this.retrieveFavorite(deepClone(value));
     },
     // 收藏列表刷新, 判断当前是否有点击活跃的收藏 如有则进行数据更新
     async updateActiveFavoriteData(value) {
       this.activeFavorite = deepClone(value);
+      this.isShowUiType ? this.initSearchList() : (this.isSqlSearchType = true);
+    },
+    // 根据检索语句 获取表单字段
+    async getSearchFieldsList(keyword) {
+      try {
+        const res = await this.$http.request('favorite/getSearchFields', {
+          data: { keyword },
+        });
+        return res.data.map(item => item.name);
+      } catch (err) {
+        return [];
+      }
+    },
+    async handleBlurSearchInput(newKeyword) {
+      newKeyword === '' && (newKeyword = '*');
+      this.inputSearchList = await this.getSearchFieldsList(newKeyword);
+    },
+    // 当点击有表单模式的收藏时 初始化search列表
+    async initSearchList() {
+      if (this.isShowUiType) {
+        this.favSearchList = this.activeFavorite.params?.search_fields || [];
+        await this.handleBlurSearchInput(this.activeFavorite.params?.keyword || '*');
+      }
     },
   },
 };
@@ -2036,7 +2087,7 @@ export default {
               user-select: none;
 
               .search-type {
-                width: 50px;
+                width: 60px;
                 margin-right: 10px;
                 color: #3a84ff;
                 transform: translateY(-1px);
@@ -2177,6 +2228,20 @@ export default {
 
               .icon-save {
                 transform: translateY(1px);
+              }
+            }
+
+            .clear-params-btn {
+              position: relative;
+              cursor: pointer;
+
+              .icon-brush {
+                position: absolute;
+                left: 8px;
+                top: 8px;
+                font-size: 14px;
+                color: #63656e;
+                pointer-events: none;
               }
             }
 

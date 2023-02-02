@@ -880,6 +880,11 @@ class FieldDateFormatEnum(ChoicesEnum):
         return [
             {"id": "yyyy-MM-dd HH:mm:ss", "name": "YYYY-MM-DD HH:mm:ss", "description": "2006-01-02 15:04:05"},
             {
+                "id": "yyyy-MM-dd HH:mm:ss,SSS",
+                "name": "YYYY-MM-DD HH:mm:ss,SSS",
+                "description": "2006-01-02 15:04:05,000",
+            },
+            {
                 "id": "yyyy-MM-dd HH:mm:ss.SSS",
                 "name": "YYYY-MM-DD HH:mm:ss.SSS",
                 "description": "2006-01-02 15:04:05.000",
@@ -1222,7 +1227,7 @@ class FavoriteGroupType(ChoicesEnum):
     UNGROUPED = "unknown"
 
     _choices_labels = (
-        (PRIVATE, _("个人组")),
+        (PRIVATE, _("个人收藏")),
         (PUBLIC, _("公共组")),
         (UNGROUPED, _("未分组")),
     )

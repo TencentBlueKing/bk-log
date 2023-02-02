@@ -125,4 +125,15 @@ export const SPACE_TYPE_MAP = {
       backgroundColor: '#D8EDD9',
     },
   },
+  bksaas: {
+    name: i18n.tc('PaaS应用'),
+    dark: {
+      color: '#2BB950',
+      backgroundColor: '#223B2B',
+    },
+    light: {
+      color: '#63656E',
+      backgroundColor: '#D8EDD9',
+    },
+  },
 };

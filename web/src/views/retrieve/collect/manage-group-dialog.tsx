@@ -114,8 +114,8 @@ export default class GroupDialog extends tsc<IProps> {
   tableDialog = false;
   selectFavoriteList = []; // 列的头部的选择框收藏ID列表
   groupList = []; // 组列表
-  unPrivateList = []; // 无个人组的收藏列表
-  privateList = []; // 个人组列表 只有个人的列表
+  unPrivateList = []; // 无个人收藏的收藏列表
+  privateList = []; // 个人收藏列表 只有个人的列表
   checkValue = 0; // 0为不选 1为半选 2为全选
   groupName = ''; // 输入框组名
   unknownGroupID = 0;
@@ -145,7 +145,7 @@ export default class GroupDialog extends tsc<IProps> {
   ];
   allOptionList = [ // 本人创建的收藏的可见范围数组
     { name: window.mainComponent.$t('公开'), id: 'public' },
-    { name: window.mainComponent.$t('仅本人'), id: 'private' },
+    { name: window.mainComponent.$t('私有'), id: 'private' },
   ];
 
   tableSetting = {
@@ -318,8 +318,8 @@ export default class GroupDialog extends tsc<IProps> {
         group_name: item.name,
         group_type: item.group_type,
       }));
-      this.unPrivateList = this.groupList.slice(1); // 去除个人组的列表
-      this.privateList = this.groupList.slice(0, 1); // 个人组列表
+      this.unPrivateList = this.groupList.slice(1); // 去除个人收藏的列表
+      this.privateList = this.groupList.slice(0, 1); // 个人收藏列表
       this.sourceFilters = res.data.map(item => ({
         text: item.name,
         value: item.name,
@@ -439,7 +439,7 @@ export default class GroupDialog extends tsc<IProps> {
 
   handleDeleteFavorite(row) {
     this.$bkInfo({
-      subTitle: `${this.$t('当前收藏为')}${row.name}，${this.$t('是否删除')}？`,
+      subTitle: `${this.$t('当前收藏名为')} ${row.name} ，${this.$t('是否删除')}？`,
       type: 'warning',
       confirmFn: () => {
         this.deleteTableIDList.push(row.id);

@@ -60,14 +60,14 @@ interface IProps {
 
 @Component
 export default class CollectDialog extends tsc<IProps> {
-  @Model("change", { type: Boolean, default: false }) value: IProps['value'];
+  @Model('change', { type: Boolean, default: false }) value: IProps['value'];
   @Prop({ type: Number, default: -1 }) favoriteID: number; // 编辑收藏ID
   @Prop({ type: Object, default: () => ({}) }) addFavoriteData: object; // 新增收藏的数据
   @Prop({ type: Object, default: () => ({}) }) replaceData: object; // 替换收藏的params数据
   @Prop({ type: Boolean, default: false }) isClickFavoriteEdit: boolean; // 当前编辑的收藏是否是点击活跃的
   @Prop({ type: Array, default: () => [] }) visibleFields: Array<any>; // 字段
   @Prop({ type: Array, default: () => [] }) favoriteList: Array<any>; // 收藏列表
-  @Ref("validateForm") validateFormRef: Form;
+  @Ref('validateForm') validateFormRef: Form;
   searchFieldsList = []; // 表单模式显示字段
   isDisableSelect = false; // 是否禁用 所属组下拉框
   isShowAddGroup = true;
@@ -83,6 +83,8 @@ export default class CollectDialog extends tsc<IProps> {
       host_scopes: {
         modules: [],
         ips: '',
+        target_nodes: [],
+        target_node_type: '',
       },
       addition: [],
       keyword: null,
@@ -104,6 +106,8 @@ export default class CollectDialog extends tsc<IProps> {
       host_scopes: {
         modules: [],
         ips: '',
+        target_nodes: [],
+        target_node_type: '',
       },
       addition: [],
       keyword: null,
@@ -115,7 +119,7 @@ export default class CollectDialog extends tsc<IProps> {
     display_fields: [],
   };
   publicGroupList = []; // 可见状态为公共的时候显示的收藏组
-  privateGroupList = []; // 个人组 group_name替换为本人
+  privateGroupList = []; // 个人收藏 group_name替换为本人
   unknownGroupID = 0;
   privateGroupID = 0;
   switchVal = true;
@@ -135,6 +139,11 @@ export default class CollectDialog extends tsc<IProps> {
       {
         validator: this.checkRepeatName,
         message: window.mainComponent.$t('收藏名重复'),
+        trigger: 'blur',
+      },
+      {
+        validator: this.checkCannotUseName,
+        message: window.mainComponent.$t('保留名称，不可使用'),
         trigger: 'blur',
       },
     ],
@@ -189,10 +198,14 @@ export default class CollectDialog extends tsc<IProps> {
   checkSpecification() {
     return /^[\u4e00-\u9fa5_a-zA-Z0-9`~!@#$%^&*()_\-+=<>?:"{}|,.\/;'\\[\]·~！@#￥%……&*（）——\-+={}|《》？：“”【】、；‘'，。、]+$/im.test(this.favoriteData.name.trim());
   }
+  /** 检查是否有内置名称不能使用 */
+  checkCannotUseName() {
+    return ![this.$t('个人收藏'), this.$t('未分组')].includes(this.favoriteData.name.trim());
+  }
 
   handleSelectGroup(nVal: number) {
-    const visible_type = nVal === this.privateGroupID ? 'private' : 'public'
-    this.isDisableSelect = nVal === this.privateGroupID
+    const visible_type = nVal === this.privateGroupID ? 'private' : 'public';
+    this.isDisableSelect = nVal === this.privateGroupID;
     Object.assign(this.favoriteData, { visible_type });
   }
 
@@ -203,6 +216,7 @@ export default class CollectDialog extends tsc<IProps> {
         // 判断是否是新增
         Object.assign(this.favoriteData, this.addFavoriteData); // 合并新增收藏详情
         this.favoriteData.group_id = this.unknownGroupID;
+        this.favoriteData.params.search_fields = [];
       } else {
         await this.getFavoriteData(this.favoriteID); // 获取收藏详情
       }
@@ -210,6 +224,7 @@ export default class CollectDialog extends tsc<IProps> {
       this.isDisableSelect = this.favoriteData.visible_type === 'private';
     } else {
       this.favoriteData = this.baseFavoriteData;
+      this.searchFieldsList = [];
       this.handleShowChange();
     }
   }
@@ -266,6 +281,7 @@ export default class CollectDialog extends tsc<IProps> {
   }
 
   async getSearchFieldsList(keyword: string) {
+    keyword === '' && (keyword = '*');
     try {
       const res = await $http.request('favorite/getSearchFields', {
         data: { keyword },
@@ -343,11 +359,10 @@ export default class CollectDialog extends tsc<IProps> {
         assignData.display_fields = this.visibleFields.map(item => item.field_name);
       }
       if (JSON.stringify(this.replaceData) !== '{}') { // 替换收藏 会把检索的params传过来
-        Object.assign(this.favoriteData, assignData, this.replaceData);
-      } else { // 通过id获取到的收藏
-        Object.assign(this.favoriteData, assignData);
+        Object.assign(assignData.params, this.replaceData.params);
       }
-    } catch (error) {} finally {
+      Object.assign(this.favoriteData, assignData);
+    } finally {
       this.formLoading = false;
     }
   }
@@ -356,9 +371,8 @@ export default class CollectDialog extends tsc<IProps> {
     return (
       <Dialog
         value={this.value}
-        title={
-          this.isCreateFavorite ? this.$t('新增收藏') : this.$t('编辑收藏')
-        }
+        title={ this.isCreateFavorite ? this.$t('新增收藏') : this.$t('编辑收藏') }
+        ok-text={ this.isCreateFavorite ? this.$t('确定') : this.$t('保存') }
         header-position="left"
         ext-cls="add-collect-dialog"
         render-directive="if"
@@ -404,49 +418,51 @@ export default class CollectDialog extends tsc<IProps> {
                 vModel={this.favoriteData.visible_type}
                 on-change={this.handleClickRadio}>
                 <Radio value={'public'}>{this.$t('公开')}</Radio>
-                <Radio value={'private'} disabled={this.isCannotChangeVisible}>{this.$t('仅本人')}</Radio>
+                <Radio value={'private'} disabled={this.isCannotChangeVisible}>{this.$t('私有')}</Radio>
               </RadioGroup>
             </FormItem>
           </div>
           <div class="form-item-container">
             <FormItem label={this.$t('所属组')}>
-              <Select
-                vModel={this.favoriteData.group_id}
-                disabled={this.isDisableSelect}
-                on-change={this.handleSelectGroup}
-                ext-popover-cls={'add-collect-dialog'}
-              >
-                {this.showGroupList.map(item => (
-                  <Option id={item.id} key={item.id} name={item.name}></Option>
-                ))}
-                <div slot="extension">
-                  {this.isShowAddGroup ? (
-                    <div class="select-add-new-group" onClick={() => this.isShowAddGroup = false}>
-                      <div><i class="bk-icon icon-plus-circle"></i>{this.$t('新增')}</div>
-                    </div>
-                  ) : (
-                    <li class="add-new-group-input">
-                      <Input
-                        clearable
-                        placeholder={this.$t('请输入组名')}
-                        vModel={this.groupName}
-                        maxlength={10}>
-                      </Input>
-                      <div class="operate-button">
-                        <Button text onClick={() => this.handleCreateGroup()}>
-                          {this.$t('确定')}
-                        </Button>
-                        <span onClick={() => {
-                          this.isShowAddGroup = true;
-                          this.groupName = '';
-                        }}>
-                          {this.$t('取消')}
-                        </span>
+              <span v-bk-tooltips={{ content: this.$t('私有Tips'), disabled: !this.isDisableSelect }}>
+                <Select
+                  vModel={this.favoriteData.group_id}
+                  disabled={this.isDisableSelect}
+                  on-change={this.handleSelectGroup}
+                  ext-popover-cls={'add-collect-dialog'}
+                >
+                  {this.showGroupList.map(item => (
+                    <Option id={item.id} key={item.id} name={item.name}></Option>
+                  ))}
+                  <div slot="extension">
+                    {this.isShowAddGroup ? (
+                      <div class="select-add-new-group" onClick={() => this.isShowAddGroup = false}>
+                        <div><i class="bk-icon icon-plus-circle"></i>{this.$t('新增')}</div>
                       </div>
-                    </li>
-                  )}
-                </div>
-              </Select>
+                    ) : (
+                      <li class="add-new-group-input">
+                        <Input
+                          clearable
+                          placeholder={this.$t('请输入组名')}
+                          vModel={this.groupName}
+                          maxlength={10}>
+                        </Input>
+                        <div class="operate-button">
+                          <Button text onClick={() => this.handleCreateGroup()}>
+                            {this.$t('确定')}
+                          </Button>
+                          <span onClick={() => {
+                            this.isShowAddGroup = true;
+                            this.groupName = '';
+                          }}>
+                            {this.$t('取消')}
+                          </span>
+                        </div>
+                      </li>
+                    )}
+                  </div>
+                </Select>
+              </span>
             </FormItem>
           </div>
           <FormItem label={this.$t('表单模式')}>

@@ -1156,27 +1156,16 @@ class SearchHandler(object):
         else:
             require_field_match = False
 
-        if self.scenario_id == Scenario.BKDATA:
-            highlight = {
-                "pre_tags": ["<mark>"],
-                "post_tags": ["</mark>"],
-                "fields": {
-                    "log": {
-                        # "type": "fvh"
-                        "number_of_fragments": 0
-                    }
-                },
-                "require_field_match": require_field_match,
-            }
-            if self.query_string == "":
-                highlight = {}
-            return highlight
         highlight = {
             "pre_tags": ["<mark>"],
             "post_tags": ["</mark>"],
             "fields": {"*": {"number_of_fragments": 0}},
             "require_field_match": require_field_match,
         }
+
+        if self.query_string == "":
+            highlight = {}
+
         return highlight
 
     def _add_cmdb_fields(self, log):

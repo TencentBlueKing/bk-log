@@ -462,6 +462,7 @@ class LogIndexSet(SoftDeleteModel):
             "space_uid",
             "index_set_id",
             "index_set_name",
+            "collector_config_id",
             "scenario_id",
             "storage_cluster_id",
             "category_id",
@@ -477,7 +478,10 @@ class LogIndexSet(SoftDeleteModel):
 
         # 获取索引详情
         index_set_ids = [index_set["index_set_id"] for index_set in index_sets]
-        mark_index_set_ids = set(IndexSetUserFavorite.batch_get_mark_index_set(index_set_ids, get_request_username()))
+        mark_index_set_ids = set(
+            Favorite.get_favorite_index_set_ids(index_set_ids=index_set_ids, username=get_request_username())
+        )
+
         index_set_data = array_group(
             list(
                 LogIndexSetData.objects.filter(
@@ -791,6 +795,14 @@ class Favorite(OperateRecordModel):
             favorites.append(fi_dict)
 
         return favorites
+
+    @classmethod
+    def get_favorite_index_set_ids(cls, username: str, index_set_ids: list = None) -> list:
+        if not index_set_ids:
+            return []
+        return cls.objects.filter(index_set_id__in=index_set_ids, created_by=username).values_list(
+            "index_set_id", flat=True
+        )
 
 
 class FavoriteGroup(OperateRecordModel):

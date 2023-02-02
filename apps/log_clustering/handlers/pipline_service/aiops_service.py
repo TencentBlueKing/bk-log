@@ -285,7 +285,8 @@ def operator_aiops_service(index_set_id, operator=OperatorServiceEnum.CREATE):
         if clustering_config.collector_config_name_en
         else "bkdata_{}".format(clustering_config.source_rt_name.split("_", 2)[-1])
     )
-    time_format = arrow.now().format("YYYYMMDDHHmmssSSS")
+    now_time = arrow.now()
+    time_format = now_time.format("YYYYMMDDHHmmssSSS")
     if operator == OperatorServiceEnum.UPDATE:
         sample_set_name = SampleSet.objects.get(sample_set_id=clustering_config.sample_set_id).sample_set_name
         model_name = AiopsModel.objects.get(model_id=clustering_config.model_id).model_name
@@ -315,6 +316,10 @@ def operator_aiops_service(index_set_id, operator=OperatorServiceEnum.CREATE):
     data = service.build_data_context(params)
     pipeline = service.build_pipeline(data, **params)
     service.start_pipeline(pipeline)
+
+    clustering_config.task_records.append({"operate": operator, "task_id": pipeline.id, "time": now_time.timestamp})
+    clustering_config.save()
+
     return pipeline.id
 
 

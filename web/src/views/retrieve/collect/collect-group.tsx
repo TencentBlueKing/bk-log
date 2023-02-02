@@ -31,7 +31,6 @@ interface ICollectProps {
   collectItem: IGroupItem;
   groupList: IGroupItem[];
   activeFavoriteID: number;
-  isShowGroupTitle: boolean;
   isSearchFilter: boolean;
 }
 
@@ -39,7 +38,6 @@ interface ICollectProps {
 export default class CollectGroup extends tsc<ICollectProps> {
   @Prop({ type: Object, required: true }) collectItem: IGroupItem; // 组的收藏列表
   @Prop({ type: Number, required: true }) activeFavoriteID: number; // 点击的活跃ID
-  @Prop({ type: Boolean, default: true }) isShowGroupTitle: boolean; // 是否展示组标题
   @Prop({ type: Boolean, default: false }) isSearchFilter: boolean; // 是否搜索过
   @Prop({ type: Array, default: () => [] }) groupList: IGroupItem[]; // 组列表
   @Inject('handleUserOperate') handleUserOperate;
@@ -51,16 +49,12 @@ export default class CollectGroup extends tsc<ICollectProps> {
   get isCannotChange() {
     return ['private', 'unknown'].includes(this.collectItem.group_type);
   }
-  get isShowTitleIcon() {
-    return this.collectItem.group_type !== 'unknown';
-  }
 
   handleClickCollect(item: IFavoriteItem) {
     setTimeout(() => {
       this.clickDrop = false;
     }, 100);
-    if (this.clickDrop) return;
-    this.clickDrop = false;
+    if (!item.is_active || this.clickDrop) return;
     this.handleUserOperate('click-favorite', item);
   }
   handleHoverTitle(type: boolean) {
@@ -111,29 +105,31 @@ export default class CollectGroup extends tsc<ICollectProps> {
     );
     return (
       <div class="retrieve-collect-group">
-        {this.isShowGroupTitle ? (
-          <div
-            class={[
-              'group-title fl-jcsb',
-              {
-                'is-active': !this.isHiddenList,
-                'is-move-cur': !this.isSearchFilter && !this.isCannotChange,
-              },
-            ]}
-            onMouseenter={() => this.handleHoverTitle(true)}
-            onMouseleave={() => this.handleHoverTitle(false)}>
-            <span class="group-cur" onClick={() => (this.isHiddenList = !this.isHiddenList)}>
-              <span class={['bk-icon icon-play-shape', { 'is-active': !this.isHiddenList }]}></span>
-              <span>{this.collectItem.group_name}</span>
-            </span>
-            {groupDropdownSlot(this.collectItem.group_name)}
-          </div>
-        ) : undefined}
+        <div
+          class={[
+            'group-title fl-jcsb',
+            {
+              'is-active': !this.isHiddenList,
+              'is-move-cur': !this.isSearchFilter && !this.isCannotChange,
+            },
+          ]}
+          onMouseenter={() => this.handleHoverTitle(true)}
+          onMouseleave={() => this.handleHoverTitle(false)}>
+          <span class="group-cur" onClick={() => (this.isHiddenList = !this.isHiddenList)}>
+            <span class={['bk-icon icon-play-shape', { 'is-active': !this.isHiddenList }]}></span>
+            <span>{this.collectItem.group_name}</span>
+          </span>
+          {groupDropdownSlot(this.collectItem.group_name)}
+        </div>
         <div class={['group-list', { 'list-hidden': this.isHiddenList }]}>
           {this.collectItem.favorites.map((item, index) => (
             <div
               key={index}
-              class={['group-item', { active: item.id === this.activeFavoriteID }]}
+              class={{
+                'group-item': true,
+                'is-disabled': !item.is_active,
+                active: item.id === this.activeFavoriteID,
+              }}
               onClick={() => this.handleClickCollect(item)}>
                 <div class={{
                   'group-item-left': true,

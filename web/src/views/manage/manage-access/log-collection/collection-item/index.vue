@@ -244,15 +244,23 @@
           <div class="collect-table-operate" slot-scope="props">
             <!-- 检索 -->
             <!-- 启用状态下 且存在 index_set_id 才能检索 -->
-            <bk-button
-              theme="primary"
-              text
+            <span
               class="king-button"
-              :disabled="!props.row.is_active || (!props.row.index_set_id && !props.row.bkdata_index_set_ids.length)"
-              v-cursor="{ active: !(props.row.permission && props.row.permission[authorityMap.SEARCH_LOG_AUTH]) }"
-              @click="operateHandler(props.row, 'search')">
-              {{ $t('nav.retrieve') }}
-            </bk-button>
+              v-bk-tooltips.top="{
+                content: getDisabledTipsMessage(props.row, 'search'),
+                disabled: !props.row.status
+                  || !(!props.row.is_active || (!props.row.index_set_id && !props.row.bkdata_index_set_ids.length)),
+                delay: 500,
+              }">
+              <bk-button
+                theme="primary"
+                text
+                :disabled="!props.row.is_active || (!props.row.index_set_id && !props.row.bkdata_index_set_ids.length)"
+                v-cursor="{ active: !(props.row.permission && props.row.permission[authorityMap.SEARCH_LOG_AUTH]) }"
+                @click="operateHandler(props.row, 'search')">
+                {{ $t('nav.retrieve') }}
+              </bk-button>
+            </span>
             <!-- 编辑 -->
             <bk-button
               theme="primary"
@@ -264,18 +272,24 @@
               @click.stop="operateHandler(props.row, 'edit')">
               {{ $t('编辑') }}
             </bk-button>
-            <!-- 前往清洗 -->
-            <bk-button
-              theme="primary"
-              text
-              class="king-button"
-              :disabled="!props.row.table_id"
-              v-cursor="{
-                active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
-              }"
-              @click.stop="operateHandler(props.row, 'clean')">
-              {{ $t('logClean.goToClean') }}
-            </bk-button>
+            <span v-bk-tooltips.top="{
+              content: getDisabledTipsMessage(props.row, 'clean'),
+              disabled: !props.row.status || props.row.table_id,
+              delay: 500,
+            }">
+              <!-- 前往清洗 -->
+              <bk-button
+                theme="primary"
+                text
+                class="king-button"
+                :disabled="!props.row.table_id"
+                v-cursor="{
+                  active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
+                }"
+                @click.stop="operateHandler(props.row, 'clean')">
+                {{ $t('logClean.goToClean') }}
+              </bk-button>
+            </span>
             <bk-dropdown-menu ref="dropdown" align="right">
               <i
                 class="bk-icon icon-more"
@@ -338,7 +352,12 @@
                     v-if="!props.row.status ||
                       props.row.status === 'running' ||
                       props.row.is_active ||
-                      !collectProject">
+                      !collectProject"
+                    v-bk-tooltips.top="{
+                      content: getDisabledTipsMessage(props.row, 'delete'),
+                      disabled: !props.row.status,
+                      delay: 500,
+                    }">
                     {{$t('btn.delete')}}
                   </a>
                   <a
@@ -354,7 +373,12 @@
                   <a
                     href="javascript:;"
                     class="text-disabled"
-                    v-if="!props.row.table_id">
+                    v-if="!props.row.table_id"
+                    v-bk-tooltips.top="{
+                      content: getDisabledTipsMessage(props.row, 'storage'),
+                      disabled: !props.row.status || props.row.table_id,
+                      delay: 500,
+                    }">
                     {{$t('logClean.storageSetting')}}
                   </a>
                   <a
@@ -370,7 +394,12 @@
                   <a
                     href="javascript:;"
                     class="text-disabled"
-                    v-if="!props.row.table_id">
+                    v-if="!props.row.table_id"
+                    v-bk-tooltips.top="{
+                      content: getDisabledTipsMessage(props.row, 'clone'),
+                      disabled: !props.row.status || props.row.table_id,
+                      delay: 500,
+                    }">
                     {{ $t('克隆') }}
                   </a>
                   <a

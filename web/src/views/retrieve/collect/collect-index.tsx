@@ -93,7 +93,6 @@ export default class CollectIndex extends tsc<IProps> {
   isSearchFilter = false; // 是否搜索过滤
   isShowAddNewFavoriteDialog = false; // 是否展示编辑收藏弹窗
   collectLoading = false; // 分组容器loading
-  isShowGroupTitle = true; // 是否展示分组头部
   searchVal = ''; // 搜索
   groupName = ''; // 新增组
   privateGroupID = 0; // 私人组ID
@@ -198,11 +197,6 @@ export default class CollectIndex extends tsc<IProps> {
         this.getFavoriteList();
         break;
       case 'reset-group-name': // 重命名
-        const isCanRename = /^[\u4e00-\u9fa5_a-zA-Z0-9`~!@#$%^&*()_\-+=<>?:"{}|,.\/;'\\[\]·~！@#￥%……&*（）——\-+={}|《》？：“”【】、；‘'，。、]+$/im.test(value);
-        if (!isCanRename) {
-          this.showMessagePop(this.$t('组名不规范'), 'error');
-          return;
-        }
         await this.handleUpdateGroupName(value, false);
         this.getFavoriteList();
         break;
@@ -226,7 +220,7 @@ export default class CollectIndex extends tsc<IProps> {
         break;
       case 'delete-favorite': // 删除收藏
         this.$bkInfo({
-          subTitle: `${this.$t('当前收藏为')}${value.name}，${this.$t('是否删除')}？`,
+          subTitle: `${this.$t('当前收藏名为')} ${value.name} ，${this.$t('确认')}${this.$t('是否删除')}？`,
           type: 'warning',
           confirmFn: async () => {
             await this.deleteFavorite(value.id);
@@ -236,7 +230,7 @@ export default class CollectIndex extends tsc<IProps> {
         break;
       case 'dismiss-group': // 解散分组
         this.$bkInfo({
-          title: `${this.$t('当前分组为')}${value.group_name}，${this.$t('是否解散')}？`,
+          title: `${this.$t('当前分组名为')} ${value.group_name} ，${this.$t('确认')}${this.$t('是否解散')}？`,
           subTitle: `${this.$t('解散文案')}`,
           type: 'warning',
           confirmFn: async () => {
@@ -255,12 +249,12 @@ export default class CollectIndex extends tsc<IProps> {
       }
         break;
       case 'drag-move-end':
-        $http.request('favorite/groupUpdateOrder', {
-          data: {
-            space_uid: this.spaceUid,
-            group_order: value,
-          },
-        });
+        // $http.request('favorite/groupUpdateOrder', {
+        //   data: {
+        //     space_uid: this.spaceUid,
+        //     group_order: value,
+        //   },
+        // });
         break;
       case 'create-copy': {
         const {
@@ -368,7 +362,10 @@ export default class CollectIndex extends tsc<IProps> {
     this.unknownGroupID = this.groupList[this.groupList.length - 1]?.group_id;
     this.privateGroupID = this.groupList[0]?.group_id;
     this.handleSearchFavorite();
-    this.isShowGroupTitle = !(this.collectList.length === 2 && !this.collectList[0].favorites.length);
+    // 当前只有未分组和个人收藏时 判断未分组是否有数据 如果没有 则不展示未分组
+    if (this.collectList.length === 2 && !this.collectList[1].favorites.length) {
+      this.collectList = [this.collectList[0]];
+    }
     this.filterCollectList = deepClone(this.collectList);
     if (this.activeFavoriteID >= 0) { // 获取列表后 判断当前是否有点击的活跃收藏 如果有 则进行数据更新
       let isFind = false;
@@ -438,6 +435,18 @@ export default class CollectIndex extends tsc<IProps> {
       this.showMessagePop(this.$t('操作成功'));
     });
   }
+  handleGroupKeyDown(value: string, event) {
+    if (['Enter', 'Tab', 'NumpadEnter'].includes(event.code) && !!value) {
+      this.handleUserOperate({
+        type: 'add-group',
+        value,
+      });
+      this.popoverGroupRef.hideHandler();
+      setTimeout(() => {
+        this.groupName = '';
+      }, 500);
+    }
+  }
 
   /** 控制页面布局宽度 */
   dragBegin(e) {
@@ -473,7 +482,6 @@ export default class CollectIndex extends tsc<IProps> {
         <CollectContainer
           dataList={this.filterCollectList}
           groupList={this.groupList}
-          isShowGroupTitle={this.isShowGroupTitle}
           activeFavoriteID={this.activeFavoriteID}
           isSearchFilter={this.isSearchFilter}
           collectLoading={this.collectLoading || this.favoriteLoading}
@@ -485,7 +493,7 @@ export default class CollectIndex extends tsc<IProps> {
                 <span class="favorite-number">{this.allFavoriteNumber}</span>
               </span>
               <span
-                class="bk-icon icon-cog"
+                class="bk-icon log-icon icon-wholesale-editor"
                 onClick={() => (this.isShowManageDialog = true)}
               ></span>
             </div>
@@ -493,6 +501,7 @@ export default class CollectIndex extends tsc<IProps> {
               <Input
                 right-icon="bk-icon icon-search"
                 vModel={this.searchVal}
+                placeholder={this.$t('搜索收藏名')}
                 on-enter={this.handleSearchFavorite}
                 on-right-icon-click={this.handleSearchFavorite}
               ></Input>
@@ -508,7 +517,8 @@ export default class CollectIndex extends tsc<IProps> {
                       clearable
                       placeholder={this.$t('请输入组名')}
                       vModel={this.groupName}
-                      maxlength={10}>
+                      maxlength={10}
+                      onKeydown={this.handleGroupKeyDown}>
                     </Input>
                     <div class="operate-button">
                       <Button text onClick={() => this.handleClickGroupBtn('add')}>
