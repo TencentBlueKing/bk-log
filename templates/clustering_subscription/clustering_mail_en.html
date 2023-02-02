@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<style>
+    table {
+        width: 1200px;
+        border: 1px solid #000000;
+        border-collapse: collapse;
+    }
+    th {
+        text-align: left;
+    }
+    th, td {
+        border: 1px solid #000000;
+        text-align: center;
+        font-size: 14px;
+        padding: 3px;
+        min-width: 60px;
+    }
+</style>
+<body>
+<p>{{ time_config.start_time }} - {{ time_config.end_time }} {{ title }}</p>
+<p>Biz Name:   {{ bk_biz_name }}</p>
+<p>Index Set Name: {{ index_set_name }}</p>
+<p>Log analysis：Pattern ({{ all_patterns.patterns.pattern_count + all_patterns.new_patterns.pattern_count }})个，Total logs ({{ all_patterns.patterns.log_count + all_patterns.new_patterns.log_count }}) </p>
+<p><a href='{{ log_search_url }}'>Log Detail</a></p>
+<table>
+    <thead>
+    <tr>
+        {% for header in table_headers%}
+            <th>{{ header }}</th>
+        {% endfor %}
+        {% for header in group_by%}
+            <th>{{ header }}</th>
+        {% endfor %}
+    </tr>
+    </thead>
+    <tbody>
+        {% if all_patterns.new_patterns.data %}
+            <p>New {{ log_col_show_type }} Example:</p>
+            {% for pattern in all_patterns.new_patterns.data %}
+                <tr>
+                    <td>{{ pattern.signature }}</td>
+                    <td>{{ pattern.count }}</td>
+                    <td>{{ pattern.percentage }}</td>
+                    <td>{{ pattern.year_on_year_count }}</td>
+                    <td>{{ pattern.pattern }}</td>
+                    {% for group in group_by%}
+                        <td>{{ group }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        {% endif %}
+        {% if all_patterns.patterns.data %}
+            <p>New {{ log_col_show_type }} Example:</p>
+            {% for pattern in all_patterns.patterns.data %}
+                <tr>
+                    <td>{{ pattern.signature }}</td>
+                    <td>{{ pattern.count }}</td>
+                    <td>{{ pattern.percentage }}</td>
+                    <td>{{ pattern.year_on_year_count }}</td>
+                    <td>{{ pattern.pattern }}</td>
+                    {% for group in group_by%}
+                        <td>{{ group }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        {% endif %}
+    </tbody>
+</table>
+</body>
+</html>

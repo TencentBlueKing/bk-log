@@ -545,7 +545,7 @@ class DataFlowHandler(BaseAiopsHandler):
             after_treat_flow.es.analyzed_fields = json.dumps(es_storage.get("analyzed_fields", []))
             doc_values_fields = es_storage.get("doc_values_fields", [])
             doc_values_fields.extend(
-                [f"{AGGS_FIELD_PREFIX}_{pattern_level}" for pattern_level in PatternEnum.get_choices()]
+                [f"{AGGS_FIELD_PREFIX}_{pattern_level}" for pattern_level in PatternEnum.get_dict_choices().keys()]
             )
             after_treat_flow.es.doc_values_fields = json.dumps(doc_values_fields)
             # 这里是为了避免计算平台数据源场景源索引命名重复导致创建有问题

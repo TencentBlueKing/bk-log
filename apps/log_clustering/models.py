@@ -19,10 +19,18 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-from apps.log_clustering.constants import StrategiesType
-from apps.models import SoftDeleteModel
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+
+from apps.log_clustering.constants import (
+    LogColShowTypeEnum,
+    PatternEnum,
+    StrategiesType,
+    SubscriptionTypeEnum,
+    YearOnYearChangeEnum,
+    YearOnYearEnum,
+)
+from apps.models import SoftDeleteModel
 
 
 class SampleSet(SoftDeleteModel):
@@ -121,3 +129,59 @@ class NoticeGroup(SoftDeleteModel):
     index_set_id = models.IntegerField(_("索引集id"), db_index=True)
     notice_group_id = models.IntegerField(_("通知人组id"))
     bk_biz_id = models.IntegerField(_("业务id"), null=True, blank=True)
+
+
+class ClusteringSubscription(SoftDeleteModel):
+    """
+    # frequency 频率&发送范围存储格式示例
+    {
+        "type": 1,
+        "day_list": [],
+        "run_time": "10",
+        "week_list": [1, 2, 3, 4, 5, 6, 7],
+        "data_range": {
+            "number": 30,
+            "time_level": "minutes"
+        }
+    }
+    """
+
+    subscription_type = models.CharField(
+        _("订阅类型"),
+        max_length=64,
+        choices=SubscriptionTypeEnum.get_choices(),
+        default=SubscriptionTypeEnum.WECHAT.value,
+    )
+    space_uid = models.CharField(_("空间ID"), db_index=True, max_length=256)
+    index_set_id = models.IntegerField(_("索引集id"), db_index=True)
+    title = models.TextField(_("标题"))
+    receivers = models.JSONField(_("接收人"))
+    managers = models.JSONField(_("管理员"))
+    frequency = models.JSONField(_("发送频率"))
+    pattern_level = models.CharField(
+        _("敏感度"), choices=PatternEnum.get_choices(), max_length=64, default=PatternEnum.LEVEL_05.value
+    )
+    log_display_count = models.IntegerField(_("日志条数"), default=5)
+    log_col_show_type = models.CharField(
+        _("日志列显示"), choices=LogColShowTypeEnum.get_choices(), max_length=64, default=LogColShowTypeEnum.PATTERN.value
+    )
+    group_by = models.JSONField(_("统计维度"), default=[], null=True, blank=True)
+    year_on_year_hour = models.IntegerField(
+        _("同比"), choices=YearOnYearEnum.get_choices(), default=YearOnYearEnum.NOT.value
+    )
+    year_on_year_change = models.CharField(
+        _("同比变化"), choices=YearOnYearChangeEnum.get_choices(), default=YearOnYearChangeEnum.ALL.value, max_length=64
+    )
+    query_string = models.TextField(_("查询语句"), default="*", null=True, blank=True)
+    addition = models.JSONField(_("查询条件"), default=[], null=True, blank=True)
+    host_scopes = models.JSONField(_("主机范围"), default={}, null=True, blank=True)
+    is_show_new_pattern = models.BooleanField(_("是否只要新类"), default=True)
+    is_enabled = models.BooleanField(_("是否启用"), default=True)
+    last_run_at = models.DateTimeField(_("最后运行时间"), blank=True, null=True)
+
+    created_at = models.DateTimeField(_("创建时间"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("更新时间"), auto_now=True)
+
+    class Meta:
+        verbose_name = _("日志聚类订阅")
+        verbose_name_plural = _("日志聚类订阅")
