@@ -433,6 +433,7 @@ export default {
 
       .setting-right {
         margin-left: 20px;
+        max-width: 1000px;
 
         .more-details {
           height: 48px;

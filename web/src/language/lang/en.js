@@ -438,7 +438,7 @@ export default {
   采集项: 'Collection',
   新建采集项: 'Create Collection',
   管理: 'Manage',
-  基本信息: 'Basic Info',
+  配置信息: 'Basic Info',
   采集状态: 'Collection Status',
   数据存储: 'Data Storage',
   数据状态: 'Data Status',
@@ -1616,5 +1616,7 @@ export default {
   正则匹配: 'Regular match',
   组合检索注意大写: 'Combination search pay attention to capitalization',
   未找到对应的采集项: 'The corresponding collection item was not found',
+  字段清洗: 'Field cleaning',
+  日志聚类: 'Log cluster',
   检查: 'Examination',
 };
