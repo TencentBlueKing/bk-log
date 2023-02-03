@@ -1319,7 +1319,7 @@ export default {
     occupySize: 'Resource occupation',
     remain: 'Remain',
     restoreStatus: 'Restore Status',
-    collectName: 'Collect Name',
+    collectName: 'Name',
     expired: 'Expired',
     totalSize: 'Total Size',
     indexCount: 'Index Count',

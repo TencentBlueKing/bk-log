@@ -264,7 +264,7 @@ export default {
           action_ids: [authorityMap.MANAGE_COLLECTION_AUTH],
           resources: [{
             type: 'collection',
-            id: row.collector_config_id,
+            id: row.id,
           }],
         });
       }
