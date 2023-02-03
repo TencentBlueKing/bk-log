@@ -23,7 +23,6 @@ from django.utils.translation import ugettext_lazy as _
 
 from apps.exceptions import BaseException, ErrorCode
 
-
 # =================================================
 # 日志聚类模块
 # =================================================
@@ -92,3 +91,8 @@ class BkdataFieldsException(BaseClusteringException):
 class ModelReleaseNotFoundException(BaseClusteringException):
     ERROR_CODE = "013"
     MESSAGE = _("模型找不到对应的发布版本: {model_id}")
+
+
+class LogSearchUrlNotFoundException(BaseClusteringException):
+    ERROR_CODE = "014"
+    MESSAGE = _("聚类配置log_search_url配置不存在")

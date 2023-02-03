@@ -345,12 +345,6 @@ BK_HOT_WARM_CONFIG_URL = (
 BK_COMPONENT_API_URL = os.environ.get("BK_COMPONENT_API_URL")
 DEPLOY_MODE = os.environ.get("DEPLOY_MODE", "")
 
-# 企业微信机器人
-WECHAT_WEB_HOOK_URL = os.getenv("BKAPP_WECHAT_WEB_HOOK_URL", "")
-
-LOG_SEARCH_SAAS_URL = os.getenv("BKAPP_LOG_SEARCH_SAAS_URL", "")
-
-
 # ===============================================================================
 # 企业版登录重定向
 # ===============================================================================
