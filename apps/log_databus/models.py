@@ -21,7 +21,7 @@ the project delivered to anyone in the future.
 """
 
 from apps.exceptions import ApiResultError
-from apps.log_databus.exceptions import ArchiveNotFound
+from apps.log_databus.exceptions import ArchiveNotFound, CollectorPluginNotImplemented
 from apps.models import MultiStrSplitByCommaFieldText
 from apps.utils.cache import cache_one_hour
 from apps.utils.function import map_if
@@ -520,11 +520,7 @@ class ArchiveConfig(SoftDeleteModel):
             raise ArchiveNotFound
         # 对采集插件归档时，获取采集插件下首个采集项ID
         if archive_config.collector_plugin_id:
-            collector = CollectorConfig.objects.filter(collector_plugin_id=archive_config.collector_plugin_id).first()
-            # 采集项不存在直接报错
-            if collector is None:
-                raise CollectorConfig.DoesNotExist
-            return collector.collector_config_id
+            return CollectorPlugin.get_collector_config_id(archive_config.collector_plugin_id)
         return archive_config.collector_config.collector_config_id
 
 
@@ -657,3 +653,15 @@ class CollectorPlugin(CollectorBase):
             is_display=display_status, updated_at=timezone.now(), updated_by=request_user
         )
         logger.info("[Change Collector Plugin Display Status] %s %s", self.collector_plugin_id, request_user)
+
+    @classmethod
+    def get_collector_config_id(cls, collector_plugin_id: int) -> int:
+        """获取任一采集项ID (默认返回ID最小的)"""
+        collector = (
+            CollectorConfig.objects.filter(collector_plugin_id=collector_plugin_id)
+            .order_by("collector_config_id")
+            .first()
+        )
+        if collector is None:
+            raise CollectorPluginNotImplemented()
+        return collector.collector_config_id

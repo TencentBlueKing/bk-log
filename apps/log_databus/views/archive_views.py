@@ -28,7 +28,7 @@ from apps.iam.handlers.drf import (
 )
 from apps.log_databus.handlers.archive import ArchiveHandler
 
-from apps.log_databus.models import ArchiveConfig, CollectorConfig
+from apps.log_databus.models import ArchiveConfig, CollectorPlugin
 from apps.log_databus.serializers import (
     CreateArchiveSerlalizer,
     ListArchiveSerlalizer,
@@ -51,11 +51,7 @@ class ArchiveViewSet(ModelViewSet):
             # 若创建的是采集插件类型归档。需要使用任一采集项进行鉴权
             collector_plugin_id = self.request.data.get("collector_plugin_id")
             if collector_plugin_id is not None:
-                collector = CollectorConfig.objects.filter(collector_plugin_id=collector_plugin_id).first()
-                # 未配置采集项时直接报错
-                if collector is None:
-                    raise CollectorConfig.DoesNotExist
-                self.request.data["collector_config_id"] = collector.collector_config_id
+                self.request.data["collector_config_id"] = CollectorPlugin.get_collector_config_id(collector_plugin_id)
             return [
                 InstanceActionForDataPermission(
                     "collector_config_id", [ActionEnum.MANAGE_COLLECTION], ResourceEnum.COLLECTION
