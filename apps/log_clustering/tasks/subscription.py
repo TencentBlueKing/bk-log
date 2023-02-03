@@ -44,16 +44,13 @@ from apps.log_clustering.constants import (
 from apps.log_clustering.exceptions import (
     ClusteringClosedException,
     ClusteringConfigNotExistException,
-    LogSearchUrlNotFoundException,
 )
 from apps.log_clustering.handlers.pattern import PatternHandler
 from apps.log_clustering.models import ClusteringConfig, ClusteringSubscription
 from apps.log_clustering.utils.wechat_robot import WeChatRobot
 from apps.log_measure.utils.metric import MetricUtils
 from apps.log_search.exceptions import IndexSetDoseNotExistException
-from apps.log_search.handlers.search.search_handlers_esquery import (
-    SearchHandler as SearchHandlerEsquery,
-)
+from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler as SearchHandlerEsquery
 from apps.log_search.models import LogIndexSet
 from apps.utils.log import logger
 from bkm_space import api
@@ -254,7 +251,7 @@ def clean_pattern(config: ClusteringSubscription, time_config: dict, data: list,
     return result
 
 
-def generate_log_search_url(config: ClusteringSubscription, time_config: dict, log_search_url: str) -> str:
+def generate_log_search_url(config: ClusteringSubscription, time_config: dict) -> str:
 
     params = {
         "spaceUid": config.space_uid,
@@ -265,7 +262,7 @@ def generate_log_search_url(config: ClusteringSubscription, time_config: dict, l
         "end_time": time_config["end_time"],
     }
 
-    url = f"{log_search_url}/#/retrieve/{config.index_set_id}?{urlencode(params)}"
+    url = f"{settings.BK_BKLOG_HOST}#/retrieve/{config.index_set_id}?{urlencode(params)}"
     return url
 
 
@@ -305,7 +302,7 @@ def send_mail(params: dict, receivers: list):
     )
 
 
-def send(config: ClusteringSubscription, time_config: dict, bk_biz_name: str, language: str, log_search_url: str):
+def send(config: ClusteringSubscription, time_config: dict, bk_biz_name: str, language: str):
     result = query_patterns(config, time_config)
     if not result:
         logger.info(f"Query pattern is empty. space_uid: {config.space_uid}, index_set_id: {config.index_set_id}")
@@ -328,7 +325,7 @@ def send(config: ClusteringSubscription, time_config: dict, bk_biz_name: str, la
         "time_config": time_config,
         "bk_biz_name": bk_biz_name,
         "index_set_name": log_index_set.index_set_name,
-        "log_search_url": generate_log_search_url(config, time_config, log_search_url),
+        "log_search_url": generate_log_search_url(config, time_config),
         "table_headers": [_("数据指纹"), _("数量"), _("占比"), _("同比数量"), "Pattern"],
         "all_patterns": all_patterns,
         "log_col_show_type": config.log_col_show_type.capitalize(),
@@ -350,9 +347,6 @@ def send(config: ClusteringSubscription, time_config: dict, bk_biz_name: str, la
 def send_subscription_task():
     if not FeatureToggleObject.switch(BKDATA_CLUSTERING_TOGGLE):
         raise ClusteringClosedException()
-    log_search_url = FeatureToggleObject.toggle(BKDATA_CLUSTERING_TOGGLE).feature_config.get("log_search_url", "")
-    if not log_search_url:
-        raise LogSearchUrlNotFoundException()
 
     subscription_configs = ClusteringSubscription.objects.all()
 
@@ -371,4 +365,4 @@ def send_subscription_task():
 
             language = space.properties.get("language", "") or translation.get_language()
             bk_biz_name = MetricUtils.get_instance().get_biz_name(space.bk_biz_id)
-            ex.submit(send, config, time_config, bk_biz_name, language, log_search_url)
+            ex.submit(send, config, time_config, bk_biz_name, language)
