@@ -33,13 +33,19 @@ from django.utils.translation import ugettext_lazy as _
 from jinja2 import Environment, FileSystemLoader
 
 from apps.api import CmsiApi
+from apps.feature_toggle.handlers.toggle import FeatureToggleObject
+from apps.feature_toggle.plugins.constants import BKDATA_CLUSTERING_TOGGLE
 from apps.log_clustering.constants import (
     FrequencyTypeEnum,
     LogColShowTypeEnum,
     SubscriptionTypeEnum,
     YearOnYearChangeEnum,
 )
-from apps.log_clustering.exceptions import ClusteringConfigNotExistException
+from apps.log_clustering.exceptions import (
+    ClusteringClosedException,
+    ClusteringConfigNotExistException,
+    LogSearchUrlNotFoundException,
+)
 from apps.log_clustering.handlers.pattern import PatternHandler
 from apps.log_clustering.models import ClusteringConfig, ClusteringSubscription
 from apps.log_clustering.utils.wechat_robot import WeChatRobot
@@ -248,7 +254,8 @@ def clean_pattern(config: ClusteringSubscription, time_config: dict, data: list,
     return result
 
 
-def generate_log_search_url(config: ClusteringSubscription, time_config: dict) -> str:
+def generate_log_search_url(config: ClusteringSubscription, time_config: dict, log_search_url: str) -> str:
+
     params = {
         "spaceUid": config.space_uid,
         "keyword": config.query_string or "*",
@@ -258,7 +265,7 @@ def generate_log_search_url(config: ClusteringSubscription, time_config: dict) -
         "end_time": time_config["end_time"],
     }
 
-    url = f"{settings.LOG_SEARCH_SAAS_URL}/#/retrieve/{config.index_set_id}?{urlencode(params)}"
+    url = f"{log_search_url}/#/retrieve/{config.index_set_id}?{urlencode(params)}"
     return url
 
 
@@ -279,7 +286,9 @@ def send_wechat(params: dict, receivers: list):
         "markdown": {"content": content},
     }
     robot_api.send_msg(send_params)
-    ClusteringSubscription.objects.filter(id=params["subscription_id"]).update(last_run_at=params["time_config"]["last_run_at"])
+    ClusteringSubscription.objects.filter(id=params["subscription_id"]).update(
+        last_run_at=params["time_config"]["last_run_at"]
+    )
 
 
 def send_mail(params: dict, receivers: list):
@@ -291,10 +300,12 @@ def send_mail(params: dict, receivers: list):
         "title": params["title"],
     }
     CmsiApi.send_mail(send_params)
-    ClusteringSubscription.objects.filter(id=params["subscription_id"]).update(last_run_at=params["time_config"]["last_run_at"])
+    ClusteringSubscription.objects.filter(id=params["subscription_id"]).update(
+        last_run_at=params["time_config"]["last_run_at"]
+    )
 
 
-def send(config: ClusteringSubscription, time_config: dict, bk_biz_name: str, language: str):
+def send(config: ClusteringSubscription, time_config: dict, bk_biz_name: str, language: str, log_search_url: str):
     result = query_patterns(config, time_config)
     if not result:
         logger.info(f"Query pattern is empty. space_uid: {config.space_uid}, index_set_id: {config.index_set_id}")
@@ -317,7 +328,7 @@ def send(config: ClusteringSubscription, time_config: dict, bk_biz_name: str, la
         "time_config": time_config,
         "bk_biz_name": bk_biz_name,
         "index_set_name": log_index_set.index_set_name,
-        "log_search_url": generate_log_search_url(config, time_config),
+        "log_search_url": generate_log_search_url(config, time_config, log_search_url),
         "table_headers": [_("数据指纹"), _("数量"), _("占比"), _("同比数量"), "Pattern"],
         "all_patterns": all_patterns,
         "log_col_show_type": config.log_col_show_type.capitalize(),
@@ -337,6 +348,12 @@ def send(config: ClusteringSubscription, time_config: dict, bk_biz_name: str, la
 
 @periodic_task(run_every=crontab(minute="*/1"))
 def send_subscription_task():
+    if not FeatureToggleObject.switch(BKDATA_CLUSTERING_TOGGLE):
+        raise ClusteringClosedException()
+    log_search_url = FeatureToggleObject.toggle(BKDATA_CLUSTERING_TOGGLE).feature_config.get("log_search_url", "")
+    if not log_search_url:
+        raise LogSearchUrlNotFoundException()
+
     subscription_configs = ClusteringSubscription.objects.all()
 
     with ThreadPoolExecutor() as ex:
@@ -354,4 +371,4 @@ def send_subscription_task():
 
             language = space.properties.get("language", "") or translation.get_language()
             bk_biz_name = MetricUtils.get_instance().get_biz_name(space.bk_biz_id)
-            ex.submit(send, config, time_config, bk_biz_name, language)
+            ex.submit(send, config, time_config, bk_biz_name, language, log_search_url)

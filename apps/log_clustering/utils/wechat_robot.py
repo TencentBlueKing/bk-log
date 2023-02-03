@@ -20,14 +20,18 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import requests
-from django.conf import settings
 
 from apps.exceptions import ApiRequestError
+from apps.feature_toggle.handlers.toggle import FeatureToggleObject
+from apps.feature_toggle.plugins.constants import BKDATA_CLUSTERING_TOGGLE
+from apps.log_clustering.exceptions import ClusteringClosedException
 
 
 class WeChatRobot:
     def __init__(self):
-        self.url = settings.WECHAT_WEB_HOOK_URL
+        if not FeatureToggleObject.switch(BKDATA_CLUSTERING_TOGGLE):
+            raise ClusteringClosedException()
+        self.url = FeatureToggleObject.toggle(BKDATA_CLUSTERING_TOGGLE).feature_config.get("wechat_web_hook_url")
 
     def send_msg(self, data):
         try:
