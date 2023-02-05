@@ -218,6 +218,7 @@ class SearchHandler(object):
         self.iterationIdx: str = search_dict.get("iterationIdx", None)  # pylint: disable=invalid-name
         self.iterationIndex: str = search_dict.get("iterationIndex", None)  # pylint: disable=invalid-name
         self.dtEventTimeStamp = search_dict.get("dtEventTimeStamp", None)  # pylint: disable=invalid-name
+        self.bk_host_id = search_dict.get("bk_host_id", None)  # pylint: disable=invalid-name
 
         # 上下文初始化标记
         self.zero: bool = search_dict.get("zero", False)
@@ -912,6 +913,7 @@ class SearchHandler(object):
                 gseindex=self.gseindex,
                 path=self.path,
                 ip=self.ip,
+                bk_host_id=self.bk_host_id,
                 container_id=self.container_id,
                 logfile=self.logfile,
                 order=order,
@@ -925,6 +927,7 @@ class SearchHandler(object):
                 gseIndex=self.gseIndex,
                 path=self.path,
                 serverIp=self.serverIp,
+                bk_host_id=self.bk_host_id,
                 container_id=self.container_id,
                 logfile=self.logfile,
                 order=order,
@@ -948,6 +951,7 @@ class SearchHandler(object):
                     gseindex=self.gseindex,
                     path=self.path,
                     ip=self.ip,
+                    bk_host_id=self.bk_host_id,
                     container_id=self.container_id,
                     logfile=self.logfile,
                     zero=self.zero,
@@ -959,6 +963,7 @@ class SearchHandler(object):
                     start=self.start,
                     gseIndex=self.gseIndex,
                     path=self.path,
+                    bk_host_id=self.bk_host_id,
                     serverIp=self.serverIp,
                     container_id=self.container_id,
                     logfile=self.logfile,
@@ -1318,6 +1323,7 @@ class SearchHandler(object):
             for index, item in enumerate(log_list):
                 gseindex: str = item.get("gseindex")
                 ip: str = item.get("ip")
+                bk_host_id: int = item.get("bk_host_id")
                 path: str = item.get("path")
                 container_id: str = item.get("container_id")
                 logfile: str = item.get("logfile")
@@ -1328,15 +1334,24 @@ class SearchHandler(object):
                         _count_start = index
 
                 if (
-                    self.gseindex == str(gseindex)
-                    and self.ip == ip
-                    and self.path == path
-                    and self._iteration_idx == str(_iteration_idx)
-                ) or (
-                    self.gseindex == str(gseindex)
-                    and self.container_id == container_id
-                    and self.logfile == logfile
-                    and self._iteration_idx == str(_iteration_idx)
+                    (
+                        self.gseindex == str(gseindex)
+                        and self.bk_host_id == bk_host_id
+                        and self.path == path
+                        and self._iteration_idx == str(_iteration_idx)
+                    )
+                    or (
+                        self.gseindex == str(gseindex)
+                        and self.ip == ip
+                        and self.path == path
+                        and self._iteration_idx == str(_iteration_idx)
+                    )
+                    or (
+                        self.gseindex == str(gseindex)
+                        and self.container_id == container_id
+                        and self.logfile == logfile
+                        and self._iteration_idx == str(_iteration_idx)
+                    )
                 ):
                     _index = index
                     break
@@ -1345,6 +1360,7 @@ class SearchHandler(object):
             for index, item in enumerate(log_list):
                 gseIndex: str = item.get("gseIndex")  # pylint: disable=invalid-name
                 serverIp: str = item.get("serverIp")  # pylint: disable=invalid-name
+                bk_host_id: int = item.get("bk_host_id")
                 path: str = item.get("path")
                 iterationIndex: str = item.get("iterationIndex")  # pylint: disable=invalid-name
                 # find the counting range point
@@ -1352,6 +1368,11 @@ class SearchHandler(object):
                     if str(gseIndex) == mark_gseIndex:
                         _count_start = index
                 if (
+                    self.gseIndex == str(gseIndex)
+                    and self.bk_host_id == bk_host_id
+                    and self.path == path
+                    and self.iterationIndex == str(iterationIndex)
+                ) or (
                     self.gseIndex == str(gseIndex)
                     and self.serverIp == serverIp
                     and self.path == path
@@ -1394,12 +1415,13 @@ class SearchHandler(object):
 
     def _combine_addition_ip_chooser(self, attrs: dict):
         ip_chooser_ip_list: list = []
+        ip_chooser_host_id_list: list = []
         ip_chooser: dict = attrs.get("ip_chooser")
         if ip_chooser:
             ip_chooser_host_list = IPChooser(
                 bk_biz_id=attrs["bk_biz_id"], fields=CommonEnum.SIMPLE_HOST_FIELDS.value
             ).transfer2host(ip_chooser)
-            # TODO: 暂时只支持IPV4
+            ip_chooser_host_id_list = [host["bk_host_id"] for host in ip_chooser_host_list]
             ip_chooser_ip_list = [host["bk_host_innerip"] for host in ip_chooser_host_list]
         addition_ip_list, new_addition = self._deal_addition(attrs)
         if addition_ip_list:
@@ -1408,6 +1430,8 @@ class SearchHandler(object):
             search_ip_list = ip_chooser_ip_list
         else:
             search_ip_list = []
+        if ip_chooser_host_id_list:
+            new_addition.append({"field": "bk_host_id", "operator": "is one of", "value": ip_chooser_host_id_list})
         new_addition.append({"field": self.ip_field, "operator": "is one of", "value": list(set(search_ip_list))})
         attrs["addition"] = new_addition
         return attrs
