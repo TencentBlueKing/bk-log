@@ -26,9 +26,10 @@ from apps.iam.handlers.drf import (
     insert_permission_field,
     InstanceActionForDataPermission,
 )
+from apps.log_databus.constants import ArchiveInstanceType
 from apps.log_databus.handlers.archive import ArchiveHandler
 
-from apps.log_databus.models import ArchiveConfig
+from apps.log_databus.models import ArchiveConfig, CollectorPlugin
 from apps.log_databus.serializers import (
     CreateArchiveSerlalizer,
     ListArchiveSerlalizer,
@@ -48,6 +49,13 @@ class ArchiveViewSet(ModelViewSet):
 
     def get_permissions(self):
         if self.action in ["create"]:
+            instance_id = self.request.data.get("instance_id")
+            instance_type = self.request.data.get("instance_type")
+            # 若创建的是采集插件类型归档。需要使用任一采集项进行鉴权
+            if instance_type == ArchiveInstanceType.COLLECTOR_PLUGIN.value:
+                self.request.data["collector_config_id"] = CollectorPlugin.get_collector_config_id(instance_id)
+            if instance_type == ArchiveInstanceType.COLLECTOR_CONFIG.value:
+                self.request.data["collector_config_id"] = instance_id
             return [
                 InstanceActionForDataPermission(
                     "collector_config_id", [ActionEnum.MANAGE_COLLECTION], ResourceEnum.COLLECTION
@@ -65,7 +73,7 @@ class ArchiveViewSet(ModelViewSet):
         return [ViewBusinessPermission()]
 
     @insert_permission_field(
-        id_field=lambda d: d["collector_config_id"],
+        id_field=lambda d: d["_collector_config_id"],
         data_field=lambda d: d["list"],
         actions=[ActionEnum.VIEW_COLLECTION, ActionEnum.MANAGE_COLLECTION],
         resource_meta=ResourceEnum.COLLECTION,
