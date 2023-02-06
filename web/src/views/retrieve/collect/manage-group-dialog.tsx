@@ -196,7 +196,7 @@ export default class GroupDialog extends tsc<IProps> {
   }
 
   mounted() {
-    const initTableHeight = parseInt(`${(document.body.clientHeight * 0.8)  - 240}`);
+    const initTableHeight = Math.floor(document.body.clientHeight * 0.8)  - 240;
     this.maxHeight = initTableHeight > this.maxHeight ? initTableHeight : this.maxHeight;
   }
 
@@ -215,6 +215,7 @@ export default class GroupDialog extends tsc<IProps> {
       this.updateSourceFilters = [];
       this.searchAfterList = [];
       this.handleShowChange();
+      this.handleSubmitChange(true);
     }
   }
 
@@ -456,6 +457,9 @@ export default class GroupDialog extends tsc<IProps> {
         // 当前选中选择删除
         const index = this.selectFavoriteList.findIndex(item => item === row.id);
         if (index >= 0) this.selectFavoriteList.splice(index, 1);
+        $http.request('favorite/deleteFavorite', {
+          params: { favorite_id: row.id },
+        });
       },
     });
   }
