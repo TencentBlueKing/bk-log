@@ -91,18 +91,30 @@
     // padding: 6px 6px !important;
   }
 
-  .add-new-group-input {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-
+  .add-new-page-container {
+    .add-new-page-input {
+      display: flex;
+      align-items: center;
+      flex-wrap: nowrap;
+      justify-content: space-between;
+    }
+  
     .operate-button {
-      margin-top: 4px;
-      .bk-button-text {
-        font-size: 12px;
+      font-size: 16px;
+      margin-left: 6px;
+      color: #979ba5;
+  
+      span {
+        cursor: pointer;
       }
-      > span {
-        margin-left: 6px;
+  
+      > :first-child {
+        color: #33D05C;
+        margin-right: 12px;
+      }
+  
+      > :last-child {
+        color: #979ba5;
       }
     }
   }
