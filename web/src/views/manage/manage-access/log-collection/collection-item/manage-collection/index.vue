@@ -65,7 +65,7 @@ export default {
       collectorData: null,
       activePanel: this.$route.query.type || 'basicInfo',
       panels: [
-        { name: 'basicInfo', label: this.$t('基本信息') },
+        { name: 'basicInfo', label: this.$t('配置信息') },
         { name: 'collectionStatus', label: this.$t('采集状态') },
         { name: 'dataStorage', label: this.$t('数据存储') },
         { name: 'dataStatus', label: this.$t('数据状态') },

@@ -660,7 +660,8 @@ export default {
         font-size: 12px;
         color: transparent;
         pointer-events: none;
-        text-decoration: red wavy underline;
+        /* stylelint-disable-next-line declaration-no-important */
+        text-decoration: red wavy underline !important;
       }
     }
 

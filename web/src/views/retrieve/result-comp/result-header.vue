@@ -107,10 +107,10 @@
         theme="light bk-select-dropdown"
         animation="slide-toggle"
         :offset="0"
-        :distance="15">
+        :distance="11">
         <slot name="trigger">
           <div class="more-operation">
-            <i class="bk-icon icon-more"></i>
+            <i class="bk-icon icon-ellipsis"></i>
           </div>
         </slot>
         <div slot="content" class="retrieve-setting-container">
@@ -232,9 +232,29 @@ export default {
       }],
       settingMenuList: [
         // { id: 'index', name: '全文索引' },
-        { id: 'extract', name: '字段清洗' },
-        { id: 'clustering', name: '日志聚类' },
+        { id: 'extract', name: this.$t('字段清洗') },
+        { id: 'clustering', name: this.$t('日志聚类') },
       ],
+      accessList: {
+        baseInfo: this.$t('配置信息'),
+        dataStorage: this.$t('数据存储'),
+        usageDetails: this.$t('使用详情'),
+        dataStatus: this.$t('数据状态'),
+        fieldInfo: this.$t('字段信息'),
+        collectionStatus: this.$t('采集状态'),
+      },
+      routeNameList: { // 路由跳转name
+        log: 'manage-collection',
+        custom: 'custom-report-detail',
+        manage: 'bkdata-index-set-manage',
+        indexManage: 'log-index-set-manage',
+      },
+      logDetailKey: ['baseInfo', 'collectionStatus', 'dataStorage', 'dataStatus', 'usageDetails'], // 日志采集li列表
+      bkdataDetailKey: ['baseInfo', 'usageDetails', 'fieldInfo'], // 计算平台 li列表
+      esDetailKey: ['baseInfo', 'usageDetails', 'fieldInfo'], // 第三方ES li列表
+      setIndexDetailKey: ['baseInfo', 'usageDetails', 'fieldInfo'], // 索引集li列表
+      customDetailKey: ['baseInfo', 'dataStorage', 'dataStatus', 'usageDetails'], // 自定义上报li列表
+      detailJumpRouteKey: 'log', // 路由key log采集列表 custom自定义上报 es、bkdata、setIndex 第三方ED or 计算平台 or 索引集
       isFirstCloseCollect: false,
       showSettingMenuList: [],
       showCollectIntroGuide: false,
@@ -259,10 +279,10 @@ export default {
     },
   },
   watch: {
-    'indexSetItem.scenario_id': {
+    indexSetItem: {
       immediate: true,
       handler(val) {
-        this.setIsShowExtract(val === 'log');
+        this.setShowLiList(val);
       },
     },
   },
@@ -323,17 +343,68 @@ export default {
       document.hidden ? clearTimeout(this.refreshTimer) : this.setRefreshTime();
     },
     handleMenuClick(val) {
-      this.$emit('settingMenuClick', val);
-    },
-    setIsShowExtract(state) {
-      if (state) {
-        this.showSettingMenuList = this.settingMenuList;
+      // 不属于新开页面的操作
+      if (['index', 'extract', 'clustering'].includes(val)) {
+        this.$emit('settingMenuClick', val);
+        return;
+      };
+      const params = {};
+      if (['manage', 'indexManage'].includes(this.detailJumpRouteKey)) {
+        params.indexSetId = this.indexSetItem?.index_set_id;
       } else {
-        const spliceIndex = this.settingMenuList.findIndex(item => item.id === 'extract');
-        const sliceSettingMenuList = JSON.parse(JSON.stringify(this.settingMenuList));
-        sliceSettingMenuList.splice(spliceIndex, 1);
-        this.showSettingMenuList = sliceSettingMenuList;
+        params.collectorId = this.indexSetItem?.collector_config_id;
       }
+      const { href } = this.$router.resolve({
+        name: this.routeNameList[this.detailJumpRouteKey],
+        params,
+        query: {
+          type: val,
+          spaceUid: this.$store.state.spaceUid,
+          backRoute: 'retrieve',
+        },
+      });
+      window.open(href, '_blank');
+    },
+    setShowLiList(setItem) {
+      if (JSON.stringify(setItem) === '{}') return;
+      if (setItem.scenario_id === 'log') { // 索引集类型为采集项或自定义上报
+        if (setItem.collector_scenario_id === null) { // 若无日志类型 则类型为索引集
+          this.initJumpRouteList('setIndex');
+          return;
+        }
+        // 判断是否是自定义上报类型
+        this.initJumpRouteList(setItem.collector_scenario_id === 'custom' ? 'custom' : 'log');
+        return;
+      }
+      // 当scenario_id不为log（采集项，索引集，自定义上报）时，不显示字段设置
+      this.initJumpRouteList(setItem.scenario_id, true);
+    },
+    /**
+     * @desc: 初始化选择列表
+     * @param {String} detailStr 当前索引集类型
+     * @param {Boolean} isFilterExtract 是否过滤字段设置
+     */
+    initJumpRouteList(detailStr, isFilterExtract = false) {
+      if (!['log', 'es', 'bkdata', 'custom', 'setIndex'].includes(detailStr)) {
+        this.showSettingMenuList = this.settingMenuList;
+        return;
+      };
+      if (['es', 'bkdata'].includes(detailStr)) {
+        this.detailJumpRouteKey = 'manage';
+      } else if (detailStr === 'setIndex') {
+        this.detailJumpRouteKey = 'indexManage';
+      } else {
+        this.detailJumpRouteKey = detailStr;
+      }
+      this.showSettingMenuList = this.settingMenuList.filter(item => (isFilterExtract ? item.id !== 'extract' : true));
+      const extraRouteList = this[`${detailStr}DetailKey`].reduce((pre, cur) => {
+        pre.push({
+          id: cur,
+          name: this.accessList[cur],
+        });
+        return pre;
+      }, []);
+      this.showSettingMenuList = this.showSettingMenuList.concat(extraRouteList);
     },
     handleClickResultIcon(type) {
       if (type === 'collect') {
@@ -548,7 +619,7 @@ export default {
       line-height: 22px;
       cursor: pointer;
 
-      .icon-more {
+      .icon-ellipsis {
         display: flex;
         justify-content: center;
         align-items: center;
@@ -560,7 +631,7 @@ export default {
         &:hover {
           color: #0083ff;
           cursor: pointer;
-          border-radius: 50%;
+          border-radius: 2px;
           background-color: #e1ecff;
         }
       }

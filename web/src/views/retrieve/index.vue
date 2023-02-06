@@ -382,6 +382,7 @@
       :favorite-i-d="activeFavoriteID"
       :replace-data="replaceFavoriteData"
       :visible-fields="visibleFields"
+      :is-click-favorite-edit="true"
       @submit="handleSubmitFavorite" />
   </div>
 </template>
@@ -410,7 +411,6 @@ import { handleTransformToTimestamp } from '../../components/time-range/utils';
 import indexSetSearchMixin from '@/mixins/indexSet-search-mixin';
 import axios from 'axios';
 import * as authorityMap from '../../common/authority-map';
-import { deepClone } from '../../components/monitor-echarts/utils';
 
 export default {
   name: 'Retrieve',
@@ -762,7 +762,8 @@ export default {
     async fetchPageData() {
       // 有spaceUid且有业务权限时 才去请求索引集列表
       if (!this.authMainPageInfo && this.spaceUid) {
-        await this.getFavoriteList(); // 先获取到收藏列表再获取索引集列表
+        // 收藏侧边栏打开且 则先获取到收藏列表再获取索引集列表
+        this.isShowCollect && await this.getFavoriteList();
         this.requestOperateList();
         this.requestIndexSetList();
       } else {
@@ -1279,7 +1280,12 @@ export default {
         };
         // 检索完后 回显当前展示的字段
         if (isMemoryFields && memoryFields.length) this.handleFieldsUpdated(memoryFields, undefined, false);
-        if (this.isFavoriteSearch) this.isSqlSearchType = !this.isShowUiType; // 判断是否有表单模式的数组值 如果有 则切换为表单模式
+        if (this.isFavoriteSearch) {
+          setTimeout(() => {
+            this.initSearchList();
+          }, 500);
+          this.isSqlSearchType = !this.isShowUiType; // 判断是否有表单模式的数组值 如果有 则切换为表单模式
+        }
         // 搜索完毕后，如果开启了自动刷新，会在 timeout 后自动刷新
         this.$refs.resultHeader && this.$refs.resultHeader.setRefreshTime();
         this.isFavoriteSearch = false;
@@ -1809,6 +1815,8 @@ export default {
           .sort((a, b) => a.group_name.localeCompare(b.group_name));
         const sortAfterList = [provideFavorite, ...sortFavoriteList, publicFavorite];
         this.favoriteList = sortAfterList;
+      } catch (err) {
+        this.favoriteLoading = false;
       } finally {
         this.favoriteLoading = false;
       }
@@ -1858,36 +1866,32 @@ export default {
       }
       this.addFavoriteData = {}; // 清空新增收藏的数据
       this.isFavoriteSearch = true;
-      this.activeFavorite = deepClone(value);
+      this.activeFavorite = value;
       this.activeFavoriteID = value.id;
-      await this.initSearchList();
-      this.retrieveFavorite(deepClone(value));
+      this.retrieveFavorite(value);
     },
     // 收藏列表刷新, 判断当前是否有点击活跃的收藏 如有则进行数据更新
-    async updateActiveFavoriteData(value) {
-      this.activeFavorite = deepClone(value);
-      this.isShowUiType ? this.initSearchList() : (this.isSqlSearchType = true);
+    updateActiveFavoriteData(value) {
+      this.activeFavorite = value;
+      this.initSearchList();
+      this.isSqlSearchType = !this.isShowUiType;
     },
-    // 根据检索语句 获取表单字段
-    async getSearchFieldsList(keyword) {
+    async handleBlurSearchInput(keyword) {
+      keyword === '' && (keyword = '*');
       try {
         const res = await this.$http.request('favorite/getSearchFields', {
           data: { keyword },
         });
-        return res.data.map(item => item.name);
+        this.inputSearchList = res.data.map(item => item.name);
       } catch (err) {
-        return [];
+        this.inputSearchList = [];
       }
     },
-    async handleBlurSearchInput(newKeyword) {
-      newKeyword === '' && (newKeyword = '*');
-      this.inputSearchList = await this.getSearchFieldsList(newKeyword);
-    },
     // 当点击有表单模式的收藏时 初始化search列表
-    async initSearchList() {
+    initSearchList() {
       if (this.isShowUiType) {
         this.favSearchList = this.activeFavorite.params?.search_fields || [];
-        await this.handleBlurSearchInput(this.activeFavorite.params?.keyword || '*');
+        this.handleBlurSearchInput(this.activeFavorite.params?.keyword || '*');
       }
     },
   },

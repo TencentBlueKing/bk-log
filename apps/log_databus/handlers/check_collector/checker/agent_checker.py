@@ -184,7 +184,7 @@ class AgentChecker(Checker):
 
                         for step in log_content["data"]:
                             module = step["module"]
-                            item = CHECK_AGENT_STEP[step["item"]]
+                            item = CHECK_AGENT_STEP.get(step["item"], "gse agent检查")
                             message = step["message"]
                             if step["status"]:
                                 self.append_normal_info(f"[{module}] [{item}] [成功] {message}")

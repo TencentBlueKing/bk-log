@@ -43,7 +43,5 @@ class CheckCollectorViewSet(APIViewSet):
     def run_check_collector(self, request, *args, **kwargs):
         data = self.params_valid(CheckCollectorSerializer)
         key = CheckCollectorRecord.generate_check_record_id(**data)
-        bk_token = request.COOKIES.get("bk_token")
-        data.update({"bk_token": bk_token})
         async_run_check.delay(**data)
         return Response({"check_record_id": key})
