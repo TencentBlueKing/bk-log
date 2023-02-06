@@ -57,7 +57,7 @@
         </bk-table-column>
         <bk-table-column :label="$t('logArchive.archiveItem')">
           <template slot-scope="props">
-            {{ props.row.collector_config_name }}
+            {{ props.row.instance_name }}
           </template>
         </bk-table-column>
         <bk-table-column :label="$t('logArchive.timeRange')" min-width="240">
@@ -352,7 +352,7 @@ export default {
             action_ids: [authorityMap.MANAGE_COLLECTION_AUTH],
             resources: [{
               type: 'collection',
-              id: row.collector_config_id,
+              id: row.instance_id,
             }],
           });
         }
