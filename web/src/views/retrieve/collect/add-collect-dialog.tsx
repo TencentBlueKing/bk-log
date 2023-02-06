@@ -67,10 +67,14 @@ export default class CollectDialog extends tsc<IProps> {
   @Prop({ type: Array, default: () => [] }) visibleFields: Array<any>; // 字段
   @Prop({ type: Array, default: () => [] }) favoriteList: Array<any>; // 收藏列表
   @Ref('validateForm') validateFormRef: Form;
+  @Ref('checkInputForm') checkInputFormRef: Form;
   searchFieldsList = []; // 表单模式显示字段
   isDisableSelect = false; // 是否禁用 所属组下拉框
   isShowAddGroup = true;
-  groupName = '';
+  // groupName = '';
+  verifyData = {
+    groupName: '',
+  };
   baseFavoriteData = {
     // 收藏参数
     space_uid: -1,
@@ -148,6 +152,26 @@ export default class CollectDialog extends tsc<IProps> {
     ],
   };
 
+  public groupNameRules = {
+    groupName: [
+      {
+        validator: this.checkName,
+        message: window.mainComponent.$t('组名不规范, 只支持输入中文、英文、数字、特殊符号.'),
+        trigger: 'change',
+      },
+      {
+        validator: this.checkExistName,
+        message: window.mainComponent.$t('组名重复'),
+        trigger: 'change',
+      },
+      {
+        required: true,
+        message: window.mainComponent.$t('必填项'),
+        trigger: 'change',
+      },
+    ],
+  };
+
   get spaceUid() {
     return this.$store.state.spaceUid;
   }
@@ -186,6 +210,15 @@ export default class CollectDialog extends tsc<IProps> {
       isCreate,
       resValue,
     };
+  }
+
+  checkName() {
+    if (this.verifyData.groupName.trim() === '') return true;
+    return /^[\u4e00-\u9fa5_a-zA-Z0-9`~!@#$%^&*()_\-+=<>?:"{}|,.\/;'\\[\]·~！@#￥%……&*（）——\-+={}|《》？：“”【】、；‘'，。、]+$/im.test(this.verifyData.groupName.trim());
+  }
+
+  checkExistName() {
+    return !this.groupList.some(item => item.name === this.verifyData.groupName);
   }
 
   /** 判断是否收藏名是否重复 */
@@ -228,23 +261,25 @@ export default class CollectDialog extends tsc<IProps> {
   }
 
   /** 新增组 */
-  async handleCreateGroup() {
-    const data = { name: this.groupName, space_uid: this.spaceUid };
-    try {
-      const res = await $http.request('favorite/createGroup', {
-        data,
-      });
-      if (res.result) {
-        this.$bkMessage({
-          message: this.$t('操作成功'),
-          theme: 'success',
+  handleCreateGroup() {
+    this.checkInputFormRef.validate().then(async () => {
+      const data = { name: this.verifyData.groupName, space_uid: this.spaceUid };
+      try {
+        const res = await $http.request('favorite/createGroup', {
+          data,
         });
-        this.requestGroupList();
+        if (res.result) {
+          this.$bkMessage({
+            message: this.$t('操作成功'),
+            theme: 'success',
+          });
+          this.requestGroupList();
+        }
+      } catch (error) {} finally {
+        this.isShowAddGroup = true;
+        this.verifyData.groupName = '';
       }
-    } catch (error) {} finally {
-      this.isShowAddGroup = true;
-      this.groupName = '';
-    }
+    });
   }
 
   handleClickRadio(value: string) {
@@ -438,17 +473,30 @@ export default class CollectDialog extends tsc<IProps> {
                       </div>
                     ) : (
                       <li class="add-new-page-input">
-                        <Input
-                          clearable
-                          placeholder={this.$t('请输入组名')}
-                          vModel={this.groupName}
-                          maxlength={10}
-                        ></Input>
+                      <Form
+                        labelWidth={0}
+                        style={{ width: '100%' }}
+                        ref="checkInputForm"
+                        {...{
+                          props: {
+                            model: this.verifyData,
+                            rules: this.groupNameRules,
+                          },
+                        }}>
+                        <FormItem property="groupName">
+                          <Input
+                            clearable
+                            placeholder={this.$t('请输入组名')}
+                            vModel={this.verifyData.groupName}
+                            maxlength={10}
+                          ></Input>
+                        </FormItem>
+                      </Form>
                         <div class="operate-button">
                           <span class="bk-icon icon-check-line" onClick={() => this.handleCreateGroup()}></span>
                           <span class="bk-icon icon-close-line-2" onClick={() => {
                             this.isShowAddGroup = true;
-                            this.groupName = '';
+                            this.verifyData.groupName = '';
                           }}></span>
                         </div>
                       </li>

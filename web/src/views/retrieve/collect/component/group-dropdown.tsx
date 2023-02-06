@@ -22,7 +22,7 @@
 
 import { Component as tsc } from 'vue-tsx-support';
 import { Component, Prop, Inject, Ref } from 'vue-property-decorator';
-import { Input, Popover } from 'bk-magic-vue';
+import { Input, Popover, Form, FormItem } from 'bk-magic-vue';
 import { IGroupItem, IFavoriteItem } from '../collect-index';
 import './group-dropdown.scss';
 
@@ -46,6 +46,8 @@ export default class CollectGroup extends tsc<IProps> {
   @Ref('operate') private readonly operatePopoverRef: Popover; // 操作列表实例
   @Ref('groupMoveList') private readonly groupMoveListPopoverRef: Popover; // 移动到分组实例
   @Ref('titleDrop') private readonly titlePopoverRef: Popover; // 操作列表实例
+  @Ref('checkInputForm') private readonly checkInputFormRef: Popover; // 移动到分组实例
+  @Ref('checkInputAddForm') private readonly checkInputAddFormRef: Popover; // 移动到分组实例
 
   isShowNewGroupInput = false; // 是否展示新建分组
   isShowResetGroupName = false; // 是否展示重命名组名
@@ -53,6 +55,29 @@ export default class CollectGroup extends tsc<IProps> {
   operatePopoverInstance = null; // 收藏操作实例例
   groupListPopoverInstance = null; // 分组列表实例
   titlePopoverInstance = null; // 表头列表实例
+  verifyData = {
+    groupEditName: '',
+  };
+
+  public rules = {
+    groupEditName: [
+      {
+        validator: this.checkName,
+        message: window.mainComponent.$t('组名不规范, 只支持输入中文、英文、数字、特殊符号.'),
+        trigger: 'change',
+      },
+      {
+        validator: this.checkExistName,
+        message: window.mainComponent.$t('组名重复'),
+        trigger: 'change',
+      },
+      {
+        required: true,
+        message: window.mainComponent.$t('必填项'),
+        trigger: 'change',
+      },
+    ],
+  };
 
   get unPrivateGroupList() {
     // 去掉个人收藏的组列表
@@ -79,22 +104,37 @@ export default class CollectGroup extends tsc<IProps> {
     // 是否是组操作
     return this.dropType === 'group';
   }
+
+
+  checkName() {
+    if (this.verifyData.groupEditName.trim() === '') return true;
+    return /^[\u4e00-\u9fa5_a-zA-Z0-9`~!@#$%^&*()_\-+=<>?:"{}|,.\/;'\\[\]·~！@#￥%……&*（）——\-+={}|《》？：“”【】、；‘'，。、]+$/im.test(this.verifyData.groupEditName.trim());
+  }
+
+  checkExistName() {
+    return !this.groupList.some(item => item.group_name === this.verifyData.groupEditName);
+  }
+
   /** 重命名 */
   handleResetGroupName(e?) {
-    if (!this.groupEditName) return;
     e?.stopPropagation();
-    this.handleUserOperate('reset-group-name', {
-      group_id: this.data.group_id,
-      group_new_name: this.groupEditName,
+    this.checkInputFormRef.validate().then(() => {
+      this.handleUserOperate('reset-group-name', {
+        group_id: this.data.group_id,
+        group_new_name: this.verifyData.groupEditName,
+      });
+      this.verifyData.groupEditName = '';
+      this.isShowResetGroupName = false;
     });
-    this.groupEditName = '';
-    this.isShowResetGroupName = false;
   }
   /** 新增组 */
   handleChangeGroupInputStatus(type: string, e?) {
     e?.stopPropagation();
-    type === 'add' && this.handleUserOperate('add-group', this.groupEditName);
-    this.isShowNewGroupInput = false;
+    this.checkInputAddFormRef.validate().then(() => {
+      type === 'add' && this.handleUserOperate('add-group', this.verifyData.groupEditName);
+      this.isShowNewGroupInput = false;
+    });
+    type === 'cancel' && (this.isShowNewGroupInput = false);
   }
   handleClickLi(type: string, value?: any) {
     if (type === 'move-favorite') {
@@ -190,14 +230,14 @@ export default class CollectGroup extends tsc<IProps> {
   }
 
   handleResetGroupTitleName() {
-    this.groupEditName = this.groupName;
+    this.verifyData.groupEditName = this.groupName;
     this.isShowResetGroupName = true;
   }
 
   clearStatus() {
     this.isShowNewGroupInput = false;
     this.isShowResetGroupName = false;
-    this.groupEditName = '';
+    this.verifyData.groupEditName = '';
   }
 
   handleGroupKeyDown(value: string, event, type = 'add') {
@@ -213,18 +253,30 @@ export default class CollectGroup extends tsc<IProps> {
         <ul class="dropdown-list add-new-page-container" ref="titleDrop">
           {this.isShowResetGroupName ? (
             <li class="add-new-page-input">
-             <Input
-                clearable
-                placeholder={this.$t('请输入组名')}
-                vModel={this.groupEditName}
-                maxlength={10}
-                onKeydown={(v, e) => this.handleGroupKeyDown(v, e, 'reset')}>
-              </Input>
+              <Form
+                labelWidth={0}
+                ref="checkInputForm"
+                {...{
+                  props: {
+                    model: this.verifyData,
+                    rules: this.rules,
+                  },
+                }}>
+                <FormItem property="groupEditName">
+                  <Input
+                    clearable
+                    placeholder={this.$t('请输入组名')}
+                    vModel={this.verifyData.groupEditName}
+                    maxlength={10}
+                    onKeydown={(v, e) => this.handleGroupKeyDown(v, e, 'reset')}
+                  ></Input>
+                </FormItem>
+              </Form>
               <div class="operate-button">
                 <span class="bk-icon icon-check-line"  onClick={e => this.handleResetGroupName(e)}></span>
                 <span class="bk-icon icon-close-line-2" onClick={() => {
                   this.isShowResetGroupName = false;
-                  this.groupEditName = '';
+                  this.verifyData.groupEditName = '';
                 }}></span>
               </div>
             </li>
@@ -266,13 +318,25 @@ export default class CollectGroup extends tsc<IProps> {
           ))}
           {this.isShowNewGroupInput ? (
             <li class="add-new-page-input">
-              <Input
-                clearable
-                placeholder={this.$t('请输入组名')}
-                vModel={this.groupEditName}
-                maxlength={10}
-                onKeydown={(v, e) => this.handleGroupKeyDown(v, e, 'add')}>
-              </Input>
+              <Form
+                labelWidth={0}
+                ref="checkInputAddForm"
+                {...{
+                  props: {
+                    model: this.verifyData,
+                    rules: this.rules,
+                  },
+                }}>
+                <FormItem property="groupEditName">
+                  <Input
+                    clearable
+                    placeholder={this.$t('请输入组名')}
+                    vModel={this.verifyData.groupEditName}
+                    maxlength={10}
+                    onKeydown={(v, e) => this.handleGroupKeyDown(v, e, 'add')}
+                  ></Input>
+                </FormItem>
+              </Form>
               <div class="operate-button">
                 <span class="bk-icon icon-check-line" onClick={e => this.handleChangeGroupInputStatus('add', e)}></span>
                 <span class="bk-icon icon-close-line-2" onClick={e => this.handleChangeGroupInputStatus('cancel', e)}></span>
