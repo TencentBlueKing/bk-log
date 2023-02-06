@@ -44,10 +44,10 @@
           <bk-form-item
             :label="$t('logArchive.collectFormLabel')"
             required
-            property="id">
+            property="instance_id">
             <bk-select
               searchable
-              v-model="formData.id"
+              v-model="formData.instance_id"
               data-test-id="formContainer_select_selectCollector"
               :clearable="false"
               :disabled="isEdit"
@@ -79,7 +79,7 @@
             <bk-select
               v-model="formData.target_snapshot_repository_name"
               data-test-id="formContainer_select_selectStorehouse"
-              :disabled="isEdit || !formData.id">
+              :disabled="isEdit || !formData.instance_id">
               <bk-option
                 v-for="option in repositoryRenderList"
                 :key="option.repository_name"
@@ -164,7 +164,7 @@ export default {
       retentionDaysList: [], // 过期天数列表
       formData: {
         snapshot_days: '',
-        id: '',
+        instance_id: '',
         target_snapshot_repository_name: '',
       },
       collectorType: 'collector_config',
@@ -188,7 +188,7 @@ export default {
     },
     repositoryRenderList() {
       let list = [];
-      const collectorId = this.formData.id;
+      const collectorId = this.formData.instance_id;
       if (collectorId && this.collectorList.length && this.repositoryOriginList.length) {
         const targetList = this.collectorList.find(item => item.id === this.collectorType)?.list || [];
         const curCollector = targetList.find(collect => collect.id === collectorId);
@@ -215,23 +215,23 @@ export default {
 
         if (this.isEdit) {
           const {
-            id,
+            instance_id: instanceId,
             target_snapshot_repository_name,
             snapshot_days,
-            type,
+            instance_type: instanceType,
           } = this.editArchive;
           Object.assign(this.formData, {
-            id,
+            instance_id: instanceId,
             target_snapshot_repository_name,
             snapshot_days,
           });
-          this.collectorType = type;
+          this.collectorType = instanceType;
         }
       } else {
         // 清空表单数据
         this.formData = {
           snapshot_days: '',
-          id: '',
+          instance_id: '',
           target_snapshot_repository_name: '',
         };
       }
@@ -239,7 +239,7 @@ export default {
   },
   created() {
     this.basicRules = {
-      id: [this.requiredRules],
+      instance_id: [this.requiredRules],
       target_snapshot_repository_name: [this.requiredRules],
       snapshot_days: [this.requiredRules],
     };
@@ -333,7 +333,7 @@ export default {
           action_ids: [authorityMap.MANAGE_COLLECTION_AUTH],
           resources: [{
             type: 'collection',
-            id: item.id,
+            id: item.collector_config_id,
           }],
         });
         window.open(res.data.apply_url);
@@ -350,7 +350,7 @@ export default {
         const params = {};
         let paramsData = {
           ...this.formData,
-          type: this.collectorType,
+          instance_type: this.collectorType,
           bk_biz_id: this.bkBizId,
         };
 
