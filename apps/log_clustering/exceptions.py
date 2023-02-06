@@ -23,7 +23,6 @@ from django.utils.translation import ugettext_lazy as _
 
 from apps.exceptions import BaseException, ErrorCode
 
-
 # =================================================
 # 日志聚类模块
 # =================================================
