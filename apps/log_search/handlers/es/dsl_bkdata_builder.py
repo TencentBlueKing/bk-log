@@ -44,6 +44,7 @@ class DslBkDataCreateSearchContextBody(object):
         order = kwargs.get("order")
         container_id = kwargs.get("container_id", "")
         logfile = kwargs.get("logfile", "")
+        bk_host_id = kwargs.get("bk_host_id", "")
 
         # 日志链路容器字段
         ext_container_id = kwargs.get("__ext", {}).get("container_id", "")
@@ -70,6 +71,18 @@ class DslBkDataCreateSearchContextBody(object):
             if item in sort_list:
                 sort.append({item: {"order": order_use}})
         body_data["sort"] = sort
+        if bk_host_id:
+            body_data["query"]["bool"]["must"].append(
+                {
+                    "match": {
+                        "bk_host_id": {
+                            "query": bk_host_id,
+                            "operator": "and",
+                        }
+                    }
+                }
+            )
+
         if ip != "":
             body_data["query"]["bool"]["must"].append(
                 {
@@ -153,6 +166,7 @@ class DslBkDataCreateSearchContextBodyScenarioLog(object):
         gse_index = kwargs.get("gseIndex")
         path = kwargs.get("path")
         server_ip = kwargs.get("serverIp")
+        bk_host_id = kwargs.get("bk_host_id")
         order = kwargs.get("order")
 
         self._body = None
@@ -175,7 +189,17 @@ class DslBkDataCreateSearchContextBodyScenarioLog(object):
             if item in sort_list:
                 sort.append({item: {"order": order_use}})
         body_data["sort"] = sort
-
+        if bk_host_id:
+            body_data["query"]["bool"]["must"].append(
+                {
+                    "match": {
+                        "bk_host_id": {
+                            "query": bk_host_id,
+                            "operator": "and",
+                        }
+                    }
+                }
+            )
         body_data["query"]["bool"]["must"].append(
             {
                 "match": {
@@ -223,6 +247,7 @@ class DslBkDataCreateSearchTailBody:
         gseindex = kwargs.get("gseindex")
         path = kwargs.get("path", "")
         ip = kwargs.get("ip", "")
+        bk_host_id = kwargs.get("bk_host_id")
         container_id = kwargs.get("container_id", "")
         logfile = kwargs.get("logfile", "")
         zero = kwargs.get("zero", False)
@@ -253,6 +278,17 @@ class DslBkDataCreateSearchTailBody:
         for item in sort_list:
             sort.append({item: {"order": order_use}})
         body_data["sort"] = sort
+        if bk_host_id:
+            body_data["query"]["bool"]["must"].append(
+                {
+                    "match": {
+                        "bk_host_id": {
+                            "query": bk_host_id,
+                            "operator": "and",
+                        }
+                    }
+                }
+            )
         if ip != "":
             body_data["query"]["bool"]["must"].append(
                 {
@@ -336,6 +372,7 @@ class DslBkDataCreateSearchTailBodyScenarioLog:
         gse_index = kwargs.get("gseIndex")
         path = kwargs.get("path")
         server_ip = kwargs.get("serverIp")
+        bk_host_id = kwargs.get("bk_host_id")
         zero = kwargs.get("zero", False)
 
         self._body = None
@@ -357,7 +394,10 @@ class DslBkDataCreateSearchTailBodyScenarioLog:
         for item in sort_list:
             sort.append({item: {"order": order_use}})
         body_data["sort"] = sort
-
+        if bk_host_id:
+            body_data["query"]["bool"]["must"].append(
+                {"match": {"bk_host_id": {"query": bk_host_id, "operator": "and"}}}
+            )
         body_data["query"]["bool"]["must"].append({"match": {"serverIp": {"query": server_ip, "operator": "and"}}})
         body_data["query"]["bool"]["must"].append({"match": {"path": {"query": path, "operator": "and"}}})
 
