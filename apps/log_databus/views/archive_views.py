@@ -233,7 +233,7 @@ class ArchiveViewSet(ModelViewSet):
         return Response(ArchiveHandler(archive_config_id).create_or_update(data))
 
     @insert_permission_field(
-        id_field=lambda d: d["collector_config_id"],
+        id_field=lambda d: d["_collector_config_id"],
         actions=[ActionEnum.VIEW_COLLECTION, ActionEnum.MANAGE_COLLECTION],
         resource_meta=ResourceEnum.COLLECTION,
     )

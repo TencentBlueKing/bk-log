@@ -217,6 +217,7 @@ class ArchiveHandler:
                 "archive_config_id": archive.archive_config_id,
                 "instance_name": archive.instance_name,
                 "instance_id": archive.instance_id,
+                "_collector_config_id": archive.collector_config_id
             }
             for archive in ArchiveConfig.objects.filter(bk_biz_id=bk_biz_id)
         ]
