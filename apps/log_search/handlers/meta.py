@@ -21,6 +21,7 @@ the project delivered to anyone in the future.
 """
 import copy
 
+from collections import defaultdict
 from django.conf import settings
 
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
@@ -53,17 +54,19 @@ class MetaHandler(APIModel):
             logger.error(f"Get sticky space by user({username}), error({e})")
             sticky_spaces = []
 
-        # bkcc按照数字排序, 非bkcc按照字母排序
-        bkcc_spaces, non_bkcc_spaces = [], []
+        spaces_by_type = defaultdict(list)
         for space in spaces:
-            if space.space_type_id == SpaceTypeEnum.BKCC.value:
-                bkcc_spaces.append(space)
-            else:
-                non_bkcc_spaces.append(space)
+            spaces_by_type[space.space_type_id].append(space)
 
-        bkcc_spaces.sort(key=lambda x: x.bk_biz_id)
-        non_bkcc_spaces.sort(key=lambda x: x.space_id)
-        spaces = bkcc_spaces + non_bkcc_spaces
+        # bkcc按照数字排序, 非bkcc按照字母排序
+        for space_type_id, _spaces in spaces_by_type.items():
+            if space_type_id == SpaceTypeEnum.BK_CC.value:
+                _spaces.sort(key=lambda x: x.bk_biz_id)
+            else:
+                _spaces.sort(key=lambda x: x.space_id)
+        spaces = spaces_by_type[SpaceTypeEnum.BKCC.value]
+        spaces.extend(spaces_by_type[SpaceTypeEnum.BCS.value])
+        spaces.extend(spaces_by_type[SpaceTypeEnum.BKCI.value])
 
         result = []
         for space in spaces:
