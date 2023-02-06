@@ -1849,18 +1849,19 @@ export default {
       };
     },
     // 点击收藏列表的收藏
-    async handleClickFavoriteItem(value) {
+    async handleClickFavoriteItem(value, isRequestList = false) {
       if (value === undefined) { // 点击为新检索时 清空收藏
         this.activeFavoriteID = -1;
         this.activeFavorite = {};
         this.isSqlSearchType = true;
         this.isFavoriteSearch = false;
+        this.isAfterRequestFavoriteList = isRequestList;
         this.clearCondition();
         return;
       }
       // 无host_scopes补充空的 host_scopes
       if (!value.params?.host_scopes?.target_node_type) {
-        value.params.host_scopes = {};
+        value.params.host_scopes = { ...value.params?.host_scopes };
         value.params.host_scopes.target_node_type = '';
         value.params.host_scopes.target_nodes = [];
       }

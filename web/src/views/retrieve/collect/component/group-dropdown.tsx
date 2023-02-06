@@ -22,7 +22,7 @@
 
 import { Component as tsc } from 'vue-tsx-support';
 import { Component, Prop, Inject, Ref } from 'vue-property-decorator';
-import { Input, Button, Popover } from 'bk-magic-vue';
+import { Input, Popover } from 'bk-magic-vue';
 import { IGroupItem, IFavoriteItem } from '../collect-index';
 import './group-dropdown.scss';
 
@@ -182,6 +182,7 @@ export default class CollectGroup extends tsc<IProps> {
         onHidden: () => {
           this.titlePopoverInstance?.destroy();
           this.titlePopoverInstance = null;
+          this.clearStatus();
         },
       });
       this.titlePopoverInstance.show(100);
@@ -209,10 +210,10 @@ export default class CollectGroup extends tsc<IProps> {
   render() {
     const groupDropList = () => (
       <div style={{ display: 'none' }}>
-        <ul class="dropdown-list" ref="titleDrop">
+        <ul class="dropdown-list add-new-page-container" ref="titleDrop">
           {this.isShowResetGroupName ? (
-            <li class="add-new-group-input">
-              <Input
+            <li class="add-new-page-input">
+             <Input
                 clearable
                 placeholder={this.$t('请输入组名')}
                 vModel={this.groupEditName}
@@ -220,7 +221,11 @@ export default class CollectGroup extends tsc<IProps> {
                 onKeydown={(v, e) => this.handleGroupKeyDown(v, e, 'reset')}>
               </Input>
               <div class="operate-button">
-                <Button text onClick={e => this.handleResetGroupName(e)}>{this.$t('确定')}</Button>
+                <span class="bk-icon icon-check-line"  onClick={e => this.handleResetGroupName(e)}></span>
+                <span class="bk-icon icon-close-line-2" onClick={() => {
+                  this.isShowResetGroupName = false;
+                  this.groupEditName = '';
+                }}></span>
               </div>
             </li>
           ) : (
@@ -255,12 +260,12 @@ export default class CollectGroup extends tsc<IProps> {
     );
     const groupList = () => (
       <div style={{ display: 'none' }}>
-        <ul class="group-dropdown-list" ref="groupMoveList">
+        <ul class="group-dropdown-list add-new-page-container" ref="groupMoveList">
           {this.showGroupList.map(item => (
             <li onClick={() => this.handleClickLi('move-favorite', item.group_id)}>{item.group_name}</li>
           ))}
           {this.isShowNewGroupInput ? (
-            <li class="add-new-group-input">
+            <li class="add-new-page-input">
               <Input
                 clearable
                 placeholder={this.$t('请输入组名')}
@@ -269,8 +274,8 @@ export default class CollectGroup extends tsc<IProps> {
                 onKeydown={(v, e) => this.handleGroupKeyDown(v, e, 'add')}>
               </Input>
               <div class="operate-button">
-                <Button text onClick={e => this.handleChangeGroupInputStatus('add', e)}>{this.$t('确定')}</Button>
-                <span onClick={e => this.handleChangeGroupInputStatus('cancel', e)}>{this.$t('取消')}</span>
+                <span class="bk-icon icon-check-line" onClick={e => this.handleChangeGroupInputStatus('add', e)}></span>
+                <span class="bk-icon icon-close-line-2" onClick={e => this.handleChangeGroupInputStatus('cancel', e)}></span>
               </div>
             </li>
           ) : (

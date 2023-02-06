@@ -43,7 +43,6 @@ import {
   Checkbox,
   Switcher,
   Tag,
-  Button,
 } from 'bk-magic-vue';
 import $http from '../../../api';
 import './add-collect-dialog.scss';
@@ -77,7 +76,7 @@ export default class CollectDialog extends tsc<IProps> {
     space_uid: -1,
     index_set_id: -1,
     name: '',
-    group_id: 0,
+    group_id: null,
     created_by: '',
     params: {
       host_scopes: {
@@ -100,7 +99,7 @@ export default class CollectDialog extends tsc<IProps> {
     space_uid: -1,
     index_set_id: -1,
     name: '',
-    group_id: 0,
+    group_id: null,
     created_by: '',
     params: {
       host_scopes: {
@@ -215,7 +214,6 @@ export default class CollectDialog extends tsc<IProps> {
       if (this.isCreateFavorite) {
         // 判断是否是新增
         Object.assign(this.favoriteData, this.addFavoriteData); // 合并新增收藏详情
-        this.favoriteData.group_id = this.unknownGroupID;
         this.favoriteData.params.search_fields = [];
       } else {
         await this.getFavoriteData(this.favoriteID); // 获取收藏详情
@@ -268,7 +266,6 @@ export default class CollectDialog extends tsc<IProps> {
         if (!this.favoriteData.group_id) this.favoriteData.group_id = this.unknownGroupID;
         this.handleUpdateFavorite(this.favoriteData);
       },
-      () => {},
     );
   }
 
@@ -429,7 +426,7 @@ export default class CollectDialog extends tsc<IProps> {
                   vModel={this.favoriteData.group_id}
                   disabled={this.isDisableSelect}
                   on-change={this.handleSelectGroup}
-                  ext-popover-cls={'add-collect-dialog'}
+                  ext-popover-cls="add-new-page-container"
                 >
                   {this.showGroupList.map(item => (
                     <Option id={item.id} key={item.id} name={item.name}></Option>
@@ -440,23 +437,19 @@ export default class CollectDialog extends tsc<IProps> {
                         <div><i class="bk-icon icon-plus-circle"></i>{this.$t('新增')}</div>
                       </div>
                     ) : (
-                      <li class="add-new-group-input">
+                      <li class="add-new-page-input">
                         <Input
                           clearable
                           placeholder={this.$t('请输入组名')}
                           vModel={this.groupName}
-                          maxlength={10}>
-                        </Input>
+                          maxlength={10}
+                        ></Input>
                         <div class="operate-button">
-                          <Button text onClick={() => this.handleCreateGroup()}>
-                            {this.$t('确定')}
-                          </Button>
-                          <span onClick={() => {
+                          <span class="bk-icon icon-check-line" onClick={() => this.handleCreateGroup()}></span>
+                          <span class="bk-icon icon-close-line-2" onClick={() => {
                             this.isShowAddGroup = true;
                             this.groupName = '';
-                          }}>
-                            {this.$t('取消')}
-                          </span>
+                          }}></span>
                         </div>
                       </li>
                     )}
