@@ -24,8 +24,9 @@ import Vue from 'vue';
 import VueI18n from 'vue-i18n';
 import jsCookie from 'js-cookie';
 import { locale, lang } from 'bk-magic-vue';
-import en from './lang/en';
-import zh from './lang/zh';
+// import en from './lang/en';
+// import zh from './lang/zh';
+import { logEnJson } from './lang/en/index';
 
 Vue.use(VueI18n);
 
@@ -41,9 +42,11 @@ const i18n = new VueI18n({
   // this.$i18n.locale 通过切换locale的值来实现语言切换
   messages: {
     // 中文语言包
-    'zh-cn': Object.assign(lang.zhCN, zh),
+    // 'zh-cn': Object.assign(lang.zhCN, zh),
+    'zh-cn': Object.assign(lang.zhCN),
     // 英文语言包
-    en: Object.assign(lang.enUS, en),
+    // en: Object.assign(lang.enUS, en),
+    en: Object.assign(lang.enUS, logEnJson),
   },
 });
 locale.i18n((key, value) => i18n.t(key, value));
