@@ -55,8 +55,6 @@ from apps.log_search.models import LogIndexSet
 from apps.utils.log import logger
 from bkm_space import api
 
-robot_api = WeChatRobot()
-
 
 def validate_end_time(freq: dict, end_time: datetime):
     if end_time.isoweekday() in freq["week_list"]:
@@ -275,6 +273,7 @@ def render_template(template: str, params: dict) -> str:
 
 
 def send_wechat(params: dict, receivers: list):
+    robot_api = WeChatRobot()
     tpl_name = "clustering_wechat_en.md" if params["language"] == "en" else "clustering_wechat.md"
     content = render_template(tpl_name, params)
     send_params = {
