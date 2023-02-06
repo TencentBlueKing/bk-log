@@ -30,6 +30,7 @@ from rest_framework.exceptions import ValidationError as SlzValidationError
 from apps.exceptions import ValidationError
 from apps.generic import DataModelSerializer
 from apps.log_databus.constants import (
+    ArchiveInstanceType,
     CLUSTER_NAME_EN_REGEX,
     COLLECTOR_CONFIG_NAME_EN_REGEX,
     ContainerCollectorType,
@@ -887,22 +888,11 @@ class ListArchiveSerlalizer(serializers.Serializer):
 
 
 class CreateArchiveSerlalizer(serializers.Serializer):
-    collector_config_id = serializers.IntegerField(required=False, label=_("采集项id"), allow_null=True)
-    collector_plugin_id = serializers.IntegerField(required=False, label=_("采集插件id"), allow_null=True)
+    instance_id = serializers.IntegerField(required=True, label=_("实例id"))
+    instance_type = serializers.ChoiceField(required=True, label=_("实例类型"), choices=ArchiveInstanceType.choices)
     target_snapshot_repository_name = serializers.CharField(required=True, label=_("目标es集群快照仓库"))
     snapshot_days = serializers.IntegerField(required=True, label=_("快照存储时间配置"), min_value=0)
     bk_biz_id = serializers.IntegerField(label=_("业务ID"), required=True)
-
-    def validate(self, attrs: dict) -> dict:
-        data = super().validate(attrs)
-        # 采集插件与采集项不能同时存在或不存在
-        if data.get("collector_plugin_id"):
-            data.pop("collector_config_id", None)
-        elif data.get("collector_config_id"):
-            data.pop("collector_plugin_id", None)
-        else:
-            raise serializers.ValidationError(_("采集项ID与采集插件ID不能同时为空"))
-        return data
 
 
 class UpdateArchiveSerlalizer(serializers.Serializer):

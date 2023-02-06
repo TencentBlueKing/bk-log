@@ -20,6 +20,8 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 
+from typing import Union
+
 from apps.exceptions import ApiResultError
 from apps.log_databus.exceptions import ArchiveNotFound, CollectorPluginNotImplemented
 from apps.models import MultiStrSplitByCommaFieldText
@@ -44,6 +46,7 @@ from django_jsonfield_backport.models import JSONField  # noqa  pylint: disable=
 
 from apps.api import CmsiApi, TransferApi  # noqa
 from apps.log_databus.constants import (  # noqa
+    ArchiveInstanceType,
     ETLProcessorChoices,
     EtlConfigChoices,
     TargetObjectTypeEnum,  # noqa
@@ -479,8 +482,13 @@ class CleanStash(SoftDeleteModel):
 
 class ArchiveConfig(SoftDeleteModel):
     archive_config_id = models.AutoField(_("归档配置id"), primary_key=True)
-    collector_config_id = models.IntegerField(_("关联采集项id"), null=True)
-    collector_plugin_id = models.IntegerField(_("关联采集插件id"), null=True)
+    instance_id = models.IntegerField(_("关联采集项id"))
+    instance_type = models.CharField(
+        _("实例类型"),
+        max_length=64,
+        choices=ArchiveInstanceType.choices,
+        default=ArchiveInstanceType.COLLECTOR_CONFIG.value,
+    )
     bk_biz_id = models.IntegerField(_("业务id"))
     # 快照存储天数
     snapshot_days = models.IntegerField(_("快照天数"), default=0)
@@ -493,35 +501,35 @@ class ArchiveConfig(SoftDeleteModel):
         verbose_name_plural = _("归档配置表")
 
     @cached_property
-    def collector_config(self) -> "CollectorConfig":
-        return CollectorConfig.objects.get(collector_config_id=self.collector_config_id)
-
-    @cached_property
-    def collector_plugin(self) -> "CollectorPlugin":
-        return CollectorPlugin.objects.get(collector_plugin_id=self.collector_plugin_id)
-
-    @property
-    def table_id(self):
-        if self.collector_plugin_id:
-            return self.collector_plugin.table_id
-        return self.collector_config.table_id
+    def instance(self) -> Union["CollectorConfig", "CollectorPlugin"]:
+        if self.instance_type == ArchiveInstanceType.COLLECTOR_CONFIG.value:
+            return CollectorConfig.objects.get(collector_config_id=self.instance_id)
+        if self.instance_type == ArchiveInstanceType.COLLECTOR_PLUGIN.value:
+            return CollectorPlugin.objects.get(collector_plugin_id=self.instance_id)
 
     @property
-    def collector_config_name(self):
-        if self.collector_plugin_id:
-            return self.collector_plugin.collector_plugin_name
-        return self.collector_config.collector_config_name
+    def table_id(self) -> str:
+        return self.instance.table_id
+
+    @property
+    def instance_name(self) -> str:
+        return self.instance.get_name()
+
+    @property
+    def collector_config_id(self) -> int:
+        # 对采集插件归档时，获取采集插件下首个采集项ID
+        if self.instance_type == ArchiveInstanceType.COLLECTOR_PLUGIN.value:
+            return CollectorPlugin.get_collector_config_id(self.instance_id)
+        if self.instance_type == ArchiveInstanceType.COLLECTOR_CONFIG.value:
+            return self.instance_id
 
     @classmethod
-    def get_collector_config_id(cls, archive_config_id):
+    def get_collector_config_id(cls, archive_config_id) -> int:
         try:
             archive_config: cls = cls.objects.get(archive_config_id=archive_config_id)
+            return archive_config.collector_config_id
         except cls.DoesNotExist:
             raise ArchiveNotFound
-        # 对采集插件归档时，获取采集插件下首个采集项ID
-        if archive_config.collector_plugin_id:
-            return CollectorPlugin.get_collector_config_id(archive_config.collector_plugin_id)
-        return archive_config.collector_config.collector_config_id
 
 
 class RestoreConfig(SoftDeleteModel):
@@ -570,7 +578,7 @@ class RestoreConfig(SoftDeleteModel):
     @classmethod
     def get_collector_config_id(cls, restore_config_id):
         restore: "RestoreConfig" = cls.objects.get(restore_config_id=restore_config_id)
-        return restore.archive.collector_config.collector_config_id
+        return restore.archive.collector_config_id
 
 
 class CollectorPlugin(CollectorBase):
