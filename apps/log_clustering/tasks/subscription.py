@@ -41,10 +41,7 @@ from apps.log_clustering.constants import (
     SubscriptionTypeEnum,
     YearOnYearChangeEnum,
 )
-from apps.log_clustering.exceptions import (
-    ClusteringClosedException,
-    ClusteringConfigNotExistException,
-)
+from apps.log_clustering.exceptions import ClusteringConfigNotExistException
 from apps.log_clustering.handlers.pattern import PatternHandler
 from apps.log_clustering.models import ClusteringConfig, ClusteringSubscription
 from apps.log_clustering.utils.wechat_robot import WeChatRobot
@@ -345,7 +342,7 @@ def send(config: ClusteringSubscription, time_config: dict, bk_biz_name: str, la
 @periodic_task(run_every=crontab(minute="*/1"))
 def send_subscription_task():
     if not FeatureToggleObject.switch(BKDATA_CLUSTERING_TOGGLE):
-        raise ClusteringClosedException()
+        return
 
     subscription_configs = ClusteringSubscription.objects.all()
 
