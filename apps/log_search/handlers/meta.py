@@ -60,7 +60,7 @@ class MetaHandler(APIModel):
 
         # bkcc按照数字排序, 非bkcc按照字母排序
         for space_type_id, _spaces in spaces_by_type.items():
-            if space_type_id == SpaceTypeEnum.BK_CC.value:
+            if space_type_id == SpaceTypeEnum.BKCC.value:
                 _spaces.sort(key=lambda x: x.bk_biz_id)
             else:
                 _spaces.sort(key=lambda x: x.space_id)
