@@ -56,7 +56,7 @@ class FavoriteHandler(object):
         if favorite_id:
             try:
                 self.data = Favorite.objects.get(pk=favorite_id)
-                user_groups: dict = FavoriteGroup.get_user_groups(self.space_uid, self.username)
+                user_groups: dict = FavoriteGroup.get_user_groups(self.data.space_uid, self.username)
                 if self.data.group_id not in user_groups:
                     raise FavoriteNotAllowedAccessException()
             except Favorite.DoesNotExist:
