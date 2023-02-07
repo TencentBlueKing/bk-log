@@ -376,3 +376,7 @@
 .icon-wholesale-editor:before {
   content: '\e17e';
 }
+
+.icon-more:before {
+  content: '\e17f';
+}

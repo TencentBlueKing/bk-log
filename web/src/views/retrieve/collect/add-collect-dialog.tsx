@@ -472,26 +472,26 @@ export default class CollectDialog extends tsc<IProps> {
                         <div><i class="bk-icon icon-plus-circle"></i>{this.$t('新增')}</div>
                       </div>
                     ) : (
-                      <li class="add-new-page-input">
-                      <Form
-                        labelWidth={0}
-                        style={{ width: '100%' }}
-                        ref="checkInputForm"
-                        {...{
-                          props: {
-                            model: this.verifyData,
-                            rules: this.groupNameRules,
-                          },
-                        }}>
-                        <FormItem property="groupName">
-                          <Input
-                            clearable
-                            placeholder={this.$t('请输入组名')}
-                            vModel={this.verifyData.groupName}
-                            maxlength={10}
-                          ></Input>
-                        </FormItem>
-                      </Form>
+                      <li class="add-new-page-input" style={{ padding: '6px 0' }}>
+                        <Form
+                          labelWidth={0}
+                          style={{ width: '100%' }}
+                          ref="checkInputForm"
+                          {...{
+                            props: {
+                              model: this.verifyData,
+                              rules: this.groupNameRules,
+                            },
+                          }}>
+                          <FormItem property="groupName">
+                            <Input
+                              clearable
+                              placeholder={this.$t('请输入组名')}
+                              vModel={this.verifyData.groupName}
+                              maxlength={10}
+                            ></Input>
+                          </FormItem>
+                        </Form>
                         <div class="operate-button">
                           <span class="bk-icon icon-check-line" onClick={() => this.handleCreateGroup()}></span>
                           <span class="bk-icon icon-close-line-2" onClick={() => {
