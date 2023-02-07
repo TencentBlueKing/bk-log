@@ -224,7 +224,7 @@ export default class CollectIndex extends tsc<IProps> {
           type: 'warning',
           confirmFn: async () => {
             await this.deleteFavorite(value.id);
-            if (value.id === this.activeFavoriteID) this.handleClickFavorite(undefined, true);
+            this.getFavoriteList();
           },
         });
         break;
