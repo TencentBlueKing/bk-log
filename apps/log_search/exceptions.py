@@ -370,7 +370,7 @@ class FavoriteVisibleTypeNotAllowedModifyException(BaseException):
 
 class FavoriteNotAllowedAccessException(BaseException):
     ERROR_CODE = "427"
-    MESSAGE = _("收藏被移动至个人收藏")
+    MESSAGE = _("无权限访问该收藏配置")
 
 
 class FavoriteGroupNotExistException(BaseException):
