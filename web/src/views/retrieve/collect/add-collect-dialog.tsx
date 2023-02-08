@@ -128,6 +128,10 @@ export default class CollectDialog extends tsc<IProps> {
   switchVal = true;
   groupList = []; // 组列表
   formLoading = false;
+  groupNameMap = {
+    unknown: window.mainComponent.$t('未分组'),
+    private: window.mainComponent.$t('个人收藏'),
+  }
   public rules = {
     name: [
       {
@@ -373,7 +377,10 @@ export default class CollectDialog extends tsc<IProps> {
           space_uid: this.spaceUid,
         },
       });
-      this.groupList = res.data;
+      this.groupList = res.data.map(item => ({
+        ...item,
+        name: this.groupNameMap[item.group_type] ?? item.name,
+      }));
       this.publicGroupList = this.groupList.slice(1, this.groupList.length);
       this.privateGroupList = [this.groupList[0]];
       this.unknownGroupID = this.groupList[this.groupList.length - 1]?.id;

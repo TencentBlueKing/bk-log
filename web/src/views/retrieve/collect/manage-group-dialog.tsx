@@ -135,6 +135,10 @@ export default class GroupDialog extends tsc<IProps> {
     'group_option_private',
     'is_group_disabled',
   ];
+  groupNameMap = {
+    unknown: window.mainComponent.$t('未分组'),
+    private: window.mainComponent.$t('个人收藏'),
+  }
   sourceFilters = []; // 所属组数组
   updateSourceFilters = []; // 更变人过滤数组
 
@@ -316,7 +320,7 @@ export default class GroupDialog extends tsc<IProps> {
       });
       this.groupList = res.data.map(item => ({
         group_id: item.id,
-        group_name: item.name,
+        group_name: this.groupNameMap[item.group_type] ?? item.name,
         group_type: item.group_type,
       }));
       this.unPrivateList = this.groupList.slice(1); // 去除个人收藏的列表
