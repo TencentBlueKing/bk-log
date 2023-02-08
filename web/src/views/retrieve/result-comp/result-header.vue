@@ -110,7 +110,7 @@
         :distance="11">
         <slot name="trigger">
           <div class="more-operation">
-            <i class="bk-icon icon-ellipsis"></i>
+            <i class="bk-icon log-icon icon-ellipsis-more"></i>
           </div>
         </slot>
         <div slot="content" class="retrieve-setting-container">
@@ -619,7 +619,7 @@ export default {
       line-height: 22px;
       cursor: pointer;
 
-      .icon-ellipsis {
+      .icon-ellipsis-more {
         display: flex;
         justify-content: center;
         align-items: center;
