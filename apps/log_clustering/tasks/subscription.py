@@ -50,7 +50,9 @@ from apps.log_clustering.models import ClusteringConfig, ClusteringSubscription
 from apps.log_clustering.utils.wechat_robot import WeChatRobot
 from apps.log_measure.utils.metric import MetricUtils
 from apps.log_search.exceptions import IndexSetDoseNotExistException
-from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler as SearchHandlerEsquery
+from apps.log_search.handlers.search.search_handlers_esquery import (
+    SearchHandler as SearchHandlerEsquery,
+)
 from apps.log_search.models import LogIndexSet
 from apps.utils.log import logger
 from bkm_space import api
@@ -163,8 +165,13 @@ def query_logs(config: ClusteringSubscription, time_config: dict, pattern: dict,
         "host_scopes": config.host_scopes if config.host_scopes else {},
         "size": 1,
     }
-
+    logger.info(
+        f"space_uid: {config.space_uid} index_set_id: {config.index_set_id} Query signature log params: {params}"
+    )
     result = SearchHandlerEsquery(config.index_set_id, params).search()
+    logger.info(
+        f"space_uid: {config.space_uid} index_set_id: {config.index_set_id} Query signature log result: {result}"
+    )
     if not result.get("list", []):
         return {}
 
@@ -184,8 +191,9 @@ def query_patterns(config: ClusteringSubscription, time_config: dict):
         "year_on_year_hour": config.year_on_year_hour,
         "group_by": config.group_by if config.group_by else [],
     }
-
+    logger.info(f"space_uid: {config.space_uid} index_set_id: {config.index_set_id} search pattern params: {params}")
     result = PatternHandler(config.index_set_id, params).pattern_search()
+    logger.info(f"space_uid: {config.space_uid} index_set_id: {config.index_set_id} search pattern result: {result}")
 
     return result
 
@@ -194,6 +202,10 @@ def clean_pattern(config: ClusteringSubscription, time_config: dict, data: list,
     patterns = []
     new_patterns = []
     for _data in data:
+        # 过滤掉空pattern
+        if not _data["pattern"]:
+            continue
+
         # 按同比进行过滤
         if (
             config.year_on_year_change == YearOnYearChangeEnum.RISE.value
@@ -210,7 +222,6 @@ def clean_pattern(config: ClusteringSubscription, time_config: dict, data: list,
             patterns.append(_data)
 
     # 截取显示长度
-
     pattern_count = [p["count"] for p in patterns]
     new_pattern_count = [p["count"] for p in new_patterns]
     result = {
@@ -283,6 +294,7 @@ def send_wechat(params: dict, receivers: list):
         "markdown": {"content": content},
     }
     robot_api.send_msg(send_params)
+    logger.info(f"Successfully sent WeChat group params: {send_params}")
     ClusteringSubscription.objects.filter(id=params["subscription_id"]).update(
         last_run_at=params["time_config"]["last_run_at"]
     )
@@ -297,6 +309,7 @@ def send_mail(params: dict, receivers: list):
         "title": params["title"],
     }
     CmsiApi.send_mail(send_params)
+    logger.info(f"Successfully sent mail params: {send_params}")
     ClusteringSubscription.objects.filter(id=params["subscription_id"]).update(
         last_run_at=params["time_config"]["last_run_at"]
     )
@@ -313,6 +326,7 @@ def send(config: ClusteringSubscription, time_config: dict, bk_biz_name: str, la
         raise ClusteringConfigNotExistException()
 
     all_patterns = clean_pattern(config, time_config, result, clustering_config)
+    logger.info(f"clean pattern result: {all_patterns}")
 
     log_index_set = LogIndexSet.objects.filter(index_set_id=config.index_set_id).first()
     if not log_index_set:
@@ -326,13 +340,15 @@ def send(config: ClusteringSubscription, time_config: dict, bk_biz_name: str, la
         "bk_biz_name": bk_biz_name,
         "index_set_name": log_index_set.index_set_name,
         "log_search_url": generate_log_search_url(config, time_config),
-        "table_headers": [_("数据指纹"), _("数量"), _("占比"), _("同比数量"), "Pattern"],
+        "table_headers": [_("序号"), _("数据指纹"), _("数量"), _("占比"), _("同比数量"), "Pattern"],
         "all_patterns": all_patterns,
         "log_col_show_type": config.log_col_show_type.capitalize(),
         "group_by": config.group_by,
         "percentage": round(max([i["percentage"] for i in result]), 2),
         "clustering_fields": clustering_config.clustering_fields,
     }
+
+    logger.info(f"Before sending notification params: {params}")
 
     if config.subscription_type == SubscriptionTypeEnum.WECHAT.value:
         if all_patterns["new_patterns"]["data"]:
@@ -345,6 +361,7 @@ def send(config: ClusteringSubscription, time_config: dict, bk_biz_name: str, la
 
 @periodic_task(run_every=crontab(minute="*/1"))
 def send_subscription_task():
+    logger.info("Send subscription task start running")
     if not FeatureToggleObject.switch(BKDATA_CLUSTERING_TOGGLE):
         raise ClusteringClosedException()
 
@@ -357,6 +374,10 @@ def send_subscription_task():
 
             time_zone = pytz.timezone(space.properties.get("time_zone", "") or settings.TIME_ZONE)
             time_config = get_start_and_end_time(config.frequency, config.last_run_at, time_zone)
+            logger.info(
+                f"subscription task "
+                f"space_uid: {config.space_uid} index_set_id: {config.index_set_id} time_config: {time_config}"
+            )
             is_run_time = time_config["is_run_time"]
 
             # 未到运行时间
@@ -366,3 +387,5 @@ def send_subscription_task():
             language = space.properties.get("language", "") or translation.get_language()
             bk_biz_name = MetricUtils.get_instance().get_biz_name(space.bk_biz_id)
             ex.submit(send, config, time_config, bk_biz_name, language)
+
+    logger.info("Send subscription task complete.")
