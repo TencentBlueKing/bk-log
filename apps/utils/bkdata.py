@@ -1,6 +1,6 @@
 from abc import ABC
 
-import settings
+from django.conf import settings
 from apps.api import BkDataQueryApi
 
 
@@ -95,9 +95,9 @@ class BkData(Sql):
         )
 
     def query(self) -> list:
-        params = {
-            "bkdata_authentication_method": "token",
-            "bkdata_data_token": settings.BKDATA_DATA_TOKEN,
-            "sql": self.to_sql(),
-        }
+        params = {"sql": self.to_sql()}
+        if settings.FEATURE_TOGGLE.get("bkdata_token_auth", "off") == "on":
+            params.update({"bkdata_authentication_method": "token", "bkdata_data_token": settings.BKDATA_DATA_TOKEN})
+        else:
+            params.update({"bkdata_authentication_method": "user"})
         return BkDataQueryApi.query(params)["list"]
