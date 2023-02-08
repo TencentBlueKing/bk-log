@@ -25,7 +25,7 @@
     <!-- 检索页首页 -->
     <div v-if="hasAuth && isRetrieveHome" class="retrieve-home-container">
       <div class="retrieve-home" data-test-id="retrieve_div_frontPageSearchBox">
-        <div class="retrieve-home-title">{{ $t('nav.retrieve') }}</div>
+        <div class="retrieve-home-title">{{ $t('检索') }}</div>
         <div class="retrieve-home-condition">
           <!-- 选择索引集 -->
           <select-indexSet

@@ -118,7 +118,7 @@
                 :disabled="!props.row.is_active || (!props.row.index_set_id && !props.row.bkdata_index_set_ids.length)"
                 v-cursor="{ active: !(props.row.permission && props.row.permission[authorityMap.SEARCH_LOG_AUTH]) }"
                 @click="operateHandler(props.row, 'search')">
-                {{ $t('nav.retrieve') }}</bk-button>
+                {{ $t('检索') }}</bk-button>
               <bk-button
                 class="king-button"
                 theme="primary"
@@ -195,7 +195,7 @@
                       href="javascript:;"
                       class="text-disabled"
                       v-if="!collectProject">
-                      {{$t('btn.delete')}}
+                      {{$t('删除')}}
                     </a>
                     <a
                       href="javascript:;"
@@ -204,7 +204,7 @@
                         active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
                       }"
                       @click="deleteCollect(props.row)">
-                      {{$t('btn.delete')}}
+                      {{$t('删除')}}
                     </a>
                   </li>
                 </ul>

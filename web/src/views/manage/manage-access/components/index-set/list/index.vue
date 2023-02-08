@@ -104,7 +104,7 @@
           <bk-button
             theme="primary" text style="margin-right: 4px;"
             v-cursor="{ active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_INDICES_AUTH]) }"
-            @click="manageIndexSet('search', props.row)">{{ $t('nav.retrieve') }}
+            @click="manageIndexSet('search', props.row)">{{ $t('检索') }}
           </bk-button>
           <bk-button
             theme="primary" text style="margin-right: 4px;"

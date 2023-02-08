@@ -102,7 +102,7 @@
         </div>
         <div class="filter-footer">
           <bk-button theme="primary" @click="handleConfirm">{{ $t('btn.confirm') }}</bk-button>
-          <bk-button @click="handleCancel">{{ $t('btn.cancel') }}</bk-button>
+          <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
         </div>
       </div>
     </bk-popover>

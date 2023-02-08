@@ -38,8 +38,8 @@
 
     <div v-show="false">
       <div class="download-box" ref="downloadTips">
-        <span @click="exportLog">{{$t('exportHistory.downloadLog')}}</span>
-        <span @click="downloadTable">{{$t('exportHistory.downloadHistory')}}</span>
+        <span @click="exportLog">{{$t('下载日志')}}</span>
+        <span @click="downloadTable">{{$t('下载历史')}}</span>
       </div>
     </div>
 

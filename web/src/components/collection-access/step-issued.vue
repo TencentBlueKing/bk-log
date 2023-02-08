@@ -78,7 +78,7 @@
                 {{ cluster.label_name === 'add' ?
                   $t('dataManage.add_btn') :
                   (cluster.label_name === 'modify' ?
-                    $t('dataManage.amend') : $t('btn.delete')) }}
+                    $t('dataManage.amend') : $t('删除')) }}
               </div>
               <div class="header-info" slot="title">
                 <div class="header-title fl">{{ cluster.node_path }}</div>

@@ -340,7 +340,7 @@ export default {
       moreTime: false,
       size: 'small',
       startTime: '',
-      menu: { name: this.$t('trace.trace'), id: 'trace', level: 1 },
+      menu: { name: this.$t('调用链'), id: 'trace', level: 1 },
       indexSetList: [],
       indexId: '',
       openDatePanel: false,

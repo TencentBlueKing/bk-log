@@ -1,3 +1,7 @@
 {
-  "检索": "Search"
+  "检索": "Search",
+  "调用链": "Trace",
+  "监控策略": "Monitoring Strategy",
+  "仪表盘": "Dashboard",
+  "管理": "Manage"
 }
