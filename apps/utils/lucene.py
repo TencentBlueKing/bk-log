@@ -41,9 +41,14 @@ class LuceneField(object):
 
     pos: int = 0
     name: str = ""
+    # 此处type为Lucene语法的type
     type: str = ""
     operator: str = DEFAULT_FIELD_OPERATOR
     value: str = ""
+    # 标识是否为全文检索字段
+    is_full_text_field: bool = False
+    # 标识同名字段出现的次数
+    repeat_count: int = 1
 
 
 class LuceneParser(object):
@@ -67,6 +72,7 @@ class LuceneParser(object):
                     for field in fields:
                         if field.name == name:
                             field.name = f"{name}({number})"
+                            field.repeat_count = number
                             number += 1
             return fields
 
@@ -83,9 +89,10 @@ class LuceneParser(object):
         field = LuceneField(
             pos=node.pos,
             name=FULL_TEXT_SEARCH_FIELD_NAME,
-            operator="~=",
+            operator=DEFAULT_FIELD_OPERATOR,
             type=LuceneSyntaxEnum.WORD,
             value=node.value,
+            is_full_text_field=True,
         )
         match = re.search(WORD_RANGE_OPERATORS, node.value)
         if match:
@@ -102,6 +109,7 @@ class LuceneParser(object):
             operator="=",
             type=LuceneSyntaxEnum.PHRASE,
             value=node.value,
+            is_full_text_field=True,
         )
         return field
 
@@ -159,6 +167,7 @@ class LuceneParser(object):
             operator=DEFAULT_FIELD_OPERATOR,
             type=LuceneSyntaxEnum.PROXIMITY,
             value=str(node),
+            is_full_text_field=True,
         )
         return field
 
@@ -192,6 +201,7 @@ class LuceneParser(object):
             operator=NOT_OPERATOR,
             type=LuceneSyntaxEnum.NOT,
             value=self._get_method(node.a).value,
+            is_full_text_field=True,
         )
         return field
 
@@ -203,6 +213,7 @@ class LuceneParser(object):
             operator=PLUS_OPERATOR,
             type=LuceneSyntaxEnum.PLUS,
             value=self._get_method(node.a).value,
+            is_full_text_field=True,
         )
         return field
 
@@ -214,6 +225,7 @@ class LuceneParser(object):
             operator=PROHIBIT_OPERATOR,
             type=LuceneSyntaxEnum.PROHIBIT,
             value=self._get_method(node.a).value,
+            is_full_text_field=True,
         )
         return field
 
