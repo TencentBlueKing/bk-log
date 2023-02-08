@@ -368,6 +368,11 @@ class FavoriteVisibleTypeNotAllowedModifyException(BaseException):
     MESSAGE = _("收藏可见类型不允许修改")
 
 
+class FavoriteNotAllowedAccessException(BaseException):
+    ERROR_CODE = "427"
+    MESSAGE = _("无权限访问该收藏配置")
+
+
 class FavoriteGroupNotExistException(BaseException):
     ERROR_CODE = "430"
     MESSAGE = _("收藏组不存在")

@@ -269,7 +269,7 @@ class CollectorScenario(object):
                 "is_dimension": False,
                 "is_delete": False,
             }
-            for pattern_level in PatternEnum.get_choices()
+            for pattern_level in PatternEnum.get_dict_choices().keys()
         ]
 
     @staticmethod
