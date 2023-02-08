@@ -1817,7 +1817,20 @@ export default {
         this.favoriteList = sortAfterList;
       } catch (err) {
         this.favoriteLoading = false;
+        this.favoriteList = [];
       } finally {
+        // 获取收藏列表后 若当前不是新检索 则判断当前收藏是否已删除 若删除则变为新检索
+        if (this.activeFavoriteID !== -1) {
+          let isFindCheckValue = false; // 是否从列表中找到匹配当前收藏的id
+          for (const gItem of this.favoriteList) {
+            const findFavorites = gItem.favorites.find(item => item.id === this.activeFavoriteID);
+            if (!!findFavorites) {
+              isFindCheckValue = true; // 找到 中断循环
+              break;
+            }
+          }
+          if (!isFindCheckValue) this.handleClickFavoriteItem(undefined); // 未找到 清空当前收藏 变为新检索
+        }
         this.favoriteLoading = false;
       }
     },
@@ -1860,7 +1873,7 @@ export default {
       }
       // 无host_scopes补充空的 host_scopes
       if (!value.params?.host_scopes?.target_node_type) {
-        value.params.host_scopes = {};
+        value.params.host_scopes = { ...value.params?.host_scopes };
         value.params.host_scopes.target_node_type = '';
         value.params.host_scopes.target_nodes = [];
       }

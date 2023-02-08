@@ -21,6 +21,7 @@ the project delivered to anyone in the future.
 """
 import copy
 
+from collections import defaultdict
 from django.conf import settings
 
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
@@ -35,6 +36,7 @@ from apps.utils.local import get_request_username
 from apps.log_search import exceptions
 from apps.feature_toggle.handlers import toggle
 from apps.utils.log import logger
+from bkm_space.define import SpaceTypeEnum
 
 
 class MetaHandler(APIModel):
@@ -48,9 +50,23 @@ class MetaHandler(APIModel):
         # 返回格式： space_uid 的列表
         try:
             sticky_spaces = TransferApi.list_sticky_spaces({"username": username})
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             logger.error(f"Get sticky space by user({username}), error({e})")
             sticky_spaces = []
+
+        spaces_by_type = defaultdict(list)
+        for space in spaces:
+            spaces_by_type[space.space_type_id].append(space)
+
+        # bkcc按照数字排序, 非bkcc按照字母排序
+        for space_type_id, _spaces in spaces_by_type.items():
+            if space_type_id == SpaceTypeEnum.BKCC.value:
+                _spaces.sort(key=lambda x: x.bk_biz_id)
+            else:
+                _spaces.sort(key=lambda x: x.space_id)
+        spaces = spaces_by_type[SpaceTypeEnum.BKCC.value]
+        spaces.extend(spaces_by_type[SpaceTypeEnum.BCS.value])
+        spaces.extend(spaces_by_type[SpaceTypeEnum.BKCI.value])
 
         result = []
         for space in spaces:

@@ -292,6 +292,7 @@ export default class CollectIndex extends tsc<IProps> {
   /** 新增组 */
   async handleClickGroupBtn(clickType: string) {
     if (clickType === 'add') {
+      if (!this.groupName.trim()) return;
       await this.handleUpdateGroupName({ group_new_name: this.groupName });
       this.getFavoriteList();
     }
