@@ -81,22 +81,29 @@
     }
   }
 
-  .add-new-group-input {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    font-size: 12px;
-
+  .add-new-page-container {
+    .add-new-page-input {
+      display: flex;
+      align-items: center;
+    }
+  
     .operate-button {
-      margin-top: 4px;
-
-      .bk-button-text {
-        font-size: 12px;
-      }
-
+      font-size: 16px;
+      margin-left: 6px;
+      justify-content: space-between;
+      color: #979ba5;
+  
       span {
-        margin-left: 6px;
         cursor: pointer;
+      }
+  
+      > :first-child {
+        color: #33D05C;
+        margin-right: 12px;
+      }
+  
+      > :last-child {
+        color: #979ba5;
       }
     }
   }

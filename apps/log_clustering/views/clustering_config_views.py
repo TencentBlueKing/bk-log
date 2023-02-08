@@ -107,6 +107,11 @@ class ClusteringConfigViewSet(APIViewSet):
         action_result = task_service.skip_activity(request.query_params.get("node_id", ""))
         return Response({"result": action_result.result, "message": action_result.message})
 
+    @list_route(methods=["GET"], url_path="pipeline/fail")
+    def fail_pipeline(self, request, *args, **kwargs):
+        action_result = task_service.forced_fail(request.query_params.get("node_id", ""))
+        return Response({"result": action_result.result, "message": action_result.message})
+
     @detail_route(methods=["POST"])
     def create_or_update(self, request, *args, **kwargs):
         """

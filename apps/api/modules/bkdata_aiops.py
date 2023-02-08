@@ -219,7 +219,7 @@ class _BkDataAIOPSApi:
         )
         self.basic_model_evaluation_result = DataAPI(
             method="GET",
-            url=AIOPS_MODEL_APIGATEWAY_ROOT
+            url=AIOPS_APIGATEWAY_ROOT
             + "models/{model_id}/experiments/{experiment_id}/basic_models/{basic_model_id}/evaluation_result/",
             module=self.MODULE,
             url_keys=["model_id", "experiment_id", "basic_model_id"],

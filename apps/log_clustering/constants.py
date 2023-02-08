@@ -19,9 +19,9 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-from apps.utils import ChoicesEnum
-
 from django.utils.translation import ugettext as _
+
+from apps.utils import ChoicesEnum
 
 DEFAULT_NEW_CLS_HOURS = 24
 
@@ -162,15 +162,13 @@ class PatternEnum(ChoicesEnum):
     LEVEL_07 = "07"
     LEVEL_09 = "09"
 
-    @classmethod
-    def get_choices(cls) -> tuple:
-        return (
-            cls.LEVEL_09.value,
-            cls.LEVEL_07.value,
-            cls.LEVEL_05.value,
-            cls.LEVEL_03.value,
-            cls.LEVEL_01.value,
-        )
+    _choices_labels = (
+        (LEVEL_01, "LEVEL_01"),
+        (LEVEL_03, "LEVEL_03"),
+        (LEVEL_05, "LEVEL_05"),
+        (LEVEL_07, "LEVEL_07"),
+        (LEVEL_09, "LEVEL_09"),
+    )
 
 
 class ActionEnum(ChoicesEnum):
@@ -187,3 +185,41 @@ class ActionEnum(ChoicesEnum):
 
 # 日志聚类失败重试次数
 MAX_FAILED_REQUEST_RETRY = 3
+
+
+class SubscriptionTypeEnum(ChoicesEnum):
+    EMAIL = "email"
+    WECHAT = "wechat"
+
+    _choices_labels = (
+        (EMAIL, _("邮件")),
+        (WECHAT, _("企业微信")),
+    )
+
+
+class YearOnYearChangeEnum(ChoicesEnum):
+    ALL = "all"
+    RISE = "rise"
+    DECLINE = "decline"
+
+    _choices_labels = (
+        (ALL, _("所有")),
+        (RISE, _("上升")),
+        (DECLINE, _("下降")),
+    )
+
+
+class LogColShowTypeEnum(ChoicesEnum):
+    PATTERN = "pattern"
+    LOG = "log"
+
+    _choices_labels = (
+        (PATTERN, _("PATTERN模式")),
+        (LOG, _("采样日志")),
+    )
+
+
+class FrequencyTypeEnum(ChoicesEnum):
+    MINUTE = 1
+    DAY = 2
+    WEEK = 3
