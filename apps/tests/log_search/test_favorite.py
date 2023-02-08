@@ -113,7 +113,7 @@ KEYWORD_FIELDS = [
         "operator": ">=",
         "value": "83063",
         "is_full_text_field": False,
-        "repeat_count": 1,
+        "repeat_count": 0,
     },
     {
         "pos": 19,
@@ -122,7 +122,7 @@ KEYWORD_FIELDS = [
         "operator": "=",
         "value": '"The Right Way"',
         "is_full_text_field": False,
-        "repeat_count": 1,
+        "repeat_count": 0,
     },
     {
         "pos": 46,
@@ -131,7 +131,7 @@ KEYWORD_FIELDS = [
         "operator": "~=",
         "value": "go",
         "is_full_text_field": False,
-        "repeat_count": 1,
+        "repeat_count": 0,
     },
     {
         "pos": 58,
@@ -140,7 +140,7 @@ KEYWORD_FIELDS = [
         "operator": "[]",
         "value": "[ 200 TO 600 ]",
         "is_full_text_field": False,
-        "repeat_count": 1,
+        "repeat_count": 0,
     },
     {
         "pos": 87,
@@ -149,7 +149,7 @@ KEYWORD_FIELDS = [
         "operator": "~=",
         "value": "blue~",
         "is_full_text_field": False,
-        "repeat_count": 1,
+        "repeat_count": 0,
     },
     {
         "pos": 102,
@@ -158,7 +158,7 @@ KEYWORD_FIELDS = [
         "operator": "~=",
         "value": "/[L-N].*z*l{2}a/",
         "is_full_text_field": False,
-        "repeat_count": 1,
+        "repeat_count": 0,
     },
     {
         "pos": 129,
@@ -176,7 +176,7 @@ KEYWORD_FIELDS = [
         "type": "Word",
         "value": "d",
         "is_full_text_field": False,
-        "repeat_count": 1,
+        "repeat_count": 0,
     },
     {
         "pos": 147,
@@ -194,7 +194,7 @@ KEYWORD_FIELDS = [
         "type": "Word",
         "value": "y",
         "is_full_text_field": False,
-        "repeat_count": 1,
+        "repeat_count": 0,
     },
     {
         "pos": 179,

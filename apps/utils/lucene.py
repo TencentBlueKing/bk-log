@@ -48,7 +48,7 @@ class LuceneField(object):
     # 标识是否为全文检索字段
     is_full_text_field: bool = False
     # 标识同名字段出现的次数
-    repeat_count: int = 1
+    repeat_count: int = 0
 
 
 class LuceneParser(object):
