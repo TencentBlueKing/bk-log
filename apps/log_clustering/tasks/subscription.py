@@ -374,7 +374,7 @@ def send_subscription_task():
     with ThreadPoolExecutor() as ex:
         for config in subscription_configs:
             log_prefix = (
-                f"clustering subscription task space_uid: {config.space_uid} index_set_id: {config.index_set_id}"
+                f"[clustering_subscription] space_uid: {config.space_uid} index_set_id: {config.index_set_id}"
             )
             # 查询空间信息
             space = api.SpaceApi.get_space_detail(space_uid=config.space_uid)
