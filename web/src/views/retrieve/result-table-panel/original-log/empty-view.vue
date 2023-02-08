@@ -136,6 +136,10 @@ export default {
   },
   methods: {
     handleBtnClick(clickType) {
+      let baseUrl = window.SITE_URL;
+      if (!baseUrl.startsWith('/')) baseUrl = `/${baseUrl}`;
+      if (!baseUrl.endsWith('/')) baseUrl += '/';
+      baseUrl = window.location.origin + baseUrl;
       switch (clickType) {
         case 'queryString': // 查询更多语法
           this.handleGotoLink('queryString');
@@ -148,12 +152,12 @@ export default {
             });
             return;
           }
-          const jumpUrl = `/#/manage/log-collection/collection-item/manage/${this.retrieveConfigId}?spaceUid=${this.spaceUid}`;
+          const jumpUrl = `${baseUrl}#/manage/log-collection/collection-item/manage/${this.retrieveConfigId}?spaceUid=${this.spaceUid}`;
           window.open(jumpUrl, '_blank');
         }
           break;
         case 'goToConfig': { // 前往配置
-          const jumpUrl = `/#/manage/log-collection/collection-item?spaceUid=${this.spaceUid}`;
+          const jumpUrl = `${baseUrl}#/manage/log-collection/collection-item?spaceUid=${this.spaceUid}`;
           window.open(jumpUrl, '_blank');
         }
           break;
