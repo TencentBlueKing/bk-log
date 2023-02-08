@@ -1011,6 +1011,7 @@ RT_RESERVED_WORD_EXAC = [
     "TIME",
     # 内置字段
     "BK_BIZ_ID",
+    "BK_HOST_ID",
     "IP",
     "PLAT_ID",
     "BK_CLOUD_ID",

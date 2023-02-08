@@ -1215,8 +1215,8 @@ class SearchHandler(object):
             set_list.append(_set["bk_set_name"])
             for module in _set.get("module", []):
                 module_list.append(module["bk_module_name"])
-        log["__module__"] = " | ".join(set_list)
-        log["__set__"] = " | ".join(module_list)
+        log["__set__"] = " | ".join(set_list)
+        log["__module__"] = " | ".join(module_list)
         log["ipv6"] = host.get("bk_host_innerip_v6", "")
         return log
 
