@@ -153,7 +153,13 @@ def get_start_and_end_time(freq: dict, last_run_at: datetime, time_zone: pytz.ti
     return result
 
 
-def query_logs(config: ClusteringSubscription, time_config: dict, pattern: dict, clustering_field) -> dict:
+def query_logs(
+    config: ClusteringSubscription,
+    time_config: dict,
+    pattern: dict,
+    clustering_field: ClusteringConfig,
+    log_prefix: str,
+) -> dict:
     addition = config.addition if config.addition else []
     params = {
         "start_time": time_config["start_time"],
@@ -165,20 +171,16 @@ def query_logs(config: ClusteringSubscription, time_config: dict, pattern: dict,
         "host_scopes": config.host_scopes if config.host_scopes else {},
         "size": 1,
     }
-    logger.info(
-        f"space_uid: {config.space_uid} index_set_id: {config.index_set_id} Query signature log params: {params}"
-    )
+    logger.info(f"{log_prefix} Query signature log params: {params}")
     result = SearchHandlerEsquery(config.index_set_id, params).search()
-    logger.info(
-        f"space_uid: {config.space_uid} index_set_id: {config.index_set_id} Query signature log result: {result}"
-    )
+    logger.info(f"{log_prefix} Query signature log result: {result}")
     if not result.get("list", []):
         return {}
 
     return {pattern["signature"]: result["list"][0][clustering_field]}
 
 
-def query_patterns(config: ClusteringSubscription, time_config: dict):
+def query_patterns(config: ClusteringSubscription, time_config: dict, log_prefix: str):
     params = {
         "start_time": time_config["start_time"],
         "end_time": time_config["end_time"],
@@ -191,14 +193,16 @@ def query_patterns(config: ClusteringSubscription, time_config: dict):
         "year_on_year_hour": config.year_on_year_hour,
         "group_by": config.group_by if config.group_by else [],
     }
-    logger.info(f"space_uid: {config.space_uid} index_set_id: {config.index_set_id} search pattern params: {params}")
+    logger.info(f"{log_prefix} search pattern params: {params}")
     result = PatternHandler(config.index_set_id, params).pattern_search()
-    logger.info(f"space_uid: {config.space_uid} index_set_id: {config.index_set_id} search pattern result: {result}")
+    logger.info(f"{log_prefix} search pattern result: {result}")
 
     return result
 
 
-def clean_pattern(config: ClusteringSubscription, time_config: dict, data: list, clustering_config) -> dict:
+def clean_pattern(
+    config: ClusteringSubscription, time_config: dict, data: list, clustering_config: ClusteringConfig, log_prefix: str
+) -> dict:
     patterns = []
     new_patterns = []
     for _data in data:
@@ -246,7 +250,7 @@ def clean_pattern(config: ClusteringSubscription, time_config: dict, data: list,
         log_map = {}
         with ThreadPoolExecutor() as ex:
             tasks = [
-                ex.submit(query_logs, config, time_config, pattern, clustering_config.clustering_fields)
+                ex.submit(query_logs, config, time_config, pattern, clustering_config.clustering_fields, log_prefix)
                 for pattern in result["new_patterns"]["data"] + result["patterns"]["data"]
             ]
             for feature in as_completed(tasks):
@@ -285,7 +289,7 @@ def render_template(template: str, params: dict) -> str:
     return content
 
 
-def send_wechat(params: dict, receivers: list):
+def send_wechat(params: dict, receivers: list, log_prefix: str):
     tpl_name = "clustering_wechat_en.md" if params["language"] == "en" else "clustering_wechat.md"
     content = render_template(tpl_name, params)
     send_params = {
@@ -294,13 +298,13 @@ def send_wechat(params: dict, receivers: list):
         "markdown": {"content": content},
     }
     robot_api.send_msg(send_params)
-    logger.info(f"Successfully sent WeChat group params: {send_params}")
+    logger.info(f"{log_prefix} Successfully sent WeChat group params: {send_params}")
     ClusteringSubscription.objects.filter(id=params["subscription_id"]).update(
         last_run_at=params["time_config"]["last_run_at"]
     )
 
 
-def send_mail(params: dict, receivers: list):
+def send_mail(params: dict, receivers: list, log_prefix: str):
     tpl_name = "clustering_mail_en.html" if params["language"] == "en" else "clustering_mail.html"
     content = render_template(tpl_name, params)
     send_params = {
@@ -309,24 +313,24 @@ def send_mail(params: dict, receivers: list):
         "title": params["title"],
     }
     CmsiApi.send_mail(send_params)
-    logger.info(f"Successfully sent mail params: {send_params}")
+    logger.info(f"{log_prefix} Successfully sent mail params: {send_params}")
     ClusteringSubscription.objects.filter(id=params["subscription_id"]).update(
         last_run_at=params["time_config"]["last_run_at"]
     )
 
 
-def send(config: ClusteringSubscription, time_config: dict, bk_biz_name: str, language: str):
-    result = query_patterns(config, time_config)
+def send(config: ClusteringSubscription, time_config: dict, bk_biz_name: str, language: str, log_prefix: str):
+    result = query_patterns(config, time_config, log_prefix)
     if not result:
-        logger.info(f"Query pattern is empty. space_uid: {config.space_uid}, index_set_id: {config.index_set_id}")
+        logger.info(f"{log_prefix} Query pattern is empty.")
         return None
 
     clustering_config = ClusteringConfig.objects.filter(index_set_id=config.index_set_id).first()
     if not clustering_config:
         raise ClusteringConfigNotExistException()
 
-    all_patterns = clean_pattern(config, time_config, result, clustering_config)
-    logger.info(f"clean pattern result: {all_patterns}")
+    all_patterns = clean_pattern(config, time_config, result, clustering_config, log_prefix)
+    logger.info(f"{log_prefix} clean pattern result: {all_patterns}")
 
     log_index_set = LogIndexSet.objects.filter(index_set_id=config.index_set_id).first()
     if not log_index_set:
@@ -348,20 +352,20 @@ def send(config: ClusteringSubscription, time_config: dict, bk_biz_name: str, la
         "clustering_fields": clustering_config.clustering_fields,
     }
 
-    logger.info(f"Before sending notification params: {params}")
+    logger.info(f"{log_prefix} Before sending notification params: {params}")
 
     if config.subscription_type == SubscriptionTypeEnum.WECHAT.value:
         if all_patterns["new_patterns"]["data"]:
-            send_wechat(params, config.receivers)
+            send_wechat(params, config.receivers, log_prefix)
 
     elif config.subscription_type == SubscriptionTypeEnum.EMAIL.value:
         if all_patterns["patterns"]["data"] or all_patterns["new_patterns"]["data"]:
-            send_mail(params, config.receivers)
+            send_mail(params, config.receivers, log_prefix)
 
 
 @periodic_task(run_every=crontab(minute="*/1"))
 def send_subscription_task():
-    logger.info("Send subscription task start running")
+    logger.info("clustering subscription task start running")
     if not FeatureToggleObject.switch(BKDATA_CLUSTERING_TOGGLE):
         raise ClusteringClosedException()
 
@@ -369,15 +373,15 @@ def send_subscription_task():
 
     with ThreadPoolExecutor() as ex:
         for config in subscription_configs:
+            log_prefix = (
+                f"clustering subscription task space_uid: {config.space_uid} index_set_id: {config.index_set_id}"
+            )
             # 查询空间信息
             space = api.SpaceApi.get_space_detail(space_uid=config.space_uid)
 
             time_zone = pytz.timezone(space.properties.get("time_zone", "") or settings.TIME_ZONE)
             time_config = get_start_and_end_time(config.frequency, config.last_run_at, time_zone)
-            logger.info(
-                f"subscription task "
-                f"space_uid: {config.space_uid} index_set_id: {config.index_set_id} time_config: {time_config}"
-            )
+            logger.info(f"{log_prefix} time_config: {time_config}")
             is_run_time = time_config["is_run_time"]
 
             # 未到运行时间
@@ -386,6 +390,6 @@ def send_subscription_task():
 
             language = space.properties.get("language", "") or translation.get_language()
             bk_biz_name = MetricUtils.get_instance().get_biz_name(space.bk_biz_id)
-            ex.submit(send, config, time_config, bk_biz_name, language)
+            ex.submit(send, config, time_config, bk_biz_name, language, log_prefix)
 
-    logger.info("Send subscription task complete.")
+    logger.info("clustering subscription task complete.")
