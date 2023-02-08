@@ -1621,4 +1621,5 @@ export default {
   检查: 'Examination',
   '组名不规范, 只支持输入中文、英文、数字、特殊符号.': '组名不规范, 只支持输入中文、英文、数字、特殊符号.',
   组名重复: 'Duplicate group name',
+  原始日志: 'Original log',
 };

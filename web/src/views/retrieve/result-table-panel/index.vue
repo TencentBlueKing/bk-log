@@ -75,9 +75,9 @@ export default {
       return aiopsBizList ? aiopsBizList.some(item => item.toString() === this.bkBizId) : false;
     },
     panelList() {
-      const list = [{ name: 'origin', label: '原始日志' }];
+      const list = [{ name: 'origin', label: this.$t('原始日志') }];
       if (this.isAiopsToggle) {
-        list.push({ name: 'clustering', label: '日志聚类' });
+        list.push({ name: 'clustering', label: this.$t('日志聚类') });
       }
 
       return list;
