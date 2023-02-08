@@ -43,7 +43,14 @@ const i18n = new VueI18n({
   messages: {
     // 中文语言包
     // 'zh-cn': Object.assign(lang.zhCN, zh),
-    'zh-cn': Object.assign(lang.zhCN),
+    'zh-cn': Object.assign(
+      lang.zhCN,
+      // 通过英文包的key配置中文包内容 可省去中文包
+      Object.keys(logEnJson).reduce((pre, key) => {
+        pre[key] = key;
+        return pre;
+      }, {}),
+    ),
     // 英文语言包
     // en: Object.assign(lang.enUS, en),
     en: Object.assign(lang.enUS, logEnJson),
