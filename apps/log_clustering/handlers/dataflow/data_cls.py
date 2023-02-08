@@ -378,6 +378,7 @@ class AfterTreatDataFlowCls(object):
     target_bk_biz_id: int
     es: ElasticsearchCls = ElasticsearchCls()
     es_cluster: str = ""
+    is_flink_env: bool = False
 
 
 @dataclass

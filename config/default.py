@@ -19,13 +19,13 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import os
 import sys
 
-from django.http import HttpResponseRedirect
-from django.utils.translation import ugettext_lazy as _
-from django.urls import reverse
-
 from blueapps.conf.default_settings import *  # noqa
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+from django.utils.translation import ugettext_lazy as _
 
 from config.log import get_logging_config_dict
 
@@ -202,6 +202,7 @@ CELERY_IMPORTS = (
     "apps.log_measure.tasks.report",
     "apps.log_extract.tasks",
     "apps.log_clustering.tasks.sync_pattern",
+    "apps.log_clustering.tasks.subscription",
     "apps.log_extract.tasks.extract",
 )
 
@@ -247,54 +248,24 @@ if IS_K8S_DEPLOY_MODE:
                 ),
             },
         },
-        "handlers": {
-            "stdout": {
-                "class": "logging.StreamHandler",
-                "formatter": "json",
-                "stream": sys.stdout,
-            },
-        },
+        "handlers": {"stdout": {"class": "logging.StreamHandler", "formatter": "json", "stream": sys.stdout,},},
         "loggers": {
             "django": {"handlers": ["stdout"], "level": "INFO", "propagate": True},
-            "django.server": {
-                "handlers": ["stdout"],
-                "level": LOG_LEVEL,
-                "propagate": True,
-            },
-            "django.request": {
-                "handlers": ["stdout"],
-                "level": "ERROR",
-                "propagate": True,
-            },
-            "django.db.backends": {
-                "handlers": ["stdout"],
-                "level": LOG_LEVEL,
-                "propagate": True,
-            },
+            "django.server": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True,},
+            "django.request": {"handlers": ["stdout"], "level": "ERROR", "propagate": True,},
+            "django.db.backends": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True,},
             # the root logger ,用于整个project的logger
             "root": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
             # 组件调用日志
-            "component": {
-                "handlers": ["stdout"],
-                "level": LOG_LEVEL,
-                "propagate": True,
-            },
+            "component": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True,},
             "celery": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
             # other loggers...
             # blueapps
-            "blueapps": {
-                "handlers": ["stdout"],
-                "level": LOG_LEVEL,
-                "propagate": True,
-            },
+            "blueapps": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True,},
             # 普通app日志
             "app": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
             "bk_dataview": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
-            "iam": {
-                "handlers": ["stdout"],
-                "level": LOG_LEVEL,
-                "propagate": True,
-            },
+            "iam": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True,},
             "bk_monitor": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
         },
     }
@@ -326,6 +297,9 @@ BK_DOC_URL = "https://bk.tencent.com/docs/"
 BK_DOC_QUERY_URL = "https://bk.tencent.com/docs/document/5.1/90/3822/"
 BK_FAQ_URL = "https://bk.tencent.com/s-mart/community"
 
+# SaaS访问域名
+BK_BKLOG_HOST = os.environ.get("BK_BKLOG_HOST", BK_PAAS_HOST)
+
 # 日志归档文档
 BK_ARCHIVE_DOC_URL = os.getenv("BKAPP_ARCHIVE_DOC_URL", "")
 
@@ -343,7 +317,6 @@ BK_HOT_WARM_CONFIG_URL = (
 )
 BK_COMPONENT_API_URL = os.environ.get("BK_COMPONENT_API_URL")
 DEPLOY_MODE = os.environ.get("DEPLOY_MODE", "")
-
 
 # ===============================================================================
 # 企业版登录重定向
@@ -617,12 +590,7 @@ MENUS = [
                         "scenes": "scenario_log",
                         "icon": "info-fill--2",
                     },
-                    {
-                        "id": "clean_templates",
-                        "name": _("清洗模板"),
-                        "feature": "on",
-                        "icon": "moban",
-                    },
+                    {"id": "clean_templates", "name": _("清洗模板"), "feature": "on", "icon": "moban",},
                 ],
             },
             {
@@ -632,24 +600,9 @@ MENUS = [
                 "icon": "",
                 "keyword": "归档",
                 "children": [
-                    {
-                        "id": "archive_repository",
-                        "name": _("归档仓库"),
-                        "feature": "on",
-                        "icon": "new-_empty-fill",
-                    },
-                    {
-                        "id": "archive_list",
-                        "name": _("归档列表"),
-                        "feature": "on",
-                        "icon": "audit-fill",
-                    },
-                    {
-                        "id": "archive_restore",
-                        "name": _("归档回溯"),
-                        "feature": "on",
-                        "icon": "withdraw-fill",
-                    },
+                    {"id": "archive_repository", "name": _("归档仓库"), "feature": "on", "icon": "new-_empty-fill",},
+                    {"id": "archive_list", "name": _("归档列表"), "feature": "on", "icon": "audit-fill",},
+                    {"id": "archive_restore", "name": _("归档回溯"), "feature": "on", "icon": "withdraw-fill",},
                 ],
             },
             {
@@ -1010,12 +963,7 @@ if BKAPP_IS_BKLOG_API and REDIS_MODE == "sentinel" and USE_REDIS:
         "OPTIONS": {
             "CLIENT_CLASS": "apps.utils.sentinel.SentinelClient",
             "PASSWORD": REDIS_PASSWD,
-            "SENTINELS": [
-                (
-                    REDIS_SENTINEL_HOST,
-                    REDIS_SENTINEL_PORT,
-                )
-            ],
+            "SENTINELS": [(REDIS_SENTINEL_HOST, REDIS_SENTINEL_PORT,)],
             "SENTINEL_KWARGS": {"password": REDIS_SENTINEL_PASSWORD},
         },
         "KEY_PREFIX": APP_CODE,

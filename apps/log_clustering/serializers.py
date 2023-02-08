@@ -24,10 +24,10 @@ from rest_framework import serializers
 
 from apps.exceptions import ValidationError
 from apps.log_clustering.constants import (
-    PatternEnum,
     AGGS_FIELD_PREFIX,
     DEFULT_FILTER_NOT_CLUSTERING_OPERATOR,
     ActionEnum,
+    PatternEnum,
 )
 
 
@@ -84,7 +84,6 @@ class ClusteringConfigSerializer(serializers.Serializer):
 class InputDataSerializer(serializers.Serializer):
     dtEventTimeStamp = serializers.IntegerField()
     log = serializers.CharField()
-    uuid = serializers.CharField()
 
 
 class ClusteringPreviewSerializer(serializers.Serializer):

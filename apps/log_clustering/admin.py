@@ -22,13 +22,14 @@ the project delivered to anyone in the future.
 from django.contrib import admin
 
 from apps.log_clustering.models import (
-    SampleSet,
     AiopsModel,
     AiopsModelExperiment,
     AiopsSignatureAndPattern,
     ClusteringConfig,
-    SignatureStrategySettings,
+    ClusteringSubscription,
     NoticeGroup,
+    SampleSet,
+    SignatureStrategySettings,
 )
 from apps.utils.admin import AppModelAdmin
 
@@ -129,3 +130,9 @@ class SignatureStrategySettingsAdmin(AppModelAdmin):
 class NoticeGroupAdmin(AppModelAdmin):
     list_display = ["index_set_id", "notice_group_id", "bk_biz_id"]
     search_fields = ["index_set_id", "notice_group_id", "bk_biz_id"]
+
+
+@admin.register(ClusteringSubscription)
+class ClusteringSubscriptionAdmin(AppModelAdmin):
+    list_display = ["subscription_type", "index_set_id", "title", "receivers", "is_enabled", "last_run_at"]
+    search_fields = ["subscription_type", "index_set_id", "title"]
