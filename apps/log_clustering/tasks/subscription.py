@@ -300,9 +300,6 @@ def send_wechat(params: dict, receivers: list, log_prefix: str):
     }
     robot_api.send_msg(send_params)
     logger.info(f"{log_prefix} Successfully sent WeChat group params: {send_params}")
-    ClusteringSubscription.objects.filter(id=params["subscription_id"]).update(
-        last_run_at=params["time_config"]["last_run_at"]
-    )
 
 
 def send_mail(params: dict, receivers: list, log_prefix: str):
@@ -315,24 +312,22 @@ def send_mail(params: dict, receivers: list, log_prefix: str):
     }
     CmsiApi.send_mail(send_params)
     logger.info(f"{log_prefix} Successfully sent mail params: {send_params}")
-    ClusteringSubscription.objects.filter(id=params["subscription_id"]).update(
-        last_run_at=params["time_config"]["last_run_at"]
-    )
 
 
 @task()
 def send(
     config: ClusteringSubscription, time_config: dict, space_name: str, language: str, log_prefix: str, time_zone: str
 ):
+    # 更新last_run_at
+    config.last_run_at = time_config["last_run_at"]
+    config.save()
+
     # 激活业务时区
     timezone.activate(pytz.timezone(time_zone))
     set_local_param("time_zone", time_zone)
 
     result = query_patterns(config, time_config, log_prefix)
     if not result:
-        # 更新last_run_at
-        config.last_run_at = time_config["last_run_at"]
-        config.save()
         logger.info(f"{log_prefix} Query pattern is empty.")
         return
 
@@ -354,7 +349,6 @@ def send(
     log_col_show_type = config.log_col_show_type.capitalize()
 
     params = {
-        "subscription_id": config.id,
         "language": language,
         "title": config.title,
         "time_config": time_config,
