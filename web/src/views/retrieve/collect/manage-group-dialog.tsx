@@ -334,7 +334,7 @@ export default class GroupDialog extends tsc<IProps> {
       this.unPrivateList = this.groupList.slice(1); // 去除个人收藏的列表
       this.privateList = this.groupList.slice(0, 1); // 个人收藏列表
       this.sourceFilters = res.data.map(item => ({
-        text: item.name,
+        text: this.groupNameMap[item.group_type] ?? item.name,
         value: item.name,
       }));
       this.unknownGroupID = this.groupList[this.groupList.length - 1]?.group_id;
