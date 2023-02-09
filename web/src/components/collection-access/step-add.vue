@@ -187,6 +187,7 @@
           <log-ip-selector
             mode="dialog"
             allow-host-list-miss-host-id
+            :key="bkBizId"
             :height="670"
             :show-dialog.sync="showIpSelectorDialog"
             :value="selectorNodes"

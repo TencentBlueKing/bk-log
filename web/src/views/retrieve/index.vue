@@ -332,6 +332,7 @@
     <!-- 目标选择器 -->
     <log-ip-selector
       mode="dialog"
+      :key="bkBizId"
       :height="670"
       :show-dialog.sync="showIpSelectorDialog"
       :value="retrieveParams.ip_chooser"
