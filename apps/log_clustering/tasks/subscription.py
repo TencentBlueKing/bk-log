@@ -26,7 +26,7 @@ from urllib.parse import urlencode
 
 import pytz
 from celery.schedules import crontab
-from celery.task import periodic_task
+from celery.task import periodic_task, task
 from django.conf import settings
 from django.utils import timezone, translation
 from django.utils.translation import ugettext_lazy as _
@@ -41,16 +41,14 @@ from apps.log_clustering.constants import (
     SubscriptionTypeEnum,
     YearOnYearChangeEnum,
 )
-from apps.log_clustering.exceptions import (
-    ClusteringClosedException,
-    ClusteringConfigNotExistException,
-)
+from apps.log_clustering.exceptions import ClusteringConfigNotExistException
 from apps.log_clustering.handlers.pattern import PatternHandler
 from apps.log_clustering.models import ClusteringConfig, ClusteringSubscription
 from apps.log_clustering.utils.wechat_robot import WeChatRobot
-from apps.log_measure.utils.metric import MetricUtils
 from apps.log_search.exceptions import IndexSetDoseNotExistException
-from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler as SearchHandlerEsquery
+from apps.log_search.handlers.search.search_handlers_esquery import (
+    SearchHandler as SearchHandlerEsquery,
+)
 from apps.log_search.models import LogIndexSet
 from apps.utils.log import logger
 from bkm_space import api
@@ -149,7 +147,13 @@ def get_start_and_end_time(freq: dict, last_run_at: datetime, time_zone: pytz.ti
     return result
 
 
-def query_logs(config: ClusteringSubscription, time_config: dict, pattern: dict, clustering_field) -> dict:
+def query_logs(
+    config: ClusteringSubscription,
+    time_config: dict,
+    pattern: dict,
+    clustering_field: ClusteringConfig,
+    log_prefix: str,
+) -> dict:
     addition = config.addition if config.addition else []
     params = {
         "start_time": time_config["start_time"],
@@ -161,15 +165,16 @@ def query_logs(config: ClusteringSubscription, time_config: dict, pattern: dict,
         "host_scopes": config.host_scopes if config.host_scopes else {},
         "size": 1,
     }
-
+    logger.info(f"{log_prefix} Query signature log params: {params}")
     result = SearchHandlerEsquery(config.index_set_id, params).search()
+    logger.info(f"{log_prefix} Query signature log result: {result}")
     if not result.get("list", []):
         return {}
 
     return {pattern["signature"]: result["list"][0][clustering_field]}
 
 
-def query_patterns(config: ClusteringSubscription, time_config: dict):
+def query_patterns(config: ClusteringSubscription, time_config: dict, log_prefix: str):
     params = {
         "start_time": time_config["start_time"],
         "end_time": time_config["end_time"],
@@ -182,16 +187,23 @@ def query_patterns(config: ClusteringSubscription, time_config: dict):
         "year_on_year_hour": config.year_on_year_hour,
         "group_by": config.group_by if config.group_by else [],
     }
-
+    logger.info(f"{log_prefix} search pattern params: {params}")
     result = PatternHandler(config.index_set_id, params).pattern_search()
+    logger.info(f"{log_prefix} search pattern result: {result}")
 
     return result
 
 
-def clean_pattern(config: ClusteringSubscription, time_config: dict, data: list, clustering_config) -> dict:
+def clean_pattern(
+    config: ClusteringSubscription, time_config: dict, data: list, clustering_config: ClusteringConfig, log_prefix: str
+) -> dict:
     patterns = []
     new_patterns = []
     for _data in data:
+        # 过滤掉空pattern
+        if not _data["pattern"]:
+            continue
+
         # 按同比进行过滤
         if (
             config.year_on_year_change == YearOnYearChangeEnum.RISE.value
@@ -208,7 +220,6 @@ def clean_pattern(config: ClusteringSubscription, time_config: dict, data: list,
             patterns.append(_data)
 
     # 截取显示长度
-
     pattern_count = [p["count"] for p in patterns]
     new_pattern_count = [p["count"] for p in new_patterns]
     result = {
@@ -233,7 +244,7 @@ def clean_pattern(config: ClusteringSubscription, time_config: dict, data: list,
         log_map = {}
         with ThreadPoolExecutor() as ex:
             tasks = [
-                ex.submit(query_logs, config, time_config, pattern, clustering_config.clustering_fields)
+                ex.submit(query_logs, config, time_config, pattern, clustering_config.clustering_fields, log_prefix)
                 for pattern in result["new_patterns"]["data"] + result["patterns"]["data"]
             ]
             for feature in as_completed(tasks):
@@ -272,7 +283,7 @@ def render_template(template: str, params: dict) -> str:
     return content
 
 
-def send_wechat(params: dict, receivers: list):
+def send_wechat(params: dict, receivers: list, log_prefix: str):
     robot_api = WeChatRobot()
     tpl_name = "clustering_wechat_en.md" if params["language"] == "en" else "clustering_wechat.md"
     content = render_template(tpl_name, params)
@@ -282,12 +293,13 @@ def send_wechat(params: dict, receivers: list):
         "markdown": {"content": content},
     }
     robot_api.send_msg(send_params)
+    logger.info(f"{log_prefix} Successfully sent WeChat group params: {send_params}")
     ClusteringSubscription.objects.filter(id=params["subscription_id"]).update(
         last_run_at=params["time_config"]["last_run_at"]
     )
 
 
-def send_mail(params: dict, receivers: list):
+def send_mail(params: dict, receivers: list, log_prefix: str):
     tpl_name = "clustering_mail_en.html" if params["language"] == "en" else "clustering_mail.html"
     content = render_template(tpl_name, params)
     send_params = {
@@ -296,72 +308,91 @@ def send_mail(params: dict, receivers: list):
         "title": params["title"],
     }
     CmsiApi.send_mail(send_params)
+    logger.info(f"{log_prefix} Successfully sent mail params: {send_params}")
     ClusteringSubscription.objects.filter(id=params["subscription_id"]).update(
         last_run_at=params["time_config"]["last_run_at"]
     )
 
 
-def send(config: ClusteringSubscription, time_config: dict, bk_biz_name: str, language: str):
-    result = query_patterns(config, time_config)
+@task()
+def send(config: ClusteringSubscription, time_config: dict, space_name: str, language: str, log_prefix: str):
+    result = query_patterns(config, time_config, log_prefix)
     if not result:
-        logger.info(f"Query pattern is empty. space_uid: {config.space_uid}, index_set_id: {config.index_set_id}")
+        logger.info(f"{log_prefix} Query pattern is empty.")
         return None
 
     clustering_config = ClusteringConfig.objects.filter(index_set_id=config.index_set_id).first()
     if not clustering_config:
         raise ClusteringConfigNotExistException()
 
-    all_patterns = clean_pattern(config, time_config, result, clustering_config)
+    all_patterns = clean_pattern(config, time_config, result, clustering_config, log_prefix)
+    logger.info(f"{log_prefix} clean pattern result: {all_patterns}")
 
     log_index_set = LogIndexSet.objects.filter(index_set_id=config.index_set_id).first()
     if not log_index_set:
         raise IndexSetDoseNotExistException()
+
+    log_col_show_type = config.log_col_show_type.capitalize()
 
     params = {
         "subscription_id": config.id,
         "language": language,
         "title": config.title,
         "time_config": time_config,
-        "bk_biz_name": bk_biz_name,
+        "space_name": space_name,
         "index_set_name": log_index_set.index_set_name,
         "log_search_url": generate_log_search_url(config, time_config),
-        "table_headers": [_("数据指纹"), _("数量"), _("占比"), _("同比数量"), "Pattern"],
+        "table_headers": [_("序号"), _("数据指纹"), _("数量"), _("占比"), _("同比数量"), log_col_show_type],
         "all_patterns": all_patterns,
-        "log_col_show_type": config.log_col_show_type.capitalize(),
+        "log_col_show_type": log_col_show_type,
         "group_by": config.group_by,
         "percentage": round(max([i["percentage"] for i in result]), 2),
         "clustering_fields": clustering_config.clustering_fields,
     }
 
+    logger.info(f"{log_prefix} Before sending notification params: {params}")
+
     if config.subscription_type == SubscriptionTypeEnum.WECHAT.value:
         if all_patterns["new_patterns"]["data"]:
-            send_wechat(params, config.receivers)
+            send_wechat(params, config.receivers, log_prefix)
 
     elif config.subscription_type == SubscriptionTypeEnum.EMAIL.value:
         if all_patterns["patterns"]["data"] or all_patterns["new_patterns"]["data"]:
-            send_mail(params, config.receivers)
+            send_mail(params, config.receivers, log_prefix)
 
 
 @periodic_task(run_every=crontab(minute="*/1"))
 def send_subscription_task():
+    logger.info("clustering subscription task start running")
     if not FeatureToggleObject.switch(BKDATA_CLUSTERING_TOGGLE):
-        raise ClusteringClosedException()
+        return
 
     subscription_configs = ClusteringSubscription.objects.all()
+    
+    for config in subscription_configs:
+        log_prefix = (
+            f"[clustering_subscription] space_uid: {config.space_uid} index_set_id: {config.index_set_id}"
+        )
+        # 查询空间信息
 
-    with ThreadPoolExecutor() as ex:
-        for config in subscription_configs:
-            # 查询空间信息
-            space = api.SpaceApi.get_space_detail(space_uid=config.space_uid)
+        space = api.SpaceApi.get_space_detail(space_uid=config.space_uid)
 
-            time_zone = pytz.timezone(space.properties.get("time_zone", "") or settings.TIME_ZONE)
-            time_config = get_start_and_end_time(config.frequency, config.last_run_at, time_zone)
-            is_run_time = time_config["is_run_time"]
+        time_zone = pytz.timezone(space.properties.get("time_zone", "") or settings.TIME_ZONE)
+        time_config = get_start_and_end_time(config.frequency, config.last_run_at, time_zone)
+        logger.info(f"{log_prefix} time_config: {time_config}")
+        is_run_time = time_config["is_run_time"]
 
-            # 未到运行时间
-            if not is_run_time:
-                continue
+        # 未到运行时间
+        if not is_run_time:
+            continue
 
-            language = space.properties.get("language", "") or translation.get_language()
-            bk_biz_name = MetricUtils.get_instance().get_biz_name(space.bk_biz_id)
-            ex.submit(send, config, time_config, bk_biz_name, language)
+        language = space.properties.get("language", "") or translation.get_language()
+        send.delay(
+            config=config,
+            time_config=time_config,
+            space_name=space.space_name,
+            language=language,
+            log_prefix=log_prefix
+        )
+
+    logger.info("clustering subscription task complete.")
