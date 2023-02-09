@@ -41,6 +41,7 @@ import ManageInput from './component/manage-input';
 import $http from '../../../api';
 import { deepClone, random, formatDate } from '../../../common/util';
 import './manage-group-dialog.scss';
+import jsCookie from 'js-cookie';
 
 interface IProps {
   value?: boolean;
@@ -135,6 +136,10 @@ export default class GroupDialog extends tsc<IProps> {
     'group_option_private',
     'is_group_disabled',
   ];
+  groupNameMap = {
+    unknown: window.mainComponent.$t('未分组'),
+    private: window.mainComponent.$t('个人收藏'),
+  }
   sourceFilters = []; // 所属组数组
   updateSourceFilters = []; // 更变人过滤数组
 
@@ -281,7 +286,14 @@ export default class GroupDialog extends tsc<IProps> {
       const updateSourceFiltersSet = new Set();
       const initList = res.data.map((item) => {
         const visible_option = item.created_by === this.getUserName ? this.allOptionList : this.unPrivateOptionList;
-        const search_fields_select_list = item.search_fields.map(item => ({ name: item })); // 初始化表单字段
+        const localLanguage = jsCookie.get('blueking_language') || 'zh-cn';
+        const search_fields_select_list = item.search_fields.map(item => ({
+          name: localLanguage === 'en' ? item.replace(/^全文检索(\(\d\))?$/, (item, p1) => {
+            return `${this.$t('全文检索')}${!!p1 ? p1 : ''}`;
+          }) : item,
+          chName: item,
+        })); // 初始化表单字段
+
         const is_group_disabled = item.visible_type === 'private';
         if (!updateSourceFiltersSet.has(item.updated_by)) updateSourceFiltersSet.add(item.updated_by);
         return {
@@ -316,7 +328,7 @@ export default class GroupDialog extends tsc<IProps> {
       });
       this.groupList = res.data.map(item => ({
         group_id: item.id,
-        group_name: item.name,
+        group_name: this.groupNameMap[item.group_type] ?? item.name,
         group_type: item.group_type,
       }));
       this.unPrivateList = this.groupList.slice(1); // 去除个人收藏的列表
@@ -375,7 +387,12 @@ export default class GroupDialog extends tsc<IProps> {
     if (status) {
       try {
         const res = await this.getSearchFieldsList(row.keyword);
-        this.operateListChange(row, { search_fields_select_list: res.data });
+        const list = res.data.map(item => ({
+          ...item,
+          name: item.is_full_text_field ? `${this.$t('全文检索')}${!!item.repeat_count ? `(${item.repeat_count})` : ''}` : item.name,
+          chName: item.name,
+        }));
+        this.operateListChange(row, { search_fields_select_list: list });
       } catch (error) {
         console.warn(error);
       }
@@ -469,7 +486,6 @@ export default class GroupDialog extends tsc<IProps> {
     Promise.all([this.batchDeleteFavorite(), this.batchUpdateFavorite()])
       .then(() => {
         this.handleValueChange(false);
-        this.handleSubmitChange(true);
       })
       .finally(() => {
         this.tableLoading = false;
@@ -557,6 +573,7 @@ export default class GroupDialog extends tsc<IProps> {
         directives: [
           {
             name: 'bk-tooltips',
+            width: 400,
             value: this.$t('表单模式显示字段文案'),
           },
         ],
@@ -692,7 +709,7 @@ export default class GroupDialog extends tsc<IProps> {
           on-toggle={status => this.handleClickFieldsList(row, status)}
         >
           {row.search_fields_select_list.map(item => (
-            <Option id={item.name} key={item.name} name={item.name}></Option>
+            <Option id={item.chName} key={item.name} name={item.name}></Option>
           ))}
         </Select>,
       ],

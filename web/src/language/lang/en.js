@@ -1586,7 +1586,7 @@ export default {
   收藏名重复: 'Favorite name is exist',
   更新成功: 'Update success',
   个人收藏: 'Private group',
-  未分组: 'Unknown group',
+  未分组: 'Ungrouped',
   '保留名称，不可使用': 'Reserve name not available',
   未完成配置: 'Undead configuration',
   删除前请先停用: 'Please stop before deleting',
@@ -1622,4 +1622,5 @@ export default {
   '组名不规范, 只支持输入中文、英文、数字、特殊符号.': '组名不规范, 只支持输入中文、英文、数字、特殊符号.',
   组名重复: 'Duplicate group name',
   原始日志: 'Original log',
+  全文检索: 'Full-text search',
 };
