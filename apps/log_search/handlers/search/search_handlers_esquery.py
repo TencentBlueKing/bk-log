@@ -1032,7 +1032,10 @@ class SearchHandler(object):
         from apps.log_search.handlers.search.mapping_handlers import MappingHandlers
 
         return MappingHandlers.get_default_sort_list(
-            index_set_id=index_set_id, scenario_id=self.scenario_id, scope=scope
+            index_set_id=index_set_id,
+            scenario_id=self.scenario_id,
+            scope=scope,
+            default_sort_tag=self.search_dict.get("default_sort_tag", False),
         )
 
     # 过滤filter

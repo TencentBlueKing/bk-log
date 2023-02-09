@@ -100,6 +100,10 @@ export default class CollectIndex extends tsc<IProps> {
   baseSortType = 'NAME_ASC'; // 排序参数
   sortType = 'NAME_ASC'; // 展示的排序参数
   editFavoriteID = -1; // 点击编辑时的收藏ID
+  groupNameMap = {
+    unknown: window.mainComponent.$t('未分组'),
+    private: window.mainComponent.$t('个人收藏'),
+  }
   groupSortList = [
     // 排序展示列表
     {
@@ -354,10 +358,13 @@ export default class CollectIndex extends tsc<IProps> {
   }
 
   handleInitFavoriteList(value) {
-    this.collectList = value;
+    this.collectList = value.map(item => ({
+      ...item,
+      group_name: this.groupNameMap[item.group_type] ?? item.group_name,
+    }));
     this.groupList = value.map(item => ({
       group_id: item.group_id,
-      group_name: item.group_name,
+      group_name: this.groupNameMap[item.group_type] ?? item.group_name,
       group_type: item.group_type,
     }));
     this.unknownGroupID = this.groupList[this.groupList.length - 1]?.group_id;

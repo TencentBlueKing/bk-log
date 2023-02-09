@@ -82,7 +82,13 @@ export default {
         const res = await this.$http.request('favorite/getSearchFields', {
           data: { keyword },
         });
-        this.searchFieldsList = res.data.filter(item => fieldsList.includes(item.name));
+        this.searchFieldsList = res.data
+          .filter(item => fieldsList.includes(item.name))
+          .map(item => ({
+            ...item,
+            name: item.is_full_text_field ? `${this.$t('全文检索')}${!!item.repeat_count ? `(${item.repeat_count})` : ''}` : item.name,
+            chName: item.name,
+          }));
         this.cacheFieldsList = deepClone(this.searchFieldsList); // 赋值缓存的展示字段
       } finally {
         this.loading = false;
