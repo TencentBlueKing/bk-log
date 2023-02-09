@@ -21,7 +21,7 @@
 <p>{{ time_config.start_time }} - {{ time_config.end_time }} {{ title }}</p>
 <p>Space Name: {{ space_name }}</p>
 <p>Index Set Name: {{ index_set_name }}</p>
-<p>Log analysis：Pattern ({{ all_patterns.patterns.pattern_count + all_patterns.new_patterns.pattern_count }}) 个，Number ({{ all_patterns.patterns.log_count + all_patterns.new_patterns.log_count }}) </p>
+<p>Log analysis：Pattern ({{ all_patterns.patterns.pattern_count + all_patterns.new_patterns.pattern_count }})，Number ({{ all_patterns.patterns.log_count + all_patterns.new_patterns.log_count }}) </p>
 <p><a href='{{ log_search_url }}'>Log Detail</a></p>
 {% if all_patterns.new_patterns.data %}
     <p>New {{ log_col_show_type }} Example:</p>
