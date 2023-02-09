@@ -149,7 +149,7 @@ class MappingHandlers(object):
         @return:
         """
         fields = {f["field_name"] for f in field_list}
-        virtual_predicate = [{"serverIp", "cloudId"}, {"ip", "cloudid"}, {"ip"}, {"bk_host_id"}]
+        virtual_predicate = [{"serverIp", "cloudId"}, {"ip", "cloudid"}, {"ip"}]
         if any([fields.issuperset(predicate) for predicate in virtual_predicate]):
             field_list.append(
                 {
@@ -175,11 +175,12 @@ class MappingHandlers(object):
                     "is_analyzed": False,
                 }
             )
+        if "bk_host_id" in fields:
             field_list.append(
                 {
                     "field_type": "__virtual__",
                     "field_name": "ipv6",
-                    "field_alias": _("ipv6"),
+                    "field_alias": "IPv6",
                     "is_display": False,
                     "is_editable": True,
                     "tag": "dimension",

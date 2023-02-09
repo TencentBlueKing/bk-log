@@ -1196,14 +1196,16 @@ class SearchHandler(object):
         bk_cloud_id = log.get("cloudId", log.get("cloudid"))
         if not bk_host_id and not server_ip:
             return log
-        if bk_host_id and CmdbHostCache.get(bk_biz_id, bk_host_id):
-            host = CmdbHostCache.get(bk_biz_id, bk_host_id)
+        host_key = bk_host_id if bk_host_id else server_ip
+        host_info = CmdbHostCache.get(bk_biz_id, host_key)
+
+        if bk_host_id and host_info:
+            host = host_info
         else:
-            host = CmdbHostCache.get(bk_biz_id, server_ip)
             if not bk_cloud_id:
-                host = next(iter(host.values()))
+                host = next(iter(host_info.values()))
             else:
-                host = host.get(str(bk_cloud_id))
+                host = host_info.get(str(bk_cloud_id))
         if not host:
             log["__module__"] = ""
             log["__set__"] = ""
@@ -1211,10 +1213,16 @@ class SearchHandler(object):
             return log
 
         set_list, module_list = [], []
-        for _set in host.get("topo", []):
-            set_list.append(_set["bk_set_name"])
-            for module in _set.get("module", []):
-                module_list.append(module["bk_module_name"])
+        if host.get("topo"):
+            for _set in host.get("topo", []):
+                set_list.append(_set["bk_set_name"])
+                for module in _set.get("module", []):
+                    module_list.append(module["bk_module_name"])
+        # 兼容旧缓存数据
+        else:
+            set_list = [_set["bk_inst_name"] for _set in host.get("set", [])]
+            module_list = [_module["bk_inst_name"] for _module in host.get("module", [])]
+
         log["__set__"] = " | ".join(set_list)
         log["__module__"] = " | ".join(module_list)
         log["ipv6"] = host.get("bk_host_innerip_v6", "")
