@@ -26,7 +26,7 @@ from urllib.parse import urlencode
 
 import pytz
 from celery.schedules import crontab
-from celery.task import periodic_task
+from celery.task import periodic_task, task
 from django.conf import settings
 from django.utils import timezone, translation
 from django.utils.translation import ugettext_lazy as _
@@ -45,7 +45,6 @@ from apps.log_clustering.exceptions import ClusteringConfigNotExistException
 from apps.log_clustering.handlers.pattern import PatternHandler
 from apps.log_clustering.models import ClusteringConfig, ClusteringSubscription
 from apps.log_clustering.utils.wechat_robot import WeChatRobot
-from apps.log_measure.utils.metric import MetricUtils
 from apps.log_search.exceptions import IndexSetDoseNotExistException
 from apps.log_search.handlers.search.search_handlers_esquery import (
     SearchHandler as SearchHandlerEsquery,
@@ -315,7 +314,8 @@ def send_mail(params: dict, receivers: list, log_prefix: str):
     )
 
 
-def send(config: ClusteringSubscription, time_config: dict, bk_biz_name: str, language: str, log_prefix: str):
+@task()
+def send(config: ClusteringSubscription, time_config: dict, space_name: str, language: str, log_prefix: str):
     result = query_patterns(config, time_config, log_prefix)
     if not result:
         logger.info(f"{log_prefix} Query pattern is empty.")
@@ -332,17 +332,19 @@ def send(config: ClusteringSubscription, time_config: dict, bk_biz_name: str, la
     if not log_index_set:
         raise IndexSetDoseNotExistException()
 
+    log_col_show_type = config.log_col_show_type.capitalize()
+
     params = {
         "subscription_id": config.id,
         "language": language,
         "title": config.title,
         "time_config": time_config,
-        "bk_biz_name": bk_biz_name,
+        "space_name": space_name,
         "index_set_name": log_index_set.index_set_name,
         "log_search_url": generate_log_search_url(config, time_config),
-        "table_headers": [_("序号"), _("数据指纹"), _("数量"), _("占比"), _("同比数量"), "Pattern"],
+        "table_headers": [_("序号"), _("数据指纹"), _("数量"), _("占比"), _("同比数量"), log_col_show_type],
         "all_patterns": all_patterns,
-        "log_col_show_type": config.log_col_show_type.capitalize(),
+        "log_col_show_type": log_col_show_type,
         "group_by": config.group_by,
         "percentage": round(max([i["percentage"] for i in result]), 2),
         "clustering_fields": clustering_config.clustering_fields,
@@ -366,26 +368,31 @@ def send_subscription_task():
         return
 
     subscription_configs = ClusteringSubscription.objects.all()
+    
+    for config in subscription_configs:
+        log_prefix = (
+            f"[clustering_subscription] space_uid: {config.space_uid} index_set_id: {config.index_set_id}"
+        )
+        # 查询空间信息
 
-    with ThreadPoolExecutor() as ex:
-        for config in subscription_configs:
-            log_prefix = (
-                f"[clustering_subscription] space_uid: {config.space_uid} index_set_id: {config.index_set_id}"
-            )
-            # 查询空间信息
-            space = api.SpaceApi.get_space_detail(space_uid=config.space_uid)
+        space = api.SpaceApi.get_space_detail(space_uid=config.space_uid)
 
-            time_zone = pytz.timezone(space.properties.get("time_zone", "") or settings.TIME_ZONE)
-            time_config = get_start_and_end_time(config.frequency, config.last_run_at, time_zone)
-            logger.info(f"{log_prefix} time_config: {time_config}")
-            is_run_time = time_config["is_run_time"]
+        time_zone = pytz.timezone(space.properties.get("time_zone", "") or settings.TIME_ZONE)
+        time_config = get_start_and_end_time(config.frequency, config.last_run_at, time_zone)
+        logger.info(f"{log_prefix} time_config: {time_config}")
+        is_run_time = time_config["is_run_time"]
 
-            # 未到运行时间
-            if not is_run_time:
-                continue
+        # 未到运行时间
+        if not is_run_time:
+            continue
 
-            language = space.properties.get("language", "") or translation.get_language()
-            bk_biz_name = MetricUtils.get_instance().get_biz_name(space.bk_biz_id)
-            ex.submit(send, config, time_config, bk_biz_name, language, log_prefix)
+        language = space.properties.get("language", "") or translation.get_language()
+        send.delay(
+            config=config,
+            time_config=time_config,
+            space_name=space.space_name,
+            language=language,
+            log_prefix=log_prefix
+        )
 
     logger.info("clustering subscription task complete.")
