@@ -5,6 +5,6 @@
 **Log analysis**：New pattern <font color="info">({{ all_patterns.new_patterns.pattern_count }})</font>，Number <font color="info">({{ all_patterns.new_patterns.log_count }})</font>, The max count of pattern logs: <font color="info">({{ all_patterns.new_patterns.max_num }})</font> <font color="info">({{ all_patterns.new_patterns.percentage }}%)</font>   
 **New {{ log_col_show_type }} Example**:  
 {% for pattern in all_patterns.new_patterns.data %}
-><font color="warning">[{{loop.index}}]</font> <font color="warning">(Count:{{pattern.count}})</font> {{ pattern.pattern }}
+><font color="warning">[{{loop.index}}]</font> <font color="warning">(Count: {{pattern.count}})</font> {{ pattern.pattern }}
 {% endfor %}
 [Log Detail]({{ log_search_url }})  
