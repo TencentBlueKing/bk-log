@@ -19,9 +19,9 @@
 </style>
 <body>
 <p>{{ time_config.start_time }} - {{ time_config.end_time }} {{ title }}</p>
-<p>业务名称: {{ bk_biz_name }}</p>
+<p>空间名称: {{ space_name }}</p>
 <p>索引集名称: {{ index_set_name }}</p>
-<p>日志分析：Pattern ({{ all_patterns.patterns.pattern_count + all_patterns.new_patterns.pattern_count }})个，日志总共出现 ({{ all_patterns.patterns.log_count + all_patterns.new_patterns.log_count }}) 条</p>
+<p>日志分析：Pattern ({{ all_patterns.patterns.pattern_count + all_patterns.new_patterns.pattern_count }}) 个，日志总共出现 ({{ all_patterns.patterns.log_count + all_patterns.new_patterns.log_count }}) 条</p>
 <p><a href='{{ log_search_url }}'>日志详情</a></p>
 {% if all_patterns.new_patterns.data %}
     <p>新增{{ log_col_show_type }}示例:</p>
