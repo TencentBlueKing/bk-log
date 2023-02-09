@@ -41,10 +41,7 @@ from apps.log_clustering.constants import (
     SubscriptionTypeEnum,
     YearOnYearChangeEnum,
 )
-from apps.log_clustering.exceptions import (
-    ClusteringClosedException,
-    ClusteringConfigNotExistException,
-)
+from apps.log_clustering.exceptions import ClusteringConfigNotExistException
 from apps.log_clustering.handlers.pattern import PatternHandler
 from apps.log_clustering.models import ClusteringConfig, ClusteringSubscription
 from apps.log_clustering.utils.wechat_robot import WeChatRobot
@@ -56,8 +53,6 @@ from apps.log_search.handlers.search.search_handlers_esquery import (
 from apps.log_search.models import LogIndexSet
 from apps.utils.log import logger
 from bkm_space import api
-
-robot_api = WeChatRobot()
 
 
 def validate_end_time(freq: dict, end_time: datetime):
@@ -290,6 +285,7 @@ def render_template(template: str, params: dict) -> str:
 
 
 def send_wechat(params: dict, receivers: list, log_prefix: str):
+    robot_api = WeChatRobot()
     tpl_name = "clustering_wechat_en.md" if params["language"] == "en" else "clustering_wechat.md"
     content = render_template(tpl_name, params)
     send_params = {
@@ -367,7 +363,7 @@ def send(config: ClusteringSubscription, time_config: dict, bk_biz_name: str, la
 def send_subscription_task():
     logger.info("clustering subscription task start running")
     if not FeatureToggleObject.switch(BKDATA_CLUSTERING_TOGGLE):
-        raise ClusteringClosedException()
+        return
 
     subscription_configs = ClusteringSubscription.objects.all()
 

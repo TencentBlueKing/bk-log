@@ -83,10 +83,10 @@ export default {
       basicLoading: true,
       authPageInfo: null,
       reportDetail: {},
-      activePanel: 'basicInfo',
+      activePanel: this.$route.query.type || 'basicInfo',
       isOpenWindow: true,
       panels: [
-        { name: 'basicInfo', label: this.$t('基本信息') },
+        { name: 'basicInfo', label: this.$t('配置信息') },
         { name: 'dataStorage', label: this.$t('数据存储') },
         { name: 'dataStatus', label: this.$t('数据状态') },
         { name: 'usageDetails', label: this.$t('使用详情') },

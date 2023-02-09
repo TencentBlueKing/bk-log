@@ -202,7 +202,7 @@ class GseAgentCheck(object):
         port = output.split("-")[-1]
         queue_status = get_command("ss -x -p | grep -E 'Rec|%s' |awk 'NR>1{print $3;print $4}'" % port)
         queue_status = list(map(int, queue_status.split("\n")))
-        if not any(queue_status):
+        if any(queue_status):
             result.message = "socket queue blocking"
             result.add_to_result()
             return

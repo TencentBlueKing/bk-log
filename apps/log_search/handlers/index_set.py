@@ -68,12 +68,14 @@ from apps.log_search.constants import (
     DEFAULT_INDEX_SET_FIELDS_CONFIG_NAME,
 )
 from apps.log_databus.handlers.storage import StorageHandler
+from apps.log_databus.models import CollectorConfig
 from apps.log_databus.constants import STORAGE_CLUSTER_TYPE
 from apps.api import BkLogApi
 from apps.log_search.handlers.search.mapping_handlers import MappingHandlers
 from apps.log_search.constants import TimeFieldTypeEnum, TimeFieldUnitEnum, DEFAULT_TIME_FIELD
 from apps.decorators import user_operation_record
 from apps.utils.thread import MultiExecuteFunc
+from apps.utils.db import array_hash
 from bkm_space.utils import space_uid_to_bk_biz_id
 
 
@@ -115,6 +117,19 @@ class IndexSetHandler(APIModel):
     @classmethod
     def get_user_index_set(cls, space_uid, scenarios=None):
         index_sets = LogIndexSet.get_index_set(scenarios=scenarios, space_uid=space_uid)
+        # 补充采集场景
+        collector_config_ids = [
+            index_set["collector_config_id"] for index_set in index_sets if index_set["collector_config_id"]
+        ]
+        collector_scenario_map = array_hash(
+            data=CollectorConfig.objects.filter(collector_config_id__in=collector_config_ids).values(
+                "collector_config_id", "collector_scenario_id"
+            ),
+            key="collector_config_id",
+            value="collector_scenario_id",
+        )
+        for index_set in index_sets:
+            index_set["collector_scenario_id"] = collector_scenario_map.get(index_set["collector_config_id"])
         return index_sets
 
     @classmethod
