@@ -238,8 +238,15 @@ class MappingHandlers(object):
     @atomic
     def get_or_create_default_config(self):
         """获取默认配置"""
+        from apps.log_search.handlers.search.pre_search_handlers import PreSearchHandlers
+
         __, display_fields = self.get_default_fields()
-        sort_list = self.get_default_sort_list(index_set_id=self.index_set_id, scenario_id=self.scenario_id)
+        default_sort_tag = PreSearchHandlers.pre_check_fields(
+            indices=self.indices, scenario_id=self.scenario_id, storage_cluster_id=self.storage_cluster_id
+        ).get("default_sort_tag", False)
+        sort_list = self.get_default_sort_list(
+            index_set_id=self.index_set_id, scenario_id=self.scenario_id, default_sort_tag=default_sort_tag
+        )
         obj, __ = IndexSetFieldsConfig.objects.get_or_create(
             index_set_id=self.index_set_id,
             name=DEFAULT_INDEX_SET_FIELDS_CONFIG_NAME,
@@ -248,16 +255,17 @@ class MappingHandlers(object):
         return obj
 
     @classmethod
-    def get_default_sort_list(cls, index_set_id: int = None, scenario_id: str = None, scope: str = "default"):
+    def get_default_sort_list(
+        cls, index_set_id: int = None, scenario_id: str = None, scope: str = "default", default_sort_tag: bool = False
+    ):
         """默认字段排序规则"""
         time_field = cls._get_time_field(index_set_id)
         if scope in ["trace_detail", "trace_scatter"]:
             return [[time_field, "asc"]]
-        if scenario_id in [Scenario.BKDATA, Scenario.LOG]:
-            if scenario_id == Scenario.BKDATA:
-                return [[time_field, "desc"], ["gseindex", "desc"], ["_iteration_idx", "desc"]]
-            if scenario_id == Scenario.LOG:
-                return [[time_field, "desc"], ["gseIndex", "desc"], ["iterationIndex", "desc"]]
+        if default_sort_tag and scenario_id == Scenario.BKDATA:
+            return [[time_field, "desc"], ["gseindex", "desc"], ["_iteration_idx", "desc"]]
+        if default_sort_tag and scenario_id == Scenario.LOG:
+            return [[time_field, "desc"], ["gseIndex", "desc"], ["iterationIndex", "desc"]]
         return [[time_field, "desc"]]
 
     def get_default_fields(self):
