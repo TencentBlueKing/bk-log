@@ -238,15 +238,8 @@ class MappingHandlers(object):
     @atomic
     def get_or_create_default_config(self):
         """获取默认配置"""
-        from apps.log_search.handlers.search.pre_search_handlers import PreSearchHandlers
-
         __, display_fields = self.get_default_fields()
-        default_sort_tag = PreSearchHandlers.pre_check_fields(
-            indices=self.indices, scenario_id=self.scenario_id, storage_cluster_id=self.storage_cluster_id
-        ).get("default_sort_tag", False)
-        sort_list = self.get_default_sort_list(
-            index_set_id=self.index_set_id, scenario_id=self.scenario_id, default_sort_tag=default_sort_tag
-        )
+        sort_list = self.get_default_sort_list(index_set_id=self.index_set_id, scenario_id=self.scenario_id)
         obj, __ = IndexSetFieldsConfig.objects.get_or_create(
             index_set_id=self.index_set_id,
             name=DEFAULT_INDEX_SET_FIELDS_CONFIG_NAME,
