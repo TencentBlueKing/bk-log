@@ -40,16 +40,21 @@ from apps.log_clustering.constants import (
     LogColShowTypeEnum,
     SubscriptionTypeEnum,
     YearOnYearChangeEnum,
+    YearOnYearEnum,
 )
 from apps.log_clustering.exceptions import ClusteringConfigNotExistException
 from apps.log_clustering.handlers.pattern import PatternHandler
 from apps.log_clustering.models import ClusteringConfig, ClusteringSubscription
+from apps.log_clustering.serializers import PatternSearchSerlaizer
 from apps.log_clustering.utils.wechat_robot import WeChatRobot
 from apps.log_search.exceptions import IndexSetDoseNotExistException
 from apps.log_search.handlers.search.search_handlers_esquery import (
     SearchHandler as SearchHandlerEsquery,
 )
 from apps.log_search.models import LogIndexSet
+from apps.log_search.serializers import SearchAttrSerializer
+from apps.utils.drf import custom_params_valid
+from apps.utils.local import set_local_param
 from apps.utils.log import logger
 from bkm_space import api
 
@@ -155,16 +160,16 @@ def query_logs(
     log_prefix: str,
 ) -> dict:
     addition = config.addition if config.addition else []
+    addition.append({"field": f"__dist_{config.pattern_level}", "operator": "is", "value": pattern["signature"]})
     params = {
         "start_time": time_config["start_time"],
         "end_time": time_config["end_time"],
         "keyword": config.query_string or "*",
-        "addition": addition.append(
-            {"field": f"__dist_{pattern['pattern_level']}", "operator": "is", "value": pattern["signature"]}
-        ),
+        "addition": addition,
         "host_scopes": config.host_scopes if config.host_scopes else {},
         "size": 1,
     }
+    params = custom_params_valid(SearchAttrSerializer, params)
     logger.info(f"{log_prefix} Query signature log params: {params}")
     result = SearchHandlerEsquery(config.index_set_id, params).search()
     logger.info(f"{log_prefix} Query signature log result: {result}")
@@ -187,6 +192,7 @@ def query_patterns(config: ClusteringSubscription, time_config: dict, log_prefix
         "year_on_year_hour": config.year_on_year_hour,
         "group_by": config.group_by if config.group_by else [],
     }
+    params = custom_params_valid(serializer=PatternSearchSerlaizer, params=params)
     logger.info(f"{log_prefix} search pattern params: {params}")
     result = PatternHandler(config.index_set_id, params).pattern_search()
     logger.info(f"{log_prefix} search pattern result: {result}")
@@ -315,9 +321,18 @@ def send_mail(params: dict, receivers: list, log_prefix: str):
 
 
 @task()
-def send(config: ClusteringSubscription, time_config: dict, space_name: str, language: str, log_prefix: str):
+def send(
+    config: ClusteringSubscription, time_config: dict, space_name: str, language: str, log_prefix: str, time_zone: str
+):
+    # 激活业务时区
+    timezone.activate(pytz.timezone(time_zone))
+    set_local_param("time_zone", time_zone)
+
     result = query_patterns(config, time_config, log_prefix)
     if not result:
+        # 更新last_run_at
+        config.last_run_at = time_config["last_run_at"]
+        config.save()
         logger.info(f"{log_prefix} Query pattern is empty.")
         return None
 
@@ -325,7 +340,11 @@ def send(config: ClusteringSubscription, time_config: dict, space_name: str, lan
     if not clustering_config:
         raise ClusteringConfigNotExistException()
 
-    all_patterns = clean_pattern(config, time_config, result, clustering_config, log_prefix)
+    try:
+        all_patterns = clean_pattern(config, time_config, result, clustering_config, log_prefix)
+    except Exception as e:
+        logger.exception(f"{log_prefix} clean pattern error: {e}")
+        return None
     logger.info(f"{log_prefix} clean pattern result: {all_patterns}")
 
     log_index_set = LogIndexSet.objects.filter(index_set_id=config.index_set_id).first()
@@ -339,10 +358,10 @@ def send(config: ClusteringSubscription, time_config: dict, space_name: str, lan
         "language": language,
         "title": config.title,
         "time_config": time_config,
+        "show_year_on_year": False if config.year_on_year_hour == YearOnYearEnum.NOT.value else True,
         "space_name": space_name,
         "index_set_name": log_index_set.index_set_name,
         "log_search_url": generate_log_search_url(config, time_config),
-        "table_headers": [_("序号"), _("数据指纹"), _("数量"), _("占比"), _("同比数量"), log_col_show_type],
         "all_patterns": all_patterns,
         "log_col_show_type": log_col_show_type,
         "group_by": config.group_by,
@@ -364,21 +383,19 @@ def send(config: ClusteringSubscription, time_config: dict, space_name: str, lan
 @periodic_task(run_every=crontab(minute="*/1"))
 def send_subscription_task():
     logger.info("clustering subscription task start running")
+
     if not FeatureToggleObject.switch(BKDATA_CLUSTERING_TOGGLE):
         return
 
     subscription_configs = ClusteringSubscription.objects.all()
-    
+
     for config in subscription_configs:
-        log_prefix = (
-            f"[clustering_subscription] space_uid: {config.space_uid} index_set_id: {config.index_set_id}"
-        )
+        log_prefix = f"[clustering_subscription] space_uid: {config.space_uid} index_set_id: {config.index_set_id}"
         # 查询空间信息
 
         space = api.SpaceApi.get_space_detail(space_uid=config.space_uid)
-
-        time_zone = pytz.timezone(space.properties.get("time_zone", "") or settings.TIME_ZONE)
-        time_config = get_start_and_end_time(config.frequency, config.last_run_at, time_zone)
+        time_zone = space.properties.get("time_zone", "") or settings.TIME_ZONE
+        time_config = get_start_and_end_time(config.frequency, config.last_run_at, pytz.timezone(time_zone))
         logger.info(f"{log_prefix} time_config: {time_config}")
         is_run_time = time_config["is_run_time"]
 
@@ -392,7 +409,8 @@ def send_subscription_task():
             time_config=time_config,
             space_name=space.space_name,
             language=language,
-            log_prefix=log_prefix
+            log_prefix=log_prefix,
+            time_zone=time_zone,
         )
 
     logger.info("clustering subscription task complete.")

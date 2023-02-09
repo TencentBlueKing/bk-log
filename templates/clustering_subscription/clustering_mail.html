@@ -28,9 +28,15 @@
     <table>
         <thead>
             <tr>
-                {% for header in table_headers%}
-                    <th>{{ header }}</th>
-                {% endfor %}
+                <th>序号</th>
+                <th>数据指纹</th>
+                <th>数量</th>
+                <th>占比</th>
+                {% if show_year_on_year %}
+                    <th>同比数量</th>
+                    <th>同比变化</th>
+                {% endif %}
+                <th>{{ log_col_show_type }}</th>
                 {% for header in group_by%}
                     <th>{{ header }}</th>
                 {% endfor %}
@@ -43,7 +49,10 @@
                 <td>{{ pattern.signature }}</td>
                 <td>{{ pattern.count }}</td>
                 <td>{{ pattern.percentage | round(2) }}%</td>
-                <td>{{ pattern.year_on_year_count }}</td>
+                {% if show_year_on_year %}
+                    <td>{{ pattern.year_on_year_count }}</td>
+                    <td>{{ pattern.year_on_year_percentage | round(2) }}%</td>
+                {% endif %}
                 <td>{{ pattern.pattern }}</td>
                 {% for group in group_by%}
                     <td>{{ group }}</td>
@@ -58,9 +67,15 @@
     <table>
         <thead>
             <tr>
-                {% for header in table_headers%}
-                    <th>{{ header }}</th>
-                {% endfor %}
+                <th>序号</th>
+                <th>数据指纹</th>
+                <th>数量</th>
+                <th>占比</th>
+                {% if show_year_on_year %}
+                    <th>同比数量</th>
+                    <th>同比变化</th>
+                {% endif %}
+                <th>{{ log_col_show_type }}</th>
                 {% for header in group_by%}
                     <th>{{ header }}</th>
                 {% endfor %}
@@ -73,7 +88,10 @@
                 <td>{{ pattern.signature }}</td>
                 <td>{{ pattern.count }}</td>
                 <td>{{ pattern.percentage | round(2) }}%</td>
-                <td>{{ pattern.year_on_year_count }}</td>
+                {% if show_year_on_year %}
+                    <td>{{ pattern.year_on_year_count }}</td>
+                    <td>{{ pattern.year_on_year_percentage | round(2) }}%</td>
+                {% endif %}
                 <td>{{ pattern.pattern }}</td>
                 {% for group in group_by%}
                     <td>{{ group }}</td>
