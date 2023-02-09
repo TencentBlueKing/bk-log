@@ -284,9 +284,9 @@ export default class GroupDialog extends tsc<IProps> {
         },
       });
       const updateSourceFiltersSet = new Set();
+      const localLanguage = jsCookie.get('blueking_language') || 'zh-cn';
       const initList = res.data.map((item) => {
         const visible_option = item.created_by === this.getUserName ? this.allOptionList : this.unPrivateOptionList;
-        const localLanguage = jsCookie.get('blueking_language') || 'zh-cn';
         const search_fields_select_list = item.search_fields.map(item => ({
           name: localLanguage === 'en' ? item.replace(/^全文检索(\(\d\))?$/, (item, p1) => {
             return `${this.$t('全文检索')}${!!p1 ? p1 : ''}`;
@@ -573,8 +573,10 @@ export default class GroupDialog extends tsc<IProps> {
         directives: [
           {
             name: 'bk-tooltips',
-            width: 400,
-            value: this.$t('表单模式显示字段文案'),
+            value: {
+              width: 400,
+              content: this.$t('表单模式显示字段文案'),
+            },
           },
         ],
       }, this.$t('表单模式')),
@@ -590,7 +592,10 @@ export default class GroupDialog extends tsc<IProps> {
         directives: [
           {
             name: 'bk-tooltips',
-            value: this.$t('是否同时显示字段文案'),
+            value: {
+              width: 400,
+              content: this.$t('是否同时显示字段文案'),
+            },
           },
         ],
       }, this.$t('显示字段')),
