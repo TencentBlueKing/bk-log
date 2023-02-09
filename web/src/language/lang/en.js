@@ -1623,4 +1623,7 @@ export default {
   组名重复: 'Duplicate group name',
   原始日志: 'Original log',
   全文检索: 'Full-text search',
+  收藏名排序: 'Sort by Favorites',
+  本业务可见: 'This business is visible',
+  仅个人可见: 'Personal only',
 };
