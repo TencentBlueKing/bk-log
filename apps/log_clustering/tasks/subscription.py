@@ -334,7 +334,7 @@ def send(
         config.last_run_at = time_config["last_run_at"]
         config.save()
         logger.info(f"{log_prefix} Query pattern is empty.")
-        return None
+        return
 
     clustering_config = ClusteringConfig.objects.filter(index_set_id=config.index_set_id).first()
     if not clustering_config:
@@ -344,7 +344,7 @@ def send(
         all_patterns = clean_pattern(config, time_config, result, clustering_config, log_prefix)
     except Exception as e:
         logger.exception(f"{log_prefix} clean pattern error: {e}")
-        return None
+        return
     logger.info(f"{log_prefix} clean pattern result: {all_patterns}")
 
     log_index_set = LogIndexSet.objects.filter(index_set_id=config.index_set_id).first()
