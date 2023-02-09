@@ -322,7 +322,11 @@ export default class CollectDialog extends tsc<IProps> {
       const res = await $http.request('favorite/getSearchFields', {
         data: { keyword },
       });
-      this.searchFieldsList = res.data;
+      this.searchFieldsList = res.data.map(item => ({
+        ...item,
+        name: item.is_full_text_field ? `${this.$t('全文检索')}${!!item.repeat_count ? `(${item.repeat_count})` : ''}` : item.name,
+        chName: item.name,
+      }));
     } catch (error) {}
   }
 
@@ -519,7 +523,7 @@ export default class CollectDialog extends tsc<IProps> {
             </div>
             <CheckboxGroup vModel={this.favoriteData.params.search_fields}>
               {this.searchFieldsList.map(item => (
-                <Checkbox value={item.name}>{item.name}</Checkbox>
+                <Checkbox value={item.chName}>{item.name}</Checkbox>
               ))}
             </CheckboxGroup>
           </FormItem>
