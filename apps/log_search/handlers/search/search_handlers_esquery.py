@@ -71,6 +71,7 @@ from apps.log_search.exceptions import (
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.api import BkLogApi, BcsCcApi
 from apps.utils.cache import cache_five_minute
+from apps.utils.core.cache.cmdb_host import CmdbHostCache
 from apps.utils.db import array_group
 from apps.utils.ipchooser import IPChooser
 from apps.utils.local import get_request_username
@@ -1188,26 +1189,43 @@ class SearchHandler(object):
     def _add_cmdb_fields(self, log):
         if not self.search_dict.get("bk_biz_id"):
             return log
+
         bk_biz_id = self.search_dict.get("bk_biz_id")
+        bk_host_id = log.get("bk_host_id")
         server_ip = log.get("serverIp", log.get("ip"))
         bk_cloud_id = log.get("cloudId", log.get("cloudid"))
-        if not server_ip:
+        if not bk_host_id and not server_ip:
             return log
+        host_key = bk_host_id if bk_host_id else server_ip
+        host_info = CmdbHostCache.get(bk_biz_id, host_key)
 
-        from apps.utils.core.cache.cmdb_host import CmdbHostCache
-
-        host = CmdbHostCache.get(bk_biz_id, server_ip)
-        host_info = None
-        if not bk_cloud_id and host:
-            host_info = next(iter(host.values()))
-        if bk_cloud_id:
-            host_info = host.get(str(bk_cloud_id))
-        if not host_info:
+        if bk_host_id and host_info:
+            host = host_info
+        else:
+            if not bk_cloud_id:
+                host = next(iter(host_info.values()))
+            else:
+                host = host_info.get(str(bk_cloud_id))
+        if not host:
             log["__module__"] = ""
             log["__set__"] = ""
+            log["ipv6"] = ""
             return log
-        log["__module__"] = " | ".join([module["bk_inst_name"] for module in host_info.get("module", [])])
-        log["__set__"] = " | ".join([set["bk_inst_name"] for set in host_info.get("set", [])])
+
+        set_list, module_list = [], []
+        if host.get("topo"):
+            for _set in host.get("topo", []):
+                set_list.append(_set["bk_set_name"])
+                for module in _set.get("module", []):
+                    module_list.append(module["bk_module_name"])
+        # 兼容旧缓存数据
+        else:
+            set_list = [_set["bk_inst_name"] for _set in host.get("set", [])]
+            module_list = [_module["bk_inst_name"] for _module in host.get("module", [])]
+
+        log["__set__"] = " | ".join(set_list)
+        log["__module__"] = " | ".join(module_list)
+        log["ipv6"] = host.get("bk_host_innerip_v6", "")
         return log
 
     def _deal_query_result(self, result_dict: dict) -> dict:
@@ -1235,7 +1253,14 @@ class SearchHandler(object):
             origin_log = copy.deepcopy(log)
             log = self._add_cmdb_fields(log)
             if self.export_fields:
-                origin_log = {key: origin_log[key] for key in self.export_fields}
+                new_origin_log = {}
+                for _export_field in self.export_fields:
+                    # 此处是为了虚拟字段[__set__, __module__, ipv6]可以导出
+                    if _export_field in origin_log:
+                        new_origin_log[_export_field] = origin_log[_export_field]
+                    else:
+                        new_origin_log[_export_field] = log.get(_export_field, "")
+                origin_log = new_origin_log
             origin_log_list.append(origin_log)
             _index = hit["_index"]
             log.update({"index": _index})

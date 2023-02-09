@@ -329,7 +329,7 @@ FIELDS = [
 # 时间字段的来源直接设为非维度
 FIELDS_NOT_ES_DOC_VALUES_KEYS = ["key1", "time1"]
 FIELDS_TIME_FIELD_ALIAS_NAME = "time1"
-FIELDS_VALID_NUM = 5
+FIELDS_VALID_NUM = 4
 FIELDS_TIME_FIELD_OPTION = {
     "time_zone": 0,
     "format": "yyyy-MM-DD hh:mm:ss",
