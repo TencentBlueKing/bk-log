@@ -54,7 +54,7 @@
                     <td>{{ pattern.year_on_year_percentage | round(2) }}%</td>
                 {% endif %}
                 <td>{{ pattern.pattern }}</td>
-                {% for group in group_by%}
+                {% for group in pattern.group_by%}
                     <td>{{ group }}</td>
                 {% endfor %}
             </tr>
@@ -93,7 +93,7 @@
                     <td>{{ pattern.year_on_year_percentage | round(2) }}%</td>
                 {% endif %}
                 <td>{{ pattern.pattern }}</td>
-                {% for group in group_by%}
+                {% for group in pattern.group_by%}
                     <td>{{ group }}</td>
                 {% endfor %}
             </tr>
