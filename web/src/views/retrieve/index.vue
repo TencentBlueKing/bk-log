@@ -1747,6 +1747,10 @@ export default {
         } = this.activeFavorite;
         const { search_fields } = params;
         const { host_scopes, addition, keyword } = this.retrieveParams;
+        const fRes = await this.$http.request('favorite/getSearchFields', {
+          data: { keyword },
+        });
+        const searchFilterList = fRes.data.filter(v => search_fields.includes(v.name));
         const data = {
           name,
           group_id,
@@ -1755,7 +1759,7 @@ export default {
           host_scopes,
           addition,
           keyword,
-          search_fields,
+          search_fields: searchFilterList,
         };
         if (!data.search_fields.length) this.isSqlSearchType = true;
         const res = await this.$http.request('favorite/updateFavorite', {

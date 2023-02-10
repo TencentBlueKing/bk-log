@@ -353,6 +353,7 @@ export default {
       this.isKeywordsError = false;
       this.keywordIsResolved = false;
       this.keywordErrorMessage = '';
+      this.$emit('isCanSearch', true);
       if (this.isAutoQuery) this.$emit('retrieve');
     },
     async handleCheckKeywords(keyword) { // 检查检索语句是否有误
