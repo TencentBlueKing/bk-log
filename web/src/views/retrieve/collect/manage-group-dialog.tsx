@@ -121,7 +121,7 @@ export default class GroupDialog extends tsc<IProps> {
   groupName = ''; // 输入框组名
   unknownGroupID = 0;
   privateGroupID = 0;
-  // positionTop = 0;
+  positionTop = 0;
   isCannotValueChange = false; // 用于分组时不进行数据更新
   maxHeight = 300;
   tippyOption = {
@@ -204,7 +204,7 @@ export default class GroupDialog extends tsc<IProps> {
   mounted() {
     const initTableHeight = Math.floor(document.body.clientHeight * 0.8)  - 240;
     this.maxHeight = initTableHeight > this.maxHeight ? initTableHeight : this.maxHeight;
-    // this.positionTop = Math.floor(document.body.clientHeight * 0.1);
+    this.positionTop = Math.floor(document.body.clientHeight * 0.1);
   }
 
   async handleValueChange(value) {
@@ -753,7 +753,7 @@ export default class GroupDialog extends tsc<IProps> {
         mask-close={false}
         ext-cls="manage-group"
         width={960}
-        // position={{ top: this.positionTop }}
+        position={{ top: this.positionTop }}
         confirm-fn={this.handleSubmitTableData}
         on-value-change={this.handleValueChange}
       >

@@ -175,7 +175,8 @@
                     :keyword="retrieveParams.keyword"
                     :active-favorite="activeFavorite"
                     :is-clear-condition="isClearCondition"
-                    @updateKeyWords="updateKeyWords" />
+                    @updateKeyWords="updateKeyWords"
+                    @isCanSearch="val => isCanStorageFavorite = val" />
                 </template>
                 <!-- 添加过滤条件 -->
                 <div class="tab-item-title flex-item-title">

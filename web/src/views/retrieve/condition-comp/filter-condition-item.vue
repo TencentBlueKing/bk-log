@@ -159,6 +159,10 @@ export default {
         operator: '',
         value: [], // String or Array
       },
+      mappingKay: {
+        '=': 'is',
+        '!=': 'is not',
+      },
       valueList: [{ id: '', name: `-${this.$t('空')}-` }], // 字段可选值列表
       filterPlaceholder: '',
       isHaveCompared: false, // 是否有大小对比的值
@@ -206,7 +210,10 @@ export default {
     },
     filterOperators() { // 过滤条件操作符
       const fieldsItem = this.filterFields.find(item => item.id === this.coreData.field);
-      return this.filterAllOperators[fieldsItem?.operatorKey] || [];
+      return this.filterAllOperators[fieldsItem?.operatorKey]?.map(item => ({
+        ...item,
+        operator: this.mappingKay[item.operator] ?? item.operator,
+      })) || [];
     },
     getOperatorLength() { // 是否是对比的操作 如果是 则值限制只能输入1个
       return this.isHaveCompared ? 1 : -1;
@@ -271,15 +278,17 @@ export default {
     },
     // 字段改变
     handleFieldChange(field) {
+      const fieldItem = this.filterFields.find(item => item.id === field);
+      const isNumberType = ['integer', 'long', 'double'].includes(fieldItem?.operatorKey);
       this.coreData.value = [];
-      this.valueList = [{ id: '', name: `-${this.$t('空')}-` }];
+      this.valueList = isNumberType ? [] : [{ id: '', name: `-${this.$t('空')}-` }];
       this.coreData.field = field || '';
       this.handleOperatorChange(this.filterOperators[0]?.operator || 'is');
       if (field && this.statisticalFieldsData[field]) {
         const fieldValues = Object.keys(this.statisticalFieldsData[field]);
         if (fieldValues?.length) {
           this.valueList = fieldValues.map(item => ({ id: item, name: item }));
-          this.valueList.unshift({ id: '', name: `-${this.$t('空')}-` });
+          if (!isNumberType) this.valueList.unshift({ id: '', name: `-${this.$t('空')}-` });
         }
       }
     },
