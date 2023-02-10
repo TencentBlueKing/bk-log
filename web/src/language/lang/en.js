@@ -1626,4 +1626,5 @@ export default {
   收藏名排序: 'Sort by Favorites',
   本业务可见: 'This business is visible',
   仅个人可见: 'Personal only',
+  保存的显示字段: 'Saved display field',
 };

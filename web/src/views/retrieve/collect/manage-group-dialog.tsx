@@ -490,7 +490,7 @@ export default class GroupDialog extends tsc<IProps> {
     this.tableLoading = true;
     Promise.all([this.batchDeleteFavorite(), this.batchUpdateFavorite()])
       .then(() => {
-        this.handleValueChange(false);
+        this.handleShowChange();
       })
       .finally(() => {
         this.tableLoading = false;

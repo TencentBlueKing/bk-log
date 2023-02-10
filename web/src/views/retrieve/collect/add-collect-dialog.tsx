@@ -125,9 +125,10 @@ export default class CollectDialog extends tsc<IProps> {
   privateGroupList = []; // 个人收藏 group_name替换为本人
   unknownGroupID = 0;
   privateGroupID = 0;
-  switchVal = true;
   groupList = []; // 组列表
   formLoading = false;
+  clickSwitch = false; // 是否点击过显示字段开关
+  isInitShowDisplayFields = false; // 编辑初始化时 是否显示字段
   groupNameMap = {
     unknown: window.mainComponent.$t('未分组'),
     private: window.mainComponent.$t('个人收藏'),
@@ -203,6 +204,11 @@ export default class CollectDialog extends tsc<IProps> {
     }, []);
   }
 
+  get showFieldsTypeSwitch() { // 判断当前显示字段是否是之前保留的
+    if (this.isCreateFavorite || !this.isInitShowDisplayFields) return this.$t('当前字段');
+    return this.clickSwitch ? this.$t('当前字段') : this.$t('保存的显示字段');
+  }
+
   @Emit('change')
   handleShowChange(value = false) {
     return value;
@@ -259,6 +265,7 @@ export default class CollectDialog extends tsc<IProps> {
       this.isDisableSelect = this.favoriteData.visible_type === 'private';
     } else {
       this.favoriteData = this.baseFavoriteData;
+      this.clickSwitch = false;
       this.searchFieldsList = [];
       this.handleShowChange();
     }
@@ -309,9 +316,10 @@ export default class CollectDialog extends tsc<IProps> {
   }
 
   handleClickDisplayFields(value) {
-    if (!value) { // 如果关闭 则更新当前显示的显示字段
+    if (value) { // 如果关闭 则更新当前显示的显示字段
       if (this.isCreateFavorite || this.isClickFavoriteEdit) {
         this.favoriteData.display_fields = this.visibleFields.map(item => item.field_name);
+        this.clickSwitch = true;
       }
     }
   }
@@ -401,6 +409,11 @@ export default class CollectDialog extends tsc<IProps> {
     try {
       const res = await $http.request('favorite/getFavorite', { params: { id } });
       const assignData = res.data;
+      this.isInitShowDisplayFields = assignData.is_enable_display_fields;
+      // 有点击收藏列表并且与编辑的收藏id一致时，且为是否显示字段为关闭时  重新拉取检索显示字段
+      if (this.isClickFavoriteEdit && !assignData.is_enable_display_fields) {
+        assignData.display_fields = this.visibleFields.map(item => item.field_name);
+      }
       if (JSON.stringify(this.replaceData) !== '{}') { // 替换收藏 会把检索的params传过来
         Object.assign(assignData.params, this.replaceData.params);
       }
@@ -529,10 +542,11 @@ export default class CollectDialog extends tsc<IProps> {
             </CheckboxGroup>
           </FormItem>
           <FormItem
-            label={this.$t('是否同时显示字段')}
+            label={`${this.$t('是否同时显示字段')} (${this.showFieldsTypeSwitch})`}
             ext-cls="filed-label"
             desc-icon="bk-icon icon-info"
             desc-type="icon"
+            labelWidth={400}
             desc={{
               content: `${this.$t('是否同时显示字段文案')}`,
               placements: ['right'],

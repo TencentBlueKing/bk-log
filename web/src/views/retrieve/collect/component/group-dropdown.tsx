@@ -365,7 +365,9 @@ export default class CollectGroup extends tsc<IProps> {
                 <span v-show={!this.isHoverTitle && this.titlePopoverInstance === null} class="title-number">
                   {this.data.favorites.length}
                 </span>
-                <div v-show={this.isHoverTitle || this.titlePopoverInstance !== null} class="more-box">
+                <div
+                  v-show={this.isHoverTitle || this.titlePopoverInstance !== null}
+                  class={['more-box', this.titlePopoverInstance !== null && 'is-click']}>
                   <span class="bk-icon icon-more"></span>
                 </div>
             </div>

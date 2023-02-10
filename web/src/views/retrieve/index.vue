@@ -166,6 +166,7 @@
                     :dropdown-data="retrieveDropdownData"
                     :is-show-ui-type="isShowUiType"
                     @inputBlur="handleBlurSearchInput"
+                    @isCanSearch="val => isCanStorageFavorite = val"
                     @retrieve="retrieveLog" />
                 </template>
                 <template v-else>
@@ -241,6 +242,7 @@
                     <bk-button
                       v-show="isFavoriteNewSearch"
                       ext-cls="favorite-btn"
+                      :disabled="!isCanStorageFavorite"
                       data-test-id="dataQuery_button_collection"
                       @click="handleClickFavorite">
                       <span class="favorite-btn-text">
@@ -255,7 +257,7 @@
                     <bk-button
                       v-show="!isFavoriteNewSearch"
                       ext-cls="favorite-btn"
-                      :disabled="!isFavoriteUpdate || favoriteUpdateLoading"
+                      :disabled="!isFavoriteUpdate || favoriteUpdateLoading || !isCanStorageFavorite"
                       @click="handleUpdateFavorite">
                       <span v-bk-tooltips="{ content: $t('保存Tips'), disabled: !isFavoriteUpdate }">
                         <span class="favorite-btn-text">
@@ -528,6 +530,7 @@ export default {
       isThollteField: false,
       globalsData: {},
       random,
+      isCanStorageFavorite: true,
       cleanConfig: {},
       clusteringData: { // 日志聚类参数
         name: '',
@@ -1256,7 +1259,6 @@ export default {
           this.requestChart();
           this.requestSearchHistory(this.indexId);
         }
-
         await this.handleResetTimer();
         await this.requestTable();
         if (this.isAfterRequestFavoriteList) await this.getFavoriteList();
@@ -1487,6 +1489,7 @@ export default {
         this.computeRetrieveDropdownData(this.logList);
       } catch (err) {
         this.$refs.resultMainRef.isPageOver = false;
+        this.isCanStorageFavorite = false; // 不能收藏
       } finally {
         this.requesting = false;
         if (this.isNextTime) {
@@ -1788,7 +1791,7 @@ export default {
           addition: this.retrieveParams.addition,
           keyword: this.retrieveParams.keyword,
         },
-        display_fields: this.visibleFields.map(item => item.field_name),
+        display_fields: this.visibleFields.map(item => item?.field_name),
       };
     },
 
