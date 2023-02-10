@@ -48,9 +48,7 @@ from apps.log_clustering.models import ClusteringConfig, ClusteringSubscription
 from apps.log_clustering.serializers import PatternSearchSerlaizer
 from apps.log_clustering.utils.wechat_robot import WeChatRobot
 from apps.log_search.exceptions import IndexSetDoseNotExistException
-from apps.log_search.handlers.search.search_handlers_esquery import (
-    SearchHandler as SearchHandlerEsquery,
-)
+from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler as SearchHandlerEsquery
 from apps.log_search.models import LogIndexSet
 from apps.log_search.serializers import SearchAttrSerializer
 from apps.utils.drf import custom_params_valid
@@ -386,9 +384,14 @@ def send_subscription_task():
     for config in subscription_configs:
         log_prefix = f"[clustering_subscription] space_uid: {config.space_uid} index_set_id: {config.index_set_id}"
         # 查询空间信息
-
         space = api.SpaceApi.get_space_detail(space_uid=config.space_uid)
-        time_zone = space.properties.get("time_zone", "") or settings.TIME_ZONE
+        if not space:
+            logger.info(f"{log_prefix} space not exist, skip")
+            continue
+
+        time_zone = space.extend.get("time_zone", "") or settings.TIME_ZONE
+        language = space.extend.get("language", "") or translation.get_language()
+
         time_config = get_start_and_end_time(config.frequency, config.last_run_at, pytz.timezone(time_zone))
         logger.info(f"{log_prefix} time_config: {time_config}")
         is_run_time = time_config["is_run_time"]
@@ -397,7 +400,6 @@ def send_subscription_task():
         if not is_run_time:
             continue
 
-        language = space.properties.get("language", "") or translation.get_language()
         send.delay(
             config=config,
             time_config=time_config,
