@@ -474,15 +474,17 @@ class IllegalOperatorInspector(BaseInspector):
         try:
             parser.parse(self.keyword, lexer=lexer)
         except ParseSyntaxError as e:
-            if str(e) == self.unexpect_unmatched_re:
-                for operator in self.unexpect_operators:
-                    if operator in self.keyword:
-                        _operator_pos = self.keyword.find(operator)
-                        if _operator_pos == len(self.keyword) - len(operator):
-                            self.keyword = self.keyword[:_operator_pos].strip()
-                            self.set_illegal()
-                            # 单次修复
-                            break
+            if str(e) != self.unexpect_unmatched_re:
+                return
+            for operator in self.unexpect_operators:
+                if operator not in self.keyword:
+                    continue
+                _operator_pos = self.keyword.find(operator)
+                if _operator_pos == len(self.keyword) - len(operator):
+                    self.keyword = self.keyword[:_operator_pos].strip()
+                    self.set_illegal()
+                    # 单次修复
+                    break
         except Exception:
             return
 
