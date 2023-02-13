@@ -1628,4 +1628,5 @@ export default {
   仅个人可见: 'Personal only',
   保存的显示字段: 'Saved display field',
   '填写收藏名（长度30个字符）': 'Fill in the collection name (length 30 characters)',
+  '（长度30个字符）': '(length 30 characters)',
 };

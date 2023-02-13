@@ -264,7 +264,7 @@ export default class CollectGroup extends tsc<IProps> {
                 <FormItem property="groupEditName">
                   <Input
                     clearable
-                    placeholder={this.$t('请输入组名')}
+                    placeholder={`${this.$t('请输入组名')}${this.$t('（长度30个字符）')}`}
                     vModel={this.verifyData.groupEditName}
                     maxlength={30}
                     onEnter={v => this.handleGroupKeyDown(v, 'reset')}
@@ -334,7 +334,7 @@ export default class CollectGroup extends tsc<IProps> {
                 <FormItem property="groupEditName">
                   <Input
                     clearable
-                    placeholder={this.$t('请输入组名')}
+                    placeholder={`${this.$t('请输入组名')}${this.$t('（长度30个字符）')}`}
                     vModel={this.verifyData.groupEditName}
                     maxlength={30}
                     onEnter={v => this.handleGroupKeyDown(v, 'add')}
