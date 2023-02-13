@@ -769,7 +769,7 @@ export default class GroupDialog extends tsc<IProps> {
             vModel={this.searchValue}
             on-enter={this.handleSearchFilter}
             on-right-icon-click={this.handleSearchFilter}
-            onKeydown={this.handleInputSearchFavorite}
+            onKeyup={this.handleInputSearchFavorite}
           ></Input>
         </div>
         {this.selectCount ? (

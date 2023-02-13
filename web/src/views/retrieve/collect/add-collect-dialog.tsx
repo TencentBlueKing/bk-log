@@ -175,6 +175,11 @@ export default class CollectDialog extends tsc<IProps> {
         message: window.mainComponent.$t('必填项'),
         trigger: 'blur',
       },
+      {
+        max: 30,
+        message: '不能多于30个字符',
+        trigger: 'blur',
+      },
     ],
   };
 
@@ -289,7 +294,7 @@ export default class CollectDialog extends tsc<IProps> {
             message: this.$t('操作成功'),
             theme: 'success',
           });
-          this.requestGroupList(true, this.verifyData.groupName);
+          this.requestGroupList(true, this.verifyData.groupName.trim());
         }
       } catch (error) {} finally {
         this.isShowAddGroup = true;
@@ -517,9 +522,9 @@ export default class CollectDialog extends tsc<IProps> {
                           <FormItem property="groupName">
                             <Input
                               clearable
-                              placeholder={this.$t('请输入组名')}
+                              placeholder={`${this.$t('请输入组名')}${this.$t('（长度30个字符）')}`}
                               vModel={this.verifyData.groupName}
-                              maxlength={10}
+                              maxlength={30}
                             ></Input>
                           </FormItem>
                         </Form>
