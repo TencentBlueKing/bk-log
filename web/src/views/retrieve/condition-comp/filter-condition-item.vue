@@ -279,16 +279,16 @@ export default {
     // 字段改变
     handleFieldChange(field) {
       const fieldItem = this.filterFields.find(item => item.id === field);
-      const isNumberType = ['integer', 'long', 'double'].includes(fieldItem?.operatorKey);
+      const isNotShowNull = !['text', 'keyword'].includes(fieldItem?.operatorKey);
       this.coreData.value = [];
-      this.valueList = isNumberType ? [] : [{ id: '', name: `-${this.$t('空')}-` }];
+      this.valueList = isNotShowNull ? [] : [{ id: '', name: `-${this.$t('空')}-` }];
       this.coreData.field = field || '';
       this.handleOperatorChange(this.filterOperators[0]?.operator || 'is');
       if (field && this.statisticalFieldsData[field]) {
         const fieldValues = Object.keys(this.statisticalFieldsData[field]);
         if (fieldValues?.length) {
           this.valueList = fieldValues.map(item => ({ id: item, name: item }));
-          if (!isNumberType) this.valueList.unshift({ id: '', name: `-${this.$t('空')}-` });
+          if (!isNotShowNull) this.valueList.unshift({ id: '', name: `-${this.$t('空')}-` });
         }
       }
     },

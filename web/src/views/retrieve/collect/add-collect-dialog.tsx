@@ -121,6 +121,7 @@ export default class CollectDialog extends tsc<IProps> {
     visible_type: 'public',
     display_fields: [],
   };
+  positionTop = 0;
   publicGroupList = []; // 可见状态为公共的时候显示的收藏组
   privateGroupList = []; // 个人收藏 group_name替换为本人
   unknownGroupID = 0;
@@ -207,6 +208,10 @@ export default class CollectDialog extends tsc<IProps> {
   get showFieldsTypeSwitch() { // 判断当前显示字段是否是之前保留的
     if (this.isCreateFavorite || !this.isInitShowDisplayFields) return this.$t('当前字段');
     return this.clickSwitch ? this.$t('当前字段') : this.$t('保存的显示字段');
+  }
+
+  mounted() {
+    this.positionTop = Math.floor(document.body.clientHeight * 0.1);
   }
 
   @Emit('change')
@@ -433,6 +438,7 @@ export default class CollectDialog extends tsc<IProps> {
         ext-cls="add-collect-dialog"
         render-directive="if"
         width={640}
+        position={{ top: this.positionTop }}
         mask-close={false}
         auto-close={false}
         on-value-change={this.handleValueChange}
@@ -462,7 +468,7 @@ export default class CollectDialog extends tsc<IProps> {
               <Input
                 class="collect-name"
                 vModel={this.favoriteData.name}
-                placeholder={'填写收藏名（长度30个字符）'}
+                placeholder={this.$t('填写收藏名（长度30个字符）')}
                 maxlength={30}
               ></Input>
             </FormItem>

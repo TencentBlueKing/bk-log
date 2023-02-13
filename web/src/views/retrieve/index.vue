@@ -1751,7 +1751,9 @@ export default {
         const fRes = await this.$http.request('favorite/getSearchFields', {
           data: { keyword },
         });
-        const searchFilterList = fRes.data.filter(v => search_fields.includes(v.name));
+        const searchFilterList = fRes.data
+          .filter(v => search_fields.includes(v.name))
+          .map(item => item.name);
         const data = {
           name,
           group_id,
