@@ -175,11 +175,6 @@ export default class CollectDialog extends tsc<IProps> {
         message: window.mainComponent.$t('必填项'),
         trigger: 'blur',
       },
-      {
-        max: 30,
-        message: '不能多于30个字符',
-        trigger: 'blur',
-      },
     ],
   };
 
