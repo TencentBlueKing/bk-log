@@ -60,5 +60,7 @@
   "耗时：": "time consuming:",
   "时间：": "time:",
   "数量：": "quantity:",
-  "系统出现异常": "The system is abnormal"
+  "系统出现异常": "The system is abnormal",
+  "当前业务没有接入调用链日志，": "The current business does not access the call chain log,",
+  "了解接入详情": "Learn about access details"
 }
