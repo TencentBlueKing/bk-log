@@ -99,5 +99,5 @@ class BkData(Sql):
         if settings.FEATURE_TOGGLE.get("bkdata_token_auth", "off") == "on":
             params.update({"bkdata_authentication_method": "token", "bkdata_data_token": settings.BKDATA_DATA_TOKEN})
         else:
-            params.update({"bkdata_authentication_method": "user"})
+            params.update({"bkdata_authentication_method": "user", "bk_username": "admin", "operator": "admin"})
         return BkDataQueryApi.query(params)["list"]

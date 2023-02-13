@@ -110,9 +110,20 @@ export default {
           keyword: this.keyword,
           params,
         },
-      }).then((res) => {
-        this.$emit('updateKeyWords', res.data);
-      });
+      }).then(async (res) => {
+        try {
+          const { data } = await this.$http.request('favorite/checkKeywords', {
+            data: { keyword: res.data },
+          });
+          this.$emit('updateKeyWords', res.data);
+          this.$emit('isCanSearch', data.is_legal);
+        } catch (error) {
+          this.$emit('isCanSearch', false);
+        }
+      })
+        .catch(() => {
+          this.$emit('isCanSearch', false);
+        });
     },
   },
 };

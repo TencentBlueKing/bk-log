@@ -121,6 +121,7 @@ export default class GroupDialog extends tsc<IProps> {
   groupName = ''; // 输入框组名
   unknownGroupID = 0;
   privateGroupID = 0;
+  positionTop = 0;
   isCannotValueChange = false; // 用于分组时不进行数据更新
   maxHeight = 300;
   tippyOption = {
@@ -203,6 +204,7 @@ export default class GroupDialog extends tsc<IProps> {
   mounted() {
     const initTableHeight = Math.floor(document.body.clientHeight * 0.8)  - 240;
     this.maxHeight = initTableHeight > this.maxHeight ? initTableHeight : this.maxHeight;
+    this.positionTop = Math.floor(document.body.clientHeight * 0.1);
   }
 
   async handleValueChange(value) {
@@ -254,6 +256,9 @@ export default class GroupDialog extends tsc<IProps> {
       this.searchAfterList = searchList;
       this.selectFavoriteList = [];
     }, 500);
+  }
+  handleInputSearchFavorite() {
+    if (this.searchValue === '') this.handleSearchFilter();
   }
   /** 全选操作 */
   handleSelectionChange(value) {
@@ -485,7 +490,7 @@ export default class GroupDialog extends tsc<IProps> {
     this.tableLoading = true;
     Promise.all([this.batchDeleteFavorite(), this.batchUpdateFavorite()])
       .then(() => {
-        this.handleValueChange(false);
+        this.handleShowChange();
       })
       .finally(() => {
         this.tableLoading = false;
@@ -672,7 +677,7 @@ export default class GroupDialog extends tsc<IProps> {
               <li class="add-new-page-input">
                 <Input
                   vModel={this.groupName}
-                  maxlength={10}
+                  maxlength={30}
                   behavior={'simplicity'}>
                 </Input>
                 <div class="operate-button">
@@ -748,6 +753,7 @@ export default class GroupDialog extends tsc<IProps> {
         mask-close={false}
         ext-cls="manage-group"
         width={960}
+        position={{ top: this.positionTop }}
         confirm-fn={this.handleSubmitTableData}
         on-value-change={this.handleValueChange}
       >
@@ -763,6 +769,7 @@ export default class GroupDialog extends tsc<IProps> {
             vModel={this.searchValue}
             on-enter={this.handleSearchFilter}
             on-right-icon-click={this.handleSearchFilter}
+            onKeydown={this.handleInputSearchFavorite}
           ></Input>
         </div>
         {this.selectCount ? (
