@@ -287,14 +287,24 @@ export default {
       if (field && this.statisticalFieldsData[field]) {
         const fieldValues = Object.keys(this.statisticalFieldsData[field]);
         if (fieldValues?.length) {
-          this.valueList = fieldValues.map(item => ({ id: item, name: item }));
+          this.valueList = fieldValues.map((item) => {
+            const markList = item.toString().match(/(<mark>).*?(<\/mark>)/g) || [];
+            if (markList.length) {
+              item = markList.map(item => item.replace(/<mark>/g, '')
+                .replace(/<\/mark>/g, '')).join(',');
+            }
+            return {
+              id: item,
+              name: item,
+            };
+          });
           if (!isNotShowNull) this.valueList.unshift({ id: '', name: `-${this.$t('空')}-` });
         }
       }
     },
     // 条件符号改变
     handleOperatorChange(operator) {
-      this.coreData.operator = operator;
+      this.coreData.operator = this.mappingKay[operator] ?? operator;
       if (['exists', 'does not exists'].includes(operator)) {
         this.coreData.value = [];
         this.valueList = [{ id: '', name: `-${this.$t('空')}-` }];

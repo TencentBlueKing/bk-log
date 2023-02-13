@@ -325,7 +325,10 @@ export default class CollectIndex extends tsc<IProps> {
         }, 500);
       });
     }
-    if (clickType === 'cancel') this.popoverGroupRef.hideHandler();
+    if (clickType === 'cancel') {
+      this.popoverGroupRef.hideHandler();
+      this.checkInputFormRef.clearError();
+    };
   }
 
   /** 排序 */
@@ -537,7 +540,7 @@ export default class CollectIndex extends tsc<IProps> {
                 vModel={this.searchVal}
                 placeholder={this.$t('搜索收藏名')}
                 on-enter={this.handleSearchFavorite}
-                onKeydown={this.handleInputSearchFavorite}
+                onKeyup={this.handleInputSearchFavorite}
                 on-right-icon-click={this.handleSearchFavorite}
               ></Input>
               <div class="fl-jcsb operate-box">
@@ -561,7 +564,7 @@ export default class CollectIndex extends tsc<IProps> {
                       <FormItem property="groupName">
                         <Input
                           clearable
-                          placeholder={this.$t('请输入组名')}
+                          placeholder={`${this.$t('请输入组名')}${this.$t('（长度30个字符）')}`}
                           vModel={this.verifyData.groupName}
                           maxlength={30}
                           onKeydown={this.handleGroupKeyDown}

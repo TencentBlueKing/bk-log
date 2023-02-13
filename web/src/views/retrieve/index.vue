@@ -275,7 +275,7 @@
                     </bk-button>
                   </div>
                   <span v-bk-tooltips="{ content: $t('清空'), delay: 200 }">
-                    <div class="clear-params-btn" @click="clearCondition">
+                    <div class="clear-params-btn" @click="() => clearCondition()">
                       <bk-button data-test-id="dataQuery_button_phrasesClear"></bk-button>
                       <span class="log-icon icon-brush"></span>
                     </div>
@@ -1061,9 +1061,9 @@ export default {
       }
     },
     // 清空条件
-    clearCondition() {
+    clearCondition(clearStr = '') {
       Object.assign(this.retrieveParams, {
-        keyword: '',
+        keyword: this.isSqlSearchType ? clearStr : this.retrieveParams.keyword, // 若是表单模式的清空则不删除keyword
         host_scopes: {
           modules: [],
           ips: '',
@@ -1073,6 +1073,7 @@ export default {
         addition: [],
       });
       this.isClearCondition = !this.isClearCondition;
+      if (this.isSqlSearchType) this.handleBlurSearchInput('*');
       this.retrieveLog();
     },
     // 搜索记录
@@ -1846,6 +1847,9 @@ export default {
     handleClickSearchType() {
       // 如果当前为sql模式，且检索的keywords和收藏的keywords不一致 则不允许切换
       if (this.isSqlSearchType && !this.isCanUseUiType) return;
+      this.retrieveLog();
+      this.handleBlurSearchInput(this.retrieveParams.keyword);
+      // this.initSearchList();
       // 切换表单模式或者sql模式
       this.isSqlSearchType = !this.isSqlSearchType;
       // 如果是sql模式切到表单模式 则缓存keywords  表单切回sql模式时回填缓存的keywords
@@ -1874,7 +1878,7 @@ export default {
         this.activeFavorite = {};
         this.isSqlSearchType = true;
         this.isFavoriteSearch = false;
-        this.clearCondition();
+        this.clearCondition('*');
         return;
       }
       // 无host_scopes补充空的 host_scopes
