@@ -108,14 +108,14 @@
           <div class="sort-fields-list" v-show="activeFieldTab === 'sort'">
             <div class="title">
               <!-- 已选项列表 -->
-              <span>{{ $t('retrieve.selectedList') + '(' + shadowSort.length + ')' }}</span>
+              <span>{{ $t('已选项列表') + '(' + shadowSort.length + ')' }}</span>
               <span class="icon log-icon icon-info-fill" v-bk-tooltips="$t('retrieve.sortTips')"></span>
               <span class="clear-all text-action" @click="deleteAllField">{{ $t('取消') }}</span>
             </div>
             <div class="sort-list-header">
-              <span style="width: calc(100% - 146px);padding-left: 32px;">{{ $t('retrieve.fieldName') }}</span>
-              <span style="width: 42px;">{{ $t('retrieve.status') }}</span>
-              <span style="width: 50px;">{{ $t('retrieve.option') }}</span>
+              <span style="width: calc(100% - 146px);padding-left: 32px;">{{ $t('字段名') }}</span>
+              <span style="width: 42px;">{{ $t('状态') }}</span>
+              <span style="width: 50px;">{{ $t('选择方式') }}</span>
             </div>
             <vue-draggable class="select-list" v-bind="dragOptions" v-model="shadowSort">
               <transition-group>
@@ -300,17 +300,17 @@ export default {
     },
     filterStatus(val) {
       if (val === 'desc') {
-        return this.$t('retrieve.desc');
+        return this.$t('降序');
       } if (val === 'asc') {
-        return this.$t('retrieve.asc');
+        return this.$t('升序');
       }
       return '';
     },
     filterOption(val) {
       if (val === 'desc') {
-        return this.$t('retrieve.setAsc');
+        return this.$t('设为降序');
       } if (val === 'asc') {
-        return this.$t('retrieve.setDesc');
+        return this.$t('设为升序');
       }
       return '';
     },

@@ -119,7 +119,7 @@
                       <p>
                         <span class="detail-text">{{ props.row.log }}</span>
                         <a href="javascript: ;" class="more" @click.stop="viewDetail(props.row)">
-                          {{ $t('dataManage.more') }}
+                          {{ $t('更多') }}
                         </a>
                       </p>
                     </template>

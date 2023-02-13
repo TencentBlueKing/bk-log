@@ -108,7 +108,7 @@
               class="more-text"
               @click="moreTime = !moreTime"
               v-if="ind === traceData.additions.length - 1">
-              {{$t('dataManage.more')}}
+              {{$t('更多')}}
               <i class="bk-icon icon-down-shape" v-if="!moreTime"></i>
               <i class="bk-icon icon-up-shape" v-else></i>
             </div>
