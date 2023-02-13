@@ -238,7 +238,7 @@ export default {
   搜索字段名: 'Search filed name',
   已添加字段: 'Visible Fields',
   可选字段: 'Available Fields',
-  显示别名: 'Show field alias',
+  表头显示别名: 'Show field alias',
   隐藏: 'Hide',
   显示: 'Show',
   '条记录中数量排名前 5 的数据值': ' records(top 5 value)',
@@ -1623,4 +1623,9 @@ export default {
   组名重复: 'Duplicate group name',
   原始日志: 'Original log',
   全文检索: 'Full-text search',
+  收藏名排序: 'Sort by Favorites',
+  本业务可见: 'This business is visible',
+  仅个人可见: 'Personal only',
+  保存的显示字段: 'Saved display field',
+  '填写收藏名（长度30个字符）': 'Fill in the collection name (length 30 characters)',
 };

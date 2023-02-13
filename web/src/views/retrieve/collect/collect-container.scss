@@ -67,6 +67,11 @@
   .group-container {
     height: calc(100vh - 240px);
     overflow-y: auto;
+    margin-right: 4px;
+
+    &::-webkit-scrollbar {
+      background: transparent;
+    }
   }
 
   .icon-box {
