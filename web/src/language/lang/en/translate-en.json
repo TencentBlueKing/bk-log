@@ -43,5 +43,21 @@
   "搜索字段名": "Search filed name",
   "已添加字段": "Visible Fields",
   "可选字段": "Available Fields",
-  "{0}/{1}条记录中数量排名前 5 的数据值": "{0}/{1} records(top 5 value)"
+  "{0}/{1}条记录中数量排名前 5 的数据值": "{0}/{1} records(top 5 value)",
+  "请输入": "please enter",
+  "未查询到数据": "No data found",
+  "方法名，函数名或者一个大型计算中的某个阶段或子任务": "method name, function name, or a stage or subtask in a large computation",
+  "近 5 秒": "Last 5S",
+  "近 5 分钟": "Last 5Min",
+  "近 15 分钟": "Last 15Min",
+  "近 30 分钟": "Last 30Min",
+  "近 1 小时": "Last 1H",
+  "近 4 小时": "Last 4H",
+  "近 12 小时": "Last 12H",
+  "近 1 天": "Last 1D",
+  "您没有相应资源的访问权限": "You do not have access to the corresponding resource, please apply for permission or contact the administrator for authorization",
+  "详情": "Detail",
+  "耗时：": "time consuming:",
+  "时间：": "time:",
+  "数量：": "quantity:"
 }

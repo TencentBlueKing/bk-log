@@ -92,5 +92,10 @@
   "返回顶部": "Back to top",
   "当前已选择{0}条数据, 共有{1}条数据": "Currently {0} pieces of data have been selected, and there are {1} pieces of data in total",
   "共有{0}条数据": "There are {0} pieces of data in total",
-  "是否批量开启告警": "Whether to enable alarms in batches"
+  "是否批量开启告警": "Whether to enable alarms in batches",
+  "索引集": "IndexSet",
+  "时间段": "time quantum",
+  "关键词": "Keyword",
+  "需要申请的权限": "Permission to apply for",
+  "关联的资源实例": "Associated resource instance"
 }
