@@ -386,7 +386,7 @@
           @click.stop="confirmHandle">
           {{ $t('btn.affirm') }}
         </bk-button>
-        <bk-button @click.stop="resetDateDialog">{{ $t('btn.cancel') }}</bk-button>
+        <bk-button @click.stop="resetDateDialog">{{ $t('取消') }}</bk-button>
       </div>
     </bk-dialog>
     <bk-dialog

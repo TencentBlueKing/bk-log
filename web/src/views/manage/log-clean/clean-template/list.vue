@@ -84,7 +84,7 @@
               text
               class="mr10 king-button"
               @click.stop="operateHandler(props.row, 'delete')">
-              {{ $t('btn.delete') }}
+              {{ $t('删除') }}
             </bk-button>
           </div>
         </bk-table-column>

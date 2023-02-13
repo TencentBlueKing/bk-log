@@ -37,7 +37,7 @@
               <div class="field_name">{{ field }}</div>
               <div
                 :class="['operate-button', disabledRemove && 'disabled']"
-                @click="removeItem(index)">{{$t('btn.delete')}}
+                @click="removeItem(index)">{{$t('删除')}}
               </div>
             </li>
           </transition-group>
@@ -61,7 +61,7 @@
         style="margin-right: 8px;"
         theme="primary"
         @click="handleConfirm">{{$t('btn.confirm')}}</bk-button>
-      <bk-button size="small" style="margin-right: 24px;" @click="handleCancel">{{$t('btn.cancel')}}</bk-button>
+      <bk-button size="small" style="margin-right: 24px;" @click="handleCancel">{{$t('取消')}}</bk-button>
     </div>
   </div>
 </template>

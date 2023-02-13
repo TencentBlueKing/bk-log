@@ -89,7 +89,7 @@
     <!-- 操作按钮 -->
     <bk-table-column
       v-if="showHandleOption"
-      :label="$t('retrieve.operate')"
+      :label="$t('操作')"
       :width="84"
       align="right"
       :resizable="false">

@@ -24,12 +24,12 @@ import i18n from '@/language/i18n';
 
 export const menuArr = [
   {
-    name: i18n.t('nav.retrieve'),
+    name: i18n.t('检索'),
     id: 'retrieve',
     level: 1,
   },
   {
-    name: i18n.t('nav.dashboard'),
+    name: i18n.t('仪表盘'),
     id: 'dashboard',
     level: 1,
     dropDown: true,
@@ -59,12 +59,12 @@ export const menuArr = [
     level: 1,
   },
   {
-    name: i18n.t('trace.trace'),
+    name: i18n.t('调用链'),
     id: 'trace',
     level: 1,
   },
   {
-    name: i18n.t('nav.monitors'),
+    name: i18n.t('监控策略'),
     id: 'monitor',
     level: 1,
     children: [
@@ -88,7 +88,7 @@ export const menuArr = [
     ],
   },
   {
-    name: i18n.t('nav.manage'),
+    name: i18n.t('管理'),
     id: 'manage',
     level: 1,
     dropDown: true,

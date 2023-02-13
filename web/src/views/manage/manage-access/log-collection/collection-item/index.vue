@@ -258,7 +258,7 @@
                 :disabled="!props.row.is_active || (!props.row.index_set_id && !props.row.bkdata_index_set_ids.length)"
                 v-cursor="{ active: !(props.row.permission && props.row.permission[authorityMap.SEARCH_LOG_AUTH]) }"
                 @click="operateHandler(props.row, 'search')">
-                {{ $t('nav.retrieve') }}
+                {{ $t('检索') }}
               </bk-button>
             </span>
             <!-- 编辑 -->
@@ -358,7 +358,7 @@
                       disabled: !props.row.status,
                       delay: 500,
                     }">
-                    {{$t('btn.delete')}}
+                    {{$t('删除')}}
                   </a>
                   <a
                     href="javascript:;"
@@ -366,7 +366,7 @@
                     v-cursor="{
                       active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
                     }"
-                    @click.stop="operateHandler(props.row, 'delete')">{{$t('btn.delete')}}</a>
+                    @click.stop="operateHandler(props.row, 'delete')">{{$t('删除')}}</a>
                 </li>
                 <!-- 存储设置 -->
                 <li>

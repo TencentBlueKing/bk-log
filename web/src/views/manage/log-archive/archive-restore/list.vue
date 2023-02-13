@@ -124,7 +124,7 @@
                 active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
               }"
               @click.stop="operateHandler(props.row, 'delete')">
-              {{ $t('btn.delete') }}
+              {{ $t('删除') }}
             </bk-button>
           </div>
         </bk-table-column>

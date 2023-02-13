@@ -114,13 +114,13 @@ export default {
         { id: 'copy', icon: 'log-icon icon-copy' },
       ],
       toolMenuTips: {
-        is: `${this.$t('添加')} is ${this.$t('过滤项')}`,
-        not: `${this.$t('添加')} is not ${this.$t('过滤项')}`,
+        is: this.$t('添加 {n} 过滤项', { n: 'is' }),
+        not: this.$t('添加 {n} 过滤项', { n: 'is not' }),
         hiddenField: this.$t('隐藏字段'),
         displayField: this.$t('显示字段'),
         copy: this.$t('复制'),
-        text_is: `${this.$t('文本类型')}${this.$t('不支持')} is ${this.$t('操作')}`,
-        text_not: `${this.$t('文本类型')}${this.$t('不支持')} is not ${this.$t('操作')}`,
+        text_is: this.$t('文本类型不支持 {n} 操作', { n: 'is' }),
+        text_not: this.$t('文本类型不支持 {n} 操作', { n: 'is not' }),
       },
     };
   },
@@ -174,7 +174,7 @@ export default {
     getIconPopover(id, field) {
       const type = this.getFieldType(field);
       if (type === 'text' && ['is', 'not'].includes(id)) return this.toolMenuTips[`text_${id}`];
-      if (type === '__virtual__' && ['is', 'not'].includes(id)) return this.$t('unKnowIconTips');
+      if (type === '__virtual__' && ['is', 'not'].includes(id)) return this.$t('该字段为平台补充 不可检索');
       if (this.filterIsExist(id, field)) return this.$t('已添加过滤条件');
       if (id !== 'display') return this.toolMenuTips[id];
 
@@ -276,7 +276,7 @@ export default {
         // 主机监控
         case 'serverip':
         case 'ip':
-          return this.$t('retrieve.host');
+          return this.$t('主机');
         // 容器
         case 'container_id':
         case '__ext.container_id':

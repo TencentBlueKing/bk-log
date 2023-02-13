@@ -109,7 +109,7 @@
               text
               ext-cls="mr10 king-button"
               :tips-conf="getTipText(props.row)"
-              :button-text="$t('nav.retrieve')"
+              :button-text="$t('检索')"
               :disabled="(!props.row.is_active || !props.row.index_set_id)"
               :cursor-active="!(props.row.permission && props.row.permission[authorityMap.SEARCH_LOG_AUTH])"
               @on-click="operateHandler(props.row, 'search')">
@@ -131,7 +131,7 @@
               text
               ext-cls="mr10 king-button"
               :tips-conf="''"
-              :button-text="$t('btn.delete')"
+              :button-text="$t('删除')"
               :disabled="props.row.etl_config !== 'bkdata_clean'"
               :cursor-active="!(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])"
               @on-click="operateHandler(props.row, 'delete')">

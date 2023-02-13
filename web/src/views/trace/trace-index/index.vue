@@ -108,7 +108,7 @@
               class="more-text"
               @click="moreTime = !moreTime"
               v-if="ind === traceData.additions.length - 1">
-              {{$t('dataManage.more')}}
+              {{$t('更多')}}
               <i class="bk-icon icon-down-shape" v-if="!moreTime"></i>
               <i class="bk-icon icon-up-shape" v-else></i>
             </div>
@@ -340,7 +340,7 @@ export default {
       moreTime: false,
       size: 'small',
       startTime: '',
-      menu: { name: this.$t('trace.trace'), id: 'trace', level: 1 },
+      menu: { name: this.$t('调用链'), id: 'trace', level: 1 },
       indexSetList: [],
       indexId: '',
       openDatePanel: false,

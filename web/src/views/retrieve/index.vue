@@ -25,7 +25,7 @@
     <!-- 检索页首页 -->
     <div v-if="hasAuth && isRetrieveHome" class="retrieve-home-container">
       <div class="retrieve-home" data-test-id="retrieve_div_frontPageSearchBox">
-        <div class="retrieve-home-title">{{ $t('nav.retrieve') }}</div>
+        <div class="retrieve-home-title">{{ $t('检索') }}</div>
         <div class="retrieve-home-condition">
           <!-- 选择索引集 -->
           <select-indexSet
@@ -1694,9 +1694,9 @@ export default {
     initToolTipsMessage(config) {
       const { contextAndRealtime, bkmonitor } = config;
       return {
-        monitorWeb: bkmonitor.is_active ? this.$t('retrieve.monitorAlarm') : bkmonitor?.extra.reason,
-        realTimeLog: contextAndRealtime.is_active ? this.$t('retrieve.log') : contextAndRealtime?.extra.reason,
-        contextLog: contextAndRealtime.is_active ? this.$t('retrieve.context') : contextAndRealtime?.extra.reason,
+        monitorWeb: bkmonitor.is_active ? this.$t('监控告警') : bkmonitor?.extra.reason,
+        realTimeLog: contextAndRealtime.is_active ? this.$t('实时日志') : contextAndRealtime?.extra.reason,
+        contextLog: contextAndRealtime.is_active ? this.$t('上下文') : contextAndRealtime?.extra.reason,
       };
     },
     // 点击新增收藏

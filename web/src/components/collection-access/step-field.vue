@@ -67,7 +67,7 @@
           <span
             @click="refreshClick"
             data-test-id="fieldExtractionBox_span_originalLogRefresh"
-          >{{$t('dataManage.Refresh')}}</span>
+          >{{$t('刷新')}}</span>
           <span
             @click="chickFile"
             data-test-id="fieldExtractionBox_span_viewReportingLog"
@@ -374,7 +374,7 @@
         <bk-button
           v-if="!isTempField && !isSetEdit"
           theme="default"
-          :title="$t('btn.cancel')"
+          :title="$t('取消')"
           class="ml10"
           data-test-id="fieldExtractionBox_button_Pass"
           @click="handleSkip"

@@ -1,3 +1,30 @@
-{
-  "自动查询": "Auto search"
+  {
+  "自动查询": "Auto search",
+  "查询": "Search",
+  "查询中": "Polling",
+  "收藏": "Favorites",
+  "添加IP": "Add IP",
+  "历史查询": "Historical Query",
+  "添加条件": "Add condition",
+  "字段类型过滤": "Field Type Filter",
+  "确定": "Confirm",
+  "取消": "Cancel",
+  "应用": "Apply",
+  "新建配置": "Add new config",
+  "隐藏": "Hide",
+  "显示": "Show",
+  "删除": "Delete",
+  "忽略数字": "Ignore Numbers",
+  "忽略符号": "Ignore Symbol",
+  "数据指纹": "Data Fingerprint",
+  "刷新": "Refresh",
+  "字段清洗": "Field cleaning",
+  "配置信息": "Basic Info",
+  "采集状态": "Collection Status",
+  "数据存储": "Data Storage",
+  "数据状态": "Data Status",
+  "使用详情": "Usage Details",
+  "复制": "Copy",
+  "查看语法": "View grammar",
+  "更多": "more"
 }

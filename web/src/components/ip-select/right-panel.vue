@@ -38,7 +38,7 @@
           <slot name="title">
             {{$t('retrieve.selected')}}
             <span class="title-desc-num">{{title.num}}</span>
-            {{$t('retrieve.a')}}{{title.type || $t('retrieve.host')}}
+            {{$t('retrieve.a')}}{{title.type || $t('主机')}}
           </slot>
         </div>
       </slot>

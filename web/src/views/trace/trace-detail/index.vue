@@ -79,7 +79,7 @@
               @click="confirmConfig">
               {{$t('btn.affirm')}}
             </bk-button>
-            <bk-button class="king-button" @click="cancelConfig">{{$t('btn.cancel')}}</bk-button>
+            <bk-button class="king-button" @click="cancelConfig">{{$t('取消')}}</bk-button>
           </div>
         </div>
       </div>
