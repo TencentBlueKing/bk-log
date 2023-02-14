@@ -32,7 +32,7 @@ import {
   Watch,
   Ref,
 } from 'vue-property-decorator';
-import { Input, Popover, Button, Radio, RadioGroup } from 'bk-magic-vue';
+import { Input, Popover, Button, Radio, RadioGroup, Form, FormItem } from 'bk-magic-vue';
 import CollectContainer from './collect-container';
 import ManageGroupDialog from './manage-group-dialog';
 import AddCollectDialog from './add-collect-dialog';
@@ -43,7 +43,6 @@ import './collect-index.scss';
 interface IProps {
   collectWidth: number;
   isShowCollect: boolean;
-  favoriteRequestID: number;
   activeFavoriteID: number;
   visibleFields: Array<any>;
   favoriteList: any;
@@ -76,13 +75,13 @@ type visibleType = 'private' | 'public' | 'unknown';
 export default class CollectIndex extends tsc<IProps> {
   @PropSync('width', { type: Number }) collectWidth: number;
   @PropSync('isShow', { type: Boolean }) isShowCollect: boolean;
-  @Prop({ type: Number, required: true }) favoriteRequestID: number;
   @Prop({ type: Boolean, required: true }) favoriteLoading: boolean;
   @Prop({ type: Array, required: true }) favoriteList: any;
   @Prop({ type: Number, required: true }) activeFavoriteID: number;
   @Prop({ type: Array, default: () => [] }) visibleFields: Array<any>;
   @Ref('popoverGroup') popoverGroupRef: Popover;
   @Ref('popoverSort') popoverSortRef: Popover;
+  @Ref('checkInputForm') private readonly checkInputFormRef: Form; // 移动到分组实例
 
   collectMinWidth = 160; // 收藏最小栏宽度
   collectMaxWidth = 400; // 收藏栏最大宽度
@@ -94,7 +93,7 @@ export default class CollectIndex extends tsc<IProps> {
   isShowAddNewFavoriteDialog = false; // 是否展示编辑收藏弹窗
   collectLoading = false; // 分组容器loading
   searchVal = ''; // 搜索
-  groupName = ''; // 新增组
+  // groupName = ''; // 新增组
   privateGroupID = 0; // 私人组ID
   unknownGroupID = 0; // 公开组ID
   baseSortType = 'NAME_ASC'; // 排序参数
@@ -104,6 +103,9 @@ export default class CollectIndex extends tsc<IProps> {
     unknown: window.mainComponent.$t('未分组'),
     private: window.mainComponent.$t('个人收藏'),
   }
+  verifyData = {
+    groupName: '',
+  };
   groupSortList = [
     // 排序展示列表
     {
@@ -119,6 +121,25 @@ export default class CollectIndex extends tsc<IProps> {
       id: 'UPDATED_AT_DESC',
     },
   ];
+  public rules = {
+    groupName: [
+      {
+        validator: this.checkName,
+        message: window.mainComponent.$t('组名不规范, 只支持输入中文、英文、数字、特殊符号.'),
+        trigger: 'blur',
+      },
+      {
+        validator: this.checkExistName,
+        message: window.mainComponent.$t('组名重复'),
+        trigger: 'blur',
+      },
+      {
+        required: true,
+        message: window.mainComponent.$t('必填项'),
+        trigger: 'blur',
+      },
+    ],
+  };
   tippyOption = {
     trigger: 'click',
     interactive: true,
@@ -160,15 +181,6 @@ export default class CollectIndex extends tsc<IProps> {
   }
 
 
-  @Watch('favoriteRequestID')
-  async handleChangeIndexSet() {
-    if (!this.isShowCollect) return;
-    this.collectList = [];
-    this.filterCollectList = [];
-    this.groupList = [];
-    this.getFavoriteList();
-  }
-
   @Emit('handleClick')
   handleClickFavorite(value) {
     return value;
@@ -180,9 +192,9 @@ export default class CollectIndex extends tsc<IProps> {
   }
 
   @Emit('favoriteDialogSubmit')
-  handleSubmitFavoriteData({ isEdit, resValue }) {
+  handleSubmitFavoriteData({ isCreate, resValue }) {
     return {
-      isEdit,
+      isCreate,
       resValue,
     };
   }
@@ -284,26 +296,39 @@ export default class CollectIndex extends tsc<IProps> {
           index_set_id,
           space_uid: this.spaceUid,
         };
-        $http.request('favorite/createFavorite', { data }).then(() => {
+        $http.request('favorite/createFavorite', { data }).then((res) => {
           this.showMessagePop(this.$t('创建成功'));
-          this.getFavoriteList();
+          this.handleSubmitFavoriteData({ isCreate: true, resValue: res.data });
         });
       }
         break;
       default:
     }
   }
+  checkName() {
+    if (this.verifyData.groupName.trim() === '') return true;
+    return /^[\u4e00-\u9fa5_a-zA-Z0-9`~!@#$%^&*()_\-+=<>?:"\s{}|,.\/;'\\[\]·~！@#￥%……&*（）——\-+={}|《》？：“”【】、；‘'，。、]+$/im.test(this.verifyData.groupName.trim());
+  }
+  checkExistName() {
+    return !this.groupList.some(item => item.group_name === this.verifyData.groupName);
+  }
   /** 新增组 */
-  async handleClickGroupBtn(clickType: string) {
+  handleClickGroupBtn(clickType: string) {
     if (clickType === 'add') {
-      if (!this.groupName.trim()) return;
-      await this.handleUpdateGroupName({ group_new_name: this.groupName });
-      this.getFavoriteList();
+      this.checkInputFormRef.validate().then(async () => {
+        if (!this.verifyData.groupName.trim()) return;
+        await this.handleUpdateGroupName({ group_new_name: this.verifyData.groupName });
+        this.getFavoriteList();
+        this.popoverGroupRef.hideHandler();
+        setTimeout(() => {
+          this.verifyData.groupName = '';
+        }, 500);
+      });
     }
-    setTimeout(() => {
-      this.groupName = '';
-    }, 500);
-    this.popoverGroupRef.hideHandler();
+    if (clickType === 'cancel') {
+      this.popoverGroupRef.hideHandler();
+      this.checkInputFormRef.clearError();
+    };
   }
 
   /** 排序 */
@@ -341,6 +366,10 @@ export default class CollectIndex extends tsc<IProps> {
     setTimeout(() => {
       if (isRequest) this.collectLoading = false;
     }, 500);
+  }
+
+  handleInputSearchFavorite() {
+    if (this.searchVal === '') this.handleSearchFavorite();
   }
 
   /** 新增或更新组名 */
@@ -444,14 +473,14 @@ export default class CollectIndex extends tsc<IProps> {
     });
   }
   handleGroupKeyDown(value: string, event) {
-    if (['Enter', 'Tab', 'NumpadEnter'].includes(event.code) && !!value) {
+    if (event.code === 'Tab' && !!value) {
       this.handleUserOperate({
         type: 'add-group',
         value,
       });
       this.popoverGroupRef.hideHandler();
       setTimeout(() => {
-        this.groupName = '';
+        this.verifyData.groupName = '';
       }, 500);
     }
   }
@@ -511,6 +540,7 @@ export default class CollectIndex extends tsc<IProps> {
                 vModel={this.searchVal}
                 placeholder={this.$t('搜索收藏名')}
                 on-enter={this.handleSearchFavorite}
+                onKeyup={this.handleInputSearchFavorite}
                 on-right-icon-click={this.handleSearchFavorite}
               ></Input>
               <div class="fl-jcsb operate-box">
@@ -521,13 +551,27 @@ export default class CollectIndex extends tsc<IProps> {
                   ext-cls="new-group-popover">
                   <span class="bk-icon icon-plus-circle"></span>
                   <div slot="content">
-                    <Input
-                      clearable
-                      placeholder={this.$t('请输入组名')}
-                      vModel={this.groupName}
-                      maxlength={10}
-                      onKeydown={this.handleGroupKeyDown}>
-                    </Input>
+                    <Form
+                      labelWidth={0}
+                      style={{ width: '100%' }}
+                      ref="checkInputForm"
+                      {...{
+                        props: {
+                          model: this.verifyData,
+                          rules: this.rules,
+                        },
+                      }}>
+                      <FormItem property="groupName">
+                        <Input
+                          clearable
+                          placeholder={`${this.$t('请输入组名')}${this.$t('（长度30个字符）')}`}
+                          vModel={this.verifyData.groupName}
+                          maxlength={30}
+                          onKeydown={this.handleGroupKeyDown}
+                          onEnter={() => this.handleClickGroupBtn('add')}>
+                        </Input>
+                      </FormItem>
+                    </Form>
                     <div class="operate-button">
                       <Button text onClick={() => this.handleClickGroupBtn('add')}>
                         {this.$t('确定')}
@@ -547,6 +591,7 @@ export default class CollectIndex extends tsc<IProps> {
                     <span class="bk-icon icon-sort"></span>
                   </div>
                   <div slot="content">
+                    <span style={{ fontSize: '14px', marginTop: '8px' }}>{this.$t('收藏名排序')}</span>
                     <RadioGroup vModel={this.sortType} class="sort-group-container">
                       {this.groupSortList.map(item => (
                         <Radio value={item.id}>{item.name}</Radio>

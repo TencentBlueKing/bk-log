@@ -67,6 +67,14 @@
     /* stylelint-disable-next-line scss/at-extend-no-missing-placeholder */
     @extend %dropdown-list;
 
+    .new-group {
+      padding: 2px;
+      color: #fff;
+      background: #FFBD50;
+      border-radius: 2px;
+      margin-left: 4px;
+    }
+
     .add-new-group {
       display: flex;
       justify-content: center;

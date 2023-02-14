@@ -316,10 +316,6 @@ def send_mail(params: dict, receivers: list, log_prefix: str):
 def send(
     config: ClusteringSubscription, time_config: dict, space_name: str, language: str, log_prefix: str, time_zone: str
 ):
-    # 更新last_run_at
-    config.last_run_at = time_config["last_run_at"]
-    config.save()
-
     # 激活业务时区
     timezone.activate(pytz.timezone(time_zone))
     set_local_param("time_zone", time_zone)
@@ -399,6 +395,10 @@ def send_subscription_task():
         # 未到运行时间
         if not is_run_time:
             continue
+
+        # 更新last_run_at
+        config.last_run_at = time_config["last_run_at"]
+        config.save()
 
         send.delay(
             config=config,
