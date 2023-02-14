@@ -65,6 +65,8 @@ from apps.utils.local import get_local_param, get_request_username
 from apps.utils.log import logger
 from apps.utils.thread import MultiExecuteFunc
 from apps.utils.time_handler import format_user_time_zone
+from bkm_space.api import SpaceApi
+from bkm_space.define import SpaceTypeEnum
 from bkm_space.utils import bk_biz_id_to_space_uid
 
 CACHE_EXPIRE_TIME = 300
@@ -98,6 +100,12 @@ class StorageHandler(object):
             return str(bk_biz_id) in [str(bk_biz["bk_biz_id"]) for bk_biz in visible_config["visible_bk_biz"]]
 
         if visible_config["visible_type"] == VisibleEnum.BIZ_ATTR.value:
+            # 如果空间类型不是业务，需要找出该空间关联的业务再做判断(如果有)
+            space_uid = bk_biz_id_to_space_uid(bk_biz_id)
+            related_space = SpaceApi.get_related_space(space_uid, SpaceTypeEnum.BKCC.value)
+            if not related_space:
+                return False
+            bk_biz_id = related_space.bk_biz_id
             bk_biz_labels = visible_config.get("bk_biz_labels", {})
             if not bk_biz_labels:
                 return False
@@ -540,6 +548,10 @@ class StorageHandler(object):
         cluster_name = params.get("cluster_name", cluster_en_name)
         # 获取节点信息
         hot_node_num, warm_node_num = self.get_hot_warm_node_info(params)
+        # 获取管理员信息
+        admin = params.get("admin", [])
+        if username not in admin:
+            admin.append(username)
         # 构造请求参数
         bkbase_params = {
             "bk_username": username,
@@ -551,7 +563,7 @@ class StorageHandler(object):
             "provider": "user",
             "purpose": "BKLog集群同步",
             "share": False,
-            "admin": [username],
+            "admin": admin,
             "tag": params.get("bkbase_tags", []) or DEFAULT_ES_TAGS,
             "connection_info": {
                 "username": params["auth_info"]["username"],

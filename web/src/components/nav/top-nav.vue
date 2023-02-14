@@ -74,7 +74,7 @@ export default {
           this.$router.replace({
             name: this.parentRoute,
             query: {
-              spaceUid: window.localStorage.getItem('space_uid'),
+              spaceUid: this.$store.state.spaceUid,
             },
           });
         }
@@ -105,7 +105,7 @@ export default {
         this.$router.push({
           name: menu.id,
           query: {
-            spaceUid: window.localStorage.getItem('space_uid'),
+            spaceUid: this.$store.state.spaceUid,
           },
         });
       }
@@ -126,7 +126,7 @@ export default {
         name: val,
         hash: '#hisitory',
         query: {
-          spaceUid: window.localStorage.getItem('space_uid'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
     },

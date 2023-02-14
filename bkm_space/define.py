@@ -12,7 +12,7 @@ class SpaceTypeEnum(Enum):
 
     BKCC = "bkcc"  # CMDB 业务
     BCS = "bcs"  # BCS
-    BKDEVOPS = "bkdevops"  # 蓝盾
+    BKCI = "bkci"  # 蓝盾
 
 
 @dataclass
@@ -32,6 +32,7 @@ class Space:
     space_uid: str
     type_name: Union[None, str]
     bk_biz_id: int
+    extend: dict
 
     @classmethod
     def from_dict(cls, data):

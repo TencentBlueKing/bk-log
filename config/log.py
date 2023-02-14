@@ -132,6 +132,7 @@ def get_logging_config_dict(settings_module):
         },
     }
 
+    # 可选，开启UDP日志上报
     if os.getenv("BKAPP_UDP_LOG", "off") == "on":
         log_udp_server_host = os.getenv("BKAPP_UDP_LOG_SERVER_HOST", "")
         log_udp_server_port = int(os.getenv("BKAPP_UDP_LOG_SERVER_PORT", 0))
@@ -143,5 +144,13 @@ def get_logging_config_dict(settings_module):
         }
         for _, v in logging_config["loggers"].items():
             v["handlers"].append("udp")
+
+    # 可选，开启OT日志上报
+    if os.getenv("BKAPP_OTLP_LOG", "off") == "on":
+        logging_config["handlers"]["otlp"] = {
+            "class": "apps.utils.log.OTLPLogHandler",
+        }
+        for _, v in logging_config["loggers"].items():
+            v["handlers"].append("otlp")
 
     return logging_config

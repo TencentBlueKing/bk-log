@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
 import json
-from collections import defaultdict
 from typing import List, Optional
+import time
 import arrow
 from django.utils.translation import ugettext_lazy as _
 
@@ -201,43 +201,52 @@ class CustomReporter(object):
         将collect中塞去数据库的数据上报至监控
         """
         # 此处实例化MetricCollector只是为了获取指标注册之后的REGISTERED_METRICS
-        aggregation_data_name_datas = defaultdict(list)
+
         MetricCollector(collector_import_paths=collector_import_paths)
         metric_ids = self.metric_id_filter()
         for metric_id in metric_ids:
-            data_name, namespace, prefix = get_metric_id_info(metric_id)
-            metric_id_datas = json.loads(MetricDataHistory.objects.filter(metric_id=metric_id).first().metric_data)
-            for i in metric_id_datas:
-                aggregation_data_name_datas[data_name].append(
-                    Metric(
-                        metric_name=i["metric_name"],
-                        metric_value=i["metric_value"],
-                        dimensions=i["dimensions"],
-                        timestamp=MetricUtils.get_instance().report_ts,
-                    ).to_bkmonitor_report(prefix=prefix, namespace=namespace)
-                )
-
-        for key, val in aggregation_data_name_datas.items():
-            if not self._report_params_verity(key, val):
-                continue
+            stime = time.time()
             try:
-                monitor_report_config = MonitorReportConfig.objects.get(data_name=key, is_enable=True)
-            except MonitorReportConfig.DoesNotExist:
-                logger.info(_("f{key} data_name初始化异常，请检查"))
-                continue
-
-            try:
-                chunks = [val[i : i + BATCH_SIZE] for i in range(0, len(val), BATCH_SIZE)]
-                for chunk in chunks:
-                    self._client.custom_report(
-                        {
-                            "data_id": monitor_report_config.data_id,
-                            "access_token": monitor_report_config.access_token,
-                            "data": chunk,
-                        }
+                aggregation_data_name_datas = []
+                data_name, namespace, prefix = get_metric_id_info(metric_id)
+                metric_id_datas = json.loads(MetricDataHistory.objects.filter(metric_id=metric_id).first().metric_data)
+                for i in metric_id_datas:
+                    aggregation_data_name_datas.append(
+                        Metric(
+                            metric_name=i["metric_name"],
+                            metric_value=i["metric_value"],
+                            dimensions=i["dimensions"],
+                            timestamp=MetricUtils.get_instance().report_ts,
+                        ).to_bkmonitor_report(prefix=prefix, namespace=namespace)
                     )
-            except Exception as e:  # pylint: disable=broad-except
-                logger.warning(f"custom_report error: {e}")
+
+                    if len(aggregation_data_name_datas) >= BATCH_SIZE:
+                        self.batch_report(data_name=data_name, data=aggregation_data_name_datas)
+                        aggregation_data_name_datas = []
+
+                if aggregation_data_name_datas:
+                    self.batch_report(data_name=data_name, data=aggregation_data_name_datas)
+                logger.info(f"report metric_id[{metric_id}] successfully, cost: {int(time.time() - stime)}s")
+            except Exception as e:
+                logger.error(f"report metric_id[{metric_id}] failed, cost: {int(time.time() - stime)}s, msg: {e}")
+
+    def batch_report(self, data_name: str, data: list):
+        try:
+            monitor_report_config = MonitorReportConfig.objects.get(data_name=data_name, is_enable=True)
+        except MonitorReportConfig.DoesNotExist:
+            logger.error(_("f{key} data_name初始化异常，请检查"))
+            return
+
+        try:
+            self._client.custom_report(
+                {
+                    "data_id": monitor_report_config.data_id,
+                    "access_token": monitor_report_config.access_token,
+                    "data": data,
+                }
+            )
+        except Exception as e:  # pylint: disable=broad-except
+            logger.warning(f"custom_report error: {e}")
 
     def metric_id_filter(self) -> list:
         metric_ids = []

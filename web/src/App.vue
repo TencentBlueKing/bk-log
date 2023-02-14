@@ -200,7 +200,7 @@ export default {
       this.$router.push({
         name: id,
         query: {
-          spaceUid: window.localStorage.getItem('space_uid'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
       if (id === 'default-dashboard') {
@@ -222,7 +222,7 @@ export default {
       const newUrl = this.$router.resolve({
         name: pageName,
         query: {
-          spaceUid: window.localStorage.getItem('space_uid'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
       return newUrl.href;
@@ -427,11 +427,13 @@ export default {
       height: calc(100% - 56px) !important;
     }
 
-    .biz-menu {
-      padding-bottom: 10px;
-      border-bottom: 1px solid rgba(240,241,245,.16);
-    }
   }
+
+  .biz-menu {
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,.10);
+  }
+
   // 表格单元 v-bk-overflow-tips
   .bk-table .bk-table-body-wrapper .table-ceil-container {
     width: 100%;

@@ -84,7 +84,7 @@ class PythonBackendCls(object):
     worker_nums: int
     memory: int
     worker_group: str = "default"
-    core: int = 4
+    core: int = 2
 
 
 @dataclass

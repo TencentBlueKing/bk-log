@@ -33,7 +33,7 @@ class AbstractSpaceApi(metaclass=abc.ABCMeta):
     @classmethod
     def get_related_space(cls, space_uid: str, related_space_type: str) -> Union[None, Space]:
         """
-        查询空间关联的资源对应空间
+        查询空间关联的资源对应空间。 如果类型和关联类型一致，则返回自己。
         """
         # 不在资源定义中的类型，直接返回
         if related_space_type not in SpaceTypeEnum._value2member_map_:
@@ -42,6 +42,10 @@ class AbstractSpaceApi(metaclass=abc.ABCMeta):
         space = cls.get_space_detail(space_uid)
         if space is None:
             return None
+        space_type, _ = cls.parse_space_uid(space_uid)
+        # 如果类型和关联类型一致，则返回自己。
+        if space_type == related_space_type:
+            return space
 
         related_space_list = space.extend["resources"]
         for r_space in related_space_list:
@@ -81,4 +85,4 @@ class SpaceApiProxy(object):
         self._api = import_string(api_class)
 
 
-SpaceApi = SpaceApiProxy()
+SpaceApi: AbstractSpaceApi = SpaceApiProxy()

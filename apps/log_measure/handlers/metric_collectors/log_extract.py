@@ -47,8 +47,8 @@ class LogExtractMetricCollector(object):
                 metric_name="count",
                 metric_value=group["count"],
                 dimensions={
-                    "target_biz_id": group["bk_biz_id"],
-                    "target_biz_name": MetricUtils.get_instance().get_biz_name(group["bk_biz_id"]),
+                    "bk_biz_id": group["bk_biz_id"],
+                    "bk_biz_name": MetricUtils.get_instance().get_biz_name(group["bk_biz_id"]),
                 },
                 timestamp=MetricUtils.get_instance().report_ts,
             )
@@ -91,8 +91,8 @@ class LogExtractMetricCollector(object):
                 metric_name="count",
                 metric_value=group["count"],
                 dimensions={
-                    "target_biz_id": group["bk_biz_id"],
-                    "target_biz_name": MetricUtils.get_instance().get_biz_name(group["bk_biz_id"]),
+                    "bk_biz_id": group["bk_biz_id"],
+                    "bk_biz_name": MetricUtils.get_instance().get_biz_name(group["bk_biz_id"]),
                     "target_username": group["created_by"],
                     "time_range": timedelta,
                 },
@@ -112,8 +112,8 @@ class LogExtractMetricCollector(object):
                     metric_name="total",
                     metric_value=aggregation_datas[bk_biz_id],
                     dimensions={
-                        "target_biz_id": bk_biz_id,
-                        "target_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                        "bk_biz_id": bk_biz_id,
+                        "bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
                         "time_range": timedelta,
                     },
                     timestamp=MetricUtils.get_instance().report_ts,

@@ -31,7 +31,7 @@ class _BkDataDataFlowApi:
     def __init__(self):
         self.export_flow = DataAPI(
             method="GET",
-            url=DATAFLOW_APIGATEWAY_ROOT + "/{flow_id}/export/",
+            url=DATAFLOW_APIGATEWAY_ROOT + "{flow_id}/export/",
             url_keys=["flow_id"],
             module=self.MODULE,
             description=u"导出flow",
@@ -40,7 +40,7 @@ class _BkDataDataFlowApi:
         )
         self.create_flow = DataAPI(
             method="POST",
-            url=DATAFLOW_APIGATEWAY_ROOT + "/create/",
+            url=DATAFLOW_APIGATEWAY_ROOT + "create/",
             module=self.MODULE,
             description=u"创建flow",
             before_request=add_esb_info_before_request_for_bkdata_user,
@@ -49,7 +49,7 @@ class _BkDataDataFlowApi:
         )
         self.start_flow = DataAPI(
             method="POST",
-            url=DATAFLOW_APIGATEWAY_ROOT + "/{flow_id}/start/",
+            url=DATAFLOW_APIGATEWAY_ROOT + "{flow_id}/start/",
             module=self.MODULE,
             url_keys=["flow_id"],
             description=u"启动flow",
@@ -58,7 +58,7 @@ class _BkDataDataFlowApi:
         )
         self.stop_flow = DataAPI(
             method="POST",
-            url=DATAFLOW_APIGATEWAY_ROOT + "/{flow_id}/stop/",
+            url=DATAFLOW_APIGATEWAY_ROOT + "{flow_id}/stop/",
             module=self.MODULE,
             url_keys=["flow_id"],
             description=u"停止flow",
@@ -67,7 +67,7 @@ class _BkDataDataFlowApi:
         )
         self.restart_flow = DataAPI(
             method="POST",
-            url=DATAFLOW_APIGATEWAY_ROOT + "/{flow_id}/restart/",
+            url=DATAFLOW_APIGATEWAY_ROOT + "{flow_id}/restart/",
             module=self.MODULE,
             url_keys=["flow_id"],
             description=u"重启flow",
@@ -76,7 +76,7 @@ class _BkDataDataFlowApi:
         )
         self.get_flow_graph = DataAPI(
             method="GET",
-            url=DATAFLOW_APIGATEWAY_ROOT + "/{flow_id}/graph/",
+            url=DATAFLOW_APIGATEWAY_ROOT + "{flow_id}/graph/",
             module=self.MODULE,
             url_keys=["flow_id"],
             description=u"获取DataFlow图信息",
@@ -85,7 +85,7 @@ class _BkDataDataFlowApi:
         )
         self.add_flow_nodes = DataAPI(
             method="POST",
-            url=DATAFLOW_APIGATEWAY_ROOT + "/{flow_id}/nodes/",
+            url=DATAFLOW_APIGATEWAY_ROOT + "{flow_id}/nodes/",
             module=self.MODULE,
             url_keys=["flow_id"],
             description=u"新增节点",

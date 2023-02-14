@@ -64,13 +64,13 @@ class EtlStorage(object):
             raise NotImplementedError(f"{etl_config} not implement, error: {error}")
 
     @classmethod
-    def get_etl_config(cls, result_table_config):
+    def get_etl_config(cls, result_table_config, default="bk_log_text"):
         """
         根据RT表配置返回etl_config类型
         """
         separator_node_action = result_table_config.get("option", {}).get("separator_node_action")
         return {"regexp": "bk_log_regexp", "delimiter": "bk_log_delimiter", "json": "bk_log_json"}.get(
-            separator_node_action, "bk_log_text"
+            separator_node_action, default
         )
 
     def etl_preview(self, data, etl_params) -> list:
@@ -150,6 +150,8 @@ class EtlStorage(object):
             field_option["es_type"] = FieldDataTypeEnum.get_es_field_type(
                 field["field_type"], is_analyzed=field["is_analyzed"]
             )
+            if field["is_analyzed"] and field.get("option", {}).get("es_analyzer"):
+                field_option["es_analyzer"] = field["option"]["es_analyzer"]
 
             # ES_INCLUDE_IN_ALL
             if field["is_analyzed"] and es_version.startswith("5."):
@@ -171,12 +173,6 @@ class EtlStorage(object):
                 time_field["option"]["field_index"] = field_option["field_index"]
                 # 删除原时间字段配置
                 field_option["es_doc_values"] = False
-
-            # 处理自定义 Option 兼容
-            origin_option = field.get("option", {})
-            if origin_option and isinstance(origin_option, dict):
-                origin_option = {key: val for key, val in origin_option.items() if key.startswith("es")}
-                field_option.update(origin_option)
 
             # 加入字段列表
             field_list.append(
@@ -350,15 +346,18 @@ class EtlStorage(object):
         # 兼容插件与采集项
         if not table_id:
             # 创建结果表
-            instance.table_id = TransferApi.create_result_table(params)["table_id"]
-            instance.save()
+            table_id = TransferApi.create_result_table(params)["table_id"]
         else:
             # 更新结果表
             params["table_id"] = table_id
             TransferApi.modify_result_table(params)
             cache.delete(CACHE_KEY_CLUSTER_INFO.format(table_id))
 
-        return {"table_id": instance.table_id if instance.table_id else table_id, "params": params}
+        if not instance.table_id:
+            instance.table_id = table_id
+            instance.save()
+
+        return {"table_id": instance.table_id, "params": params}
 
     @classmethod
     def switch_result_table(cls, collector_config: CollectorConfig, is_enable=True):

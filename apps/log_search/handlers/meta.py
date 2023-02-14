@@ -21,18 +21,22 @@ the project delivered to anyone in the future.
 """
 import copy
 
+from collections import defaultdict
 from django.conf import settings
 
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.feature_toggle.plugins.constants import USER_GUIDE_CONFIG
 from apps.iam import Permission, ActionEnum
-from apps.log_search.constants import UserMetaConfType
+from apps.log_search.constants import UserMetaConfType, UserFunctionGuideType
+from apps.log_search.exceptions import FunctionGuideException
 from apps.utils import APIModel
 from apps.api import BKLoginApi, CmsiApi, TransferApi
 from apps.log_search.models import ProjectInfo, UserMetaConf, Space
 from apps.utils.local import get_request_username
 from apps.log_search import exceptions
 from apps.feature_toggle.handlers import toggle
+from apps.utils.log import logger
+from bkm_space.define import SpaceTypeEnum
 
 
 class MetaHandler(APIModel):
@@ -44,7 +48,25 @@ class MetaHandler(APIModel):
 
         # 获取置顶空间列表
         # 返回格式： space_uid 的列表
-        sticky_spaces = TransferApi.list_sticky_spaces({"username": username})
+        try:
+            sticky_spaces = TransferApi.list_sticky_spaces({"username": username})
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error(f"Get sticky space by user({username}), error({e})")
+            sticky_spaces = []
+
+        spaces_by_type = defaultdict(list)
+        for space in spaces:
+            spaces_by_type[space.space_type_id].append(space)
+
+        # bkcc按照数字排序, 非bkcc按照字母排序
+        for space_type_id, _spaces in spaces_by_type.items():
+            if space_type_id == SpaceTypeEnum.BKCC.value:
+                _spaces.sort(key=lambda x: x.bk_biz_id)
+            else:
+                _spaces.sort(key=lambda x: x.space_id)
+        spaces = spaces_by_type[SpaceTypeEnum.BKCC.value]
+        spaces.extend(spaces_by_type[SpaceTypeEnum.BCS.value])
+        spaces.extend(spaces_by_type[SpaceTypeEnum.BKCI.value])
 
         result = []
         for space in spaces:
@@ -205,12 +227,38 @@ class MetaHandler(APIModel):
                 toggle_key: {**toggle_val, **{"current_step": user_meta_conf.conf.get(toggle_key, 0)}}
                 for toggle_key, toggle_val in feature_config.items()
             }
+        # 获取用户功能指引, 语义为 是否展示, 所以默认值为 True
+        user_function_guide, __ = UserMetaConf.objects.get_or_create(
+            username=username,
+            type=UserMetaConfType.FUNCTION_GUIDE,
+            defaults={"conf": {i: True for i in UserFunctionGuideType.get_keys()}},
+        )
+        meta_conf["function_guide"] = user_function_guide.conf
         return meta_conf
 
     @classmethod
     def update_user_guide(cls, username, user_guide_dict):
-        user_meta_conf = UserMetaConf.objects.filter(username=username, type=UserMetaConfType.USER_GUIDE).first()
-        if not user_meta_conf:
-            user_meta_conf = UserMetaConf.objects.create(username=username, type=UserMetaConfType.USER_GUIDE, conf={})
-        user_meta_conf.conf.update(user_guide_dict)
-        user_meta_conf.save()
+        # 更新顶级菜单指引, user_guide_dict的key为 default
+        if "default" in user_guide_dict.keys():
+            user_meta_conf = UserMetaConf.objects.filter(username=username, type=UserMetaConfType.USER_GUIDE).first()
+            if not user_meta_conf:
+                user_meta_conf = UserMetaConf.objects.create(
+                    username=username, type=UserMetaConfType.USER_GUIDE, conf={}
+                )
+            user_meta_conf.conf.update(user_guide_dict)
+            user_meta_conf.save()
+            return
+        # 更新新功能菜单指引, 和前端达成一致传入的是 {"function_guide": "search_favorite"}
+        update_function_guide = user_guide_dict["function_guide"]
+        if update_function_guide not in UserFunctionGuideType.get_keys():
+            raise FunctionGuideException()
+
+        user_function_guide = UserMetaConf.objects.filter(
+            username=username,
+            type=UserMetaConfType.FUNCTION_GUIDE,
+        ).first()
+        if not user_function_guide:
+            raise FunctionGuideException()
+        # 更新用户功能指引, 语义为 是否展示, 所以更新后的值为 False
+        user_function_guide.conf[update_function_guide] = False
+        user_function_guide.save()

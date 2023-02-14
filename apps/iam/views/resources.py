@@ -98,7 +98,10 @@ class CollectionResourceProvider(BaseResourceProvider):
 
         queryset = CollectorConfig.objects.filter(pk__in=ids)
 
-        results = [{"id": str(item.pk), "display_name": item.collector_config_name} for item in queryset]
+        results = [
+            {"id": str(item.pk), "display_name": item.collector_config_name, "_bk_iam_approver_": item.created_by}
+            for item in queryset
+        ]
         return ListResult(results=results, count=queryset.count())
 
     def list_instance_by_policy(self, filter, page, **options):
@@ -253,7 +256,10 @@ class EsSourceResourceProvider(BaseResourceProvider):
             ids = [str(i) for i in filter.ids]
             clusters = [cluster for cluster in clusters if str(cluster["id"]) in ids]
 
-        results = [{"id": item["id"], "display_name": item["display_name"]} for item in clusters]
+        results = [
+            {"id": item["id"], "display_name": item["display_name"], "_bk_iam_approver_": item["owner"]}
+            for item in clusters
+        ]
         return ListResult(results=results, count=len(clusters))
 
     def list_instance_by_policy(self, filter, page, **options):
@@ -369,7 +375,10 @@ class IndicesResourceProvider(BaseResourceProvider):
 
         queryset = LogIndexSet.objects.filter(pk__in=ids)
 
-        results = [{"id": str(item.pk), "display_name": item.index_set_name} for item in queryset]
+        results = [
+            {"id": str(item.pk), "display_name": item.index_set_name, "_bk_iam_approver_": item.created_by}
+            for item in queryset
+        ]
         return ListResult(results=results, count=queryset.count())
 
     def list_instance_by_policy(self, filter, page, **options):

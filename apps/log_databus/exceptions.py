@@ -371,7 +371,7 @@ class BcsClusterIdNotValidException(BaseCollectorConfigException):
 
 class NamespaceNotValidException(BaseCollectorConfigException):
     ERROR_CODE = "906"
-    MESSAGE = _("namespace不合法，请检查")
+    MESSAGE = _("namespace({namespaces})不合法，请检查")
 
 
 class AllNamespaceNotAllowedException(BaseCollectorConfigException):

@@ -21,6 +21,8 @@ the project delivered to anyone in the future.
 """
 from concurrent.futures import ThreadPoolExecutor
 
+import pytz
+from django.utils import timezone
 from rest_framework.test import APIRequestFactory
 from rest_framework.request import Request
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -28,7 +30,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from opentelemetry.context import attach, get_current
 
 from apps.utils.function import ignored
-from apps.utils.local import get_request, activate_request
+from apps.utils.local import get_request, activate_request, get_local_param, set_local_param
 
 
 class FuncThread:
@@ -41,10 +43,15 @@ class FuncThread:
         with ignored(AttributeError, BaseException):
             self.requests = get_request()
         self.trace_context = get_current()
+        self.timezone = get_local_param("time_zone")
 
     def _init_context(self):
         with ignored(Exception):
             attach(self.trace_context)
+
+            if self.timezone:
+                set_local_param("time_zone", self.timezone)
+                timezone.activate(pytz.timezone(self.timezone))
 
     def run(self):
         self._init_context()

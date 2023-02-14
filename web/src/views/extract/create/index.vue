@@ -235,7 +235,7 @@ export default {
       this.$router.push({
         name: 'log-extract-task',
         query: {
-          spaceUid: window.localStorage.getItem('space_uid'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
     },

@@ -38,14 +38,20 @@ DIST_CLUSTERING_FIELDS = [
     "dist_07 AS __dist_07",
     "dist_09 AS __dist_09",
 ]
-DEFAULT_SPARK_EXECUTOR_INSTANCES = 20
-DEFAULT_PSEUDO_SHUFFLE = 200
+DEFAULT_SPARK_EXECUTOR_INSTANCES = 8
+DEFAULT_SPARK_EXECUTOR_CORES = 2
+DEFAULT_SPARK_PSEUDO_SHUFFLE = 200
 DEFAULT_SPARK_LOCALITY_WAIT = "0s"
+
+DEFAULT_FLINK_BATCH_SIZE = 100
+DEFAULT_FLINK_CPU = 2
+DEFAULT_FLINK_MEMORY = 2048
+
 STREAM_SOURCE_NODE_TYPE = "stream_source"
 DIVERSION_NODE_NAME = _("回流数据")
 TSPIDER_STORAGE_NODE_TYPE = "tspider_storage"
-TSPIDER_STORAGE_NODE_NAME = _("回流数据(tspider_storage)")
 TSPIDER_STORAGE_INDEX_FIELDS = ["history_time", "event_time"]
+MYSQL_STORAGE_NODE_TYPE = "mysql_storage"
 
 SPLIT_TYPE = "split"
 
@@ -288,29 +294,6 @@ DEFAULT_MODEL_OUTPUT_FIELDS = [
         "field_index": 3,
         "data_field_name": "__group_id__",
         "data_field_alias": "分组字段",
-    },
-    {
-        "roles": ["predict_result"],
-        "properties": {
-            "deletable": False,
-            "complex": False,
-            "constraint_type": "",
-            "role_changeable": False,
-            "extra": {},
-            "value_fixed": False,
-            "constraints": {},
-            "required": True,
-            "name_inherited": False,
-            "passthrough": False,
-            "compatibility": False,
-        },
-        "data_field_alias": None,
-        "field_index": 4,
-        "field_name": "token",
-        "field_type": "text",
-        "components": [],
-        "field_alias": "token",
-        "data_field_name": "",
     },
     {
         "properties": {

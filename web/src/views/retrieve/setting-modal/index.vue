@@ -332,21 +332,14 @@ export default {
     handleClickDetail() {
       const { extra: { collector_config_id: collectorID, collector_scenario_id: scenarioID } } = this.cleanConfig;
       if (!collectorID) return;
-      const spaceUid = window.localStorage.getItem('space_uid');
+      const spaceUid = this.$store.state.spaceUid;
       const jumpUrl = scenarioID === 'custom'
         ? `/#/manage/custom-report/detail/${collectorID}?spaceUid=${spaceUid}`
         : `/#/manage/log-collection/collection-item/manage/${collectorID}?spaceUid=${spaceUid}`;
       window.open(jumpUrl, '_blank');
     },
     setIsShowExtract(state) {
-      if (state) {
-        this.showCurrentList = this.currentList;
-      } else {
-        const spliceIndex = this.currentList.findIndex(item => item.id === 'extract');
-        const sliceCurrentList = JSON.parse(JSON.stringify(this.currentList));
-        sliceCurrentList.splice(spliceIndex, 1);
-        this.showCurrentList = sliceCurrentList;
-      }
+      this.showCurrentList = this.currentList.filter(item => (state ? true : item.id !== 'extract'));
     },
     resetPage() {
       this.isShowPage = false;
@@ -433,6 +426,7 @@ export default {
 
       .setting-right {
         margin-left: 20px;
+        max-width: 1000px;
 
         .more-details {
           height: 48px;

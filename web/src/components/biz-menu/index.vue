@@ -21,32 +21,55 @@
   -->
 
 <template>
-  <div :class="['biz-menu-select', { 'light-theme': theme === 'light' }]"
-       v-bk-clickoutside="handleClickOutSide">
+  <div
+    :class="['biz-menu-select', { 'light-theme': theme === 'light' }]"
+    v-bk-clickoutside="handleClickOutSide"
+  >
     <div :class="['menu-select']">
-      <span class="menu-title">{{ bizNameIcon }}</span>
+      <span class="menu-title" :style="`backgroundColor: ${spaceBgColor}`">{{ bizNameIcon }}</span>
       <span
-        v-if="isExpand" tabindex="{0}" class="menu-select-name" @mousedown="handleClickBizSelect">
+        v-if="isExpand"
+        tabindex="{0}"
+        class="menu-select-name"
+        @mousedown="handleClickBizSelect"
+      >
         {{ bizName }}
         <i
-          :class="`bk-select-angle bk-icon ${theme === 'light' ? 'icon-angle-down' : 'icon-down-shape'} select-icon`"
+          class="bk-select-angle bk-icon icon-angle-up-fill select-icon"
           :style="{ transform: `rotate(${!showBizList ? '0deg' : '-180deg'})` }"
         />
       </span>
     </div>
-    <div v-if="isExpand"
-         class="menu-select-list"
-         :style="{ display: showBizList ? 'flex' : 'none' }">
+    <div
+      v-if="isExpand"
+      class="menu-select-list"
+      :style="{ display: showBizList ? 'flex' : 'none' }"
+    >
       <bk-input
         ref="menuSearchInput"
         class="menu-select-search"
-        right-icon="bk-icon icon-search"
+        left-icon="bk-icon icon-search"
         :placeholder="$t('搜索')"
         :clearable="false"
         :value="keyword"
         @clear="handleBizSearch"
-        @change="handleBizSearch">
+        @change="handleBizSearch"
+      >
       </bk-input>
+      <ul class="space-type-list" v-if="spaceTypeIdList.length > 1">
+        <li
+          v-for="(item) in spaceTypeIdList"
+          class="space-type-item"
+          :key="item.id"
+          :style="{
+            ...item.styles,
+            borderColor: item.id === searchTypeId ? item.styles.color : 'transparent'
+          }"
+          @click="handleSearchType(item.id)"
+        >
+          {{item.name}}
+        </li>
+      </ul>
       <div class="biz-list">
         <template v-if="allKeyWorldLength">
           <slot name="list-top"></slot>
@@ -57,7 +80,8 @@
                 :key="gIndex"
                 :theme="theme"
                 :space-list="gItem.keywordList"
-                @click-menu-item="(item) => handleClickMenuItem(item, gKey)" />
+                @click-menu-item="(item) => handleClickMenuItem(item, gKey)"
+              />
             </div>
           </template>
         </template>
@@ -68,7 +92,11 @@
           <span class="icon bk-icon icon-plus-circle"></span>
           {{ $t('申请业务权限') }}
         </div> -->
-        <div class="menu-select-extension-item" v-if="demoUid" @mousedown.stop="experienceDemo">
+        <div
+          class="menu-select-extension-item"
+          v-if="demoUid"
+          @mousedown.stop="experienceDemo"
+        >
           <span class="icon log-icon icon-app-store"></span>
           {{ $t('体验DEMO') }}
         </div>
@@ -84,6 +112,9 @@ import menuList from './list';
 import { deepClone } from '../monitor-echarts/utils';
 import { Storage } from '@/common/util';
 import * as authorityMap from '../../common/authority-map';
+import { SPACE_TYPE_MAP } from '@/store/constant';
+
+const SPACE_COLOR_LIST = ['#7250A9', '#3563BE', '#3799BA', '#4FB17F', '#86AF4A', '#E9AE1D', '#EB9258', '#D36C68', '#BC4FB3'];
 
 export default {
   components: {
@@ -136,6 +167,9 @@ export default {
       },
       BIZ_SELECTOR_COMMON_IDS: 'BIZ_SELECTOR_COMMON_IDS', // 常用的 的key
       BIZ_SELECTOR_COMMON_MAX: 5, // 常用的的最大长度
+      spaceTypeIdList: [],
+      searchTypeId: '',
+      spaceBgColor: '#3799BA',
     };
   },
   computed: {
@@ -143,7 +177,7 @@ export default {
       demoUid: 'demoUid',
     }),
     bizName() {
-      return this.mySpaceList.find(item => item.space_uid === this.spaceUid)?.space_full_code_name;
+      return this.mySpaceList.find(item => item.space_uid === this.spaceUid)?.space_name;
     },
     bizNameIcon() {
       return this.bizName[0].toLocaleUpperCase();
@@ -153,31 +187,32 @@ export default {
     },
   },
   watch: {
-    keyword(val) {
-      const groupList = this.groupList;
-      if (!!val) {
-        for (const key in groupList) {
-          const gItem = groupList[key];
-          if (!gItem.list.length) continue;
-          const keyword = val.trim().toLocaleLowerCase();
-          const filterList = gItem.list.filter((item) => {
-            return item.space_name.toLocaleLowerCase().indexOf(keyword) > -1
-             || item.space_code.toLocaleLowerCase().indexOf(keyword) > -1;
-          });
-          gItem.keywordList = filterList;
-        }
-      } else {
-        for (const key in groupList) {
-          const gItem = groupList[key];
-          gItem.keywordList = gItem.list;
-        }
-      }
+    keyword() {
+      this.initGroupList();
     },
   },
   created() {
+    // this.spaceBgColor = this.$store.getters.spaceBgColor || this.getRandomColor();
     this.initGroupList();
+    const spaceTypeMap = {};
+    this.mySpaceList.forEach((item) => {
+      spaceTypeMap[item.space_type_id] = 1;
+      if (item.space_type_id === 'bkci' && item.space_code) {
+        spaceTypeMap.bcs = 1;
+      }
+    });
+    this.spaceTypeIdList = Object.keys(spaceTypeMap).map(key => ({
+      id: key,
+      name: SPACE_TYPE_MAP[key]?.name || this.$t('未知'),
+      styles: (this.theme === 'dark' ? SPACE_TYPE_MAP[key]?.dark : SPACE_TYPE_MAP[key]?.light) || {},
+    }));
   },
   methods: {
+    getRandomColor() {
+      const color =  SPACE_COLOR_LIST[Math.floor(Math.random() * SPACE_COLOR_LIST.length)];
+      this.$store.commit('setSpaceBgColor', color);
+      return color;
+    },
     initGroupList() {
       this.storage = new Storage();
       this.commonListIds = this.storage.get(this.BIZ_SELECTOR_COMMON_IDS) || [];
@@ -263,7 +298,30 @@ export default {
       const correctList = [];
       const failureList = [];
       groupList.forEach((item) => {
-        callback(item) ? correctList.push(item) : failureList.push(item);
+        let show = false;
+        const keyword = this.keyword.trim().toLocaleLowerCase();
+        if (this.searchTypeId) {
+          show = this.searchTypeId === 'bcs' ? item.space_type_id === 'bkci' && !!item.space_code : item.space_type_id === this.searchTypeId;
+        }
+
+        if ((show && keyword) || (!this.searchTypeId && !show)) {
+          show = (item.space_name.toLocaleLowerCase().indexOf(keyword) > -1
+        || item.py_text.toLocaleLowerCase().indexOf(keyword) > -1
+        // || `${item.id}`.includes(keyword));
+        || `${item.space_code}`.includes(keyword));
+        }
+        if (show) {
+          const tags = [{ id: item.space_type_id, name: item.space_type_name, type: item.space_type_id }];
+          if (item.space_type_id === 'bkci' && item.space_code) {
+            tags.push({ id: 'bcs', name: this.$tc('容器项目'), type: 'bcs' });
+          }
+          const newItem = {
+            ...item,
+            name: item.space_name.replace(/\[.*?\]/, ''),
+            tags,
+          };
+          callback(item) ? correctList.push(newItem) : failureList.push(newItem);
+        }
       });
       return [correctList, failureList];
     },
@@ -276,6 +334,10 @@ export default {
     experienceDemo() {
       this.checkSpaceChange(this.demoUid);
     },
+    handleSearchType(typeId) {
+      this.searchTypeId = typeId === this.searchTypeId ? '' : typeId;
+      this.initGroupList();
+    },
   },
 };
 </script>
@@ -285,23 +347,24 @@ export default {
   @import '../../scss/mixins/ellipsis.scss';
 
   .biz-menu-select {
+    padding-left: 8px;
+
     .menu-select {
-      padding: 0 4px 0 16px;
+      padding: 0 4px 0 8px;
       flex: 1;
       display: flex;
       align-items: center;
       position: relative;
-      height: 40px;
-      border: 1px solid #2c354d;
+      height: 32px;
       border-radius: 2px;
-      background: rgba(44,53,77,.00);;
+      background-color: #2b354d;
 
       &-name {
-        padding: 0 26px 0 10px;
+        padding: 0 26px 0 8px;
         flex: 1;
         position: relative;
-        color: #eaebf0;
-        font-size: 14px;
+        color: #acb2c6;
+        font-size: 12px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -311,14 +374,14 @@ export default {
         .select-icon {
           position: absolute;
           top: 8px;
-          right: 10px;
-          color: #96a2b9;
+          right: 8px;
+          color: #c4c6cc;
           transition: transform .3s cubic-bezier(.4,0,.2,1),-webkit-transform .3s cubic-bezier(.4,0,.2,1);
         }
 
-        .icon-angle-down {
-          top: 5px;
-          font-size: 20px;
+        .icon-angle-up-fill {
+          top: 8px;
+          color: #96a2b9;
         }
       }
 
@@ -326,20 +389,21 @@ export default {
         display: flex;
         position: fixed;
         left: 0;
-        top: 112px;
+        top: 100px;
         flex-direction: column;
         z-index: 99;
-        background-color: #363f56;
+        background-color: #38455f;
         overflow: auto;
         border-radius: 2px;
         box-shadow: 0px 2px 6px 0px rgba(0,0,0,.20);
+        z-index: 2000;
 
         .biz-list {
           display: flex;
           flex-direction: column;
           max-height: 240px;
           overflow: auto;
-          min-width: 418px;
+          width: 380px;
           padding: 6px 0;
 
           .group-title {
@@ -353,7 +417,7 @@ export default {
           %list-empty {
             height: 32px;
             flex: 0 0 32px;
-            padding: 0 16px;
+            padding: 0 9px 0 12px;
             color: #c3d0e7;
             font-size: 12px;
 
@@ -376,6 +440,7 @@ export default {
 
             &:hover {
               cursor: pointer;
+              background-color: #323c53;
 
               @extend %is-select;
             }
@@ -400,16 +465,36 @@ export default {
             &:hover .apply-text {
               display: flex;
             }
+
+            .list-item-left {
+              /* stylelint-disable-next-line declaration-no-important */
+              display: inline-flex !important;
+              flex: 1;
+              flex-wrap: nowrap;
+              margin-right: 8px;
+
+              @include ellipsis();
+
+              .list-item-name {
+                @include ellipsis();
+              }
+
+              .list-item-id {
+                margin-left: 8px;
+
+                @include ellipsis();
+              }
+            }
           }
 
           &::-webkit-scrollbar {
             width: 4px;
-            background: #363f56;
+            background: #38455f;
           }
 
           &::-webkit-scrollbar-thumb {
             border-radius: 20px;
-            background: #363f56;
+            background: #ddd;
             box-shadow: inset 0 0 6px rgba(204, 204, 204, .3);
           }
         }
@@ -420,19 +505,30 @@ export default {
         flex: 1;
         width: inherit;
 
+        .left-icon {
+          color: #63656e;
+          left: 0;
+        }
+
         .bk-form-input {
           border: 0;
           border-bottom: 1px solid rgba(240,241,245,.16);
           border-radius: 0;
-          background-color: #363f56;
-          color: #acb5c6;
+          background-color: #38455f;
+          color: #acb5c6;;
+
+          &::placeholder {
+            /* stylelint-disable-next-line declaration-no-important */
+            color: #66768e!important;
+            background-color: #39455f;
+          }
 
           &:focus {
             /* stylelint-disable-next-line declaration-no-important */
-            background-color: #363f56 !important;
+            background-color: #39455f !important;
 
             /* stylelint-disable-next-line declaration-no-important */
-            border-color: rgba(240,241,245,.16) !important;
+            border-bottom-color: #434e68 !important;
           }
         }
       }
@@ -473,13 +569,13 @@ export default {
     .menu-title {
       height: 20px;
       flex: 1;
-      border-radius: 4px;
+      border-radius: 2px;
       width: 20px;
       min-width: 20px;
       max-width: 20px;
-      background: #ffd695;
+      background: #a09e21;;
       color: #fff;
-      font-weight: bold;
+      font-weight: 700;
       font-size: 12px;
 
       @include flex-center;
@@ -487,11 +583,24 @@ export default {
   }
 
   .light-theme {
+    padding: 0;
+
     .menu-select {
-      background: #f0f1f5;
+      background: transparent;
       border: 0;
 
+      .menu-select-name {
+        color: #313238;
+        font-size: 14px;
+      }
+
+      .select-icon {
+        /* stylelint-disable-next-line declaration-no-important */
+        right: 2px !important;
+      }
+
       &-list {
+        top: 106px;
         left: 16px;
         width: 418px;
         background-color: #fff;
@@ -554,6 +663,10 @@ export default {
           background-color: #fff;
           color: #63656e;
 
+          &::placeholder {
+            background-color: #fff;
+          }
+
           &:focus {
             /* stylelint-disable-next-line declaration-no-important */
             background-color: #fff !important;
@@ -583,6 +696,31 @@ export default {
 
     .select-icon {
       color: #c4c6cc;
+    }
+
+    .space-type-list {
+      border-color: #eaebf0;
+    }
+  }
+
+  .space-type-list {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    margin: 0 12px;
+    border-bottom: 1px solid #434e68;
+
+    .space-type-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 10px;
+      border-radius: 2px;
+      margin-right: 4px;
+      height: 22px;
+      font-size: 12px;
+      cursor: pointer;
+      border: 1px solid transparent;
     }
   }
 </style>

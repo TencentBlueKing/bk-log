@@ -1017,7 +1017,7 @@ export default {
       this.$router.push({
         name: routeName,
         query: {
-          spaceUid: window.localStorage.getItem('space_uid'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
     },

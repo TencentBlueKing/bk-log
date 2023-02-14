@@ -93,3 +93,11 @@ def inject_space_field(data: Union[Dict, List], max_depth=5):
     """
     _inject_space_field_recursive(data, max_depth)
     return data
+
+
+def is_bcs_space(space_uid: str) -> bool:
+    """判断是否是bcs类型的空间 ."""
+    if not space_uid:
+        return False
+    space_type, _ = parse_space_uid(space_uid)
+    return space_type == SpaceTypeEnum.BCS.value

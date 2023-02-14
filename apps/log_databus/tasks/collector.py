@@ -20,6 +20,7 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import datetime
+import traceback
 from collections import defaultdict
 
 import pytz
@@ -30,11 +31,18 @@ from apps.api import BkLogApi, TransferApi
 from apps.api.modules.bkdata_databus import BkDataDatabusApi
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.feature_toggle.plugins.constants import FEATURE_BKDATA_DATAID
-from apps.log_databus.constants import CollectItsmStatus, REGISTERED_SYSTEM_DEFAULT, STORAGE_CLUSTER_TYPE
+from apps.log_databus.constants import (
+    CollectItsmStatus,
+    REGISTERED_SYSTEM_DEFAULT,
+    STORAGE_CLUSTER_TYPE,
+    ContainerCollectStatus,
+)
 from apps.log_databus.handlers.collector import CollectorHandler
-from apps.log_databus.models import CollectorConfig
+from apps.log_databus.models import CollectorConfig, ContainerCollectorConfig
 from apps.log_databus.models import StorageUsed
 from apps.log_measure.handlers.elastic import ElasticHandle
+from apps.log_search.constants import CustomTypeEnum
+from apps.utils.bcs import Bcs
 from apps.utils.log import logger
 
 
@@ -216,3 +224,71 @@ def get_biz_storage_capacity(bk_biz_id, cluster):
         total_size += int(_info["store.size"])
 
     return round(total_size / 1024, 2)
+
+
+@task(ignore_result=True)
+def create_container_release(bcs_cluster_id: str, container_config_id: int, config_name: str, config_params: dict):
+    container_config = ContainerCollectorConfig.objects.get(pk=container_config_id)
+    container_config.status = ContainerCollectStatus.RUNNING.value
+    container_config.save()
+
+    try:
+        result = Bcs(bcs_cluster_id).save_bklog_config(bklog_config_name=config_name, bklog_config=config_params)
+        container_config.status = (
+            ContainerCollectStatus.SUCCESS.value if result else ContainerCollectStatus.FAILED.value
+        )
+    except Exception as e:  # pylint: disable=broad-except
+        logger.exception("[create_container_release] save bklog config failed: %s", e)
+        container_config.status = ContainerCollectStatus.FAILED.value
+    container_config.save()
+
+
+@task(ignore_result=True)
+def delete_container_release(
+    bcs_cluster_id: str, container_config_id: int, config_name: str, delete_config: bool = False
+):
+    try:
+        # 删除配置，如果没抛异常，则必定成功
+        Bcs(bcs_cluster_id).delete_bklog_config(config_name)
+    except Exception as e:  # pylint: disable=broad-except
+        logger.exception("[delete_container_release] delete bklog config failed: %s", e)
+
+    try:
+        container_config = ContainerCollectorConfig.objects.get(pk=container_config_id)
+    except ContainerCollectorConfig.DoesNotExist:
+        # 采集配置可能已经被删掉，这种情况下直接返回就行，不用更新采集状态
+        return
+
+    if delete_config:
+        # 停用后直接删掉
+        container_config.delete()
+    else:
+        # 无论成败与否，都设置为已停用
+        container_config.status = ContainerCollectStatus.TERMINATED.value
+        container_config.save()
+
+
+@periodic_task(run_every=crontab(minute="0"))
+def create_custom_log_group():
+    """
+    将存量的 Otlp Log 创建 Log Group
+    """
+
+    otlp_logs = CollectorConfig.objects.filter(custom_type=CustomTypeEnum.OTLP_LOG.value, log_group_id__isnull=True)
+    for log in otlp_logs:
+        try:
+            CollectorHandler.create_custom_log_group(log)
+            log.refresh_from_db(fields=["log_group_id"])
+            logger.info(
+                "[CreateCustomLogGroupSuccess] Collector => %s; LogGroupID => %s",
+                log.collector_config_id,
+                log.log_group_id
+            )
+        except Exception as err:
+            msg = traceback.format_exc()
+            logger.error(
+                "[CreateCustomLogGroupFailed] Collector => %s; Error => %s ; Detail => %s",
+                log.collector_config_id,
+                str(err),
+                msg
+            )

@@ -20,14 +20,13 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 from apps.utils.log import logger
 from apps.api import BcsCcApi, BcsApi
 from apps.log_search.models import Space
-from apps.utils.thread import MultiExecuteFunc
 from bkm_space.define import SpaceTypeEnum
 
 
 class BcsHandler:
     @classmethod
     def list_bcs_shared_cluster_namespace(cls, bcs_cluster_id):
-        namespaces = BcsCcApi.list_shared_clusters_ns({"cluster_id": bcs_cluster_id})
+        namespaces = BcsCcApi.list_shared_clusters_ns({"cluster_id": bcs_cluster_id, "desire_all_data": "1"})
         project_id_to_ns = {}
         for ns in namespaces.get("results", []):
             project_id_to_ns.setdefault(ns["project_id"], []).append(ns["name"])
@@ -41,42 +40,27 @@ class BcsHandler:
 
         space = Space.objects.get(bk_biz_id=bk_biz_id)
         if space.space_type_id == SpaceTypeEnum.BKCC.value:
-            bcs_projects = BcsCcApi.list_project()
-            # bcs_project_name_map = {p["project_id"]: p["project_name"] for p in bcs_projects}
-            bcs_projects = [p for p in bcs_projects if str(p["cc_app_id"]) == str(bk_biz_id)]
-            multi_execute_func = MultiExecuteFunc()
-            for project in bcs_projects:
-                multi_execute_func.append(
-                    project["project_id"],
-                    BcsApi.list_cluster_by_project_id,
-                    {"projectID": project["project_id"], "no_request": True},
-                    use_request=False,
-                )
-            bcs_result = multi_execute_func.run()
+            clusters = BcsApi.list_cluster_by_project_id({"businessID": bk_biz_id})
         elif space.space_type_id == SpaceTypeEnum.BCS.value:
             clusters = BcsApi.list_cluster_by_project_id({"projectID": space.space_id})
-            bcs_result = {space.space_id: clusters}
+        elif space.space_type_id == SpaceTypeEnum.BKCI.value and space.space_code:
+            clusters = BcsApi.list_cluster_by_project_id({"projectID": space.space_code})
         else:
-            bcs_result = {}
+            clusters = []
 
         result = []
-        for project_id, clusters in bcs_result.items():
-            if not clusters:
-                continue
-            for cluster in clusters:
-                result.append(
-                    {
-                        # "area_name": bcs_area_name_map.get(cluster["area_id"], cluster["area_id"]),
-                        # "project_name": bcs_project_name_map.get(project_id, project_id),
-                        "project_id": project_id,
-                        "cluster_id": cluster["clusterID"],
-                        "cluster_name": cluster["clusterName"],
-                        "region": cluster["region"],
-                        # "disable": cluster["disable"],
-                        "environment": cluster["environment"],
-                        "status": cluster["status"],
-                        "engine_type": cluster["engineType"],
-                        "is_shared": cluster["is_shared"],
-                    }
-                )
+
+        for cluster in clusters:
+            result.append(
+                {
+                    "project_id": cluster["projectID"],
+                    "cluster_id": cluster["clusterID"],
+                    "cluster_name": cluster["clusterName"],
+                    "region": cluster["region"],
+                    "environment": cluster["environment"],
+                    "status": cluster["status"],
+                    "engine_type": cluster["engineType"],
+                    "is_shared": cluster["is_shared"],
+                }
+            )
         return result

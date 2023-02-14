@@ -69,9 +69,9 @@ class BusinessMetricCollector(object):
             datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S%z") - datetime.timedelta(minutes=timedelta_v)
         ).strftime("%Y-%m-%d %H:%M:%S%z")
 
-        history_ids = UserIndexSetSearchHistory.objects.filter(created_at__range=[start_time, end_time],).values_list(
-            "index_set_id", flat=True
-        )
+        history_ids = UserIndexSetSearchHistory.objects.filter(
+            created_at__range=[start_time, end_time],
+        ).values_list("index_set_id", flat=True)
 
         space_uids = set(
             LogIndexSet.objects.filter(index_set_id__in=set(history_ids)).values_list("space_uid", flat=True)
@@ -82,8 +82,8 @@ class BusinessMetricCollector(object):
                 metric_name="count",
                 metric_value=1,
                 dimensions={
-                    "target_biz_id": MetricUtils.get_instance().space_info[space_uid].bk_biz_id,
-                    "target_biz_name": MetricUtils.get_instance().space_info[space_uid].space_name,
+                    "bk_biz_id": MetricUtils.get_instance().space_info[space_uid].bk_biz_id,
+                    "bk_biz_name": MetricUtils.get_instance().space_info[space_uid].space_name,
                     "time_range": timedelta,
                 },
                 timestamp=MetricUtils.get_instance().report_ts,
@@ -120,8 +120,8 @@ class BusinessMetricCollector(object):
                     metric_name="bk_biz_info",
                     metric_value=1,
                     dimensions={
-                        "target_biz_id": bk_biz_id,
-                        "target_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
+                        "bk_biz_id": bk_biz_id,
+                        "bk_biz_name": MetricUtils.get_instance().get_biz_name(bk_biz_id),
                     },
                     timestamp=MetricUtils.get_instance().report_ts,
                 )
@@ -145,8 +145,8 @@ class BusinessMetricCollector(object):
                     metric_name="count",
                     metric_value=collector_config["total"],
                     dimensions={
-                        "target_biz_id": collector_config["bk_biz_id"],
-                        "target_biz_name": MetricUtils.get_instance().get_biz_name(collector_config["bk_biz_id"]),
+                        "bk_biz_id": collector_config["bk_biz_id"],
+                        "bk_biz_name": MetricUtils.get_instance().get_biz_name(collector_config["bk_biz_id"]),
                     },
                     timestamp=MetricUtils.get_instance().report_ts,
                 )

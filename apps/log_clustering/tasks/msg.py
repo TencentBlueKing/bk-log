@@ -46,8 +46,11 @@ def send(index_set_id):
         raise ClusteringClosedException()
     conf = FeatureToggleObject.toggle(BKDATA_CLUSTERING_TOGGLE).feature_config
 
-    if doc_count > conf.get("auto_approve_doc_count", 0):
-        # 千万级别的需要人工审批
+    # 若该配置小于0，则代表不需要审批
+    auto_approve_doc_count = conf.get("auto_approve_doc_count", -1)
+
+    if 0 <= auto_approve_doc_count < doc_count:
+        # auto_approve_doc_count 大于 0，且单日文档数量大于 auto_approve_doc_count，则需要进行审批
         msg = _("[待审批] 有新聚类创建，请关注！索引集id: {}, 索引集名称: {}, 业务id: {}, 业务名称: {}, 创建者: {}, 过去一天的数据量doc_count={}").format(
             index_set_id,
             log_index_set.index_set_name,

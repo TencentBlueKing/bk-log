@@ -76,6 +76,7 @@ class TransferEtlHandler(EtlHandler):
             if clustering_handler.data.bkdata_etl_processing_id:
                 DataAccessHandler().create_or_update_bkdata_etl(self.data.collector_config_id, fields, etl_params)
             etl_params["etl_flat"] = True
+            etl_params["separator_node_action"] = ""
             log_clustering_fields = CollectorScenario.log_clustering_fields(cluster_info["cluster_config"]["version"])
             fields = CollectorScenario.fields_insert_field_index(source_fields=fields, dst_fields=log_clustering_fields)
             update_clustering_clean.delay(index_set_id=clustering_handler.data.index_set_id)

@@ -198,7 +198,7 @@ class CreateNewIndexSetService(BaseService):
         src_index_set_indexes = src_index_set.indexes
         new_cls_index_set = IndexSetHandler.create(
             index_set_name="{}_clustering".format(src_index_set.index_set_name),
-            project_id=src_index_set.project_id,
+            space_uid=src_index_set.space_uid,
             storage_cluster_id=src_index_set.storage_cluster_id,
             scenario_id=src_index_set.scenario_id,
             view_roles=None,

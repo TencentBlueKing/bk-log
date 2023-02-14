@@ -92,7 +92,7 @@
         <div slot="empty">
           <div class="empty-text">
             <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-            <p v-if="!isHaveText && indexSetItem.scenario_id !== 'log'">
+            <p v-if="indexSetItem.scenario_id !== 'log' && !isHaveAnalyzed">
               {{$t('canNotFieldMessage1')}}
               <span class="empty-leave" @click="handleLeaveCurrent">{{$t('计算平台')}}</span>
               {{$t('canNotFieldMessage2')}}
@@ -210,7 +210,6 @@ export default {
       allFingerList: [], // 所有数据指纹List
       showScrollTop: false, // 是否展示返回顶部icon
       throttle: false, // 请求防抖
-      isHaveText: false, // 是否含有text字段
     };
   },
   computed: {
@@ -244,6 +243,9 @@ export default {
     },
     bkBizId() {
       return this.$store.state.bkBizId;
+    },
+    isHaveAnalyzed() {
+      return this.totalFields.some(item => item.is_analyzed);
     },
   },
   watch: {
@@ -281,12 +283,11 @@ export default {
            *  来源如果是数据平台并且日志聚类大开关有打开则进入text判断
            *  有text则提示去开启日志聚类 无则显示跳转计算平台
            */
-          this.isHaveText = newList.some(el => el.field_type === 'text');
           // 初始化分组下拉列表
           this.filterGroupList();
           this.initTable();
           // 判断是否有text字段 无则提示当前不支持采集项清洗
-          this.exhibitAll = this.isHaveText;
+          this.exhibitAll = newList.some(el => el.field_type === 'text');
         }
       },
     },
@@ -390,7 +391,7 @@ export default {
     },
     handleLeaveCurrent() {
       // 不显示字段提取时跳转计算平台
-      if (this.indexSetItem.scenario_id !== 'log' && !this.isHaveText) {
+      if (this.indexSetItem.scenario_id !== 'log' && !this.isHaveAnalyzed) {
         const jumpUrl = `${window.BKDATA_URL}`;
         window.open(jumpUrl, '_blank');
         return;
@@ -401,7 +402,7 @@ export default {
           name: 'clean-edit',
           params: { collectorId: this.configID },
           query: {
-            spaceUid: window.localStorage.getItem('space_uid'),
+            spaceUid: this.$store.state.spaceUid,
             backRoute: this.$route.name,
           },
         });
