@@ -428,6 +428,12 @@ export default {
     }
 
   }
+
+  .biz-menu {
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,.10);
+  }
+
   // 表格单元 v-bk-overflow-tips
   .bk-table .bk-table-body-wrapper .table-ceil-container {
     width: 100%;

@@ -32,7 +32,7 @@ from rest_framework import serializers
 
 from apps.exceptions import ValidationError
 from apps.log_search.constants import InstanceTypeEnum, TemplateType, FavoriteListOrderType, FavoriteVisibleType
-from apps.log_search.models import ProjectInfo, Scenario, UserIndexSetConfig
+from apps.log_search.models import ProjectInfo, Scenario
 from apps.utils.local import get_local_param
 from bkm_space.serializers import SpaceUIDField
 
@@ -198,7 +198,8 @@ class SearchIndexSetScopeSerializer(serializers.Serializer):
     space_uid = SpaceUIDField(label=_("空间唯一标识"), required=True)
 
 
-class SearchUserIndexSetConfigSerializer(serializers.Serializer):
+class CreateIndexSetFieldsConfigSerializer(serializers.Serializer):
+    name = serializers.CharField(label=_("字段名称"), required=True)
     display_fields = serializers.ListField(allow_empty=False)
     sort_list = serializers.ListField(label=_("排序规则"), allow_empty=True, child=serializers.ListField())
 
@@ -211,9 +212,25 @@ class SearchUserIndexSetConfigSerializer(serializers.Serializer):
                 raise ValidationError(_("排序规则只支持升序asc或降序desc"))
         return value
 
-    class Meta:
-        model = UserIndexSetConfig
-        fields = ["display_fields"]
+
+class UpdateIndexSetFieldsConfigSerializer(serializers.Serializer):
+    config_id = serializers.IntegerField(label=_("配置ID"), required=True)
+    name = serializers.CharField(label=_("字段名称"), required=True)
+    display_fields = serializers.ListField(allow_empty=False)
+    sort_list = serializers.ListField(label=_("排序规则"), allow_empty=True, child=serializers.ListField())
+
+    def validate_sort_list(self, value):
+        for _item in value:
+            if len(_item) != 2:
+                raise ValidationError(_("sort_list参数格式有误"))
+
+            if _item[1].lower() not in ["desc", "asc"]:
+                raise ValidationError(_("排序规则只支持升序asc或降序desc"))
+        return value
+
+
+class SearchUserIndexSetConfigSerializer(serializers.Serializer):
+    config_id = serializers.IntegerField(label=_("配置ID"), required=True)
 
 
 class SearchExportSerializer(serializers.Serializer):
@@ -283,7 +300,7 @@ class HostIpListSerializer(serializers.Serializer):
     """
 
     ip = serializers.CharField(label=_("主机IP"), max_length=15)
-    bk_cloud_id = serializers.IntegerField(label=_("云区域ID"), required=False, default=0)
+    bk_cloud_id = serializers.IntegerField(label=_("云区域ID"), required=False)
 
 
 class HostInstanceByIpListSerializer(serializers.Serializer):

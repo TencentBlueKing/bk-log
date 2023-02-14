@@ -339,14 +339,7 @@ export default {
       window.open(jumpUrl, '_blank');
     },
     setIsShowExtract(state) {
-      if (state) {
-        this.showCurrentList = this.currentList;
-      } else {
-        const spliceIndex = this.currentList.findIndex(item => item.id === 'extract');
-        const sliceCurrentList = JSON.parse(JSON.stringify(this.currentList));
-        sliceCurrentList.splice(spliceIndex, 1);
-        this.showCurrentList = sliceCurrentList;
-      }
+      this.showCurrentList = this.currentList.filter(item => (state ? true : item.id !== 'extract'));
     },
     resetPage() {
       this.isShowPage = false;
@@ -433,6 +426,7 @@ export default {
 
       .setting-right {
         margin-left: 20px;
+        max-width: 1000px;
 
         .more-details {
           height: 48px;

@@ -162,6 +162,7 @@ class CollectorConfig(CollectorBase):
     yaml_config = models.TextField(_("yaml配置内容"), default="")
     rule_id = models.IntegerField(_("bcs规则集id"), default=0)
     is_display = models.BooleanField(_("采集项是否对用户可见"), default=True)
+    log_group_id = models.BigIntegerField(_("自定义日志组ID"), null=True, blank=True)
 
     def get_name(self):
         return self.collector_config_name
@@ -262,6 +263,7 @@ class CollectorConfig(CollectorBase):
         verbose_name_plural = _("用户采集配置")
         ordering = ("-updated_at",)
         unique_together = [("collector_config_name", "bk_biz_id")]
+        index_together = [["custom_type", "log_group_id"]]
 
     def has_apply_itsm(self):
         if self.itsm_ticket_status:

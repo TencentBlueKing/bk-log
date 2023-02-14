@@ -66,7 +66,7 @@ export default {
       authPageInfo: null,
       activePanel: this.$route.query.type || 'basicInfo',
       panels: [
-        { name: 'basicInfo', label: this.$t('基本信息') },
+        { name: 'basicInfo', label: this.$t('配置信息') },
         { name: 'usageDetails', label: this.$t('使用详情') },
         { name: 'fieldInfo', label: this.$t('字段信息') },
       ],

@@ -150,7 +150,8 @@
                   v-for="(option, key) in item.children"
                   :key="key"
                   :id="option.id"
-                  :name="`${item.name}-${option.name}`"> {{ option.name }}
+                  :name="`${item.name}-${option.name}`">
+                  {{ option.name }}
                 </bk-option>
               </bk-option-group>
             </template>
@@ -557,7 +558,7 @@ export default {
             { value: '' },
           ],
           conditions: {
-            type: 'match', // 过滤方式类型
+            type: '', // 过滤方式类型 match separator
             match_type: 'include', // 过滤方式 可选字段 include, exclude
             match_content: '',
             separator: '|',
@@ -598,7 +599,7 @@ export default {
             params: {
               paths: [{ value: '' }], // 日志路径
               conditions: {
-                type: 'match', // 过滤方式类型
+                type: '', // 过滤方式类型 match separator
                 match_type: 'include',  // 过滤方式 可选字段 include, exclude
                 match_content: '',
                 separator: '|',
@@ -1218,14 +1219,20 @@ export default {
           delete params.multiline_timeout;
         }
         const { match_type, match_content, separator, separator_filters, type } = params.conditions;
-        let finallyType = type; // 如果是分隔符过滤，都没有填写或只填写一半的值，若过滤数组为空变成match不传过滤内容
+        let finallyType = !type ? 'match' : type ; // 如果是分隔符过滤，都没有填写或只填写一半的值，若过滤数组为空变成match不传过滤内容
         const separatorEffectiveArr = separator_filters.filter(item => item.fieldindex && item.word);
         !separatorEffectiveArr.length && (finallyType = 'match');
-        params.conditions = finallyType === 'match' ? { type, match_type, match_content } : {
-          type,
-          separator,
-          separator_filters: separatorEffectiveArr,
-        };
+        params.conditions = finallyType === 'match'
+          ? {
+            type: finallyType,
+            match_type,
+            match_content,
+          }
+          : {
+            type: finallyType,
+            separator,
+            separator_filters: separatorEffectiveArr,
+          };
         if (!separatorEffectiveArr.length && type === 'separator') {  // 当前是分隔符过滤但内容都没有填写则传默认的字符串类型
           Object.assign(params.conditions, {
             type: 'match',
@@ -1598,7 +1605,8 @@ export default {
       font-size: 12px;
       color: transparent;
       pointer-events: none;
-      text-decoration: red wavy underline;
+      /* stylelint-disable-next-line declaration-no-important */
+      text-decoration: red wavy underline !important;
     }
   }
 
@@ -1684,7 +1692,7 @@ export default {
   }
 
   .multiline-log-container {
-    margin-top: 20px;
+    margin-top: 4px;
 
     .row-container {
       display: flex;

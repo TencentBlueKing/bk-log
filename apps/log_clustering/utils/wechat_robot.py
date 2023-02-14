@@ -19,45 +19,24 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-import json
+import requests
+
+from apps.exceptions import ApiRequestError
+from apps.feature_toggle.handlers.toggle import FeatureToggleObject
+from apps.feature_toggle.plugins.constants import BKDATA_CLUSTERING_TOGGLE
+from apps.log_clustering.exceptions import ClusteringClosedException
 
 
-class Report(object):
-    def __init__(self, name, info: list = None, warning: list = None, error: list = None):
-        self.name = name
-        self.info = info if info else []
-        self.warning = warning if warning else []
-        self.error = error if error else []
-
-    def has_problem(self):
-        return self.error != []
-
-    def add_info(self, message: str):
-        self.info.append(message)
-
-    def add_warning(self, message: str):
-        self.warning.append(message)
-
-    def add_error(self, message: str):
-        self.error.append(message)
-
-    def add_report(self, report):
-        self.info.extend(report.info)
-        self.warning.extend(report.warning)
-        self.error.extend(report.error)
-
-    def __str__(self):
-        return json.dumps(
-            {"report_name": self.name, "info": self.info, "warning": self.warning, "error": self.error},
-            ensure_ascii=False,
-        )
-
-
-class BaseStory(object):
-    name = ""
-
+class WeChatRobot:
     def __init__(self):
-        self.report = Report(self.name)
+        if not FeatureToggleObject.switch(BKDATA_CLUSTERING_TOGGLE):
+            raise ClusteringClosedException()
+        self.url = FeatureToggleObject.toggle(BKDATA_CLUSTERING_TOGGLE).feature_config.get("wechat_web_hook_url")
 
-    def get_report(self):
-        return self.report
+    def send_msg(self, data):
+        try:
+            result = requests.post(self.url, json=data).json()
+            if result["errcode"] != 0:
+                raise ApiRequestError(f"Request wechat web hook failed: {result['errmsg']}")
+        except Exception as e:
+            raise ApiRequestError(f"Request wechat web hook failed: {e}")

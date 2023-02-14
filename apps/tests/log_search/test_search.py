@@ -84,6 +84,9 @@ class TestSearchHandler(TestCase):
         "apps.log_search.handlers.search.search_handlers_esquery.SearchHandler._init_time_field",
         lambda _, index_set_id, scenario_id: ("dtEventTimeStamp", "time", "s"),
     )
+    @patch(
+        "apps.log_search.handlers.search.mapping_handlers.MappingHandlers._get_time_field", lambda _: "dtEventTimeStamp"
+    )
     def setUp(self) -> None:
         self.search_handler = SearchHandler(index_set_id=INDEX_SET_ID, search_dict=SEARCH_DICT, pre_check_enable=False)
 

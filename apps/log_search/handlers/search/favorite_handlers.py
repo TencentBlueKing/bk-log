@@ -40,6 +40,7 @@ from apps.log_search.exceptions import (
     FavoriteNotExistException,
     FavoriteVisibleTypeNotAllowedModifyException,
     FavoriteAlreadyExistException,
+    FavoriteNotAllowedAccessException,
 )
 from apps.log_search.models import Favorite, FavoriteGroup, FavoriteGroupCustomOrder, LogIndexSet
 from apps.utils.lucene import LuceneParser, LuceneTransformer, LuceneSyntaxResolver, generate_query_string
@@ -55,6 +56,9 @@ class FavoriteHandler(object):
         if favorite_id:
             try:
                 self.data = Favorite.objects.get(pk=favorite_id)
+                user_groups: dict = FavoriteGroup.get_user_groups(self.data.space_uid, self.username)
+                if self.data.group_id not in user_groups:
+                    raise FavoriteNotAllowedAccessException()
             except Favorite.DoesNotExist:
                 raise FavoriteNotExistException()
 

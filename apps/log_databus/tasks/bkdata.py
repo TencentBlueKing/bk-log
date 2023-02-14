@@ -101,7 +101,7 @@ def create_bkdata_data_id(collector_config: CollectorConfig, platform_username: 
         }
     )
     collector_config.bkdata_data_id = collector_config.bk_data_id
-    collector_config.save()
+    collector_config.save(update_fields=["bkdata_data_id"])
 
 
 @periodic_task(run_every=crontab(minute="30", hour="3"))

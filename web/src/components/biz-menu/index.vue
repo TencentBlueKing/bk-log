@@ -26,7 +26,7 @@
     v-bk-clickoutside="handleClickOutSide"
   >
     <div :class="['menu-select']">
-      <span class="menu-title">{{ bizNameIcon }}</span>
+      <span class="menu-title" :style="`backgroundColor: ${spaceBgColor}`">{{ bizNameIcon }}</span>
       <span
         v-if="isExpand"
         tabindex="{0}"
@@ -35,7 +35,7 @@
       >
         {{ bizName }}
         <i
-          :class="`bk-select-angle bk-icon ${theme === 'light' ? 'icon-angle-down' : 'icon-angle-down'} select-icon`"
+          class="bk-select-angle bk-icon icon-angle-up-fill select-icon"
           :style="{ transform: `rotate(${!showBizList ? '0deg' : '-180deg'})` }"
         />
       </span>
@@ -114,6 +114,8 @@ import { Storage } from '@/common/util';
 import * as authorityMap from '../../common/authority-map';
 import { SPACE_TYPE_MAP } from '@/store/constant';
 
+const SPACE_COLOR_LIST = ['#7250A9', '#3563BE', '#3799BA', '#4FB17F', '#86AF4A', '#E9AE1D', '#EB9258', '#D36C68', '#BC4FB3'];
+
 export default {
   components: {
     menuList,
@@ -167,6 +169,7 @@ export default {
       BIZ_SELECTOR_COMMON_MAX: 5, // 常用的的最大长度
       spaceTypeIdList: [],
       searchTypeId: '',
+      spaceBgColor: '#3799BA',
     };
   },
   computed: {
@@ -189,6 +192,7 @@ export default {
     },
   },
   created() {
+    // this.spaceBgColor = this.$store.getters.spaceBgColor || this.getRandomColor();
     this.initGroupList();
     const spaceTypeMap = {};
     this.mySpaceList.forEach((item) => {
@@ -199,11 +203,16 @@ export default {
     });
     this.spaceTypeIdList = Object.keys(spaceTypeMap).map(key => ({
       id: key,
-      name: SPACE_TYPE_MAP[key].name,
-      styles: this.theme === 'dark' ? SPACE_TYPE_MAP[key].dark : SPACE_TYPE_MAP[key].light,
+      name: SPACE_TYPE_MAP[key]?.name || this.$t('未知'),
+      styles: (this.theme === 'dark' ? SPACE_TYPE_MAP[key]?.dark : SPACE_TYPE_MAP[key]?.light) || {},
     }));
   },
   methods: {
+    getRandomColor() {
+      const color =  SPACE_COLOR_LIST[Math.floor(Math.random() * SPACE_COLOR_LIST.length)];
+      this.$store.commit('setSpaceBgColor', color);
+      return color;
+    },
     initGroupList() {
       this.storage = new Storage();
       this.commonListIds = this.storage.get(this.BIZ_SELECTOR_COMMON_IDS) || [];
@@ -338,7 +347,7 @@ export default {
   @import '../../scss/mixins/ellipsis.scss';
 
   .biz-menu-select {
-    padding: 0 16px;
+    padding-left: 8px;
 
     .menu-select {
       padding: 0 4px 0 8px;
@@ -348,10 +357,10 @@ export default {
       position: relative;
       height: 32px;
       border-radius: 2px;
-      background-color: rgba(255, 255, 255, .05);
+      background-color: #2b354d;
 
       &-name {
-        padding: 0 26px 0 10px;
+        padding: 0 26px 0 8px;
         flex: 1;
         position: relative;
         color: #acb2c6;
@@ -365,21 +374,21 @@ export default {
         .select-icon {
           position: absolute;
           top: 8px;
-          right: 10px;
+          right: 8px;
           color: #c4c6cc;
           transition: transform .3s cubic-bezier(.4,0,.2,1),-webkit-transform .3s cubic-bezier(.4,0,.2,1);
         }
 
-        .icon-angle-down {
-          top: 5px;
-          font-size: 20px;
+        .icon-angle-up-fill {
+          top: 8px;
+          color: #96a2b9;
         }
       }
 
       &-list {
         display: flex;
         position: fixed;
-        left: 16px;
+        left: 0;
         top: 100px;
         flex-direction: column;
         z-index: 99;
@@ -394,7 +403,7 @@ export default {
           flex-direction: column;
           max-height: 240px;
           overflow: auto;
-          width: 350px;
+          width: 380px;
           padding: 6px 0;
 
           .group-title {
@@ -408,7 +417,7 @@ export default {
           %list-empty {
             height: 32px;
             flex: 0 0 32px;
-            padding: 0 16px;
+            padding: 0 9px 0 12px;
             color: #c3d0e7;
             font-size: 12px;
 
@@ -480,12 +489,12 @@ export default {
 
           &::-webkit-scrollbar {
             width: 4px;
-            background: #363f56;
+            background: #38455f;
           }
 
           &::-webkit-scrollbar-thumb {
             border-radius: 20px;
-            background: #363f56;
+            background: #ddd;
             box-shadow: inset 0 0 6px rgba(204, 204, 204, .3);
           }
         }
@@ -577,6 +586,7 @@ export default {
     padding: 0;
 
     .menu-select {
+      background: transparent;
       border: 0;
 
       .menu-select-name {

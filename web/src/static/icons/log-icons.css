@@ -368,3 +368,15 @@
 .icon-zhankai:before {
   content: '\e17c';
 }
+
+.icon-brush:before {
+  content: '\e17d';
+}
+
+.icon-wholesale-editor:before {
+  content: '\e17e';
+}
+
+.icon-ellipsis-more:before {
+  content: '\e17f';
+}

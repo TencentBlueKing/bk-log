@@ -127,6 +127,7 @@ class CollectorViewSet(ModelViewSet):
             "etl_time",
             "update_or_create_clean_config",
             "custom_update",
+            "report_token",
         ]:
             return [InstanceActionPermission([ActionEnum.MANAGE_COLLECTION], ResourceEnum.COLLECTION)]
         return [ViewBusinessPermission()]
@@ -2257,3 +2258,11 @@ class CollectorViewSet(ModelViewSet):
                 ).encode("utf-8")
             )
         )
+
+    @detail_route(methods=["GET"], url_path="report_token")
+    def report_token(self, request, collector_config_id=None):
+        return Response(CollectorHandler(collector_config_id).get_report_token())
+
+    @list_route(methods=["GET"], url_path="report_host")
+    def report_host(self, request):
+        return Response(CollectorHandler().get_report_host())

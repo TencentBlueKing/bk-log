@@ -65,6 +65,7 @@ class UserOperationTypeEnum(ChoicesEnum):
     COLLECTOR_PLUGIN = "collector_plugin"
     STORAGE = "storage"
     INDEX_SET = "index_set"
+    INDEX_SET_CONFIG = "index_set_config"
     SEARCH = "search"
     ETL = "etl"
     EXPORT = "export"
@@ -76,6 +77,7 @@ class UserOperationTypeEnum(ChoicesEnum):
         (COLLECTOR, _("采集项")),
         (STORAGE, _("存储集群")),
         (INDEX_SET, _("索引集")),
+        (INDEX_SET_CONFIG, _("索引集配置")),
         (SEARCH, _("检索配置")),
         (ETL, _("清洗配置")),
         (EXPORT, _("导出")),

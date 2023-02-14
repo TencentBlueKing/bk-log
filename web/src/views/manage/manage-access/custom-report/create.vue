@@ -23,8 +23,10 @@
 <template>
   <div
     data-test-id="custom_div_addNewCustomBox"
+    ref="addNewCustomBoxRef"
     v-bkloading="{ isLoading: containerLoading }"
-    :class="`custom-create-container ${isOpenWindow ? 'is-active-details' : ''}`">
+    :style="`padding-right: ${introWidth + 20}px;`"
+    class="custom-create-container">
     <bk-form
       :label-width="103"
       :model="formData"
@@ -288,10 +290,19 @@
       </div>
     </bk-form>
 
-    <intro-panel
-      :data="formData"
-      :is-open-window="isOpenWindow"
-      @handleActiveDetails="handleActiveDetails" />
+    <div
+      :class="['intro-container',isDraging && 'draging-move']"
+      :style="`width: ${ introWidth }px`">
+      <div :class="`drag-item ${!introWidth && 'hidden-drag'}`" :style="`right: ${introWidth - 18}px`">
+        <span
+          class="bk-icon icon-more"
+          @mousedown.left="dragBegin"></span>
+      </div>
+      <intro-panel
+        :data="formData"
+        :is-open-window="isOpenWindow"
+        @handleActiveDetails="handleActiveDetails" />
+    </div>
 
     <div class="submit-btn">
       <bk-button
@@ -314,6 +325,7 @@
 <script>
 import { mapGetters } from 'vuex';
 import storageMixin from '@/mixins/storage-mixin';
+import dragMixin from '@/mixins/drag-mixin';
 import IntroPanel from './components/intro-panel';
 import clusterTable from '@/components/collection-access/components/cluster-table';
 
@@ -323,7 +335,7 @@ export default {
     IntroPanel,
     clusterTable,
   },
-  mixins: [storageMixin],
+  mixins: [storageMixin, dragMixin],
   data() {
     return {
       isItsm: window.FEATURE_TOGGLE.collect_itsm === 'on',
@@ -477,6 +489,9 @@ export default {
       .finally(() => {
         this.containerLoading = false;
       });
+    this.$nextTick(() => {
+      this.maxIntroWidth = this.$refs.addNewCustomBoxRef.clientWidth - 380;
+    });
   },
   methods: {
     handleChangeType(id) {
@@ -581,6 +596,7 @@ export default {
     },
     handleActiveDetails(state) {
       this.isOpenWindow = state;
+      this.introWidth = state ? 360 : 0;
     },
     checkEnNameValidator(val) {
       this.isTextValid = new RegExp(/^[A-Za-z0-9_]+$/).test(val);
@@ -626,11 +642,6 @@ export default {
 
   .custom-create-container {
     padding: 0 24px;
-    transition: padding .5s;
-
-    &.is-active-details {
-      padding: 0 420px 0 24px;
-    }
 
     .en-bk-form {
       width: 680px;
@@ -649,7 +660,8 @@ export default {
         font-size: 12px;
         color: transparent;
         pointer-events: none;
-        text-decoration: red wavy underline;
+        /* stylelint-disable-next-line declaration-no-important */
+        text-decoration: red wavy underline !important;
       }
     }
 
@@ -683,6 +695,44 @@ export default {
       margin: 20px 20px 100px ;
 
       @include clearfix;
+    }
+
+    .intro-container {
+      position: fixed;
+      top: 99px;
+      right: 0;
+      z-index: 999;
+      height: calc(100vh - 99px);
+      overflow: hidden;
+      border-left: 1px solid transparent;
+
+      .drag-item {
+        width: 20px;
+        height: 40px;
+        display: inline-block;
+        color: #c4c6cc;
+        position: absolute;
+        z-index: 100;
+        right: 304px;
+        top: 48%;
+        user-select: none;
+        cursor: col-resize;
+
+        &.hidden-drag {
+          display: none;
+        }
+
+        .icon-more::after {
+          content: '\e189';
+          position: absolute;
+          left: 0;
+          top: 12px;
+        }
+      }
+
+      &.draging-move {
+        border-left-color: #3a84ff;
+      }
     }
   }
 </style>

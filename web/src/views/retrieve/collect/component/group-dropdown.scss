@@ -35,30 +35,8 @@
     position: absolute;
   }
 
-  .group-dropdown-list {
-    min-width: 170px;
-    max-height: 300px;
-    overflow-y: auto;
-    padding-bottom: 0 !important;
-
-    @extend .dropdown-list;
-
-    .add-new-group {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 40px;
-      background: #fafcfe;
-
-      .icon-close-circle {
-        display: inline-block;
-        transform: rotate(45deg);
-        margin-right: 4px;
-      }
-    }
-  }
-
-  .dropdown-list {
+  .dropdown-list,
+  %dropdown-list {
     padding: 4px 0;
     background: #fff;
     border: 1px solid #dcdee5;
@@ -78,24 +56,73 @@
     }
   }
 
+  .group-dropdown-list {
+    min-width: 170px;
+    max-height: 300px;
+    overflow-y: auto;
+
+    /* stylelint-disable-next-line declaration-no-important */
+    padding-bottom: 0 !important;
+
+    /* stylelint-disable-next-line scss/at-extend-no-missing-placeholder */
+    @extend %dropdown-list;
+
+    .new-group {
+      padding: 2px;
+      color: #fff;
+      background: #FFBD50;
+      border-radius: 2px;
+      margin-left: 4px;
+    }
+
+    .add-new-group {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 40px;
+      background: #fafcfe;
+
+      .icon-close-circle {
+        display: inline-block;
+        transform: rotate(45deg);
+        margin-right: 4px;
+      }
+    }
+  }
+
   .eye-catching {
     // margin: 0 6px;
     border-top: 1px solid #dcdee5;
-    color: #F56350 !important;
+
+    /* stylelint-disable-next-line declaration-no-important */
+    color: #f56350 !important;
     // padding: 6px 6px !important;
   }
 
-  .add-new-group-input {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-
+  .add-new-page-container {
+    .add-new-page-input {
+      display: flex;
+      align-items: center;
+      flex-wrap: nowrap;
+      justify-content: space-between;
+    }
+  
     .operate-button {
-      margin-top: 4px;
-      font-size: 14px;
-
-      > span {
-        margin-left: 6px;
+      font-size: 16px;
+      margin-left: 6px;
+      color: #979ba5;
+  
+      span {
+        cursor: pointer;
+      }
+  
+      > :first-child {
+        color: #33D05C;
+        margin-right: 12px;
+      }
+  
+      > :last-child {
+        color: #979ba5;
       }
     }
   }

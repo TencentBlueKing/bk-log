@@ -20,13 +20,14 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import re
+from typing import Optional
 from collections import defaultdict
 from django.conf import settings
 from django.db import transaction
-from django.utils import timezone
 from django.utils.translation import ugettext as _
 
 from apps.api import TransferApi
+from apps.models import model_to_dict
 from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
 from apps.iam import ResourceEnum, Permission
 from apps.log_trace.handlers.proto.proto import Proto
@@ -45,19 +46,36 @@ from apps.log_search.exceptions import (
     SearchUnKnowTimeField,
     UnauthorizedResultTableException,
     IndexSetSourceException,
-    BaseSearchParamNotExistException,
+    IndexSetFieldsConfigNotExistException,
+    IndexSetFieldsConfigAlreadyExistException,
 )
-from apps.log_search.models import LogIndexSet, LogIndexSetData, Scenario, UserIndexSetConfig, Space
+from apps.log_search.models import (
+    LogIndexSet,
+    LogIndexSetData,
+    Scenario,
+    Space,
+    IndexSetFieldsConfig,
+    UserIndexSetFieldsConfig,
+)
+
 from apps.utils import APIModel
 from apps.utils.local import get_request_username, get_request_app_code
-from apps.log_search.constants import GlobalCategoriesEnum, EsHealthStatus, COMMON_LOG_INDEX_RE, BKDATA_INDEX_RE
+from apps.log_search.constants import (
+    GlobalCategoriesEnum,
+    EsHealthStatus,
+    COMMON_LOG_INDEX_RE,
+    BKDATA_INDEX_RE,
+    DEFAULT_INDEX_SET_FIELDS_CONFIG_NAME,
+)
 from apps.log_databus.handlers.storage import StorageHandler
+from apps.log_databus.models import CollectorConfig
 from apps.log_databus.constants import STORAGE_CLUSTER_TYPE
 from apps.api import BkLogApi
 from apps.log_search.handlers.search.mapping_handlers import MappingHandlers
 from apps.log_search.constants import TimeFieldTypeEnum, TimeFieldUnitEnum, DEFAULT_TIME_FIELD
 from apps.decorators import user_operation_record
 from apps.utils.thread import MultiExecuteFunc
+from apps.utils.db import array_hash
 from bkm_space.utils import space_uid_to_bk_biz_id
 
 
@@ -70,64 +88,48 @@ class IndexSetHandler(APIModel):
     def get_index_set_for_storage(storage_cluster_id):
         return LogIndexSet.objects.filter(storage_cluster_id=storage_cluster_id)
 
-    @staticmethod
-    def add_field_config_record(index_set_id, display_fields, sort_list, scope="default"):
-        """
-        添加index字段配置
-        :param index_set_id:
-        :param display_fields:
-        :param sort_list:
-        :param scope
-        :return:
-        """
-        if not index_set_id or not display_fields:
-            raise BaseSearchParamNotExistException()
-        user_name = get_request_username()
-        condition = {"index_set_id": index_set_id, "created_by": user_name, "scope": scope}
-        current_time = timezone.now()
-        kwargs = {
-            "display_fields": display_fields,
-            "updated_at": current_time,
-            "updated_by": user_name,
-            "sort_list": sort_list,
-        }
-        if UserIndexSetConfig.objects.filter(**condition).exists():
-            UserIndexSetConfig.objects.filter(**condition).update(**kwargs)
-            is_add = False
-        else:
-            UserIndexSetConfig.objects.create(
-                index_set_id=index_set_id, display_fields=display_fields, scope=scope, sort_list=sort_list
-            )
-            is_add = True
-
+    def config(self, config_id: int):
+        """修改用户当前索引集的配置"""
+        username = get_request_username()
+        UserIndexSetFieldsConfig.objects.update_or_create(
+            index_set_id=self.index_set_id, username=username, defaults={"config_id": config_id}
+        )
         # add user_operation_record
         try:
-            log_index_set_obj = LogIndexSet.objects.get(index_set_id=index_set_id)
+            log_index_set_obj = LogIndexSet.objects.get(index_set_id=self.index_set_id)
             operation_record = {
-                "username": get_request_username(),
+                "username": username,
                 "biz_id": 0,
                 "space_uid": log_index_set_obj.space_uid,
                 "record_type": UserOperationTypeEnum.SEARCH,
                 "record_sub_type": log_index_set_obj.scenario_id,
-                "record_object_id": index_set_id,
-                "action": UserOperationActionEnum.CREATE if is_add else UserOperationActionEnum.UPDATE,
+                "record_object_id": self.index_set_id,
+                "action": UserOperationActionEnum.CONFIG,
                 "params": {
-                    "index_set_id": index_set_id,
-                    "display_fields": display_fields,
-                    "sort_list": sort_list,
-                    "scope": scope,
+                    "index_set_id": self.index_set_id,
                 },
             }
         except LogIndexSet.DoesNotExist:
-            logger.exception(f"LogIndexSet --> {index_set_id} 不存在")
+            logger.exception(f"LogIndexSet --> {self.index_set_id} does not exist")
         else:
             user_operation_record.delay(operation_record)
-
-        return list()
 
     @classmethod
     def get_user_index_set(cls, space_uid, scenarios=None):
         index_sets = LogIndexSet.get_index_set(scenarios=scenarios, space_uid=space_uid)
+        # 补充采集场景
+        collector_config_ids = [
+            index_set["collector_config_id"] for index_set in index_sets if index_set["collector_config_id"]
+        ]
+        collector_scenario_map = array_hash(
+            data=CollectorConfig.objects.filter(collector_config_id__in=collector_config_ids).values(
+                "collector_config_id", "collector_scenario_id"
+            ),
+            key="collector_config_id",
+            value="collector_scenario_id",
+        )
+        for index_set in index_sets:
+            index_set["collector_scenario_id"] = collector_scenario_map.get(index_set["collector_config_id"])
         return index_sets
 
     @classmethod
@@ -935,7 +937,9 @@ class BaseIndexSetHandler(object):
         ]
         for index in to_append_indexes:
             IndexSetHandler(index_set_id=self.index_set_obj.index_set_id).add_index(
-                index["bk_biz_id"], index.get("time_field"), index["result_table_id"],
+                index["bk_biz_id"],
+                index.get("time_field"),
+                index["result_table_id"],
             )
 
         # 更新字段快照
@@ -1027,7 +1031,8 @@ class BkDataIndexSetHandler(BaseIndexSetHandler):
         if unauthorized_result_tables:
             # 如果存在没有权限的RT，要把状态设置为审批中
             LogIndexSetData.objects.filter(
-                index_set_id=index_set.index_set_id, result_table_id__in=unauthorized_result_tables,
+                index_set_id=index_set.index_set_id,
+                result_table_id__in=unauthorized_result_tables,
             ).update(apply_status=LogIndexSetData.Status.PENDING)
 
     def post_create(self, index_set):
@@ -1090,3 +1095,75 @@ class LogIndexSetDataHandler(object):
             result_table_id=self.result_table_id,
             bk_biz_id=self.bk_biz_id,
         ).delete()
+
+
+class IndexSetFieldsConfigHandler(object):
+    """索引集配置字段(展示字段以及排序字段)"""
+
+    data: Optional[IndexSetFieldsConfig] = None
+
+    def __init__(self, config_id: int = None, index_set_id: int = None):
+        self.config_id = config_id
+        self.index_set_id = index_set_id
+        if config_id:
+            try:
+                self.data = IndexSetFieldsConfig.objects.get(pk=config_id)
+            except IndexSetFieldsConfig.DoesNotExist:
+                raise IndexSetFieldsConfigNotExistException()
+
+    def list(self) -> list:
+        config_list = [
+            model_to_dict(i) for i in IndexSetFieldsConfig.objects.filter(index_set_id=self.index_set_id).all()
+        ]
+        config_list.sort(key=lambda c: c["name"] == DEFAULT_INDEX_SET_FIELDS_CONFIG_NAME, reverse=True)
+        return config_list
+
+    def create_or_update(self, name: str, display_fields: list, sort_list: list):
+        username = get_request_username()
+        # 校验配置需要修改名称时, 名称是否可用
+        if self.data and self.data.name != name or not self.data:
+            if IndexSetFieldsConfig.objects.filter(name=name, index_set_id=self.index_set_id).exists():
+                raise IndexSetFieldsConfigAlreadyExistException()
+
+        if self.data:
+            # 更新配置, 只允许更新name, display_fields, sort_list
+            if self.data.name != DEFAULT_INDEX_SET_FIELDS_CONFIG_NAME:
+                self.data.name = name
+            self.data.display_fields = display_fields
+            self.data.sort_list = sort_list
+            self.data.save()
+        else:
+            # 创建配置
+            self.data = IndexSetFieldsConfig.objects.create(
+                name=name,
+                index_set_id=self.index_set_id,
+                display_fields=display_fields,
+                sort_list=sort_list,
+            )
+
+        # add user_operation_record
+        try:
+            log_index_set_obj = LogIndexSet.objects.get(index_set_id=self.index_set_id)
+            operation_record = {
+                "username": username,
+                "biz_id": 0,
+                "space_uid": log_index_set_obj.space_uid,
+                "record_type": UserOperationTypeEnum.INDEX_SET_CONFIG,
+                "record_sub_type": log_index_set_obj.scenario_id,
+                "record_object_id": self.index_set_id,
+                "action": UserOperationActionEnum.UPDATE if self.data else UserOperationActionEnum.CREATE,
+                "params": {
+                    "index_set_id": self.index_set_id,
+                    "display_fields": display_fields,
+                    "sort_list": sort_list,
+                },
+            }
+        except LogIndexSet.DoesNotExist:
+            logger.exception(f"LogIndexSet --> {self.index_set_id} does not exist")
+        else:
+            user_operation_record.delay(operation_record)
+
+        return model_to_dict(self.data)
+
+    def delete(self):
+        IndexSetFieldsConfig.delete_config(self.config_id)

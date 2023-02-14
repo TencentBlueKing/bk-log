@@ -37,7 +37,7 @@ export default {
     activeFavorite: {
       type: Object,
       required: true,
-    }
+    },
   },
   data() {
     return {

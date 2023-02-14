@@ -11,12 +11,13 @@
     z-index: 99;
     user-select: none;
     cursor: col-resize;
+
     &::after {
       content: ' ';
       position: absolute;
       right: 0px;
       display: inline-block;
-      background-color: #DBDCE0;
+      background-color: #dbdce0;
       width: 1px;
       height: 100%;
     }
@@ -24,6 +25,7 @@
     &.drag-ing,
     &:hover {
       &::after {
+        width: 2px;
         background-color: #3a84ff;
       }
     }

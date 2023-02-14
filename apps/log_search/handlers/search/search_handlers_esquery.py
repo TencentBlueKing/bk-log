@@ -38,8 +38,8 @@ from apps.log_search.models import (
     LogIndexSet,
     LogIndexSetData,
     Scenario,
-    UserIndexSetConfig,
     UserIndexSetSearchHistory,
+    UserIndexSetFieldsConfig,
 )
 from apps.log_search.constants import (
     TimeEnum,
@@ -83,7 +83,6 @@ from apps.log_search.handlers.es.indices_optimizer_context_tail import IndicesOp
 from apps.utils.local import get_local_param
 from apps.log_search.handlers.biz import BizHandler
 from apps.log_search.handlers.search.mapping_handlers import MappingHandlers
-from apps.log_search.handlers.search.search_sort_builder import SearchSortBuilder
 from apps.log_search.handlers.search.pre_search_handlers import PreSearchHandlers
 from apps.utils.log import logger
 from apps.utils.lucene import generate_query_string
@@ -229,8 +228,6 @@ class SearchHandler(object):
         self.request_username = get_request_username()
 
     def fields(self, scope="default"):
-        # field_result, display_fields = self._get_all_fields_by_index_id(scope)
-        # sort_list: list = self._get_sort_list_by_index_id(scope)
         mapping_handlers = MappingHandlers(
             self.indices,
             self.index_set_id,
@@ -241,7 +238,7 @@ class SearchHandler(object):
             end_time=self.end_time,
         )
         field_result, display_fields = mapping_handlers.get_all_fields_by_index_id(scope)
-        sort_list: list = MappingHandlers.get_sort_list_by_index_id(self.index_set_id, scope)
+        sort_list: list = MappingHandlers.get_sort_list_by_index_id(self.index_set_id)
 
         # 校验sort_list字段是否存在
         field_result_list = [i["field_name"] for i in field_result]
@@ -271,6 +268,10 @@ class SearchHandler(object):
             self.clean_config(),
         ]:
             result_dict["config"].append(fields_config)
+        # 将用户当前使用的配置id传递给前端
+        result_dict["config_id"] = UserIndexSetFieldsConfig.get_config(
+            index_set_id=self.index_set_id, username=self.request_username
+        ).id
 
         return result_dict
 
@@ -676,16 +677,6 @@ class SearchHandler(object):
             result_size += scroll_size
             yield self._deal_query_result(scroll_result)
 
-    def _get_sort_list_by_index_id(self, scope="default"):
-        index_config_obj = UserIndexSetConfig.objects.filter(
-            index_set_id=self.index_set_id, created_by=self.request_username, scope=scope, is_deleted=False
-        )
-        if not index_config_obj.exists():
-            return list()
-
-        sort_list = index_config_obj.first().sort_list
-        return sort_list if isinstance(sort_list, list) else list()
-
     @staticmethod
     def get_bcs_manage_url(cluster_id, container_id):
         """
@@ -1024,8 +1015,28 @@ class SearchHandler(object):
             return time_field, TimeFieldTypeEnum.DATE.value, TimeFieldUnitEnum.SECOND.value
 
     def _init_sort(self) -> list:
-        sort_list = SearchSortBuilder.sort_list(**self.search_dict)
-        return sort_list
+        index_set_id = self.search_dict.get("index_set_id")
+        # 获取用户对sort的排序需求
+        sort_list: List = self.search_dict.get("sort_list", [])
+        if sort_list:
+            return sort_list
+        # 用户已设置排序规则
+        username = get_request_username()
+        scope = self.search_dict.get("search_type", "default")
+        config_obj = UserIndexSetFieldsConfig.get_config(index_set_id=index_set_id, username=username)
+        if config_obj:
+            sort_list = config_obj.sort_list
+            if sort_list:
+                return sort_list
+        # 安全措施, 用户未设置排序规则，且未创建默认配置时, 使用默认排序规则
+        from apps.log_search.handlers.search.mapping_handlers import MappingHandlers
+
+        return MappingHandlers.get_default_sort_list(
+            index_set_id=index_set_id,
+            scenario_id=self.scenario_id,
+            scope=scope,
+            default_sort_tag=self.search_dict.get("default_sort_tag", False),
+        )
 
     # 过滤filter
     def _init_filter(self):
@@ -1053,7 +1064,7 @@ class SearchHandler(object):
             if operator in REAL_OPERATORS_MAP.keys():
                 operator = REAL_OPERATORS_MAP[operator]
 
-            if operator in ["exists", "does not exists"]:
+            if operator in [OperatorEnum.EXISTS["operator"], OperatorEnum.NOT_EXISTS["operator"]]:
                 new_filter_list.append(
                     {"field": field, "value": "0", "operator": operator, "condition": condition, "type": _type}
                 )
@@ -1148,27 +1159,16 @@ class SearchHandler(object):
         else:
             require_field_match = False
 
-        if self.scenario_id == Scenario.BKDATA:
-            highlight = {
-                "pre_tags": ["<mark>"],
-                "post_tags": ["</mark>"],
-                "fields": {
-                    "log": {
-                        # "type": "fvh"
-                        "number_of_fragments": 0
-                    }
-                },
-                "require_field_match": require_field_match,
-            }
-            if self.query_string == "":
-                highlight = {}
-            return highlight
         highlight = {
             "pre_tags": ["<mark>"],
             "post_tags": ["</mark>"],
             "fields": {"*": {"number_of_fragments": 0}},
             "require_field_match": require_field_match,
         }
+
+        if self.query_string == "":
+            highlight = {}
+
         return highlight
 
     def _add_cmdb_fields(self, log):
@@ -1526,14 +1526,10 @@ class SearchHandler(object):
             return ERROR_MSG_CHECK_FIELDS_FROM_LOG
 
     def _get_user_sorted_list(self, sorted_fields):
-        user_sort_list = (
-            UserIndexSetConfig.objects.filter(index_set_id=self.index_set_id, created_by=self.request_username)
-            .values("sort_list")
-            .first()
-        )
-        if not user_sort_list:
+        config = UserIndexSetFieldsConfig.get_config(index_set_id=self.index_set_id, username=self.request_username)
+        if not config:
             return [[sorted_field, ASYNC_SORTED] for sorted_field in sorted_fields]
-        user_sort_list = user_sort_list["sort_list"]
+        user_sort_list = config.sort_list
         user_sort_fields = [i[0] for i in user_sort_list]
         for sorted_field in sorted_fields:
             if sorted_field in user_sort_fields:

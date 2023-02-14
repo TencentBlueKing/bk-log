@@ -368,6 +368,11 @@ class FavoriteVisibleTypeNotAllowedModifyException(BaseException):
     MESSAGE = _("收藏可见类型不允许修改")
 
 
+class FavoriteNotAllowedAccessException(BaseException):
+    ERROR_CODE = "427"
+    MESSAGE = _("无权限访问该收藏配置")
+
+
 class FavoriteGroupNotExistException(BaseException):
     ERROR_CODE = "430"
     MESSAGE = _("收藏组不存在")
@@ -386,6 +391,21 @@ class FavoriteGroupNotAllowedModifyException(BaseException):
 class FavoriteGroupNotAllowedDeleteException(BaseException):
     ERROR_CODE = "433"
     MESSAGE = _("只有公开收藏组可以删除")
+
+
+class IndexSetFieldsConfigNotExistException(BaseException):
+    ERROR_CODE = "434"
+    MESSAGE = _("索引集字段配置不存在")
+
+
+class DefaultConfigNotAllowedDelete(BaseException):
+    ERROR_CODE = "435"
+    MESSAGE = _("默认索引集字段配置不允许删除")
+
+
+class IndexSetFieldsConfigAlreadyExistException(BaseException):
+    ERROR_CODE = "436"
+    MESSAGE = _("索引集字段配置名称已存在")
 
 
 # =================================================

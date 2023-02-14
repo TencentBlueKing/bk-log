@@ -23,34 +23,32 @@ import json
 import logging
 
 from django.conf import settings
-from kafka import KafkaConsumer
-from kafka.structs import TopicPartition
+from kafka import KafkaConsumer, TopicPartition
 
-from home_application.constants import (
+from apps.log_databus.constants import (
     KAFKA_TEST_GROUP,
+    DEFAULT_KAFKA_SECURITY_PROTOCOL,
+    KAFKA_SSL_MECHANISM,
     KAFKA_SSL_USERNAME,
     KAFKA_SSL_PASSWORD,
-    KAFKA_SSL_MECHANISM,
     KAFKA_SSL_PROTOCOL,
-    DEFAULT_KAFKA_SECURITY_PROTOCOL,
-    CHECK_STORY_3,
 )
-from home_application.handlers.collector_checker.base import BaseStory
+from apps.log_databus.handlers.check_collector.checker.base_checker import Checker
 
 logger = logging.getLogger()
 
 
-class CheckKafkaStory(BaseStory):
-    name = CHECK_STORY_3
+class KafkaChecker(Checker):
+    CHECKER_NAME = "kafka checker"
 
-    def __init__(self, kafka_info_list: list):
-        super().__init__()
+    def __init__(self, kafka_info_list: list, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.kafka_info_list = kafka_info_list
         self.latest_log = []
 
-    def check(self):
+    def _run(self):
         if not self.kafka_info_list:
-            self.report.add_info("没有kafka, 跳过检查")
+            self.append_normal_info("没有kafka, 跳过检查")
             return
         for kafka_info in self.kafka_info_list:
             self.get_kafka_test_group_latest_log(kafka_info)
@@ -82,7 +80,7 @@ class CheckKafkaStory(BaseStory):
             # 获取topic分区信息
             topic_partitions = consumer.partitions_for_topic(topic)
             if not topic_partitions:
-                self.report.add_error(f"获取topic[{topic}] partition信息失败")
+                self.append_error_info(f"获取topic[{topic}] partition信息失败")
                 return
 
             for _partition in topic_partitions:
@@ -116,9 +114,9 @@ class CheckKafkaStory(BaseStory):
         except Exception as e:  # pylint: disable=broad-except
             message = f"创建kafka消费者失败, err: {str(e)}"
             logger.error(message)
-            self.report.add_error(message)
+            self.append_error_info(message)
 
         if not log_content:
-            self.report.add_error(f"{host}:{port}, topic: {topic}, 无数据")
+            self.append_error_info(f"{host}:{port}, topic: {topic}, 无数据")
         else:
-            self.report.add_info(f"{host}:{port}, topic: {topic}, 有数据")
+            self.append_normal_info(f"{host}:{port}, topic: {topic}, 有数据")

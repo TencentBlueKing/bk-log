@@ -26,7 +26,6 @@ from apps.utils.drf import detail_route
 from apps.generic import APIViewSet
 from apps.iam import ActionEnum, ResourceEnum
 from apps.iam.handlers.drf import InstanceActionPermission, ViewBusinessPermission, insert_permission_field
-from apps.log_search.handlers.index_set import IndexSetHandler
 from apps.log_trace.constants import FIELDS_SCOPE_VALUE
 from apps.exceptions import ValidationError
 from apps.log_trace.serializers import (
@@ -34,10 +33,8 @@ from apps.log_trace.serializers import (
     TraceSearchAttrSerializer,
     TraceSearchTraceIdAttrSerializer,
 )
-from apps.log_search.serializers import SearchUserIndexSetConfigSerializer
 from apps.log_trace.handlers.trace_handlers import TraceHandler
 from apps.log_trace.handlers.trace_config_handlers import TraceConfigHandlers
-from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler as SearchHandlerEsquery
 
 
 class TraceViewSet(APIViewSet):
@@ -52,7 +49,9 @@ class TraceViewSet(APIViewSet):
         return [InstanceActionPermission([ActionEnum.SEARCH_LOG], ResourceEnum.INDICES)]
 
     @insert_permission_field(
-        actions=[ActionEnum.SEARCH_LOG], resource_meta=ResourceEnum.INDICES, id_field=lambda d: d["index_set_id"],
+        actions=[ActionEnum.SEARCH_LOG],
+        resource_meta=ResourceEnum.INDICES,
+        id_field=lambda d: d["index_set_id"],
     )
     def list(self, request, *args, **kwargs):
         """
@@ -536,35 +535,3 @@ class TraceViewSet(APIViewSet):
         if scope not in FIELDS_SCOPE_VALUE:
             raise ValidationError(_("scope取值范围：trace、trace_detail、trace_detail_log"))
         return Response(TraceHandler(index_set_id).fields(scope=scope))
-
-    @detail_route(methods=["POST"], url_path="config")
-    def config(self, request, *args, **kwargs):
-        """
-        @api {post} /trace/index_set/$index_set_id/config/?scope=list 08_Trace-显示字段及排序规则配置
-        @apiDescription 创建或更新用户在某个trace索引集的配置
-        @apiName trace_index_set_user_config
-        @apiGroup 17_Trace
-        @apiParamExample {Json} 请求参数
-        {
-            "display_fields": ["aaa", "bbb"]
-            "sort_list": [
-                ["aaa", "desc"],
-                ["bbb", "asc"]
-            ]
-        }
-        @apiSuccessExample {json} 成功返回:
-        {
-            "message": "",
-            "code": 0,
-            "data": null,
-            "result": true
-        }
-        """
-        index_set_id = kwargs.get("index_set_id", "")
-        scope = request.GET.get("scope")
-        if scope not in FIELDS_SCOPE_VALUE:
-            raise ValidationError(_("scope取值范围：trace、trace_detail、trace_detail_log"))
-        data = self.params_valid(SearchUserIndexSetConfigSerializer)
-        SearchHandlerEsquery(index_set_id, {}).verify_sort_list_item(data["sort_list"])
-        result = IndexSetHandler.add_field_config_record(index_set_id, data["display_fields"], data["sort_list"], scope)
-        return Response(result)

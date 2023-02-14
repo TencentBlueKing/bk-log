@@ -20,11 +20,11 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
  */
 
-import { Component as tsc } from "vue-tsx-support";
-import { Component, Ref, Emit, Prop, Watch } from "vue-property-decorator";
-import { Input } from "bk-magic-vue";
-import { IFavoriteItem } from "../collect-index";
-import "./manage-input.scss";
+import { Component as tsc } from 'vue-tsx-support';
+import { Component, Ref, Emit, Prop, Watch } from 'vue-property-decorator';
+import { Input } from 'bk-magic-vue';
+import { IFavoriteItem } from '../collect-index';
+import './manage-input.scss';
 
 interface IProps {
   favoriteData?: IFavoriteItem;
@@ -34,14 +34,14 @@ export default class ManageInput extends tsc<IProps> {
   @Prop({ type: Object, default: () => ({}) }) favoriteData: IFavoriteItem;
   @Ref() inputRef: any;
 
-  inputStr = "";
+  inputStr = '';
 
-  @Watch("favoriteData.name", { immediate: true })
+  @Watch('favoriteData.name', { immediate: true })
   handleWatchFavoriteName(str) {
     this.inputStr = str;
   }
 
-  @Emit("change")
+  @Emit('change')
   handleChangeFavoriteName() {
     return this.inputStr;
   }
@@ -64,12 +64,13 @@ export default class ManageInput extends tsc<IProps> {
             vModel={this.inputStr}
             ref="inputRef"
             onBlur={this.blurInput}
+            maxlength={30}
           ></Input>
         ) : (
           <div class="collect-name">
             {this.inputStr}
             {!this.favoriteData.is_active ? (
-              <span v-bk-tooltips={{content: this.$t('数据源不存在'), placement: 'right'}}>
+              <span v-bk-tooltips={{ content: this.$t('数据源不存在'), placement: 'right' }}>
                 <span class="bk-icon log-icon icon-shixiao"></span>
               </span>
             ) : undefined}
