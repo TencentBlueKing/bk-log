@@ -59,6 +59,9 @@ export default {
       searchFieldsList: [], // 表单展示字段
       cacheFieldsList: [], // 修改字段之前的缓存字段
       loading: false,
+      isUpdateFavorite: false,
+      favoriteKeyword: '',
+      isSearchInit: false,
     };
   },
   watch: {
@@ -66,17 +69,19 @@ export default {
       immediate: true,
       deep: true,
       handler(value) {
-        const keyword = this.isFavoriteSearch ? value?.params?.keyword : this.keyword;
+        this.isUpdateFavorite = true;
+        this.favoriteKeyword = value?.params?.keyword || '*';
+        const keyword = this.isSearchInit ? this.favoriteKeyword : this.keyword;
         this.getSearchFieldsList(keyword, value?.params?.search_fields);
       },
     },
     isClearCondition() {
       this.searchFieldsList.forEach(item => item.value = '');
+      this.handleChangeValue();
     },
   },
   methods: {
     async getSearchFieldsList(keyword, fieldsList = []) {
-      keyword === '' && (keyword = '*');
       this.loading = true;
       try {
         const res = await this.$http.request('favorite/getSearchFields', {
@@ -92,6 +97,7 @@ export default {
         this.cacheFieldsList = deepClone(this.searchFieldsList); // 赋值缓存的展示字段
       } finally {
         this.loading = false;
+        this.isSearchInit = false;
       }
     },
     async handleChangeValue() {
@@ -107,12 +113,26 @@ export default {
         }));
       this.$http.request('favorite/getGenerateQuery', {
         data: {
-          keyword: this.keyword,
+          keyword: this.isUpdateFavorite ? this.favoriteKeyword : this.keyword,
           params,
         },
-      }).then((res) => {
-        this.$emit('updateKeyWords', res.data);
-      });
+      }).then(async (res) => {
+        try {
+          const { data } = await this.$http.request('favorite/checkKeywords', {
+            data: { keyword: res.data },
+          });
+          this.$emit('updateKeyWords', res.data);
+          this.$emit('isCanSearch', data.is_legal);
+        } catch (error) {
+          this.$emit('isCanSearch', false);
+        }
+      })
+        .catch(() => {
+          this.$emit('isCanSearch', false);
+        })
+        .finally(() => {
+          this.isUpdateFavorite = false;
+        });
     },
   },
 };

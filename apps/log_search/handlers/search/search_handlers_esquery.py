@@ -1064,7 +1064,7 @@ class SearchHandler(object):
             if operator in REAL_OPERATORS_MAP.keys():
                 operator = REAL_OPERATORS_MAP[operator]
 
-            if operator in ["exists", "does not exists"]:
+            if operator in [OperatorEnum.EXISTS["operator"], OperatorEnum.NOT_EXISTS["operator"]]:
                 new_filter_list.append(
                     {"field": field, "value": "0", "operator": operator, "condition": condition, "type": _type}
                 )

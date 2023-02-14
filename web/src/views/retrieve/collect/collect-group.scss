@@ -12,8 +12,14 @@
   .group-cur {
     display: flex;
     align-items: center;
-    flex: 1;
+    flex-wrap: nowrap;
+    width: calc(100% - 20px);
     cursor: pointer;
+    .group-str {
+      width: calc(100% - 20px);
+      margin-left: 2px;
+      word-wrap: break-word;
+    }
 
     .is-active {
       transform: scale(.5) rotate(90deg);
@@ -21,8 +27,8 @@
   }
 
   .group-title {
-    height: 32px;
-    padding: 0 16px;
+    min-height: 32px;
+    padding: 7px 16px;
 
     // &.is-move-cur {
     //   cursor: move;
