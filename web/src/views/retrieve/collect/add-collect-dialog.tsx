@@ -162,7 +162,7 @@ export default class CollectDialog extends tsc<IProps> {
     groupName: [
       {
         validator: this.checkName,
-        message: window.mainComponent.$t('组名不规范, 只支持输入中文、英文、数字、特殊符号.'),
+        message: window.mainComponent.$t('组名不规范，包含了特殊符号.'),
         trigger: 'blur',
       },
       {
