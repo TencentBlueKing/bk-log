@@ -275,7 +275,7 @@
                     </bk-button>
                   </div>
                   <span v-bk-tooltips="{ content: $t('清空'), delay: 200 }">
-                    <div class="clear-params-btn" @click="() => clearCondition()">
+                    <div class="clear-params-btn" @click="() => clearCondition('*')">
                       <bk-button data-test-id="dataQuery_button_phrasesClear"></bk-button>
                       <span class="log-icon icon-brush"></span>
                     </div>
@@ -667,6 +667,7 @@ export default {
       this.$store.commit('updateIndexId', val);
       this.retrieveSearchNumber = 0; // 切换索引集 检索次数设置为0;
       val && this.requestSearchHistory(val);
+      this.clearCondition();
     },
     spaceUid: {
       async handler() {
@@ -1061,7 +1062,7 @@ export default {
       }
     },
     // 清空条件
-    clearCondition(clearStr = '') {
+    clearCondition(clearStr = '*') {
       Object.assign(this.retrieveParams, {
         keyword: this.isSqlSearchType ? clearStr : this.retrieveParams.keyword, // 若是表单模式的清空则不删除keyword
         host_scopes: {
@@ -2363,5 +2364,11 @@ export default {
     .tippy-tooltip {
       padding: 0;
     }
+  }
+
+  .bk-dialog-wrapper .bk-info-box .bk-dialog-type-header .header{
+    white-space: normal;
+    text-overflow: inherit;
+    overflow: hidden;
   }
 </style>

@@ -77,6 +77,11 @@ export default class CollectGroup extends tsc<IProps> {
         message: window.mainComponent.$t('必填项'),
         trigger: 'blur',
       },
+      {
+        max: 30,
+        message: window.mainComponent.$t('不能多于30个字符'),
+        trigger: 'blur',
+      },
     ],
   };
 
@@ -279,7 +284,6 @@ export default class CollectGroup extends tsc<IProps> {
                     clearable
                     placeholder={`${this.$t('请输入组名')}${this.$t('（长度30个字符）')}`}
                     vModel={this.verifyData.groupEditName}
-                    maxlength={30}
                     onEnter={v => this.handleGroupKeyDown(v, 'reset')}
                   ></Input>
                 </FormItem>
@@ -337,7 +341,7 @@ export default class CollectGroup extends tsc<IProps> {
           ))}
           <li class="add-new-group">
             {this.isShowNewGroupInput ? (
-              <li class="add-new-page-input">
+              <li class="new-page-input">
                 <Form
                   labelWidth={0}
                   style={{ width: '100%' }}
@@ -353,7 +357,6 @@ export default class CollectGroup extends tsc<IProps> {
                       clearable
                       placeholder={`${this.$t('请输入组名')}${this.$t('（长度30个字符）')}`}
                       vModel={this.verifyData.groupEditName}
-                      maxlength={30}
                       onEnter={v => this.handleGroupKeyDown(v, 'add')}
                     ></Input>
                   </FormItem>
