@@ -17,6 +17,11 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: apps/log_search/constants.py:135
+#, fuzzy
+msgid "全文检索"
+msgstr "Full-text search"
+
 #: apps/api/base.py:229
 #, fuzzy, python-brace-format
 #| msgid "[{module}]API请求异常：({error_message})"
