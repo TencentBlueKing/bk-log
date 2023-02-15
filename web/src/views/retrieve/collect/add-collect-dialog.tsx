@@ -128,7 +128,6 @@ export default class CollectDialog extends tsc<IProps> {
   privateGroupID = 0;
   groupList = []; // 组列表
   formLoading = false;
-  clickSwitch = false; // 是否点击过显示字段开关
   isInitShowDisplayFields = false; // 编辑初始化时 是否显示字段
   groupNameMap = {
     unknown: window.mainComponent.$t('未分组'),
@@ -215,9 +214,8 @@ export default class CollectDialog extends tsc<IProps> {
     }, []);
   }
 
-  get showFieldsTypeSwitch() { // 判断当前显示字段是否是之前保留的
-    if (this.isCreateFavorite || !this.isInitShowDisplayFields) return this.$t('当前字段');
-    return this.clickSwitch ? this.$t('当前字段') : this.$t('保存的显示字段');
+  get showFieldsLabel() {
+    return this.favoriteData.is_enable_display_fields ? this.$t('显示字段') : this.$t('当前字段');
   }
 
   mounted() {
@@ -268,19 +266,21 @@ export default class CollectDialog extends tsc<IProps> {
 
   async handleValueChange(value) {
     if (value) {
+      this.formLoading = true;
       await this.requestGroupList(); // 获取组列表
       if (this.isCreateFavorite) {
         // 判断是否是新增
         Object.assign(this.favoriteData, this.addFavoriteData); // 合并新增收藏详情
         this.favoriteData.params.search_fields = [];
+        this.favoriteData.group_id = null;
       } else {
         await this.getFavoriteData(this.favoriteID); // 获取收藏详情
       }
-      this.getSearchFieldsList(this.favoriteData.params.keyword); // 获取表单模式显示字段
       this.isDisableSelect = this.favoriteData.visible_type === 'private';
+      await this.getSearchFieldsList(this.favoriteData.params.keyword); // 获取表单模式显示字段
+      this.formLoading = false;
     } else {
       this.favoriteData = this.baseFavoriteData;
-      this.clickSwitch = false;
       this.searchFieldsList = [];
       this.handleShowChange();
     }
@@ -334,7 +334,6 @@ export default class CollectDialog extends tsc<IProps> {
     if (value) { // 如果关闭 则更新当前显示的显示字段
       if (this.isCreateFavorite || this.isClickFavoriteEdit) {
         this.favoriteData.display_fields = this.visibleFields.map(item => item.field_name);
-        this.clickSwitch = true;
       }
     }
   }
@@ -420,7 +419,6 @@ export default class CollectDialog extends tsc<IProps> {
   }
   /** 获取收藏详情 */
   async getFavoriteData(id) {
-    this.formLoading = true;
     try {
       const res = await $http.request('favorite/getFavorite', { params: { id } });
       const assignData = res.data;
@@ -433,9 +431,7 @@ export default class CollectDialog extends tsc<IProps> {
         Object.assign(assignData.params, this.replaceData.params);
       }
       Object.assign(this.favoriteData, assignData);
-    } finally {
-      this.formLoading = false;
-    }
+    } catch {}
   }
 
   render() {
@@ -556,7 +552,7 @@ export default class CollectDialog extends tsc<IProps> {
             </CheckboxGroup>
           </FormItem>
           <FormItem
-            label={`${this.$t('是否同时显示字段')} (${this.showFieldsTypeSwitch})`}
+            label={this.$t('是否同时显示字段')}
             ext-cls="filed-label"
             desc-icon="bk-icon icon-info"
             desc-type="icon"
@@ -572,7 +568,7 @@ export default class CollectDialog extends tsc<IProps> {
                 theme="primary"
                 on-change={value => this.handleClickDisplayFields(value)}
               ></Switcher>
-              <span class="current-filed">{this.$t('当前字段')}：</span>
+              <span class="current-filed">{this.showFieldsLabel}: </span>
               {this.favoriteData.display_fields.map(item => (
                 <Tag>{item}</Tag>
               ))}
