@@ -110,12 +110,19 @@
   .add-new-page-container {
     box-sizing: border-box;
     .add-new-page-input {
-      width: 100%;
-      padding: 0;
       display: flex;
       align-items: center;
       flex-wrap: nowrap;
       justify-content: space-between;
+    }
+  
+    .new-page-input {
+      display: flex;
+      align-items: center;
+      flex-wrap: nowrap;
+      justify-content: space-between;
+      padding: 0;
+      width: 100%;
     }
   
     .operate-button {

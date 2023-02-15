@@ -138,6 +138,11 @@ export default class CollectIndex extends tsc<IProps> {
         message: window.mainComponent.$t('必填项'),
         trigger: 'blur',
       },
+      {
+        max: 30,
+        message: window.mainComponent.$t('不能多于30个字符'),
+        trigger: 'blur',
+      },
     ],
   };
   tippyOption = {
@@ -566,7 +571,6 @@ export default class CollectIndex extends tsc<IProps> {
                           clearable
                           placeholder={`${this.$t('请输入组名')}${this.$t('（长度30个字符）')}`}
                           vModel={this.verifyData.groupName}
-                          maxlength={30}
                           onKeydown={this.handleGroupKeyDown}
                           onEnter={() => this.handleClickGroupBtn('add')}>
                         </Input>
