@@ -478,9 +478,7 @@ class LogIndexSet(SoftDeleteModel):
 
         # 获取索引详情
         index_set_ids = [index_set["index_set_id"] for index_set in index_sets]
-        mark_index_set_ids = set(
-            Favorite.get_favorite_index_set_ids(index_set_ids=index_set_ids, username=get_request_username())
-        )
+        mark_index_set_ids = set(IndexSetUserFavorite.batch_get_mark_index_set(index_set_ids, get_request_username()))
 
         index_set_data = array_group(
             list(
