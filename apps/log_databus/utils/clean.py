@@ -31,11 +31,14 @@ from apps.utils.log import logger
 from apps.utils.bk_data_auth import BkDataAuthHandler
 from apps.utils.time_handler import format_user_time_zone
 
+from bkm_space.utils import bk_biz_id_to_space_uid
+
 
 class CleanFilterUtils:
     Cleans = namedtuple(
         "Clean",
         [
+            "space_uid",
             "bk_data_id",
             "collector_config_name",
             "result_table_id",
@@ -64,6 +67,7 @@ class CleanFilterUtils:
         for collector_config in collector_configs:
             self.cleans.append(
                 self.Cleans(
+                    space_uid=bk_biz_id_to_space_uid(self.bk_biz_id),
                     bk_data_id=collector_config.bk_data_id,
                     collector_config_name=collector_config.collector_config_name,
                     result_table_id=collector_config.table_id.replace(".", "_"),
@@ -91,6 +95,7 @@ class CleanFilterUtils:
 
             self.cleans.append(
                 self.Cleans(
+                    space_uid=bk_biz_id_to_space_uid(self.bk_biz_id),
                     bk_data_id=bk_data_clean.raw_data_id,
                     collector_config_name=collector_config.collector_config_name,
                     result_table_id=bk_data_clean.result_table_id,
