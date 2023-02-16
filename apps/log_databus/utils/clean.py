@@ -55,6 +55,7 @@ class CleanFilterUtils:
 
     def __init__(self, bk_biz_id):
         self.bk_biz_id = bk_biz_id
+        self.space_uid = bk_biz_id_to_space_uid(self.bk_biz_id)
         self.cleans = []
 
     def get_collector_config(self):
@@ -67,7 +68,7 @@ class CleanFilterUtils:
         for collector_config in collector_configs:
             self.cleans.append(
                 self.Cleans(
-                    space_uid=bk_biz_id_to_space_uid(self.bk_biz_id),
+                    space_uid=self.space_uid,
                     bk_data_id=collector_config.bk_data_id,
                     collector_config_name=collector_config.collector_config_name,
                     result_table_id=collector_config.table_id.replace(".", "_"),
@@ -95,7 +96,7 @@ class CleanFilterUtils:
 
             self.cleans.append(
                 self.Cleans(
-                    space_uid=bk_biz_id_to_space_uid(self.bk_biz_id),
+                    space_uid=self.space_uid,
                     bk_data_id=bk_data_clean.raw_data_id,
                     collector_config_name=collector_config.collector_config_name,
                     result_table_id=bk_data_clean.result_table_id,
