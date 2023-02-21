@@ -30,6 +30,7 @@ from rest_framework.exceptions import ValidationError as SlzValidationError
 from apps.exceptions import ValidationError
 from apps.generic import DataModelSerializer
 from apps.log_databus.constants import (
+    ArchiveInstanceType,
     CLUSTER_NAME_EN_REGEX,
     COLLECTOR_CONFIG_NAME_EN_REGEX,
     ContainerCollectorType,
@@ -887,7 +888,8 @@ class ListArchiveSerlalizer(serializers.Serializer):
 
 
 class CreateArchiveSerlalizer(serializers.Serializer):
-    collector_config_id = serializers.IntegerField(required=True, label=_("采集项id"))
+    instance_id = serializers.IntegerField(required=True, label=_("实例id"))
+    instance_type = serializers.ChoiceField(required=True, label=_("实例类型"), choices=ArchiveInstanceType.choices)
     target_snapshot_repository_name = serializers.CharField(required=True, label=_("目标es集群快照仓库"))
     snapshot_days = serializers.IntegerField(required=True, label=_("快照存储时间配置"), min_value=0)
     bk_biz_id = serializers.IntegerField(label=_("业务ID"), required=True)

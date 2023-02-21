@@ -21,7 +21,7 @@
  */
 
 import { Component as tsc } from 'vue-tsx-support';
-import { Component, Prop, Inject, Ref } from 'vue-property-decorator';
+import { Component, Prop, Inject, Ref, Watch } from 'vue-property-decorator';
 import { Input, Popover, Form, FormItem } from 'bk-magic-vue';
 import { IGroupItem, IFavoriteItem } from '../collect-index';
 import './group-dropdown.scss';
@@ -64,7 +64,7 @@ export default class CollectGroup extends tsc<IProps> {
     groupEditName: [
       {
         validator: this.checkName,
-        message: window.mainComponent.$t('组名不规范, 只支持输入中文、英文、数字、特殊符号.'),
+        message: window.mainComponent.$t('组名不规范，包含了特殊符号.'),
         trigger: 'blur',
       },
       {
@@ -75,6 +75,11 @@ export default class CollectGroup extends tsc<IProps> {
       {
         required: true,
         message: window.mainComponent.$t('必填项'),
+        trigger: 'blur',
+      },
+      {
+        max: 30,
+        message: window.mainComponent.$t('不能多于30个字符'),
         trigger: 'blur',
       },
     ],
@@ -99,6 +104,17 @@ export default class CollectGroup extends tsc<IProps> {
     return this.userMeta.username !== this.data.created_by
       ? this.unPrivateGroupList
       : this.groupList;
+  }
+
+  @Watch('showGroupList')
+  async handleJumpNewGroup(val) {
+    const newIndex = val.findIndex(item => item.group_name === this.newGroupName);
+    await this.$nextTick();
+    if (newIndex > 0) {
+      const subLength = val.length - newIndex;
+      const scrollTopNum = (newIndex * 28) - (subLength < 3 ? 0 : 28 * 3);
+      this.groupMoveListPopoverRef.scrollTop = (scrollTopNum >= 0 ? scrollTopNum : 0);
+    }
   }
 
   get isGroupDrop() {
@@ -129,9 +145,9 @@ export default class CollectGroup extends tsc<IProps> {
   /** 新增组 */
   handleChangeGroupInputStatus(type: string) {
     this.checkInputAddFormRef.validate().then(() => {
-      type === 'add' && this.handleUserOperate('add-group', this.verifyData.groupEditName);
       this.newGroupName = this.verifyData.groupEditName;
-      this.isShowNewGroupInput = false;
+      type === 'add' && this.handleUserOperate('add-group', this.verifyData.groupEditName);
+      this.clearStatus();
     });
     type === 'cancel' && (this.isShowNewGroupInput = false);
   }
@@ -172,6 +188,7 @@ export default class CollectGroup extends tsc<IProps> {
           this.groupListPopoverInstance = null;
           this.clearStatus();
           this.operatePopoverInstance?.set({ hideOnClick: true });
+          this.newGroupName = '';
         },
         onShow: () => {
           this.operatePopoverInstance?.set({ hideOnClick: false });
@@ -192,6 +209,7 @@ export default class CollectGroup extends tsc<IProps> {
         hideOnClick: true, // 先是可被外部点击隐藏
         distance: 4,
         sticky: true,
+        trigger: 'click',
         placement: 'bottom-start',
         extCls: 'more-container',
         zIndex: 999,
@@ -266,7 +284,6 @@ export default class CollectGroup extends tsc<IProps> {
                     clearable
                     placeholder={`${this.$t('请输入组名')}${this.$t('（长度30个字符）')}`}
                     vModel={this.verifyData.groupEditName}
-                    maxlength={30}
                     onEnter={v => this.handleGroupKeyDown(v, 'reset')}
                   ></Input>
                 </FormItem>
@@ -313,47 +330,51 @@ export default class CollectGroup extends tsc<IProps> {
       <div style={{ display: 'none' }}>
         <ul class="group-dropdown-list add-new-page-container" ref="groupMoveList">
           {this.showGroupList.map(item => (
-            <li onClick={() => this.handleClickLi('move-favorite', item.group_id)}>
+            <li
+              class={{ 'new-group-container': this.newGroupName === item.group_name }}
+              onClick={() => this.handleClickLi('move-favorite', item.group_id)}>
               <span>{item.group_name}</span>
               {
                 this.newGroupName === item.group_name && <span class="new-group">New</span>
               }
             </li>
           ))}
-          {this.isShowNewGroupInput ? (
-            <li class="add-new-page-input">
-              <Form
-                labelWidth={0}
-                ref="checkInputAddForm"
-                {...{
-                  props: {
-                    model: this.verifyData,
-                    rules: this.rules,
-                  },
-                }}>
-                <FormItem property="groupEditName">
-                  <Input
-                    clearable
-                    placeholder={`${this.$t('请输入组名')}${this.$t('（长度30个字符）')}`}
-                    vModel={this.verifyData.groupEditName}
-                    maxlength={30}
-                    onEnter={v => this.handleGroupKeyDown(v, 'add')}
-                  ></Input>
-                </FormItem>
-              </Form>
-              <div class="operate-button">
-                <span class="bk-icon icon-check-line" onClick={() => this.handleChangeGroupInputStatus('add')}></span>
-                <span class="bk-icon icon-close-line-2" onClick={() => this.handleChangeGroupInputStatus('cancel')}></span>
-              </div>
-            </li>
-          ) : (
-            <li class="add-new-group" onClick={() => (this.isShowNewGroupInput = true)}>
-              <span>
-                <span class="bk-icon icon-close-circle"></span>
-                <span>{this.$t('新建分组')}</span>
-              </span>
-            </li>
-          )}
+          <li class="add-new-group">
+            {this.isShowNewGroupInput ? (
+              <li class="new-page-input">
+                <Form
+                  labelWidth={0}
+                  style={{ width: '100%' }}
+                  ref="checkInputAddForm"
+                  {...{
+                    props: {
+                      model: this.verifyData,
+                      rules: this.rules,
+                    },
+                  }}>
+                  <FormItem property="groupEditName">
+                    <Input
+                      clearable
+                      placeholder={`${this.$t('请输入组名')}${this.$t('（长度30个字符）')}`}
+                      vModel={this.verifyData.groupEditName}
+                      onEnter={v => this.handleGroupKeyDown(v, 'add')}
+                    ></Input>
+                  </FormItem>
+                </Form>
+                <div class="operate-button">
+                  <span class="bk-icon icon-check-line" onClick={() => this.handleChangeGroupInputStatus('add')}></span>
+                  <span class="bk-icon icon-close-line-2" onClick={() => this.handleChangeGroupInputStatus('cancel')}></span>
+                </div>
+              </li>
+            ) : (
+              <li class="add-new-group" onClick={() => (this.isShowNewGroupInput = true)}>
+                <span>
+                  <span class="bk-icon icon-close-circle"></span>
+                  <span>{this.$t('新建分组')}</span>
+                </span>
+              </li>
+            )}
+          </li>
         </ul>
       </div>
     );
@@ -382,7 +403,7 @@ export default class CollectGroup extends tsc<IProps> {
                     'more-box',
                     { 'is-click': !!this.operatePopoverInstance },
                   ]}
-                  onMouseenter={this.handleClickIcon}
+                  onClick={this.handleClickIcon}
                 >
                   <span class="bk-icon icon-more"></span>
                 </div>

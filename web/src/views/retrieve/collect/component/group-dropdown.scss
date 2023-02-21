@@ -24,7 +24,7 @@
       display: inline-block;
       margin-left: 2px;
       font-size: 20px;
-      transform: translateY(1px);
+      transform: translateY(2px);
       color: #979ba5;
     }
   }
@@ -41,7 +41,6 @@
     background: #fff;
     border: 1px solid #dcdee5;
     box-shadow: 0 2px 6px 0 rgba(0, 0, 0, .1);
-    border-radius: 2px;
 
     li {
       color: #63656e;
@@ -62,20 +61,29 @@
     overflow-y: auto;
 
     /* stylelint-disable-next-line declaration-no-important */
-    padding-bottom: 0 !important;
+    padding-bottom: 42px !important;
 
     /* stylelint-disable-next-line scss/at-extend-no-missing-placeholder */
     @extend %dropdown-list;
 
+    .new-group-container {
+      color: #3A84FF;
+      background: #E1ECFF;
+    }
+
     .new-group {
-      padding: 2px;
+      padding: 1px 3px;
       color: #fff;
       background: #FFBD50;
       border-radius: 2px;
       margin-left: 4px;
+      font-size: 12px !important;
     }
 
     .add-new-group {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -100,11 +108,21 @@
   }
 
   .add-new-page-container {
+    box-sizing: border-box;
     .add-new-page-input {
       display: flex;
       align-items: center;
       flex-wrap: nowrap;
       justify-content: space-between;
+    }
+  
+    .new-page-input {
+      display: flex;
+      align-items: center;
+      flex-wrap: nowrap;
+      justify-content: space-between;
+      padding: 0;
+      width: 100%;
     }
   
     .operate-button {

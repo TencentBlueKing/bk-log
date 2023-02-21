@@ -1319,7 +1319,7 @@ export default {
     occupySize: 'Resource occupation',
     remain: 'Remain',
     restoreStatus: 'Restore Status',
-    collectName: 'Collect Name',
+    collectName: 'Name',
     expired: 'Expired',
     totalSize: 'Total Size',
     indexCount: 'Index Count',
@@ -1619,7 +1619,7 @@ export default {
   字段清洗: 'Field cleaning',
   日志聚类: 'Log cluster',
   检查: 'Examination',
-  '组名不规范, 只支持输入中文、英文、数字、特殊符号.': '组名不规范, 只支持输入中文、英文、数字、特殊符号.',
+  '组名不规范，包含了特殊符号.': '组名不规范，包含了特殊符号.',
   组名重复: 'Duplicate group name',
   原始日志: 'Original log',
   全文检索: 'Full-text search',
@@ -1629,4 +1629,5 @@ export default {
   保存的显示字段: 'Saved display field',
   '填写收藏名（长度30个字符）': 'Fill in the collection name (length 30 characters)',
   '（长度30个字符）': '(length 30 characters)',
+  不能多于30个字符: 'Cannot be longer than 30 characters',
 };

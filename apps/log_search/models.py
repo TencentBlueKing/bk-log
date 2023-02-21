@@ -480,9 +480,7 @@ class LogIndexSet(SoftDeleteModel):
 
         # 获取索引详情
         index_set_ids = [index_set["index_set_id"] for index_set in index_sets]
-        mark_index_set_ids = set(
-            Favorite.get_favorite_index_set_ids(index_set_ids=index_set_ids, username=get_request_username())
-        )
+        mark_index_set_ids = set(IndexSetUserFavorite.batch_get_mark_index_set(index_set_ids, get_request_username()))
 
         index_set_data = array_group(
             list(
@@ -1062,7 +1060,7 @@ class Space(SoftDeleteModel):
 
     id = models.AutoField(_("空间自增ID"), primary_key=True)
 
-    space_uid = models.CharField(_("空间唯一标识"), max_length=256, unique=True)
+    space_uid = models.CharField(_("空间唯一标识"), max_length=256)
     bk_biz_id = models.IntegerField(_("业务ID"), unique=True)
 
     space_type_id = models.CharField(_("空间类型英文名称"), max_length=64)
