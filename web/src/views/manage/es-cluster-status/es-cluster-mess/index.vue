@@ -157,7 +157,7 @@
               theme="primary"
               text
               class="mr10"
-              :tips-conf="props.row.is_platform ? $t('platformTip') : $t('unableEditTip')"
+              :tips-conf="props.row.is_platform ? $t('公共集群，禁止创建自定义索引集') : $t('平台默认的集群不允许编辑和删除，请联系管理员。')"
               :button-text="$t('建索引集')"
               :disabled="!props.row.is_editable || props.row.is_platform"
               @on-click="createIndexSet(props.row)">>
@@ -167,7 +167,7 @@
               text
               class="mr10"
               v-cursor="{ active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_ES_SOURCE_AUTH]) }"
-              :tips-conf="$t('unableEditTip')"
+              :tips-conf="$t('平台默认的集群不允许编辑和删除，请联系管理员。')"
               :button-text="$t('编辑')"
               :disabled="!props.row.is_editable"
               @on-click="editDataSource(props.row)">
@@ -177,7 +177,7 @@
               text
               class="mr10"
               v-cursor="{ active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_ES_SOURCE_AUTH]) }"
-              :tips-conf="$t('unableEditTip')"
+              :tips-conf="$t('平台默认的集群不允许编辑和删除，请联系管理员。')"
               :button-text="$t('删除')"
               :disabled="!props.row.is_editable"
               @on-click="deleteDataSource(props.row)">
@@ -557,7 +557,7 @@ export default {
 
       this.$bkInfo({
         type: 'warning',
-        subTitle: `${this.$t('当前集群为')} ${row.cluster_config.domain_name}， ${this.$t('确认要删除')}`,
+        subTitle: this.$t('当前集群为{n}，确认要删除？', { n: row.cluster_config.domain_name }),
         confirmFn: () => {
           this.handleDelete(row);
         },

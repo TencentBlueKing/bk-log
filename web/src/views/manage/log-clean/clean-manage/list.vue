@@ -41,7 +41,7 @@
         <div
           class="operation-icon"
           @click="handleSync"
-          v-bk-tooltips="$t('logClean.syncTip')">
+          v-bk-tooltips="$t('同步计算平台的结果')">
           <span v-if="!syncLoading" class="log-icon icon-tongbu"></span>
           <span v-else class="loading"></span>
         </div>
@@ -59,18 +59,18 @@
         @filter-change="handleFilterChange"
         @page-change="handlePageChange"
         @page-limit-change="handleLimitChange">
-        <bk-table-column :label="$t('migrate.collectionItemName')">
+        <bk-table-column :label="$t('采集项名称')">
           <template slot-scope="props">
             {{ props.row.collector_config_name }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('logClean.storageIndex')">
+        <bk-table-column :label="$t('存储索引')">
           <template slot-scope="props">
             {{ props.row.result_table_id }}
           </template>
         </bk-table-column>
         <bk-table-column
-          :label="$t('logClean.etlConfig')"
+          :label="$t('格式化方法')"
           prop="etl_config"
           class-name="filter-column"
           column-key="etl_config"
@@ -80,17 +80,17 @@
             {{ getFormatName(props.row) }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('dataSource.updated_by')">
+        <bk-table-column :label="$t('更新人')">
           <template slot-scope="props">
             {{ props.row.updated_by }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('dataSource.updated_at')">
+        <bk-table-column :label="$t('更新时间')">
           <template slot-scope="props">
             {{ props.row.updated_at }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('dataSource.operation')" width="200">
+        <bk-table-column :label="$t('操作')" width="200">
           <div class="collect-table-operate" slot-scope="props">
             <!-- bkdata_auth_url不为null则表示需要跳转计算平台检索 -->
             <!-- 高级清洗授权 -->
@@ -187,8 +187,8 @@ export default {
         });
       });
       target.push(
-        { text: this.$t('logClean.rawData'), value: 'bk_log_text' },
-        { text: this.$t('logClean.advancedClean'), value: 'bkdata_clean' },
+        { text: this.$t('原始数据'), value: 'bk_log_text' },
+        { text: this.$t('高级清洗'), value: 'bkdata_clean' },
       );
       return target;
     },
@@ -387,7 +387,7 @@ export default {
           clearInterval(this.timer);
           this.timer = null;
           this.syncLoading = false;
-          this.messageSuccess(this.$t('logClean.syncSuccess'));
+          this.messageSuccess(this.$t('同步计算平台的结果表成功'));
           this.requestData();
         } else if (data.status === 'RUNNING') { // 轮循直至同步成功
           if (this.timer) {
@@ -397,7 +397,7 @@ export default {
             this.getSyncStatus(true);
           }, 2000);
         } else {
-          this.messageError(this.$t('logClean.syncFaild'));
+          this.messageError(this.$t('同步计算平台的结果表失败'));
           this.syncLoading = false;
         }
       })

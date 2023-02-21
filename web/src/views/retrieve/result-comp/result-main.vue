@@ -24,16 +24,6 @@
   <div class="result-scroll-container" ref="scrollContainer" @scroll.passive="handleScroll">
     <!-- 检索结果 -->
     <div class="result-text">
-      <!-- {{ $t('retrieve.result1') }}
-      <span class="total-count">{{ totalCount }}</span>
-      {{ $t('retrieve.result2') + tookTime + $t('retrieve.ms') }}
-      <template v-if="showAddMonitor">
-        <span>{{ $t('retrieve.result3') }}</span>
-        <a href="javascript:void(0);" class="monitor-link" @click="jumpMonitor">
-          {{ $t('retrieve.result4') }}
-          <span class="log-icon icon-lianjie"></span>
-        </a>
-      </template> -->
       <i18n path="检索结果（找到 {0} 条结果，用时{1}毫秒) {2}">
         <span class="total-count">{{ totalCount }}</span>
         <span>{{tookTime}}</span>

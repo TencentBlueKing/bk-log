@@ -25,7 +25,7 @@
   <div>
     <bk-form :label-width="200">
       <!-- 大小写敏感 -->
-      <bk-form-item :label="$t('retrieve.ignoreCase')" :required="true">
+      <bk-form-item :label="$t('大小写敏感')" :required="true">
         <bk-switcher
           class="ml200"
           theme="primary"
@@ -35,7 +35,7 @@
       </bk-form-item>
       <!-- 包含中文 -->
       <bk-form-item
-        :label="$t('retrieveSetting.containsChinese')"
+        :label="$t('包含中文')"
         :required="true">
         <bk-switcher
           class="ml200"
@@ -47,7 +47,7 @@
       </bk-form-item>
       <!-- 分词符 -->
       <bk-form-item
-        :label="$t('retrieveSetting.wordBreaker')"
+        :label="$t('分词符')"
         :required="true"
         :property="''">
         <bk-input
@@ -69,17 +69,17 @@
         </bk-button>
         <bk-button
           theme="default"
-          :title="$t('dataManage.Reset')"
+          :title="$t('重置')"
           :disabled="!globalEditable"
           @click="handleReset">
-          {{ $t('dataManage.Reset') }}
+          {{ $t('重置') }}
         </bk-button>
         <bk-button
           theme="default"
-          :title="$t('retrieveSetting.reset')"
+          :title="$t('恢复默认')"
           :disabled="!globalEditable"
           @click="handleDefaultReset">
-          {{ $t('retrieveSetting.reset') }}
+          {{ $t('恢复默认') }}
         </bk-button>
       </bk-form-item>
     </bk-form>

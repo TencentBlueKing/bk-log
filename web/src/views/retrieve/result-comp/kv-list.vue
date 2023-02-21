@@ -239,7 +239,7 @@ export default {
           } else {
             this.$bkMessage({
               theme: 'warning',
-              message: this.$t('retrieve.traceNoDataTips'),
+              message: this.$t('未找到相关的应用，请确认是否有Trace数据的接入。'),
             });
           }
           break;
@@ -272,7 +272,7 @@ export default {
         // trace检索
         case 'trace_id':
         case 'traceid':
-          return this.$t('retrieve.traceRetrieve');
+          return this.$t('trace检索');
         // 主机监控
         case 'serverip':
         case 'ip':
@@ -280,7 +280,7 @@ export default {
         // 容器
         case 'container_id':
         case '__ext.container_id':
-          return this.$t('retrieve.container');
+          return this.$t('容器');
         default:
           return;
       }

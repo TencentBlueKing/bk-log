@@ -3,5 +3,12 @@
   "调用链": "Trace",
   "监控策略": "Monitoring Strategy",
   "仪表盘": "Dashboard",
-  "管理": "Manage"
+  "管理": "Manage",
+  "新建仪表盘": "'Create Dashboard",
+  "新建目录": "Create Category",
+  "导入仪表盘": "Import Dashboard",
+  "日志提取": "Log Extract",
+  "告警策略": "Alarm Rules",
+  "新建告警策略": "New",
+  "编辑告警策略": "Edit"
 }

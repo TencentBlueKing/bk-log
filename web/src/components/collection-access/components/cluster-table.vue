@@ -78,7 +78,7 @@
         <div class="noData-container">
           <div class="noData-message">
             <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-            <p class="empty-message">{{ tableShowType ? $t('createAPlatformTips') : $t('createAClusterTips')}}</p>
+            <p class="empty-message">{{ tableShowType ? $t('当前还没有共享集群，请联系平台管理员提供') : $t('当前还没有业务独享集群，快去创建吧')}}</p>
             <p v-if="!tableShowType" class="button-text" @click="handleCreateCluster">{{$t('创建集群')}}</p>
           </div>
         </div>
@@ -177,7 +177,7 @@ export default {
       }
       this.$bkInfo({
         type: 'warning',
-        title: this.$t('changeClusterTips'),
+        title: this.$t('切换集群将导致历史数据无法查询'),
         confirmFn: () => {
           this.$emit('update:isChangeSelect', true);
           this.$emit('update:storageClusterId', $row.storage_cluster_id);

@@ -138,7 +138,7 @@
                       style="color: #d7473f; display: inline-block; transform: translateY(-2px);"
                       class="bk-icon icon-exclamation-circle-shape">
                     </span>
-                    <span>{{$t('表单Tips')}}</span>
+                    <span>{{$t('收藏的内容已修改，不能切回表单模式')}}</span>
                   </div>
                 </bk-popover>
               </div>
@@ -258,7 +258,7 @@
                       ext-cls="favorite-btn"
                       :disabled="!isFavoriteUpdate || favoriteUpdateLoading"
                       @click="handleUpdateFavorite">
-                      <span v-bk-tooltips="{ content: $t('保存Tips'), disabled: !isFavoriteUpdate }">
+                      <span v-bk-tooltips="{ content: $t('当前收藏有更新，点击保存当前修改'), disabled: !isFavoriteUpdate }">
                         <span class="favorite-btn-text">
                           <span :class="[
                             'icon',

@@ -35,8 +35,8 @@
       </keep-alive>
 
       <!-- 表格底部内容 -->
-      <p class="more-desc" v-if="tableList.length === limitCount">{{ $t('retrieve.showMore') }}
-        <a href="javascript: void(0);" @click="scrollToTop">{{ $t('btn.backToTop') }}</a>
+      <p class="more-desc" v-if="tableList.length === limitCount">{{ $t('仅展示检索结果的前2000条，如果要查看更多请优化查询条件') }}
+        <a href="javascript: void(0);" @click="scrollToTop">{{ $t('返回顶部') }}</a>
       </p>
     </div>
 
@@ -155,7 +155,7 @@ export default {
     openLogDialog(row, type) {
       this.logDialog.data = row;
       this.logDialog.type = type;
-      this.logDialog.title = type === 'realTimeLog' ? this.$t('retrieve.realTimeScrollingLog') : this.$t('retrieve.context');
+      this.logDialog.title = type === 'realTimeLog' ? this.$t('实时滚动日志') : this.$t('上下文');
       this.logDialog.visible = true;
       this.logDialog.fullscreen = true;
     },
