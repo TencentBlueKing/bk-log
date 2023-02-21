@@ -22,7 +22,7 @@
 
 <template>
   <div class="time-format-container">
-    <span class="switch-label">时间</span>
+    <span class="switch-label">{{ $t('时间') }}</span>
     <bk-switcher
       theme="primary"
       :value="isFormatDate"

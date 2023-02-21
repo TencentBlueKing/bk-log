@@ -49,23 +49,35 @@ export default {
       type: String,
       required: true,
     },
+    isClearCondition: {
+      type: Boolean,
+      required: true,
+    },
   },
   data() {
     return {
       searchFieldsList: [], // 表单展示字段
       cacheFieldsList: [], // 修改字段之前的缓存字段
       loading: false,
+      isUpdateFavorite: false,
+      favoriteKeyword: '',
+      isSearchInit: false,
     };
   },
-  computed: {},
   watch: {
     activeFavorite: {
       immediate: true,
       deep: true,
       handler(value) {
-        const keyword = this.isFavoriteSearch ? value?.params?.keyword : this.keyword;
+        this.isUpdateFavorite = true;
+        this.favoriteKeyword = value?.params?.keyword || '*';
+        const keyword = this.isSearchInit ? this.favoriteKeyword : this.keyword;
         this.getSearchFieldsList(keyword, value?.params?.search_fields);
       },
+    },
+    isClearCondition() {
+      this.searchFieldsList.forEach(item => item.value = '');
+      this.handleChangeValue();
     },
   },
   methods: {
@@ -75,10 +87,17 @@ export default {
         const res = await this.$http.request('favorite/getSearchFields', {
           data: { keyword },
         });
-        this.searchFieldsList = res.data.filter(item => fieldsList.includes(item.name));
+        this.searchFieldsList = res.data
+          .filter(item => fieldsList.includes(item.name))
+          .map(item => ({
+            ...item,
+            name: item.is_full_text_field ? `${this.$t('全文检索')}${!!item.repeat_count ? `(${item.repeat_count})` : ''}` : item.name,
+            chName: item.name,
+          }));
         this.cacheFieldsList = deepClone(this.searchFieldsList); // 赋值缓存的展示字段
-      } catch (error) {} finally {
+      } finally {
         this.loading = false;
+        this.isSearchInit = false;
       }
     },
     async handleChangeValue() {
@@ -86,22 +105,34 @@ export default {
       const searchValueStr = this.searchFieldsList.map(item => item.value).join(',');
       if (cacheValueStr === searchValueStr) return; // 鼠标失焦后判断每个值是否和缓存的一样 如果一样 则不请求
       this.cacheFieldsList = deepClone(this.searchFieldsList); // 重新赋值缓存的展示字段
-      const keyword = this.activeFavorite.params.keyword;
       const params = this.searchFieldsList
         .filter(item => Boolean(item.value))
         .map(item => ({
           value: item.value,
           pos: item.pos,
         }));
-      try {
-        const res = await this.$http.request('favorite/getGenerateQuery', {
-          data: {
-            keyword,
-            params,
-          },
+      this.$http.request('favorite/getGenerateQuery', {
+        data: {
+          keyword: this.isUpdateFavorite ? this.favoriteKeyword : this.keyword,
+          params,
+        },
+      }).then(async (res) => {
+        try {
+          const { data } = await this.$http.request('favorite/checkKeywords', {
+            data: { keyword: res.data },
+          });
+          this.$emit('updateKeyWords', res.data);
+          this.$emit('isCanSearch', data.is_legal);
+        } catch (error) {
+          this.$emit('isCanSearch', false);
+        }
+      })
+        .catch(() => {
+          this.$emit('isCanSearch', false);
+        })
+        .finally(() => {
+          this.isUpdateFavorite = false;
         });
-        this.$emit('updateKeyWords', res.data);
-      } catch (error) {}
     },
   },
 };

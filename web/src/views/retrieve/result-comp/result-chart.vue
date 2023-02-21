@@ -260,36 +260,39 @@ export default {
         }
       }
 
-      const res = await this.$http.request('retrieve/getLogChartList', {
-        params: { index_set_id: this.$route.params.indexId },
-        data: {
-          ...this.retrieveParams,
-          time_range: 'customized',
-          interval: this.interval,
-          // 每次轮循的起始时间
-          start_time: formatDate(this.pollingStartTime),
-          end_time: formatDate(this.pollingEndTime),
-        },
-      });
+      if (!!this.$route.params?.indexId) { // 从检索切到其他页面时 表格初始化的时候路由中indexID可能拿不到 拿不到 则不请求图表
+        const res = await this.$http.request('retrieve/getLogChartList', {
+          params: { index_set_id: this.$route.params.indexId },
+          data: {
+            ...this.retrieveParams,
+            time_range: 'customized',
+            interval: this.interval,
+            // 每次轮循的起始时间
+            start_time: formatDate(this.pollingStartTime),
+            end_time: formatDate(this.pollingEndTime),
+          },
+        });
+        const originChartData = res.data.aggs?.group_by_histogram?.buckets || [];
+        const targetArr = originChartData.map((item) => {
+          this.totalCount = this.totalCount + item.doc_count;
+          return ([item.doc_count, item.key]);
+        });
 
-      const originChartData = res.data.aggs?.group_by_histogram?.buckets || [];
-      const targetArr = originChartData.map((item) => {
-        this.totalCount = this.totalCount + item.doc_count;
-        return ([item.doc_count, item.key]);
-      });
-
-      if (this.pollingStartTime <= Date.parse(this.retrieveParams.start_time)) {
+        if (this.pollingStartTime <= Date.parse(this.retrieveParams.start_time)) {
         // 轮询结束
-        this.finishPolling = true;
-      }
+          this.finishPolling = true;
+        }
 
-      for (let i = 0; i < targetArr.length; i++) {
-        for (let j = 0; j < this.optionData.length; j++) {
-          if (this.optionData[j][1] === targetArr[i][1] && targetArr[i][0] > 0) {
-            // 根据请求结果匹配对应时间下数量叠加
-            this.optionData[j][0] = this.optionData[j][0] + targetArr[i][0];
+        for (let i = 0; i < targetArr.length; i++) {
+          for (let j = 0; j < this.optionData.length; j++) {
+            if (this.optionData[j][1] === targetArr[i][1] && targetArr[i][0] > 0) {
+              // 根据请求结果匹配对应时间下数量叠加
+              this.optionData[j][0] = this.optionData[j][0] + targetArr[i][0];
+            }
           }
         }
+      } else {
+        this.finishPolling = true;
       }
 
       return [{

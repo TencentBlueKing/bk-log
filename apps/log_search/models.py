@@ -131,7 +131,7 @@ class GlobalConfig(models.Model):
         # ES日志来源类型
         configs[GlobalTypeEnum.ES_SOURCE_TYPE.value] = EsSourceType.get_choices_list_dict()
         # 日志聚类
-        configs[GlobalTypeEnum.LOG_CLUSTERING_LEVEL.value] = PatternEnum.get_choices()
+        configs[GlobalTypeEnum.LOG_CLUSTERING_LEVEL.value] = list(PatternEnum.get_dict_choices().keys())
         configs[GlobalTypeEnum.LOG_CLUSTERING_YEAR_ON_YEAR.value] = YearOnYearEnum.get_choices_list_dict()
         # 自定义上报
         configs[GlobalTypeEnum.DATABUS_CUSTOM.value] = CustomTypeEnum.get_choices_list_dict()
@@ -462,6 +462,7 @@ class LogIndexSet(SoftDeleteModel):
             "space_uid",
             "index_set_id",
             "index_set_name",
+            "collector_config_id",
             "scenario_id",
             "storage_cluster_id",
             "category_id",
@@ -478,6 +479,7 @@ class LogIndexSet(SoftDeleteModel):
         # 获取索引详情
         index_set_ids = [index_set["index_set_id"] for index_set in index_sets]
         mark_index_set_ids = set(IndexSetUserFavorite.batch_get_mark_index_set(index_set_ids, get_request_username()))
+
         index_set_data = array_group(
             list(
                 LogIndexSetData.objects.filter(
@@ -791,6 +793,14 @@ class Favorite(OperateRecordModel):
             favorites.append(fi_dict)
 
         return favorites
+
+    @classmethod
+    def get_favorite_index_set_ids(cls, username: str, index_set_ids: list = None) -> list:
+        if not index_set_ids:
+            return []
+        return cls.objects.filter(index_set_id__in=index_set_ids, created_by=username).values_list(
+            "index_set_id", flat=True
+        )
 
 
 class FavoriteGroup(OperateRecordModel):

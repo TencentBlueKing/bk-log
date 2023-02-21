@@ -133,6 +133,7 @@ from apps.log_search.handlers.index_set import IndexSetHandler
 from apps.models import model_to_dict
 from apps.utils.bcs import Bcs
 from apps.utils.cache import caches_one_hour
+from apps.utils.custom_report import BK_CUSTOM_REPORT, CONFIG_OTLP_FIELD
 from apps.utils.db import array_chunk
 from apps.utils.function import map_if
 from apps.utils.local import get_local_param, get_request_username
@@ -415,6 +416,27 @@ class CollectorHandler(object):
             logger.info(f"[databus retrieve] process => [{process}] collector_config => [{collector_config}]")
 
         return collector_config
+
+    def get_report_token(self):
+        """
+        获取上报Token
+        """
+        data = {"bk_data_token": ""}
+        if self.data.custom_type == CustomTypeEnum.OTLP_LOG.value and self.data.log_group_id:
+            log_group = TransferApi.get_log_group({"log_group_id": self.data.log_group_id})
+            data["bk_data_token"] = log_group.get("bk_data_token", "")
+        return data
+
+    def get_report_host(self):
+        """
+        获取上报Host
+        """
+
+        data = {}
+        bk_custom_report = FeatureToggleObject.toggle(BK_CUSTOM_REPORT)
+        if bk_custom_report:
+            data = bk_custom_report.feature_config.get(CONFIG_OTLP_FIELD, {})
+        return data
 
     def _get_ids(self, node_type: str, nodes: list):
         return [node["bk_inst_id"] for node in nodes if node["bk_obj_id"] == node_type]
@@ -874,7 +896,7 @@ class CollectorHandler(object):
 
     def _pre_check_collector_config_en(self, model_fields: dict, bk_biz_id: int):
         qs = CollectorConfig.objects.filter(
-            collector_config_name_en=model_fields["collector_config_name_en"], bk_biz_id=bk_biz_id,
+            collector_config_name_en=model_fields["collector_config_name_en"], bk_biz_id=bk_biz_id
         )
         if self.collector_config_id:
             qs = qs.exclude(collector_config_id=self.collector_config_id)
@@ -2149,6 +2171,20 @@ class CollectorHandler(object):
             for collector in CollectorConfig.objects.filter(bk_biz_id=bk_biz_id)
         ]
 
+    @classmethod
+    def create_custom_log_group(cls, collector: CollectorConfig):
+        resp = TransferApi.create_log_group(
+            {
+                "bk_data_id": collector.bk_data_id,
+                "bk_biz_id": collector.get_bk_biz_id(),
+                "log_group_name": collector.collector_config_name_en,
+                "label": collector.category_id,
+                "operator": collector.created_by,
+            }
+        )
+        collector.log_group_id = resp["log_group_id"]
+        collector.save(update_fields=["log_group_id"])
+
     def custom_create(
         self,
         bk_biz_id=None,
@@ -2164,6 +2200,8 @@ class CollectorHandler(object):
         storage_replies=1,
         es_shards=settings.ES_SHARDS,
         bk_app_code=settings.APP_CODE,
+        bkdata_biz_id=None,
+        is_display=True,
     ):
         collector_config_params = {
             "bk_biz_id": bk_biz_id,
@@ -2175,9 +2213,12 @@ class CollectorHandler(object):
             "description": description or collector_config_name,
             "data_link_id": int(data_link_id) if data_link_id else 0,
             "bk_app_code": bk_app_code,
+            "bkdata_biz_id": bkdata_biz_id,
+            "is_display": is_display
         }
+        bkdata_biz_id = bkdata_biz_id or bk_biz_id
         # 判断是否已存在同英文名collector
-        if self._pre_check_collector_config_en(model_fields=collector_config_params, bk_biz_id=bk_biz_id):
+        if self._pre_check_collector_config_en(model_fields=collector_config_params, bk_biz_id=bkdata_biz_id):
             logger.error(
                 "collector_config_name_en {collector_config_name_en} already exists".format(
                     collector_config_name_en=collector_config_name_en
@@ -2189,8 +2230,10 @@ class CollectorHandler(object):
                 )
             )
         # 判断是否已存在同bk_data_name, result_table_id
-        bk_data_name = build_bk_data_name(bk_biz_id=bk_biz_id, collector_config_name_en=collector_config_name_en)
-        result_table_id = build_result_table_id(bk_biz_id=bk_biz_id, collector_config_name_en=collector_config_name_en)
+        bk_data_name = build_bk_data_name(bk_biz_id=bkdata_biz_id, collector_config_name_en=collector_config_name_en)
+        result_table_id = build_result_table_id(
+            bk_biz_id=bkdata_biz_id, collector_config_name_en=collector_config_name_en
+        )
         if self._pre_check_bk_data_name(model_fields=collector_config_params, bk_data_name=bk_data_name):
             logger.error(f"bk_data_name {bk_data_name} already exists")
             raise CollectorBkDataNameDuplicateException(
@@ -2213,7 +2256,7 @@ class CollectorHandler(object):
             self.data.bk_data_id = collector_scenario.update_or_create_data_id(
                 bk_data_id=self.data.bk_data_id,
                 data_link_id=self.data.data_link_id,
-                data_name=build_bk_data_name(self.data.bk_biz_id, collector_config_name),
+                data_name=build_bk_data_name(bkdata_biz_id, collector_config_name),
                 description=collector_config_params["description"],
                 encoding=META_DATA_ENCODING,
             )
@@ -2235,22 +2278,32 @@ class CollectorHandler(object):
         async_create_bkdata_data_id.delay(self.data.collector_config_id)
 
         custom_config = get_custom(custom_type)
-        from apps.log_databus.handlers.etl import EtlHandler
 
-        etl_handler = EtlHandler.get_instance(self.data.collector_config_id)
-        etl_params = {
-            "table_id": collector_config_name_en,
-            "storage_cluster_id": storage_cluster_id,
-            "retention": retention,
-            "allocation_min_days": allocation_min_days,
-            "storage_replies": storage_replies,
-            "es_shards": es_shards,
-            "etl_params": custom_config.etl_params,
-            "etl_config": custom_config.etl_config,
-            "fields": custom_config.fields,
-        }
-        self.data.index_set_id = etl_handler.update_or_create(**etl_params)["index_set_id"]
+        # 仅在有集群ID时创建清洗
+        if storage_cluster_id:
+            from apps.log_databus.handlers.etl import EtlHandler
+
+            etl_handler = EtlHandler.get_instance(self.data.collector_config_id)
+            etl_params = {
+                "table_id": collector_config_name_en,
+                "storage_cluster_id": storage_cluster_id,
+                "retention": retention,
+                "allocation_min_days": allocation_min_days,
+                "storage_replies": storage_replies,
+                "es_shards": es_shards,
+                "etl_params": custom_config.etl_params,
+                "etl_config": custom_config.etl_config,
+                "fields": custom_config.fields,
+            }
+            self.data.index_set_id = etl_handler.update_or_create(**etl_params)["index_set_id"]
+            self.data.save(update_fields=["index_set_id"])
+
         custom_config.after_hook(self.data)
+
+        # create custom Log Group
+        if custom_type == CustomTypeEnum.OTLP_LOG.value:
+            self.create_custom_log_group(self.data)
+
         return {
             "collector_config_id": self.data.collector_config_id,
             "index_set_id": self.data.index_set_id,
@@ -2267,16 +2320,18 @@ class CollectorHandler(object):
         allocation_min_days=0,
         storage_replies=1,
         es_shards=settings.ES_SHARDS,
+        is_display=True,
     ):
 
         collector_config_update = {
             "collector_config_name": collector_config_name,
             "category_id": category_id,
             "description": description or collector_config_name,
+            "is_display": is_display
         }
 
         bk_data_name = build_bk_data_name(
-            bk_biz_id=self.data.bk_biz_id, collector_config_name_en=self.data.collector_config_name_en
+            bk_biz_id=self.data.get_bk_biz_id(), collector_config_name_en=self.data.collector_config_name_en
         )
         if self.data.bk_data_id and self.data.bk_data_name != bk_data_name:
             TransferApi.modify_data_id({"data_id": self.data.bk_data_id, "data_name": bk_data_name})
@@ -2316,21 +2371,24 @@ class CollectorHandler(object):
             etl_config = collector_detail["etl_config"]
             fields = collector_detail["fields"]
 
-        from apps.log_databus.handlers.etl import EtlHandler
+        # 仅在传入集群ID时更新
+        if storage_cluster_id:
+            from apps.log_databus.handlers.etl import EtlHandler
 
-        etl_handler = EtlHandler.get_instance(self.data.collector_config_id)
-        etl_params = {
-            "table_id": self.data.collector_config_name_en,
-            "storage_cluster_id": storage_cluster_id,
-            "retention": retention,
-            "es_shards": es_shards,
-            "allocation_min_days": allocation_min_days,
-            "storage_replies": storage_replies,
-            "etl_params": etl_params,
-            "etl_config": etl_config,
-            "fields": fields,
-        }
-        etl_handler.update_or_create(**etl_params)
+            etl_handler = EtlHandler.get_instance(self.data.collector_config_id)
+            etl_params = {
+                "table_id": self.data.collector_config_name_en,
+                "storage_cluster_id": storage_cluster_id,
+                "retention": retention,
+                "es_shards": es_shards,
+                "allocation_min_days": allocation_min_days,
+                "storage_replies": storage_replies,
+                "etl_params": etl_params,
+                "etl_config": etl_config,
+                "fields": fields,
+            }
+            etl_handler.update_or_create(**etl_params)
+
         custom_config.after_hook(self.data)
 
         # add user_operation_record
@@ -3130,7 +3188,7 @@ class CollectorHandler(object):
         )
 
         bcs_path_index_set, bcs_std_index_set = LogIndexSet.get_bcs_index_set(
-            space_uid=bk_biz_id_to_space_uid(data["bk_biz_id"]), bcs_project_id=data["project_id"],
+            space_uid=bk_biz_id_to_space_uid(data["bk_biz_id"]), bcs_project_id=data["project_id"]
         )
         return {
             "rule_id": rule_id,
@@ -3217,7 +3275,7 @@ class CollectorHandler(object):
             raise RuleCollectorException(RuleCollectorException.MESSAGE.format(rule_id=rule_id))
         for collector in collectors:
             self.deal_self_call(
-                collector_config_id=collector.collector_config_id, collector=collector, func=self.destroy,
+                collector_config_id=collector.collector_config_id, collector=collector, func=self.destroy
             )
         bcs_rule.delete()
         return {"rule_id": rule_id}

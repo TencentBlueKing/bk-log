@@ -261,16 +261,17 @@ class MappingHandlers(object):
         return obj
 
     @classmethod
-    def get_default_sort_list(cls, index_set_id: int = None, scenario_id: str = None, scope: str = "default"):
+    def get_default_sort_list(
+        cls, index_set_id: int = None, scenario_id: str = None, scope: str = "default", default_sort_tag: bool = False
+    ):
         """默认字段排序规则"""
         time_field = cls._get_time_field(index_set_id)
         if scope in ["trace_detail", "trace_scatter"]:
             return [[time_field, "asc"]]
-        if scenario_id in [Scenario.BKDATA, Scenario.LOG]:
-            if scenario_id == Scenario.BKDATA:
-                return [[time_field, "desc"], ["gseindex", "desc"], ["_iteration_idx", "desc"]]
-            if scenario_id == Scenario.LOG:
-                return [[time_field, "desc"], ["gseIndex", "desc"], ["iterationIndex", "desc"]]
+        if default_sort_tag and scenario_id == Scenario.BKDATA:
+            return [[time_field, "desc"], ["gseindex", "desc"], ["_iteration_idx", "desc"]]
+        if default_sort_tag and scenario_id == Scenario.LOG:
+            return [[time_field, "desc"], ["gseIndex", "desc"], ["iterationIndex", "desc"]]
         return [[time_field, "desc"]]
 
     def get_default_fields(self):
@@ -294,14 +295,17 @@ class MappingHandlers(object):
     def _get_time_field(cls, index_set_id: int):
         """获取索引时间字段"""
         index_set_obj: LogIndexSet = LogIndexSet.objects.filter(index_set_id=index_set_id).first()
+        if index_set_obj.scenario_id in [Scenario.BKDATA, Scenario.LOG]:
+            return "dtEventTimeStamp"
+
         if index_set_obj.time_field:
             return index_set_obj.time_field
-
-        index_set_obj: LogIndexSetData = LogIndexSetData.objects.filter(index_set_id=index_set_id).first()
-        if not index_set_obj:
-            raise SearchNotTimeFieldType()
-
-        return index_set_obj.time_field
+        # 遍历index_set_data取任意一个不为空的时间字段
+        time_field_list = LogIndexSetData.objects.filter(index_set_id=index_set_id).values_list("time_field", flat=True)
+        for time_field in time_field_list:
+            if time_field:
+                return time_field
+        raise SearchNotTimeFieldType()
 
     def _get_object_field(self, final_fields_list):
         """获取对象字段"""

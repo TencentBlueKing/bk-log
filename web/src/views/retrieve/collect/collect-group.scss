@@ -3,34 +3,40 @@
   .icon-play-shape {
     color: #63656e;
     display: inline-block;
-    margin-right: 6px;
+    margin-right: 2px;
     font-size: 12px;
-    transform: scale(.6);
+    transform: scale(.5);
     transition: transform .3s;
   }
 
   .group-cur {
     display: flex;
     align-items: center;
-    width: 100px;
+    flex-wrap: nowrap;
+    width: calc(100% - 20px);
     cursor: pointer;
 
+    .group-str {
+      width: calc(100% - 20px);
+      margin-left: 2px;
+      word-wrap: break-word;
+    }
+
     .is-active {
-      transform: scale(.6) rotate(90deg);
+      transform: scale(.5) rotate(90deg);
     }
   }
 
   .group-title {
-    height: 24px;
-    background: #EFF1F5;
-    padding: 0 16px;
-    margin-bottom: 8px;
+    min-height: 32px;
+    padding: 7px 16px;
 
-    &.is-move-cur {
-      cursor: move;
-    }
+    // &.is-move-cur {
+    //   cursor: move;
+    // }
 
     &.is-active {
+      /* stylelint-disable-next-line declaration-no-important */
       margin-bottom: 0 !important;
     }
 
@@ -40,28 +46,38 @@
 
     .title-number {
       display: inline-block;
-      min-width: 16px;
+      min-width: 20px;
       height: 16px;
+      line-height: 16px;
+      border-radius: 2px;
       text-align: center;
+      background: #fff;
+      transform: translateX(2px);
+    }
+
+    &:hover {
+      background: #eff1f5;
     }
   }
 
   .group-list {
-    margin-bottom: 8px;
-
     &.list-hidden {
       display: none;
     }
 
     .group-item {
-      line-height: 20px;
-      padding: 8px 16px 0;
+      line-height: 16px;
+      padding: 7px 16px 7px;
       cursor: pointer;
       border: 1px solid transparent;
       border-bottom: none;
 
+      &.is-disabled {
+        cursor: not-allowed;
+      }
+
       &:hover {
-        background: #F0F1F5;
+        background: #f0f1f5;
       }
 
       .more-box {
@@ -81,22 +97,46 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding-bottom: 8px;
-        border-bottom: 1px solid #eaebf0;
+        padding-left: 24px;
+        border-bottom: 1px solid transparent;
+        position: relative;
+        flex-wrap: nowrap;
+
+        .fav-name {
+          flex: 1;
+          width: calc(100% - 20px);
+          margin-left: 2px;
+          word-wrap: break-word;
+        }
+
         .creator {
           color: #979ba5;
         }
 
-        .active-name {
-          color: #3A84FF;
+        &.active-name {
+          color: #3a84ff;
+
+          &::before {
+            background: #3a84ff;
+          }
         }
 
         .icon-shixiao {
           display: inline-block;
           font-size: 12px;
           margin-left: 4px;
-          color: #FF9C01;
+          color: #ff9c01;
           transform: translateY(-1px);
+        }
+
+        &::before {
+          content: ' ';
+          width: 4px;
+          height: 4px;
+          position: absolute;
+          left: 14px;
+          border-radius: 50%;
+          background: #dcdee5;
         }
       }
 

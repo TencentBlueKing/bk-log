@@ -95,7 +95,7 @@ export default {
   data() {
     return {
       tips: {
-        trigger: 'click',
+        trigger: 'mouseenter',
         theme: 'light',
         allowHtml: true,
         content: '#retrieve-help-tips-content',

@@ -7,6 +7,7 @@
     }
 
     > :not(:first-child) {
+      /* stylelint-disable-next-line declaration-no-important */
       margin-top: 12px !important;
     }
   }
@@ -23,6 +24,7 @@
   }
 
   .collect-radio {
+    /* stylelint-disable-next-line declaration-no-important */
     margin-top: 0 !important;
 
     .bk-form-control {
@@ -33,12 +35,15 @@
   }
 
   .filed-label .bk-label-text {
-    width: 150px;
+    width: 100%;
   }
 
   .bk-form-item {
     padding: 0 16px;
-    .bk-label, .bk-radio-text, .bk-checkbox-text {
+
+    .bk-label,
+    .bk-radio-text,
+    .bk-checkbox-text {
       font-size: 12px;
     }
   }
@@ -76,21 +81,29 @@
     }
   }
 
-  .add-new-group-input {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    font-size: 12px;
-
+  .add-new-page-container {
+    .add-new-page-input {
+      display: flex;
+      align-items: center;
+    }
+  
     .operate-button {
-      margin-top: 4px;
-      .bk-button-text {
-        font-size: 12px;
-      }
-
+      font-size: 16px;
+      margin-left: 6px;
+      justify-content: space-between;
+      color: #979ba5;
+  
       span {
-        margin-left: 6px;
         cursor: pointer;
+      }
+  
+      > :first-child {
+        color: #33d05c;
+        margin-right: 12px;
+      }
+  
+      > :last-child {
+        color: #979ba5;
       }
     }
   }
