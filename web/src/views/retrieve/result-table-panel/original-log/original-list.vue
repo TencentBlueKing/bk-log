@@ -27,7 +27,6 @@
     :data="tableList"
     :show-header="false"
     :outer-border="false"
-    :empty-text="$t('retrieve.notData')"
     @row-click="tableRowClick"
     @row-mouse-enter="handleMouseEnter"
     @row-mouse-leave="handleMouseLeave"
@@ -112,6 +111,9 @@
         :visible-fields="visibleFields">
       </retrieve-loader>
     </bk-table-column>
+    <template v-else slot="empty">
+      <empty-view v-bind="$attrs" v-on="$listeners" />
+    </template>
     <!-- 下拉刷新骨架屏loading -->
     <template slot="append" v-if="tableList.length && visibleFields.length && isPageOver">
       <retrieve-loader

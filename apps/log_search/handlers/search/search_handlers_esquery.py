@@ -1039,7 +1039,10 @@ class SearchHandler(object):
         from apps.log_search.handlers.search.mapping_handlers import MappingHandlers
 
         return MappingHandlers.get_default_sort_list(
-            index_set_id=index_set_id, scenario_id=self.scenario_id, scope=scope
+            index_set_id=index_set_id,
+            scenario_id=self.scenario_id,
+            scope=scope,
+            default_sort_tag=self.search_dict.get("default_sort_tag", False),
         )
 
     # 过滤filter
@@ -1068,7 +1071,7 @@ class SearchHandler(object):
             if operator in REAL_OPERATORS_MAP.keys():
                 operator = REAL_OPERATORS_MAP[operator]
 
-            if operator in ["exists", "does not exists"]:
+            if operator in [OperatorEnum.EXISTS["operator"], OperatorEnum.NOT_EXISTS["operator"]]:
                 new_filter_list.append(
                     {"field": field, "value": "0", "operator": operator, "condition": condition, "type": _type}
                 )
@@ -1163,27 +1166,16 @@ class SearchHandler(object):
         else:
             require_field_match = False
 
-        if self.scenario_id == Scenario.BKDATA:
-            highlight = {
-                "pre_tags": ["<mark>"],
-                "post_tags": ["</mark>"],
-                "fields": {
-                    "log": {
-                        # "type": "fvh"
-                        "number_of_fragments": 0
-                    }
-                },
-                "require_field_match": require_field_match,
-            }
-            if self.query_string == "":
-                highlight = {}
-            return highlight
         highlight = {
             "pre_tags": ["<mark>"],
             "post_tags": ["</mark>"],
             "fields": {"*": {"number_of_fragments": 0}},
             "require_field_match": require_field_match,
         }
+
+        if self.query_string == "":
+            highlight = {}
+
         return highlight
 
     def _add_cmdb_fields(self, log):

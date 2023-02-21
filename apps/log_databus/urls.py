@@ -29,6 +29,7 @@ from apps.log_databus.views import (
     collector_views,
     itsm_views,
     restore_views,
+    check_collector_views,
 )
 from apps.log_databus.views import link_views
 from apps.log_databus.views import storage_views
@@ -45,6 +46,7 @@ router.register(r"collect_itsm", itsm_views.ItsmViewSet, basename="collect_itsm"
 router.register(r"collect_itsm_cb", itsm_views.ItsmCallbackViewSet, basename="collect_itsm_cb")
 router.register(r"clean_template", clean_views.CleanTemplateViewSet, basename="clean_template")
 router.register(r"clean", clean_views.CleanViewSet, basename="clean")
+router.register(r"check_collector", check_collector_views.CheckCollectorViewSet, basename="check_collector")
 
 
 urlpatterns = [

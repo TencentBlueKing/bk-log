@@ -169,7 +169,7 @@ export default {
       BIZ_SELECTOR_COMMON_MAX: 5, // 常用的的最大长度
       spaceTypeIdList: [],
       searchTypeId: '',
-      spaceBgColor: '',
+      spaceBgColor: '#3799BA',
     };
   },
   computed: {
@@ -192,7 +192,7 @@ export default {
     },
   },
   created() {
-    this.spaceBgColor = this.$store.getters.spaceBgColor || this.getRandomColor();
+    // this.spaceBgColor = this.$store.getters.spaceBgColor || this.getRandomColor();
     this.initGroupList();
     const spaceTypeMap = {};
     this.mySpaceList.forEach((item) => {
@@ -203,8 +203,8 @@ export default {
     });
     this.spaceTypeIdList = Object.keys(spaceTypeMap).map(key => ({
       id: key,
-      name: SPACE_TYPE_MAP[key].name,
-      styles: this.theme === 'dark' ? SPACE_TYPE_MAP[key].dark : SPACE_TYPE_MAP[key].light,
+      name: SPACE_TYPE_MAP[key]?.name || this.$t('未知'),
+      styles: (this.theme === 'dark' ? SPACE_TYPE_MAP[key]?.dark : SPACE_TYPE_MAP[key]?.light) || {},
     }));
   },
   methods: {
@@ -347,6 +347,8 @@ export default {
   @import '../../scss/mixins/ellipsis.scss';
 
   .biz-menu-select {
+    padding-left: 8px;
+
     .menu-select {
       padding: 0 4px 0 8px;
       flex: 1;
@@ -386,7 +388,7 @@ export default {
       &-list {
         display: flex;
         position: fixed;
-        left: 4px;
+        left: 0;
         top: 100px;
         flex-direction: column;
         z-index: 99;

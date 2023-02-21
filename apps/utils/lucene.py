@@ -41,9 +41,14 @@ class LuceneField(object):
 
     pos: int = 0
     name: str = ""
+    # 此处type为Lucene语法的type
     type: str = ""
     operator: str = DEFAULT_FIELD_OPERATOR
     value: str = ""
+    # 标识是否为全文检索字段
+    is_full_text_field: bool = False
+    # 标识同名字段出现的次数
+    repeat_count: int = 0
 
 
 class LuceneParser(object):
@@ -67,6 +72,7 @@ class LuceneParser(object):
                     for field in fields:
                         if field.name == name:
                             field.name = f"{name}({number})"
+                            field.repeat_count = number
                             number += 1
             return fields
 
@@ -83,9 +89,10 @@ class LuceneParser(object):
         field = LuceneField(
             pos=node.pos,
             name=FULL_TEXT_SEARCH_FIELD_NAME,
-            operator="~=",
+            operator=DEFAULT_FIELD_OPERATOR,
             type=LuceneSyntaxEnum.WORD,
             value=node.value,
+            is_full_text_field=True,
         )
         match = re.search(WORD_RANGE_OPERATORS, node.value)
         if match:
@@ -102,6 +109,7 @@ class LuceneParser(object):
             operator="=",
             type=LuceneSyntaxEnum.PHRASE,
             value=node.value,
+            is_full_text_field=True,
         )
         return field
 
@@ -159,6 +167,7 @@ class LuceneParser(object):
             operator=DEFAULT_FIELD_OPERATOR,
             type=LuceneSyntaxEnum.PROXIMITY,
             value=str(node),
+            is_full_text_field=True,
         )
         return field
 
@@ -192,6 +201,7 @@ class LuceneParser(object):
             operator=NOT_OPERATOR,
             type=LuceneSyntaxEnum.NOT,
             value=self._get_method(node.a).value,
+            is_full_text_field=True,
         )
         return field
 
@@ -203,6 +213,7 @@ class LuceneParser(object):
             operator=PLUS_OPERATOR,
             type=LuceneSyntaxEnum.PLUS,
             value=self._get_method(node.a).value,
+            is_full_text_field=True,
         )
         return field
 
@@ -214,6 +225,7 @@ class LuceneParser(object):
             operator=PROHIBIT_OPERATOR,
             type=LuceneSyntaxEnum.PROHIBIT,
             value=self._get_method(node.a).value,
+            is_full_text_field=True,
         )
         return field
 
@@ -285,7 +297,15 @@ class BaseInspector(object):
         """根据RE match来移除异常字符"""
         unexpect_word_len = len(match[1])
         position = int(str(match[2]))
+        # "127.0.0.1 这种单个引号在开头的情况，需要移除引号
+        if match[1].startswith('"') and not match[1].endswith('"'):
+            self.keyword = self.keyword[:position] + self.keyword[position + 1 :]
+            return
+        if match[1].startswith("'") and not match[1].endswith("'"):
+            self.keyword = self.keyword[:position] + self.keyword[position + 1 :]
+            return
         self.keyword = self.keyword[:position] + self.keyword[position + unexpect_word_len :]
+        self.keyword = self.keyword.strip()
 
     def replace_unexpected_character(self, pos: int, char: str):
         """替换字符"""
@@ -369,7 +389,7 @@ class IllegalRangeSyntaxInspector(BaseInspector):
                     if not end:
                         end = "*"
                     new_range_str = f"[{start} TO {end}]"
-                    new_keyword = new_keyword.replace(match_range_str, new_range_str)
+                    new_keyword = new_keyword.replace(match_range_str, new_range_str).strip()
 
             if self.keyword != new_keyword:
                 self.set_illegal()
@@ -413,7 +433,7 @@ class IllegalBracketInspector(BaseInspector):
                         return
                 if not s:
                     return
-                self.keyword = self.keyword[: s[-1]["index"]] + self.keyword[s[-1]["index"] + 1 :]
+                self.keyword = self.keyword[: s[-1]["index"]] + self.keyword[s[-1]["index"] + 1 :].strip()
                 self.set_illegal()
         except Exception:
             return
@@ -434,8 +454,37 @@ class IllegalColonInspector(BaseInspector):
         except ParseSyntaxError as e:
             if str(e) == self.unexpect_unmatched_re:
                 if self.keyword.find(":") == len(self.keyword) - 1:
-                    self.keyword = self.keyword[:-1]
+                    self.keyword = self.keyword[:-1].strip()
                     self.set_illegal()
+        except Exception:
+            return
+
+
+class IllegalOperatorInspector(BaseInspector):
+    """修复非法运算符"""
+
+    syntax_error_message = _("非法逻辑运算符(AND, OR, NOT)")
+    unexpect_operators = ["AND", "OR", "NOT"]
+    # 非预期语法re
+    unexpect_unmatched_re = (
+        "Syntax error in input : unexpected end of expression (maybe due to unmatched parenthesis) at the end!"
+    )
+
+    def inspect(self):
+        try:
+            parser.parse(self.keyword, lexer=lexer)
+        except ParseSyntaxError as e:
+            if str(e) != self.unexpect_unmatched_re:
+                return
+            for operator in self.unexpect_operators:
+                if operator not in self.keyword:
+                    continue
+                _operator_pos = self.keyword.find(operator)
+                if _operator_pos == len(self.keyword) - len(operator):
+                    self.keyword = self.keyword[:_operator_pos].strip()
+                    self.set_illegal()
+                    # 单次修复
+                    break
         except Exception:
             return
 
@@ -479,6 +528,7 @@ class LuceneSyntaxResolver(object):
         IllegalCharacterInspector,
         IllegalColonInspector,
         IllegalBracketInspector,
+        IllegalOperatorInspector,
         UnknownOperatorInspector,
         DefaultInspector,
     ]

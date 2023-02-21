@@ -21,6 +21,7 @@ the project delivered to anyone in the future.
 """
 import markdown
 from django.conf import settings
+from django.db.models import TextChoices
 from django.utils import translation
 from django.utils.translation import ugettext_lazy as _
 
@@ -421,3 +422,128 @@ class LabelSelectorOperator(object):
 
 # 容器采集配置项转yaml时需要排除的字段
 CONTAINER_CONFIGS_TO_YAML_EXCLUDE_FIELDS = ("container", "label_selector")
+
+
+class CheckStatusEnum(ChoicesEnum):
+    WAIT: str = "wait"
+    STARTED: str = "started"
+    FINISH: str = "finish"
+
+    _choices_labels = (
+        (WAIT, _("等待")),
+        (STARTED, _("开始")),
+        (FINISH, _("完成")),
+    )
+
+
+class InfoTypeEnum(ChoicesEnum):
+    INFO: str = "info"
+    WARNING: str = "warning"
+    ERROR: str = "error"
+
+    _choices_labels = (
+        (INFO, _("信息")),
+        (WARNING, _("告警")),
+        (ERROR, _("错误")),
+    )
+
+
+INFO_TYPE_PREFIX_MAPPING = {
+    InfoTypeEnum.INFO.value: "✅",
+    InfoTypeEnum.WARNING.value: "⚠️",
+    InfoTypeEnum.ERROR.value: "❌",
+}
+
+CHECK_COLLECTOR_CACHE_KEY_PREFIX = "check_collector"
+
+CHECK_COLLECTOR_ITEM_CACHE_TIMEOUT = 1800
+
+# gse agent
+IPC_PATH = "/var/run/ipc.state.report"
+GSE_PATH = "/usr/local/gse/"
+
+DEFAULT_BK_USERNAME = "admin"
+DEFAULT_EXECUTE_SCRIPT_ACCOUNT = "root"
+
+JOB_SUCCESS_STATUS = 9
+JOB_FAILED_AGENT_EXCEPTION = 310
+JOB_STATUS = {
+    JOB_SUCCESS_STATUS: _("成功"),
+    JOB_FAILED_AGENT_EXCEPTION: _("Agent异常"),
+}
+
+RETRY_TIMES = 5
+WAIT_FOR_RETRY = 20
+INDEX_WRITE_PREFIX = "write_"
+INDEX_READ_SUFFIX = "_read"
+
+
+class ScriptType(ChoicesEnum):
+    SHELL = 1
+    BAT = 2
+    PERL = 3
+    PYTHON = 4
+    POWERSHELL = 5
+
+    _choices_labels = (
+        (SHELL, _("shell")),
+        (BAT, _("bat")),
+        (PERL, _("perl")),
+        (PYTHON, _("python")),
+        (POWERSHELL, _("powershell")),
+    )
+
+
+CHECK_AGENT_STEP = {
+    "bin_file": _("检查二进制文件是否存在"),
+    "process": _("检查进程是否存在"),
+    "main_config": _("检查主配置是否存在及正确"),
+    "config": _("检查配置是否正确"),
+    "hosted": _("检查采集插件是否被gse_agent托管"),
+    "socket": _("检查socket文件是否存在"),
+    "healthz": _("执行healthz自检查查看结果"),
+    "socket_queue_status": _("检查socket队列状态"),
+    "dataserver_port": _("检查data server端口是否存在"),
+}
+
+# kafka ssl配置项
+KAFKA_SSL_USERNAME = "sasl_username"
+KAFKA_SSL_PASSWORD = "sasl_passwd"
+KAFKA_SSL_MECHANISM = "sasl_mechanisms"
+KAFKA_SSL_PROTOCOL = "security_protocol"
+
+KAFKA_SSL_CONFIG_ITEMS = {KAFKA_SSL_USERNAME, KAFKA_SSL_PASSWORD, KAFKA_SSL_MECHANISM, KAFKA_SSL_PROTOCOL}
+
+KAFKA_TEST_GROUP = "kafka_test_group"
+DEFAULT_KAFKA_SECURITY_PROTOCOL = "PLAINTEXT"
+DEFAULT_KAFKA_SASL_MECHANISM = "PLAIN"
+
+TABLE_TRANSFER = "pushgateway_transfer_metircs.base"
+
+# 调用GSE的'接收端配置接口'以及'路由接口'时使用
+DEFAULT_GSE_API_PLAT_NAME = "bkmonitor"  # GSE分配给监控的平台名称，不随APP_CODE变更，请不要修改
+
+# transfer metrics
+TRANSFER_METRICS = [
+    "transfer_pipeline_backend_handled_total",
+    "transfer_pipeline_frontend_handled_total",
+    "transfer_pipeline_processor_handled_total",
+    "transfer_pipeline_backend_dropped_total",
+    "transfer_pipeline_frontend_dropped_total",
+    "transfer_pipeline_processor_dropped_total",
+    "transfer_kafka_request_latency_milliseconds_bucket",
+    "transfer_kafka_request_latency_milliseconds_sum",
+    "transfer_kafka_request_latency_milliseconds_count",
+]
+
+META_DATA_CRON_REFRESH_TASK_NAME_LIST = [
+    "metadata.task.config_refresh.refresh_datasource",
+    "metadata.task.config_refresh.refresh_consul_storage",
+    "metadata.task.config_refresh.refresh_es_storage",
+]
+
+
+# Archive
+class ArchiveInstanceType(TextChoices):
+    COLLECTOR_CONFIG = "collector_config", _("采集项")
+    COLLECTOR_PLUGIN = "collector_plugin", _("采集插件")

@@ -219,12 +219,6 @@ export default {
         params.operation = 'display';
         params.displayFieldNames = displayFieldNames;
         if (!displayFieldNames.length) return; // 可以设置为全部隐藏，但是不请求接口
-        this.$http.request('retrieve/postFieldsConfig', {
-          params: { index_set_id: this.$route.params.indexId },
-          data: { display_fields: displayFieldNames, sort_list: this.sortList, config_id: this.filedSettingConfigID },
-        }).catch((e) => {
-          console.warn(e);
-        });
       }
 
       if (Object.keys(params).length) this.$emit('menuClick', params);

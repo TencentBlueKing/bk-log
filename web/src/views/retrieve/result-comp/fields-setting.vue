@@ -141,7 +141,7 @@
       </bk-button>
     </div>
     <div class="field-alias-setting">
-      <span style="margin-right: 4px;">{{ $t('显示别名') }}</span>
+      <span style="margin-right: 4px;">{{ $t('表头显示别名') }}</span>
       <bk-switcher v-model="showFieldAlias" theme="primary" size="small"></bk-switcher>
     </div>
   </div>
@@ -277,7 +277,9 @@ export default {
           await this.submitFieldsSet(this.currentClickConfigID);
         }
         this.$store.commit('updateClearTableWidth', 1);
-        this.$emit('confirm', this.shadowVisible, this.showFieldAlias);
+        // 判断当前页, 如果是排序时 不更新字段
+        const isRequestFields = this.activeFieldTab !== 'sort';
+        this.$emit('confirm', this.shadowVisible, this.showFieldAlias, isRequestFields);
       } catch (error) {
         console.warn(error);
       } finally {
@@ -455,6 +457,9 @@ export default {
           params: { index_set_id: this.$route.params.indexId },
           data,
         });
+        if (this.activeFieldTab === 'sort') {
+          this.$emit('shouldRetrieve', undefined, true, false);
+        }
       } catch (error) {} finally {
         if (!this.isConfirmSubmit) this.initRequestConfigListShow();
         this.newConfigStr = '';

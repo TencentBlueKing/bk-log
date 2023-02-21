@@ -413,11 +413,72 @@ python
         OTLP_LOG: _(
             """
 # 注意事项
-# 使用方法
-不同云区域的自定义上报服务地址
+
+API 频率限制 5w/s
+
+# 上报地址
 
 {otlp_report_config}
 
+# 使用方法
+
+安装依赖
+
+    $ pip install "opentelemetry-api>=1.7.1,<1.13.0" "opentelemetry-sdk>=1.7.1,<1.13.0" "opentelemetry-exporter-otlp>=1.7.1,<1.13.0"
+    
+    # 依赖版本
+    # Package                                Version
+    # -------------------------------------- ---------
+    # opentelemetry-api                      1.11.1
+    # opentelemetry-sdk                      1.11.1
+    # opentelemetry-exporter-otlp            1.11.1
+    
+上报日志
+
+    import logging
+    import time
+    
+    from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
+    from opentelemetry.sdk._logs import LogEmitterProvider, set_log_emitter_provider
+    from opentelemetry.sdk._logs.export import BatchLogProcessor
+    from opentelemetry.sdk.resources import Resource
+    
+    try:
+        from opentelemetry.sdk._logs import LoggingHandler
+    except ImportError:
+        from opentelemetry.sdk._logs import OTLPHandler as LoggingHandler
+    
+    # init settings
+    service_name = "${{service_name}}"
+    bk_data_token = "${{bk_data_token}}"
+    endpoint = "${{endpoint}}"
+    
+    # init log emitter
+    log_emitter_provider = LogEmitterProvider(
+        resource=Resource.create({{"service.name": service_name, "bk.data.token": bk_data_token}})
+    )
+    set_log_emitter_provider(log_emitter_provider)
+    
+    # init exporter
+    exporter = OTLPLogExporter(endpoint=endpoint)
+    log_emitter_provider.add_log_processor(BatchLogProcessor(exporter))
+    
+    # init logger
+    handler = LoggingHandler(
+        level=logging.NOTSET,
+        log_emitter=log_emitter_provider.get_log_emitter(__name__),
+    )
+    logging.getLogger("root").addHandler(handler)
+    
+    # init log
+    logger = logging.getLogger("root")
+    logger.setLevel(logging.INFO)
+    
+    # report log
+    logger.info(msg="msg content", extra={{"attribute.a": "a", "attribute.b": "b"}})
+    
+    # 防止未上报进程结束
+    time.sleep(3)
 
 [opentelemetry官方文档](https://opentelemetry.io/)
 """
@@ -819,6 +880,11 @@ class FieldDateFormatEnum(ChoicesEnum):
         return [
             {"id": "yyyy-MM-dd HH:mm:ss", "name": "YYYY-MM-DD HH:mm:ss", "description": "2006-01-02 15:04:05"},
             {
+                "id": "yyyy-MM-dd HH:mm:ss,SSS",
+                "name": "YYYY-MM-DD HH:mm:ss,SSS",
+                "description": "2006-01-02 15:04:05,000",
+            },
+            {
                 "id": "yyyy-MM-dd HH:mm:ss.SSS",
                 "name": "YYYY-MM-DD HH:mm:ss.SSS",
                 "description": "2006-01-02 15:04:05.000",
@@ -1162,7 +1228,7 @@ class FavoriteGroupType(ChoicesEnum):
     UNGROUPED = "unknown"
 
     _choices_labels = (
-        (PRIVATE, _("个人组")),
+        (PRIVATE, _("个人收藏")),
         (PUBLIC, _("公共组")),
         (UNGROUPED, _("未分组")),
     )

@@ -22,9 +22,10 @@
 
 <template>
   <div
-    style="transition: padding .5s;"
     v-bkloading="{ isLoading: basicLoading }"
-    :class="`custom-report-detail-container access-manage-container ${isOpenWindow ? 'is-active-details' : ''}`">
+    ref="detailRef"
+    :style="`padding-right: ${introWidth + 20}px;`"
+    class="custom-report-detail-container access-manage-container">
     <auth-container-page v-if="authPageInfo" :info="authPageInfo"></auth-container-page>
     <template v-if="!authPageInfo && !basicLoading && reportDetail">
       <bk-tab :active.sync="activePanel" type="border-card">
@@ -40,10 +41,19 @@
       </keep-alive>
     </template>
 
-    <intro-panel
-      :data="reportDetail"
-      :is-open-window="isOpenWindow"
-      @handleActiveDetails="handleActiveDetails" />
+    <div
+      :class="['intro-container',isDraging && 'draging-move']"
+      :style="`width: ${ introWidth }px`">
+      <div :class="`drag-item ${!introWidth && 'hidden-drag'}`" :style="`right: ${introWidth - 18}px`">
+        <span
+          class="bk-icon icon-more"
+          @mousedown.left="dragBegin"></span>
+      </div>
+      <intro-panel
+        :data="reportDetail"
+        :is-open-window="isOpenWindow"
+        @handleActiveDetails="handleActiveDetails" />
+    </div>
   </div>
 </template>
 
@@ -53,6 +63,7 @@ import BasicInfo from '../log-collection/collection-item/manage-collection/basic
 import DataStorage from '../log-collection/collection-item/manage-collection/data-storage';
 import DataStatus from '../log-collection/collection-item/manage-collection/data-status';
 import UsageDetails from '@/views/manage/manage-access/components/usage-details';
+import dragMixin from '@/mixins/drag-mixin';
 import IntroPanel from './components/intro-panel';
 import * as authorityMap from '../../../../common/authority-map';
 
@@ -66,15 +77,16 @@ export default {
     UsageDetails,
     IntroPanel,
   },
+  mixins: [dragMixin],
   data() {
     return {
       basicLoading: true,
       authPageInfo: null,
       reportDetail: {},
-      activePanel: 'basicInfo',
+      activePanel: this.$route.query.type || 'basicInfo',
       isOpenWindow: true,
       panels: [
-        { name: 'basicInfo', label: this.$t('基本信息') },
+        { name: 'basicInfo', label: this.$t('配置信息') },
         { name: 'dataStorage', label: this.$t('数据存储') },
         { name: 'dataStatus', label: this.$t('数据状态') },
         { name: 'usageDetails', label: this.$t('使用详情') },
@@ -94,6 +106,11 @@ export default {
   },
   created() {
     this.initPage();
+  },
+  mounted() {
+    this.$nextTick(() => {
+      this.maxIntroWidth = this.$refs.detailRef.clientWidth - 380;
+    });
   },
   methods: {
     async initPage() {
@@ -128,13 +145,48 @@ export default {
     },
     handleActiveDetails(state) {
       this.isOpenWindow = state;
+      this.introWidth = state ? 360 : 0;
     },
   },
 };
 </script>
 
 <style lang="scss">
-  .is-active-details {
-    padding: 20px 420px 20px 24px;
+  .intro-container {
+    position: fixed;
+    top: 99px;
+    right: 0;
+    z-index: 999;
+    height: calc(100vh - 99px);
+    overflow: hidden;
+    border-left: 1px solid transparent;
+
+    .drag-item {
+      width: 20px;
+      height: 40px;
+      display: inline-block;
+      color: #c4c6cc;
+      position: absolute;
+      z-index: 100;
+      right: 304px;
+      top: 48%;
+      user-select: none;
+      cursor: col-resize;
+
+      &.hidden-drag {
+        display: none;
+      }
+
+      .icon-more::after {
+        content: '\e189';
+        position: absolute;
+        left: 0;
+        top: 12px;
+      }
+    }
+
+    &.draging-move {
+      border-left-color: #3a84ff;
+    }
   }
 </style>

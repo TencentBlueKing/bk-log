@@ -404,6 +404,27 @@ class _TransferApi(object):
             description=_("查询置顶空间实例列表"),
             before_request=add_esb_info_before_request,
         )
+        self.create_log_group = DataAPI(
+            method="POST",
+            url=MONITOR_APIGATEWAY_ROOT + "metadata_create_log_group/",
+            module=self.MODULE,
+            description=_("创建自定义日志组"),
+            before_request=add_esb_info_before_request,
+        )
+        self.modify_log_group = DataAPI(
+            method="POST",
+            url=MONITOR_APIGATEWAY_ROOT + "metadata_modify_log_group/",
+            module=self.MODULE,
+            description=_("修改自定义日志组"),
+            before_request=add_esb_info_before_request,
+        )
+        self.get_log_group = DataAPI(
+            method="GET",
+            url=MONITOR_APIGATEWAY_ROOT + "metadata_get_log_group/",
+            module=self.MODULE,
+            description=_("获取自定义日志组"),
+            before_request=add_esb_info_before_request,
+        )
 
 
 Transfer = _TransferApi()

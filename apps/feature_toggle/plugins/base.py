@@ -175,3 +175,14 @@ class EsConfig(FeatureToggleBase):
 
     def action(self):
         pass
+
+
+@register
+class CheckCollectorCustomConfig(FeatureToggleBase):
+    target = "check_collector_custom_config"
+
+    def set_status(self, param: dict) -> dict:
+        return param
+
+    def action(self):
+        pass

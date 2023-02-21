@@ -143,10 +143,10 @@ class AiopsModelHandler(BaseAiopsHandler):
         self,
         experiment_id: int,
         window: str = "1h",
-        worker_nums: int = 6,
-        memory: int = 2048,
+        worker_nums: int = 2,
+        memory: int = 4096,
         time_limit: int = 7200,
-        core: int = 4,
+        core: int = 2,
         max_memory: int = 8192,
     ):
         """
@@ -1102,12 +1102,20 @@ class AiopsModelHandler(BaseAiopsHandler):
         max_log_length: int,
         is_case_sensitive: int,
     ):
+        for item in input_data:
+            # 追加内置字段
+            item.update({"__group_id__": "0", "__id__": "0", "__index__": "0"})
         aiops_experiment_debug_request = AiopsExperimentsDebugCls(
             project_id=self.conf.get("project_id"),
             input_config=AiopsExperimentsDebugInputConfigCls(
                 algorithm_name=self.conf.get("debug_algorithm_name"),
                 input_data=input_data,
-                feature_columns=[{"field_name": "log", "data_field_name": clustering_field}],
+                feature_columns=[
+                    {"data_field_name": clustering_field, "field_name": "log"},
+                    {"data_field_name": "__index__", "field_name": "__index__"},
+                    {"data_field_name": "__id__", "field_name": "__id__"},
+                    {"data_field_name": "__group_id__", "field_name": "__group_id__"},
+                ],
                 training_args=[
                     {"field_name": "min_members", "value": min_members},
                     {"field_name": "max_dist_list", "value": max_dist_list},

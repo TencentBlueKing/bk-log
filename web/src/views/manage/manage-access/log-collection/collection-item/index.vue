@@ -244,15 +244,23 @@
           <div class="collect-table-operate" slot-scope="props">
             <!-- 检索 -->
             <!-- 启用状态下 且存在 index_set_id 才能检索 -->
-            <bk-button
-              theme="primary"
-              text
+            <span
               class="king-button"
-              :disabled="!props.row.is_active || (!props.row.index_set_id && !props.row.bkdata_index_set_ids.length)"
-              v-cursor="{ active: !(props.row.permission && props.row.permission[authorityMap.SEARCH_LOG_AUTH]) }"
-              @click="operateHandler(props.row, 'search')">
-              {{ $t('nav.retrieve') }}
-            </bk-button>
+              v-bk-tooltips.top="{
+                content: getDisabledTipsMessage(props.row, 'search'),
+                disabled: !props.row.status
+                  || !(!props.row.is_active || (!props.row.index_set_id && !props.row.bkdata_index_set_ids.length)),
+                delay: 500,
+              }">
+              <bk-button
+                theme="primary"
+                text
+                :disabled="!props.row.is_active || (!props.row.index_set_id && !props.row.bkdata_index_set_ids.length)"
+                v-cursor="{ active: !(props.row.permission && props.row.permission[authorityMap.SEARCH_LOG_AUTH]) }"
+                @click="operateHandler(props.row, 'search')">
+                {{ $t('nav.retrieve') }}
+              </bk-button>
+            </span>
             <!-- 编辑 -->
             <bk-button
               theme="primary"
@@ -264,25 +272,31 @@
               @click.stop="operateHandler(props.row, 'edit')">
               {{ $t('编辑') }}
             </bk-button>
-            <!-- 前往清洗 -->
-            <bk-button
-              theme="primary"
-              text
-              class="king-button"
-              :disabled="!props.row.table_id"
-              v-cursor="{
-                active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
-              }"
-              @click.stop="operateHandler(props.row, 'clean')">
-              {{ $t('logClean.goToClean') }}
-            </bk-button>
+            <span v-bk-tooltips.top="{
+              content: getDisabledTipsMessage(props.row, 'clean'),
+              disabled: !props.row.status || props.row.table_id,
+              delay: 500,
+            }">
+              <!-- 前往清洗 -->
+              <bk-button
+                theme="primary"
+                text
+                class="king-button"
+                :disabled="!props.row.table_id"
+                v-cursor="{
+                  active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
+                }"
+                @click.stop="operateHandler(props.row, 'clean')">
+                {{ $t('logClean.goToClean') }}
+              </bk-button>
+            </span>
             <bk-dropdown-menu ref="dropdown" align="right">
               <i
                 class="bk-icon icon-more"
                 style="margin-left: 5px; font-size: 14px; font-weight: bold;"
                 slot="dropdown-trigger">
               </i>
-              <ul class="bk-dropdown-list" slot="dropdown-content">
+              <ul class="bk-dropdown-list collection-operation-list" slot="dropdown-content">
                 <!-- 查看详情 -->
                 <li>
                   <a
@@ -338,7 +352,12 @@
                     v-if="!props.row.status ||
                       props.row.status === 'running' ||
                       props.row.is_active ||
-                      !collectProject">
+                      !collectProject"
+                    v-bk-tooltips.top="{
+                      content: getDisabledTipsMessage(props.row, 'delete'),
+                      disabled: !props.row.status,
+                      delay: 500,
+                    }">
                     {{$t('btn.delete')}}
                   </a>
                   <a
@@ -354,7 +373,12 @@
                   <a
                     href="javascript:;"
                     class="text-disabled"
-                    v-if="!props.row.table_id">
+                    v-if="!props.row.table_id"
+                    v-bk-tooltips.top="{
+                      content: getDisabledTipsMessage(props.row, 'storage'),
+                      disabled: !props.row.status || props.row.table_id,
+                      delay: 500,
+                    }">
                     {{$t('logClean.storageSetting')}}
                   </a>
                   <a
@@ -370,7 +394,12 @@
                   <a
                     href="javascript:;"
                     class="text-disabled"
-                    v-if="!props.row.table_id">
+                    v-if="!props.row.table_id"
+                    v-bk-tooltips.top="{
+                      content: getDisabledTipsMessage(props.row, 'clone'),
+                      disabled: !props.row.status || props.row.table_id,
+                      delay: 500,
+                    }">
                     {{ $t('克隆') }}
                   </a>
                   <a
@@ -380,6 +409,11 @@
                       active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
                     }"
                     @click.stop="operateHandler(props.row, 'clone')">{{ $t('克隆') }}</a>
+                </li>
+                <li v-if="enableCheckCollector">
+                  <a href="javascript:;" @click.stop="handleShowReport(props.row)">
+                    {{ $t('一键检测') }}
+                  </a>
                 </li>
               </ul>
             </bk-dropdown-menu>
@@ -395,6 +429,11 @@
         </bk-table-column>
       </bk-table>
     </section>
+    <collection-report-view
+      v-model="reportDetailShow"
+      :check-record-id="checkRecordId"
+      @closeReport="() => reportDetailShow = false"
+    />
   </section>
 </template>
 
@@ -403,9 +442,13 @@ import { projectManages } from '@/common/util';
 import collectedItemsMixin from '@/mixins/collected-items-mixin';
 import { mapGetters } from 'vuex';
 import * as authorityMap from '../../../../../common/authority-map';
+import CollectionReportView from '../../components/collection-report-view';
 
 export default {
   name: 'CollectionItem',
+  components: {
+    CollectionReportView,
+  },
   mixins: [collectedItemsMixin],
   data() {
     const settingFields = [
@@ -496,6 +539,12 @@ export default {
         fields: settingFields,
         selectedFields: settingFields.slice(1, 8),
       },
+      // 是否支持一键检测
+      enableCheckCollector: window.ENABLE_CHECK_COLLECTOR,
+      // 一键检测弹窗配置
+      reportDetailShow: false,
+      // 一键检测采集项标识
+      checkRecordId: '',
     };
   },
   computed: {
@@ -805,6 +854,18 @@ export default {
         });
       });
     },
+    handleShowReport(row) {
+      this.$http.request('collect/runCheck', {
+        data: {
+          collector_config_id: row.collector_config_id,
+        },
+      }).then((res) => {
+        if (res.data?.check_record_id) {
+          this.reportDetailShow = true;
+          this.checkRecordId = res.data.check_record_id;
+        }
+      });
+    },
   },
 };
 </script>
@@ -920,6 +981,10 @@ export default {
     .bk-dropdown-list a.text-disabled:hover {
       color: #c4c6cc;
       cursor: not-allowed;
+    }
+
+    .collection-operation-list {
+      max-height: 190px;
     }
 
     .collect-table-operate {

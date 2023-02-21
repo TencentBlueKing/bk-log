@@ -41,6 +41,7 @@ import ManageInput from './component/manage-input';
 import $http from '../../../api';
 import { deepClone, random, formatDate } from '../../../common/util';
 import './manage-group-dialog.scss';
+import jsCookie from 'js-cookie';
 
 interface IProps {
   value?: boolean;
@@ -114,12 +115,13 @@ export default class GroupDialog extends tsc<IProps> {
   tableDialog = false;
   selectFavoriteList = []; // 列的头部的选择框收藏ID列表
   groupList = []; // 组列表
-  unPrivateList = []; // 无个人组的收藏列表
-  privateList = []; // 个人组列表 只有个人的列表
+  unPrivateList = []; // 无个人收藏的收藏列表
+  privateList = []; // 个人收藏列表 只有个人的列表
   checkValue = 0; // 0为不选 1为半选 2为全选
   groupName = ''; // 输入框组名
   unknownGroupID = 0;
   privateGroupID = 0;
+  positionTop = 0;
   isCannotValueChange = false; // 用于分组时不进行数据更新
   maxHeight = 300;
   tippyOption = {
@@ -135,6 +137,10 @@ export default class GroupDialog extends tsc<IProps> {
     'group_option_private',
     'is_group_disabled',
   ];
+  groupNameMap = {
+    unknown: window.mainComponent.$t('未分组'),
+    private: window.mainComponent.$t('个人收藏'),
+  }
   sourceFilters = []; // 所属组数组
   updateSourceFilters = []; // 更变人过滤数组
 
@@ -145,7 +151,7 @@ export default class GroupDialog extends tsc<IProps> {
   ];
   allOptionList = [ // 本人创建的收藏的可见范围数组
     { name: window.mainComponent.$t('公开'), id: 'public' },
-    { name: window.mainComponent.$t('仅本人'), id: 'private' },
+    { name: window.mainComponent.$t('私有'), id: 'private' },
   ];
 
   tableSetting = {
@@ -196,8 +202,9 @@ export default class GroupDialog extends tsc<IProps> {
   }
 
   mounted() {
-    const initTableHeight = parseInt(`${(document.body.clientHeight * 0.8)  - 240}`);
+    const initTableHeight = Math.floor(document.body.clientHeight * 0.8)  - 240;
     this.maxHeight = initTableHeight > this.maxHeight ? initTableHeight : this.maxHeight;
+    this.positionTop = Math.floor(document.body.clientHeight * 0.1);
   }
 
   async handleValueChange(value) {
@@ -215,6 +222,7 @@ export default class GroupDialog extends tsc<IProps> {
       this.updateSourceFilters = [];
       this.searchAfterList = [];
       this.handleShowChange();
+      this.handleSubmitChange(true);
     }
   }
 
@@ -249,6 +257,9 @@ export default class GroupDialog extends tsc<IProps> {
       this.selectFavoriteList = [];
     }, 500);
   }
+  handleInputSearchFavorite() {
+    if (this.searchValue === '') this.handleSearchFilter();
+  }
   /** 全选操作 */
   handleSelectionChange(value) {
     this.selectFavoriteList = value
@@ -278,9 +289,16 @@ export default class GroupDialog extends tsc<IProps> {
         },
       });
       const updateSourceFiltersSet = new Set();
+      const localLanguage = jsCookie.get('blueking_language') || 'zh-cn';
       const initList = res.data.map((item) => {
         const visible_option = item.created_by === this.getUserName ? this.allOptionList : this.unPrivateOptionList;
-        const search_fields_select_list = item.search_fields.map(item => ({ name: item })); // 初始化表单字段
+        const search_fields_select_list = item.search_fields.map(item => ({
+          name: localLanguage === 'en' ? item.replace(/^全文检索(\(\d\))?$/, (item, p1) => {
+            return `${this.$t('全文检索')}${!!p1 ? p1 : ''}`;
+          }) : item,
+          chName: item,
+        })); // 初始化表单字段
+
         const is_group_disabled = item.visible_type === 'private';
         if (!updateSourceFiltersSet.has(item.updated_by)) updateSourceFiltersSet.add(item.updated_by);
         return {
@@ -315,13 +333,13 @@ export default class GroupDialog extends tsc<IProps> {
       });
       this.groupList = res.data.map(item => ({
         group_id: item.id,
-        group_name: item.name,
+        group_name: this.groupNameMap[item.group_type] ?? item.name,
         group_type: item.group_type,
       }));
-      this.unPrivateList = this.groupList.slice(1); // 去除个人组的列表
-      this.privateList = this.groupList.slice(0, 1); // 个人组列表
+      this.unPrivateList = this.groupList.slice(1); // 去除个人收藏的列表
+      this.privateList = this.groupList.slice(0, 1); // 个人收藏列表
       this.sourceFilters = res.data.map(item => ({
-        text: item.name,
+        text: this.groupNameMap[item.group_type] ?? item.name,
         value: item.name,
       }));
       this.unknownGroupID = this.groupList[this.groupList.length - 1]?.group_id;
@@ -374,7 +392,12 @@ export default class GroupDialog extends tsc<IProps> {
     if (status) {
       try {
         const res = await this.getSearchFieldsList(row.keyword);
-        this.operateListChange(row, { search_fields_select_list: res.data });
+        const list = res.data.map(item => ({
+          ...item,
+          name: item.is_full_text_field ? `${this.$t('全文检索')}${!!item.repeat_count ? `(${item.repeat_count})` : ''}` : item.name,
+          chName: item.name,
+        }));
+        this.operateListChange(row, { search_fields_select_list: list });
       } catch (error) {
         console.warn(error);
       }
@@ -439,7 +462,7 @@ export default class GroupDialog extends tsc<IProps> {
 
   handleDeleteFavorite(row) {
     this.$bkInfo({
-      subTitle: `${this.$t('当前收藏为')}${row.name}，${this.$t('是否删除')}？`,
+      subTitle: `${this.$t('当前收藏名为')} ${row.name} ，${this.$t('是否删除')}？`,
       type: 'warning',
       confirmFn: () => {
         this.deleteTableIDList.push(row.id);
@@ -456,6 +479,9 @@ export default class GroupDialog extends tsc<IProps> {
         // 当前选中选择删除
         const index = this.selectFavoriteList.findIndex(item => item === row.id);
         if (index >= 0) this.selectFavoriteList.splice(index, 1);
+        $http.request('favorite/deleteFavorite', {
+          params: { favorite_id: row.id },
+        });
       },
     });
   }
@@ -464,8 +490,7 @@ export default class GroupDialog extends tsc<IProps> {
     this.tableLoading = true;
     Promise.all([this.batchDeleteFavorite(), this.batchUpdateFavorite()])
       .then(() => {
-        this.handleValueChange(false);
-        this.handleSubmitChange(true);
+        this.handleShowChange();
       })
       .finally(() => {
         this.tableLoading = false;
@@ -554,7 +579,10 @@ export default class GroupDialog extends tsc<IProps> {
         directives: [
           {
             name: 'bk-tooltips',
-            value: this.$t('表单模式显示字段文案'),
+            value: {
+              width: 400,
+              content: this.$t('表单模式显示字段文案'),
+            },
           },
         ],
       }, this.$t('表单模式')),
@@ -570,7 +598,10 @@ export default class GroupDialog extends tsc<IProps> {
         directives: [
           {
             name: 'bk-tooltips',
-            value: this.$t('是否同时显示字段文案'),
+            value: {
+              width: 400,
+              content: this.$t('是否同时显示字段文案'),
+            },
           },
         ],
       }, this.$t('显示字段')),
@@ -647,9 +678,9 @@ export default class GroupDialog extends tsc<IProps> {
               <li class="add-new-page-input">
                 <Input
                   vModel={this.groupName}
-                  maxlength={10}
-                  behavior={'simplicity'}
-                ></Input>
+                  maxlength={30}
+                  behavior={'simplicity'}>
+                </Input>
                 <div class="operate-button">
                   <span class="bk-icon icon-check-line" onClick={() => this.handleAddGroupName()}></span>
                   <span class="bk-icon icon-close-line-2" onClick={() => {
@@ -689,7 +720,7 @@ export default class GroupDialog extends tsc<IProps> {
           on-toggle={status => this.handleClickFieldsList(row, status)}
         >
           {row.search_fields_select_list.map(item => (
-            <Option id={item.name} key={item.name} name={item.name}></Option>
+            <Option id={item.chName} key={item.name} name={item.name}></Option>
           ))}
         </Select>,
       ],
@@ -723,6 +754,7 @@ export default class GroupDialog extends tsc<IProps> {
         mask-close={false}
         ext-cls="manage-group"
         width={960}
+        position={{ top: this.positionTop }}
         confirm-fn={this.handleSubmitTableData}
         on-value-change={this.handleValueChange}
       >
@@ -738,6 +770,7 @@ export default class GroupDialog extends tsc<IProps> {
             vModel={this.searchValue}
             on-enter={this.handleSearchFilter}
             on-right-icon-click={this.handleSearchFilter}
+            onKeyup={this.handleInputSearchFavorite}
           ></Input>
         </div>
         {this.selectCount ? (

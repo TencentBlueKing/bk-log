@@ -71,6 +71,7 @@
             <div slot="content" class="fields-setting-container">
               <fields-setting
                 v-if="showFieldsSetting"
+                v-on="$listeners"
                 :field-alias-map="$attrs['field-alias-map']"
                 :retrieve-params="retrieveParams"
                 @setPopperInstance="setPopperInstance"
