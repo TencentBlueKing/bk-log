@@ -474,7 +474,7 @@ export default class CollectDialog extends tsc<IProps> {
               <Input
                 class="collect-name"
                 vModel={this.favoriteData.name}
-                placeholder={this.$t('填写收藏名（长度30个字符）')}
+                placeholder={this.$t('{n}, （长度30个字符）', { n: this.$t('填写收藏名') })}
               ></Input>
             </FormItem>
             <FormItem
@@ -522,7 +522,7 @@ export default class CollectDialog extends tsc<IProps> {
                           <FormItem property="groupName">
                             <Input
                               clearable
-                              placeholder={`${this.$t('请输入组名')}${this.$t('（长度30个字符）')}`}
+                              placeholder={this.$t('{n}, （长度30个字符）', { n: this.$t('请输入组名') })}
                               vModel={this.verifyData.groupName}
                             ></Input>
                           </FormItem>

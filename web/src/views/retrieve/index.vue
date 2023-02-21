@@ -667,7 +667,7 @@ export default {
       this.$store.commit('updateIndexId', val);
       this.retrieveSearchNumber = 0; // 切换索引集 检索次数设置为0;
       val && this.requestSearchHistory(val);
-      this.clearCondition();
+      this.clearCondition('*', false);
     },
     spaceUid: {
       async handler() {
@@ -1061,8 +1061,12 @@ export default {
         this.retrieveLog();
       }
     },
-    // 清空条件
-    clearCondition(clearStr = '*') {
+    /**
+     * @desc: 清空条件
+     * @param {String} clearStr 检索keywords
+     * @param {Boolean} isRetrieveLog 是否检索表格
+     */
+    clearCondition(clearStr = '*', isRetrieveLog = true) {
       Object.assign(this.retrieveParams, {
         keyword: this.isSqlSearchType ? clearStr : this.retrieveParams.keyword, // 若是表单模式的清空则不删除keyword
         host_scopes: {
@@ -1075,7 +1079,7 @@ export default {
       });
       this.isClearCondition = !this.isClearCondition;
       if (this.isSqlSearchType) this.handleBlurSearchInput('*');
-      this.retrieveLog();
+      if (isRetrieveLog) this.retrieveLog();
     },
     // 搜索记录
     retrieveFavorite({ index_set_id: indexSetID, params }) {
