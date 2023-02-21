@@ -139,7 +139,7 @@ class ClusteringMonitorHandler(object):
             strategy_type=strategy_type,
         )
 
-        labels = DEFAULT_LABEL
+        labels = DEFAULT_LABEL.copy()
         if strategy_type == StrategiesType.NORMAL_STRATEGY:
             labels += [f"LogClustering/NewLog/{self.index_set_id}"]
         else:
