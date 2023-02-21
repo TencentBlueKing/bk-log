@@ -36,7 +36,7 @@
           v-if="!sliderLoading"
           data-test-id="addNewArchive_div_formContainer"
           :model="formData"
-          :label-width="150"
+          :label-width="160"
           :rules="basicRules"
           form-type="vertical"
           ref="validateForm"
@@ -44,35 +44,32 @@
           <bk-form-item
             :label="$t('选择采集项/采集插件')"
             required
-            property="collector_config_id">
+            property="instance_id">
             <bk-select
               searchable
-              v-model="formData.collector_config_id"
+              v-model="formData.instance_id"
               data-test-id="formContainer_select_selectCollector"
               :clearable="false"
               :disabled="isEdit"
-              @change="handleCollectorChange">
-              <bk-option
-                v-for="option in collectorList"
-                :key="option.collector_config_id"
-                :id="option.collector_config_id"
-                :name="option.collector_config_name"
-                :disabled="!option.permission[authorityMap.MANAGE_COLLECTION_AUTH]">
-                <!-- <div
-                  v-if="!(option.permission && option.permission.manage_collection)"
-                  class="option-slot-container no-authority"
-                  @click.stop>
-                  <span class="text">
-                    <span>{{ option.collector_config_name }}</span>
-                    <span style="color:#979ba5;">（{{ `#${option.collector_config_id}` }}）</span>
-                  </span>
-                  <span class="apply-text" @click.stop="applyProjectAccess(option)">{{ $t('申请权限') }}</span>
-                </div>
-                <div v-else v-bk-overflow-tips class="option-slot-container">
-                  <span>{{ option.collector_config_name }}</span>
-                  <span style="color:#979ba5;">（{{ `#${option.collector_config_id}` }}）</span>
-                </div> -->
-              </bk-option>
+              @change="handleCollectorChange"
+            >
+              <bk-option-group
+                show-collapse
+                v-for="item in collectorList"
+                :id="item.id"
+                :name="item.name"
+                :key="item.id"
+              >
+                <bk-option
+                  v-for="option in item.list"
+                  :key="option.id"
+                  :id="option.id"
+                  :name="option.name"
+                  :disabled="!option.permission[authorityMap.MANAGE_COLLECTION_AUTH]"
+                >
+                  {{ option.name }}
+                </bk-option>
+              </bk-option-group>
             </bk-select>
           </bk-form-item>
           <bk-form-item
@@ -82,7 +79,7 @@
             <bk-select
               v-model="formData.target_snapshot_repository_name"
               data-test-id="formContainer_select_selectStorehouse"
-              :disabled="isEdit || !formData.collector_config_id">
+              :disabled="isEdit || !formData.instance_id">
               <bk-option
                 v-for="option in repositoryRenderList"
                 :key="option.repository_name"
@@ -158,15 +155,19 @@ export default {
       confirmLoading: false,
       sliderLoading: false,
       customRetentionDay: '', // 自定义过期天数
-      collectorList: [], // 采集项列表
+      collectorList: [
+        { id: 'collector_config', name: this.$t('采集项'), list: [] }, // 采集项
+        { id: 'collector_plugin', name: this.$t('采集插件'), list: [] }, // 采集插件
+      ], // 采集项列表
       repositoryOriginList: [], // 仓库列表
       // repositoryRenderList: [], // 根据采集项关联的仓库列表
       retentionDaysList: [], // 过期天数列表
       formData: {
         snapshot_days: '',
-        collector_config_id: '',
+        instance_id: '',
         target_snapshot_repository_name: '',
       },
+      collectorType: 'collector_config',
       basicRules: {},
       requiredRules: {
         required: true,
@@ -187,9 +188,10 @@ export default {
     },
     repositoryRenderList() {
       let list = [];
-      const collectorId = this.formData.collector_config_id;
+      const collectorId = this.formData.instance_id;
       if (collectorId && this.collectorList.length && this.repositoryOriginList.length) {
-        const curCollector = this.collectorList.find(collect => collect.collector_config_id === collectorId);
+        const targetList = this.collectorList.find(item => item.id === this.collectorType)?.list || [];
+        const curCollector = targetList.find(collect => collect.id === collectorId);
         const clusterId = curCollector.storage_cluster_id;
         list = this.repositoryOriginList.filter(item => item.cluster_id === clusterId);
       }
@@ -213,21 +215,23 @@ export default {
 
         if (this.isEdit) {
           const {
-            collector_config_id,
+            instance_id: instanceId,
             target_snapshot_repository_name,
             snapshot_days,
+            instance_type: instanceType,
           } = this.editArchive;
           Object.assign(this.formData, {
-            collector_config_id,
+            instance_id: instanceId,
             target_snapshot_repository_name,
             snapshot_days,
           });
+          this.collectorType = instanceType;
         }
       } else {
         // 清空表单数据
         this.formData = {
           snapshot_days: '',
-          collector_config_id: '',
+          instance_id: '',
           target_snapshot_repository_name: '',
         };
       }
@@ -235,7 +239,7 @@ export default {
   },
   created() {
     this.basicRules = {
-      collector_config_id: [this.requiredRules],
+      instance_id: [this.requiredRules],
       target_snapshot_repository_name: [this.requiredRules],
       snapshot_days: [this.requiredRules],
     };
@@ -248,10 +252,22 @@ export default {
         have_data_id: 1,
       };
       this.$http.request('collect/getAllCollectors', { query }).then((res) => {
-        const data = res.data;
-        if (data.length) {
-          this.collectorList = data;
-        }
+        this.collectorList[0].list = res.data.map((item) => {
+          return {
+            id: item.collector_config_id,
+            name: item.collector_config_name,
+            ...item,
+          };
+        }) || [];
+      });
+      this.$http.request('collect/getCollectorPlugins', { query }).then((res) => {
+        this.collectorList[1].list = res.data.map((item) => {
+          return {
+            id: item.collector_plugin_id,
+            name: item.collector_plugin_name,
+            ...item,
+          };
+        }) || [];
       });
     },
     // 获取归档仓库列表
@@ -268,7 +284,8 @@ export default {
           this.sliderLoading = false;
         });
     },
-    handleCollectorChange() {
+    handleCollectorChange(value) {
+      this.collectorType = this.collectorList.find(item => item.list.some(val => val.id === value))?.id || '';
       this.formData.target_snapshot_repository_name = '';
     },
     updateIsShow(val) {
@@ -333,6 +350,7 @@ export default {
         const params = {};
         let paramsData = {
           ...this.formData,
+          instance_type: this.collectorType,
           bk_biz_id: this.bkBizId,
         };
 

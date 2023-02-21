@@ -64,6 +64,7 @@ class ClusteringMonitorHandler(object):
                 ClusteringIndexSetNotExistException.MESSAGE.format(index_set_id=self.index_set_id)
             )
         self.log_index_set_data, *_ = self.index_set.indexes
+        self.clustering_config = ClusteringConfig.objects.get(index_set_id=self.index_set_id)
 
     def update_strategies(self, pattern_level, actions):
         result = True
@@ -120,8 +121,13 @@ class ClusteringMonitorHandler(object):
             strategy_type=strategy_type,
             signature_setting_id=signature_strategy_settings.id,
         )
-        notice_template = DEFAULT_PATTERN_MONITOR_MSG
-        recover_template = DEFAULT_PATTERN_RECOVER_MSG
+        notice_template = DEFAULT_PATTERN_MONITOR_MSG.replace(
+            "__clustering_field__", self.clustering_config.clustering_fields
+        )
+        recover_template = DEFAULT_PATTERN_RECOVER_MSG.replace(
+            "__clustering_field__", self.clustering_config.clustering_fields
+        )
+
         item_name = self._generate_item_name(strategy_type=strategy_type, pattern=pattern)
 
         query_config = self._generate_query_config(
@@ -133,7 +139,7 @@ class ClusteringMonitorHandler(object):
             strategy_type=strategy_type,
         )
 
-        labels = DEFAULT_LABEL
+        labels = DEFAULT_LABEL.copy()
         if strategy_type == StrategiesType.NORMAL_STRATEGY:
             labels += [f"LogClustering/NewLog/{self.index_set_id}"]
         else:
@@ -258,8 +264,7 @@ class ClusteringMonitorHandler(object):
             return strategy_id
 
     def create_new_cls_strategy(self):
-        clustering_config = ClusteringConfig.objects.get(index_set_id=self.index_set_id)
-        table_id = clustering_config.new_cls_pattern_rt
+        table_id = self.clustering_config.new_cls_pattern_rt
         return self.save_strategy(
             table_id=table_id, metric=DEFAULT_METRIC, strategy_type=StrategiesType.NEW_CLS_strategy
         )

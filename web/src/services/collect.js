@@ -94,6 +94,11 @@ const getAllCollectors = {
   url: '/databus/collectors/list_collectors/',
   method: 'get',
 };
+// 采集插件列表
+const getCollectorPlugins = {
+  url: '/databus/collector_plugins/',
+  method: 'get',
+};
 // 采集列表-状态
 const getCollectStatus = { // 轮询-批量获取采集项订阅状态
   url: '/databus/collectors/batch_subscription_status/',
@@ -223,6 +228,7 @@ export {
   details,
   getCollectList,
   getAllCollectors,
+  getCollectorPlugins,
   getCollectStatus,
   startCollect,
   stopCollect,

@@ -238,6 +238,7 @@ export default {
       this.showDropdown = false;
     },
     handleFocus() {
+      this.$emit('isCanSearch', false);
       if (this.isSearchRecord) {
         this.inputElement.blur();
         this.isSearchRecord = false;
@@ -326,10 +327,13 @@ export default {
       });
     },
     handleBlur(val) {
+      setTimeout(() => {
+        this.$emit('isCanSearch', true);
+      }, 100);
       // 非自动搜索时 鼠标失焦后 判断语句是否出错
       this.blurTimer && clearTimeout(this.blurTimer);
       this.blurTimer = setTimeout(() => {
-        if (this.shouldHandleBlur) this.handleCheckKeywords(val.trim()); // 检查语句是否有错误;
+        if (this.shouldHandleBlur || this.isKeywordsError) this.handleCheckKeywords(val.trim()); // 检查语句是否有错误;
       }, 200);
       // 如果当前有点击收藏且有选择表单模式的key时 监听新输入的检索语句判断
       if (this.isShowUiType) this.$emit('inputBlur', val);
@@ -344,9 +348,9 @@ export default {
         if (this.shouldHandleBlur) { // 非点击下拉触发的 blur 事件
           this.showDropdown = false;
           // 自动搜索时 先判断语句是否出错 如果出错 则提示出错原因 且不进行请求
-          if (this.retrievedKeyword !== val.trim()) {
-            const isCanAutoSearch = await this.handleCheckKeywords(val.trim());
-            if (isCanAutoSearch) this.$emit('retrieve');
+          if (this.retrievedKeyword !== val.trim() || this.isKeywordsError) {
+            const isCanSearch = await this.handleCheckKeywords(val.trim());
+            if (isCanSearch) this.$emit('retrieve');
           }
         } else {
           // 点击了下拉菜单，会再次聚焦
@@ -359,7 +363,7 @@ export default {
       this.isKeywordsError = false;
       this.keywordIsResolved = false;
       this.keywordErrorMessage = '';
-      this.resetKeyword = '';
+      this.$emit('isCanSearch', true);
       if (this.isAutoQuery) this.$emit('retrieve');
     },
     async handleCheckKeywords(keyword) { // 检查检索语句是否有误
@@ -372,7 +376,8 @@ export default {
         this.keywordIsResolved = data.is_resolved;
         this.keywordErrorMessage = data.message;
         this.resetKeyword = data.keyword;
-        return data.is_legal || !data.is_resolved;
+        this.$emit('isCanSearch', data.is_legal);
+        return data.is_legal || data.is_resolved;
       } catch (error) {
         return true;
       }

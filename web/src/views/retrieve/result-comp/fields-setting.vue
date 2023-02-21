@@ -141,7 +141,7 @@
       </bk-button>
     </div>
     <div class="field-alias-setting">
-      <span style="margin-right: 4px;">{{ $t('显示别名') }}</span>
+      <span style="margin-right: 4px;">{{ $t('表头显示别名') }}</span>
       <bk-switcher v-model="showFieldAlias" theme="primary" size="small"></bk-switcher>
     </div>
   </div>

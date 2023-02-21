@@ -117,7 +117,7 @@ export default class CollectGroup extends tsc<ICollectProps> {
           onMouseleave={() => this.handleHoverTitle(false)}>
           <span class="group-cur" onClick={() => (this.isHiddenList = !this.isHiddenList)}>
             <span class={['bk-icon icon-play-shape', { 'is-active': !this.isHiddenList }]}></span>
-            <span>{this.collectItem.group_name}</span>
+            <span class="group-str">{this.collectItem.group_name}</span>
           </span>
           {groupDropdownSlot(this.collectItem.group_name)}
         </div>
