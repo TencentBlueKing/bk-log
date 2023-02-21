@@ -25,10 +25,10 @@
     <auth-container-page v-if="isCleanField && authPageInfo" :info="authPageInfo"></auth-container-page>
     <div class="step-field" v-bkloading="{ isLoading: basicLoading }" v-else>
       <bk-alert v-if="!isCleanField && !isTempField && !isSetEdit" class="king-alert" type="info">
-        <div slot="title" class="slot-title-container">{{$t('dataManage.field_hint')}}</div>
+        <div slot="title" class="slot-title-container">{{$t('通过字段清洗，可以格式化日志内容方便检索、告警和分析。')}}</div>
       </bk-alert>
       <bk-alert v-if="isSetEdit" class="king-alert" type="info">
-        <div slot="title" class="slot-title-container">{{$t('retrieveSetting.extractionPrompt')}}</div>
+        <div slot="title" class="slot-title-container">{{$t('将过滤后的日志采集上来后，日志检索模块可进行日志内容格式化，方便检索和分析。')}}</div>
       </bk-alert>
       <div class="collector-select" v-show="isCleanField && !isSetEdit">
         <label>{{ $t('采集项') }}</label>
@@ -62,7 +62,7 @@
         </bk-select>
       </div>
       <div class="step-field-title">
-        <div>{{$t('configDetails.originalLog')}}</div>
+        <div>{{$t('原始日志')}}</div>
         <div class="text-nav" v-if="!isTempField">
           <span
             @click="refreshClick"
@@ -71,7 +71,7 @@
           <span
             @click="chickFile"
             data-test-id="fieldExtractionBox_span_viewReportingLog"
-          >{{$t('configDetails.report')}}</span>
+          >{{$t('查看上报日志')}}</span>
         </div>
       </div>
       <template>
@@ -99,8 +99,8 @@
           :modal="false"
           :width="596">
           <div slot="header">
-            {{$t('configDetails.logDetails')}}
-            <span @click="copyText(JSON.stringify(jsonText))">{{$t('btn.copy')}}</span>
+            {{$t('上报日志详情')}}
+            <span @click="copyText(JSON.stringify(jsonText))">{{$t('复制')}}</span>
           </div>
           <div class="p20 json-text-style" slot="content">
             <VueJsonPretty :deep="5" :data="jsonText" />
@@ -110,7 +110,7 @@
 
       <section class="field-method">
         <div :class="{ 'field-method-head': true, 'field-template-head': isTempField }">
-          <h4 class="field-method-title fl field-text">{{ $t('nav.Field_extraction') }}</h4>
+          <h4 class="field-method-title fl field-text">{{ $t('字段清洗') }}</h4>
           <bk-tab
             v-if="!isTempField"
             :active.sync="activePanel"
@@ -130,7 +130,7 @@
           <div class="field-step field-method-step" style="margin-top: 20px;">
             <div class="step-head">
               <div>
-                <span class="step-text">{{ $t('dataManage.modeSelect') }}</span>
+                <span class="step-text">{{ $t('模式选择') }}</span>
                 <span
                   v-if="!isTempField"
                   data-test-id="fieldExtractionBox_span_applyTemp"
@@ -140,7 +140,7 @@
                   }"
                   @click="openTemplateDialog(false)">
                   <span class="log-icon icon-daoru"></span>
-                  {{ $t('dataManage.applyTemp') }}
+                  {{ $t('应用模版') }}
                 </span>
               </div>
               <p class="documentation button-text" v-if="docUrl" @click="handleGotoLink('logExtract')">
@@ -168,9 +168,9 @@
                   style="margin-left: 10px;color: #979ba5; cursor: pointer;"
                   class="log-icon icon-info-fill fl"></span>
                 <div id="reg-tip">
-                  <p>{{$t('dataManage.regular_format1')}}</p>
-                  <p>{{$t('dataManage.regular_format2')}}</p>
-                  <p>{{$t('dataManage.regular_format3')}}</p>
+                  <p>{{$t('正则表达式(golang语法)需要匹配日志全文，如以下DEMO将从日志内容提取请求时间与内容')}}</p>
+                  <p>{{$t(' - 日志内容：[2006-01-02 15:04:05] content')}}</p>
+                  <p>{{$t(' - 表达式：')}}\[(?P&lt;request_time>[^]]+)\] (?P&lt;content>.+)</p>
                 </div>
               </template>
             </div>
@@ -205,14 +205,14 @@
                   v-model="params.etl_params.separator_regexp">
                 </bk-input>
               </div>
-              <p class="format-error" v-if="!isJsonOrOperator && !formatResult">{{ $t('dataManage.try_methods') }}</p>
+              <p class="format-error" v-if="!isJsonOrOperator && !formatResult">{{ $t('格式解析失败，可以尝试其他提取方法') }}</p>
             </div>
           </div>
 
           <!-- 调试设置字段 -->
           <div class="field-step field-method-step" data-test-id="fieldExtraction_div_debugSetField">
             <div class="step-head">
-              <span class="step-text">{{ $t('dataManage.debugField') }}</span>
+              <span class="step-text">{{ $t('调试设置字段') }}</span>
               <div class="">
                 <bk-button
                   class="fl debug-btn"
@@ -223,7 +223,7 @@
                   {{ $t('调试') }}
                 </bk-button>
                 <p class="format-error ml10 fl" v-if="isJsonOrOperator && !formatResult">
-                  {{ $t('dataManage.try_methods') }}
+                  {{ $t('格式解析失败，可以尝试其他提取方法') }}
                 </p>
               </div>
             </div>
@@ -304,7 +304,7 @@
               </div>
               <div class="step-description">
                 <span class="step-num">1</span>
-                <span class="description-text">{{ $t('dataManage.advanceStep1') }}</span>
+                <span class="description-text">{{ $t('高级清洗只能应用于日志平台采集的日志，会在链路上分发给计算平台进行更复杂的数据处理。') }}</span>
               </div>
             </div>
             <span class="bk-icon icon-angle-double-right-line"></span>
@@ -314,13 +314,15 @@
               </div>
               <div class="step-description">
                 <span class="step-num">2</span>
-                <span class="description-text">{{ $t('dataManage.advanceStep2') }}
-                  <a class="link" @click="handleGotoLink('bkBase')">
-                    {{ $t('dataManage.linkdocs') }}
-                    <span class="log-icon icon-lianjie"></span>
-                  </a>
+                <span class="description-text">
+                  <i18n path="选择了高级字段提取能力后，会跳转到计算平台进行更多的字段处理，计算平台提供13种清洗算法。具体的使用方法可查看{0}">
+                    <a class="link" @click="handleGotoLink('bkBase')">
+                      {{ $t('计算平台文档') }}
+                      <span class="log-icon icon-lianjie"></span>
+                    </a>
+                  </i18n>
                 </span>
-                <p class="remark">{{ $t('dataManage.advanceRemark1') }}</p>
+                <p class="remark">{{ $t('注： 同一个日志可以进行多次清洗。') }}</p>
               </div>
             </div>
             <span class="bk-icon icon-angle-double-right-line"></span>
@@ -330,8 +332,8 @@
               </div>
               <div class="step-description">
                 <span class="step-num">3</span>
-                <span class="description-text">{{ $t('dataManage.advanceStep3') }}</span>
-                <p class="remark">{{ $t('dataManage.advanceRemark2') }}</p>
+                <span class="description-text">{{ $t('清洗完并且存储到ES后，日志平台会识别到对应的索引创建日志平台的索引集，后续可以直接在检索和监控中使用。') }}</span>
+                <p class="remark">{{ $t('注：如果清洗后存储成其他类型，将无法关联上。') }}</p>
               </div>
             </div>
           </div>
@@ -344,11 +346,11 @@
           v-if="!isCleanField && !isTempField && !isSetEdit"
           theme="default"
           data-test-id="fieldExtractionBox_button_previousPage"
-          :title="$t('dataManage.last')"
+          :title="$t('上一步')"
           class="mr10"
           :disabled="isLoading"
           @click="prevHandler">
-          {{$t('dataManage.last')}}
+          {{$t('上一步')}}
         </bk-button>
         <!-- 前往高级清洗 -->
         <log-button
@@ -356,7 +358,7 @@
           theme="primary"
           data-test-id="fieldExtractionBox_button_goToAdvancedCleaning"
           :tips-conf="advanceDisableTips"
-          :button-text="$t('dataManage.advanceClean')"
+          :button-text="$t('前往高级清洗')"
           :disabled="advanceDisable"
           @on-click="advanceHandler">
         </log-button>
@@ -379,7 +381,7 @@
           data-test-id="fieldExtractionBox_button_Pass"
           @click="handleSkip"
           :disabled="isLoading">
-          {{$t('dataManage.skip')}}
+          {{$t('跳过')}}
         </bk-button>
         <!-- 保存模板 -->
         <bk-button
@@ -389,7 +391,7 @@
           data-test-id="fieldExtractionBox_button_saveTemplate"
           :disabled="!hasFields || isSetDisabled"
           @click="openTemplateDialog(true)">
-          {{$t('dataManage.saveTemp')}}
+          {{$t('保存模板')}}
         </bk-button>
         <!-- 日志清洗 保存模板 取消 -->
         <bk-button
@@ -398,7 +400,7 @@
           class="ml10"
           data-test-id="fieldExtractionBox_button_cancelSaveTemplate"
           @click="handleCancel(false)">
-          {{isSetEdit ? $t('dataManage.Reset') : $t('取消')}}
+          {{isSetEdit ? $t('重置') : $t('取消')}}
         </bk-button>
         <!-- 检索字段提取设置 重置 -->
         <bk-button
@@ -408,7 +410,7 @@
           data-test-id="fieldExtractionBox_button_cancelSaveTemplate"
           :disabled="!collectProject || !showDebugBtn || !hasFields || isSetDisabled"
           @click="setDetail(setId)">
-          {{$t('btn.reset')}}
+          {{$t('重置')}}
         </bk-button>
       </div>
 
@@ -419,7 +421,7 @@
         :mask-close="false"
         :draggable="false"
         :show-footer="false"
-        :title="$t('dataManage.View_fields')">
+        :title="$t('查看内置字段')">
         <div class="standard-field-table">
           <field-table
             v-if="dialogVisible"
@@ -438,7 +440,7 @@
         :header-position="'left'"
         :mask-close="false"
         :draggable="false"
-        :title="isSaveTempDialog ? $t('dataManage.saveTemp') : $t('dataManage.selectTemp')"
+        :title="isSaveTempDialog ? $t('保存模板') : $t('选择模版')"
         :confirm-fn="handleTemplConfirm">
         <div class="template-content">
           <div v-if="isSaveTempDialog">
@@ -556,8 +558,8 @@ export default {
       },
       activePanel: 'base',
       panels: [
-        { name: 'base', label: this.$t('dataManage.Base') },
-        { name: 'advance', label: this.$t('dataManage.Advance') },
+        { name: 'base', label: this.$t('基础') },
+        { name: 'advance', label: this.$t('高级') },
       ],
       selectTemplate: '', // 应用模板
       saveTempName: '',
@@ -676,10 +678,10 @@ export default {
             directives: [
               {
                 name: 'bk-tooltips',
-                value: this.$t('dataManage.disabledAdvance'),
+                value: this.$t('未部署基础计算平台，无法进行高级清洗'),
               },
             ],
-          }, this.$t('dataManage.Advance')),
+          }, this.$t('高级')),
         ]);
       };
     }
@@ -818,18 +820,18 @@ export default {
               directives: [
                 {
                   name: 'bk-tooltips',
-                  value: this.$t('dataManage.disabledBase'),
+                  value: this.$t('当前采集项已配置基础清洗，无需重复配置'),
                 },
               ],
-            }, this.$t('dataManage.Base')),
+            }, this.$t('基础')),
           ]);
         };
       } else {
         if (this.unAuthBkdata) return;
         this.activePanel = 'base';
         this.panels = [
-          { name: 'base', label: this.$t('dataManage.Base') },
-          { name: 'advance', label: this.$t('dataManage.Advance') },
+          { name: 'base', label: this.$t('基础') },
+          { name: 'advance', label: this.$t('高级') },
         ];
       }
     },
@@ -955,12 +957,12 @@ export default {
         const h = this.$createElement;
         this.$bkInfo({
           type: 'warning',
-          title: this.$t('dataManage.Submit'),
+          title: this.$t('是否按原配置提交?'),
           subHeader: h('p', {
             style: {
               whiteSpace: 'normal',
             },
-          }, this.$t('dataManage.Debug_set')),
+          }, this.$t('字段提取方法或条件已发生变更，需【调试&设置】按钮点击操作成功才会生效')),
           confirmFn: () => {
             isCollect ? this.fieldCollection(true) : this.handleSaveTemp();
           },
@@ -974,12 +976,12 @@ export default {
       if (!this.params.etl_config) {
         this.$bkMessage({
           theme: 'error',
-          message: this.$t('dataManage.select_field'),
+          message: this.$t('请选择字段提取方法'),
         });
       }
       // 清洗模板选择多业务时不能为空
       if (this.formData.visible_type === 'multi_biz' && !this.visibleBkBiz.length && this.isClearTemplate) {
-        this.messageError(this.$t('multiBizTip'));
+        this.messageError(this.$t('可见类型为业务属性时，业务标签不能为空'));
         return
       }
       // const promises = [this.checkStore()];
@@ -1030,15 +1032,15 @@ export default {
       // const h = this.$createElement;
       this.$bkInfo({
         type: 'warning',
-        title: this.$t('dataManage.jumpComputedPlatform'),
+        title: this.$t('跳转到计算平台'),
         subHeader: h('p', {
           style: {
             whiteSpace: 'normal',
             padding: '0 28px',
             color: '#63656e',
           },
-        }, this.$t('dataManage.advanceCleanConfirm')),
-        // okText: this.$t('retrieve.immediateExport'),
+        }, this.$t('高级清洗需要跳转到计算平台并终止当前流程，请确认是否继续跳转')),
+        // okText: this.$t('直接下载'),
         confirmFn: () => {
           const id = this.curCollect.bkdata_data_id;
           const jumpUrl = `${window.BKDATA_URL}/#/data-access/data-detail/${id}/3`;
@@ -1124,7 +1126,7 @@ export default {
           style: {
             textAlign: 'center',
           },
-        }, this.$t('retrieve.copySuccess')),
+        }, this.$t('复制成功')),
         offsetY: 80,
       });
     },
@@ -1332,7 +1334,7 @@ export default {
         if (this.saveTempName.trim() === '') {
           this.$bkMessage({
             theme: 'error',
-            message: this.$t('dataManage.saveTempErrorTips'),
+            message: this.$t('请输入模板名称'),
           });
           return;
         }
@@ -1342,7 +1344,7 @@ export default {
         if (!this.selectTemplate) {
           this.$bkMessage({
             theme: 'error',
-            message: this.$t('dataManage.selectTempErrorTips'),
+            message: this.$t('请选择清洗模板'),
           });
           return;
         }

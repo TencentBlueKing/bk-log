@@ -36,7 +36,7 @@
             @showSpanId="viewSpanDetail" />
         </transition>
         <div class="chart-side-bar">
-          <div class="chart-name">{{$t('trace.connectionChart')}}</div>
+          <div class="chart-name">{{$t('调用关系图')}}</div>
           <div class="icon-container collapse-icon" @click="isCollapseChart = !isCollapseChart">
             <span class="bk-icon icon-angle-up"></span>
           </div>
@@ -48,11 +48,11 @@
       <div class="button-container">
         <div class="button-left-container">
           <!-- 查看日志 -->
-          <bk-button @click="isShowLog = true" :disabled="isLoading">{{$t('trace.viewLog')}}</bk-button>
+          <bk-button @click="isShowLog = true" :disabled="isLoading">{{$t('设置显示字段')}}</bk-button>
           <time-formatter style="margin-left: 16px;"></time-formatter>
           <div style="margin-left: 16px">
             <bk-switcher v-model="asyncSwitch" theme="primary"></bk-switcher>
-            <span class="asyncSwitch">{{$t('trace.only_sync')}}</span>
+            <span class="asyncSwitch">{{$t('仅显示同步请求')}}</span>
           </div>
         </div>
         <div
@@ -63,7 +63,7 @@
         </div>
         <div id="fields-config-tippy">
           <!-- 字段显示设置 -->
-          <h3 class="config-title">{{$t('trace.fieldsSetting')}}</h3>
+          <h3 class="config-title">{{$t('设置显示字段')}}</h3>
           <ul class="config-list">
             <li v-for="field in fieldsConfigList" :key="field.field_name">
               <bk-checkbox :disabled="field.is_editable === false" v-model="field.is_display">
@@ -77,7 +77,7 @@
               class="king-button"
               theme="primary"
               @click="confirmConfig">
-              {{$t('btn.affirm')}}
+              {{$t('确定')}}
             </bk-button>
             <bk-button class="king-button" @click="cancelConfig">{{$t('取消')}}</bk-button>
           </div>
@@ -160,7 +160,7 @@
       </div>
     </div>
     <bk-sideslider
-      :title="$t('trace.log')"
+      :title="$t('日志')"
       :width="1096"
       :is-show.sync="isShowLog"
       :quick-close="true">
@@ -498,7 +498,7 @@ export default {
         this.totalFieldsList = totalFields;
         this.visibleFieldsList = this.formatFieldsList(totalFields, displayFields);
         this.fieldsConfigList = [];
-        this.messageSuccess(this.$t('common.configSuccessfully'));
+        this.messageSuccess(this.$t('设置成功'));
       } catch (e) {
         console.warn(e);
         this.$refs.fieldsConfigRef._tippy.show();

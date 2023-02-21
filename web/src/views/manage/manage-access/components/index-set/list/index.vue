@@ -48,7 +48,7 @@
       </bk-input>
     </div>
     <bk-table
-      :empty-text="$t('btn.vacancy')"
+      :empty-text="$t('暂无内容')"
       :data="indexSetList"
       :pagination="pagination"
       data-test-id="logIndexSetBox_table_indexSetTable"
@@ -173,9 +173,9 @@ export default {
     },
     alertText() {
       const textMap = {
-        log: this.$t('logAlertTips'),
-        es: this.$t('esAlertTips'),
-        bkdata: this.$t('bkdataAlertTips'),
+        log: this.$t('索引集允许用户可以跨多个采集的索引查看日志。'),
+        es: this.$t('如果日志已经存储在Elasticsearch，可以在“集群管理”中添加Elasticsearch集群，就可以通过创建索引集来使用存储中的日志数据。'),
+        bkdata: this.$t('通过新建索引集添加计算平台中的Elasticsearch的索引，就可以在日志平台中进行检索、告警、可视化等。'),
       };
       return textMap[this.scenarioId];
     },
@@ -331,7 +331,7 @@ export default {
         });
       } else if (type === 'delete') { // 删除索引集
         this.$bkInfo({
-          subTitle: `${this.$t('当前索引集为')} ${row.index_set_name}，${this.$t('shield.isdelete')}`,
+          subTitle: this.$t('当前索引集为{n}，确认要删除？', { n: row.index_set_name }),
           maskClose: true,
           confirmFn: () => {
             this.$bkLoading({

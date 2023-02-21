@@ -36,9 +36,10 @@
         </i>
         <div class="title-desc">
           <slot name="title">
-            {{$t('retrieve.selected')}}
-            <span class="title-desc-num">{{title.num}}</span>
-            {{$t('retrieve.a')}}{{title.type || $t('主机')}}
+            <i18n path="已选择{0}个{1}">
+              <span class="title-desc-num">{{title.num}}</span>
+              <span>{{title.type || $t('主机')}}</span>
+            </i18n>
           </slot>
         </div>
       </slot>

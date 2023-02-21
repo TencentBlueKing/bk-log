@@ -34,9 +34,9 @@
             {{$t('查看语法')}}<span class="log-icon icon-lianjie"></span>
           </a>
         </div>
-        <div class="title">{{$t('精确匹配：')}}</div>
+        <div class="title">{{$t('精确匹配(支持AND、OR)：')}}</div>
         <div class="detail">author:"John Smith" AND age:20</div>
-        <div class="title">{{$t('字段名匹配：')}}</div>
+        <div class="title">{{$t('字段名匹配(*代表通配符)：')}}</div>
         <div class="detail">status:active</div>
         <div class="detail">title:(quick brown)</div>
         <div class="title">{{$t('字段名模糊匹配：')}}</div>
@@ -70,7 +70,7 @@
               </div>
             </li>
           </template>
-          <li v-else class="list-item not-history">{{`${$t('暂无')}${$t('历史记录')}`}}</li>
+          <li v-else class="list-item not-history">{{$t('暂无历史记录')}}</li>
         </ul>
       </div>
     </div>

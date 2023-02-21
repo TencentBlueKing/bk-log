@@ -28,7 +28,7 @@
         theme="primary"
         data-test-id="restoreContainer_button_addNewRestore"
         @click="handleCreate">
-        {{ $t('logArchive.restore') }}
+        {{ $t('回溯') }}
       </bk-button>
       <div class="restore-search fr">
         <bk-input
@@ -55,18 +55,18 @@
             {{ props.row.index_set_name }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('logArchive.archiveItem')">
+        <bk-table-column :label="$t('归档项')">
           <template slot-scope="props">
             {{ props.row.collector_config_name }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('logArchive.timeRange')" min-width="240">
+        <bk-table-column :label="$t('时间范围')" min-width="240">
           <template slot-scope="props">
             {{ `${props.row.start_time} - ${props.row.end_time}` }}
           </template>
         </bk-table-column>
         <bk-table-column
-          :label="$t('logArchive.occupySize')"
+          :label="$t('资源占用')"
           class-name="filter-column">
           <template slot-scope="props">
             {{ getFileSize(props.row.total_store_size) }}
@@ -77,7 +77,7 @@
             {{ props.row.expired_time }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('logArchive.restoreStatus')">
+        <bk-table-column :label="$t('回溯状态')">
           <template slot-scope="props">
             <div class="restore-status">
               <span :class="`status-icon is-${props.row.status}`"></span>
@@ -85,12 +85,12 @@
             </div>
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('logArchive.isExpired')">
+        <bk-table-column :label="$t('是否过期')">
           <template slot-scope="props">
-            {{ props.row.is_expired ? $t('common.yes') : $t('common.no') }}
+            {{ props.row.is_expired ? $t('是') : $t('否') }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('dataSource.operation')" width="180">
+        <bk-table-column :label="$t('操作')" width="180">
           <div class="restore-table-operate" slot-scope="props">
             <!-- 检索 -->
             <log-button
@@ -318,12 +318,12 @@ export default {
             }
             if (completeCount === 0) {
               row.statusHandler = 'unStart';
-              row.status_name = this.$t('logArchive.notStarted');
+              row.status_name = this.$t('未开始');
             }
             if (completeCount > 0 && completeCount < totalCount) {
               const precent = `${Math.round(completeCount / totalCount * 100)}%`;
               row.status = 'restoring';
-              row.status_name = `${this.$t('logArchive.restoring')}(${precent})`;
+              row.status_name = `${this.$t('回溯中')}(${precent})`;
             }
           }
         });
@@ -377,7 +377,7 @@ export default {
       if (operateType === 'delete') {
         this.$bkInfo({
           type: 'warning',
-          title: this.$t('logArchive.Confirm_delete_restore'),
+          title: this.$t('确认删除该回溯？'),
           confirmFn: () => {
             this.requestDelete(row);
           },

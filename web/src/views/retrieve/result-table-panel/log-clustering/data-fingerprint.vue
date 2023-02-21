@@ -218,7 +218,9 @@
 
       <template slot="append" v-if="isShowBottomTips">
         <div class="bottom-tips">
-          {{$t('allLoadTips')}} <span @click="handleReturnTop">{{$t('返回顶部')}}</span>
+          <i18n path="已加载完全部数据，如需查看更多查询条件可以{0}">
+            <span @click="handleReturnTop">{{$t('返回顶部')}}</span>
+          </i18n>
         </div>
       </template>
 

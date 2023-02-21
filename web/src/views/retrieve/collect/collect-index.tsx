@@ -103,11 +103,11 @@ export default class CollectIndex extends tsc<IProps> {
   groupSortList = [
     // 排序展示列表
     {
-      name: `${window.mainComponent.$t('按名称')} A - Z ${window.mainComponent.$t('排序')}`,
+      name: window.mainComponent.$t('按名称 {n} 排序', { n: 'A - Z' }),
       id: 'NAME_ASC',
     },
     {
-      name: `${window.mainComponent.$t('按名称')} Z - A ${window.mainComponent.$t('排序')}`,
+      name: window.mainComponent.$t('按名称 {n} 排序', { n: 'Z - A' }),
       id: 'NAME_DESC',
     },
     {
@@ -220,7 +220,7 @@ export default class CollectIndex extends tsc<IProps> {
         break;
       case 'delete-favorite': // 删除收藏
         this.$bkInfo({
-          subTitle: `${this.$t('当前收藏名为')} ${value.name} ，${this.$t('确认')}${this.$t('是否删除')}？`,
+          subTitle: this.$t('当前收藏名为 {0}，确认是否删除？', { n: value.name }),
           type: 'warning',
           confirmFn: async () => {
             await this.deleteFavorite(value.id);
@@ -230,8 +230,8 @@ export default class CollectIndex extends tsc<IProps> {
         break;
       case 'dismiss-group': // 解散分组
         this.$bkInfo({
-          title: `${this.$t('当前分组名为')} ${value.group_name} ，${this.$t('确认')}${this.$t('是否解散')}？`,
-          subTitle: `${this.$t('解散文案')}`,
+          title: this.$t('当前分组名为 {n}，确认是否解散？', { n: value.group_name }),
+          subTitle: `${this.$t('解散分组后，原分组内的收藏将移至未分组中。')}`,
           type: 'warning',
           confirmFn: async () => {
             await this.deleteGroup(value.group_id);

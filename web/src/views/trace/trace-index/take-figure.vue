@@ -123,7 +123,7 @@ export default {
   methods: {
     handleEnter(e, val) {
       this.instance = this.$bkPopover(e.target, {
-        content: `<div>${this.$t('耗时：')}${val.value}</div><div>${this.$t('时间：')}${val.label}</div><div>${this.$t('数量：')}${val.count}</div>`,
+        content: `<div>${this.$t('耗时')}： ${val.value}</div><div>${this.$t('时间')}：${val.label}</div><div>${this.$t('数量')}: ${val.count}</div>`,
         arrow: true,
         placement: 'top',
       });

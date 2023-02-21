@@ -49,8 +49,7 @@
         </div>
       </div>
       <bk-button @click.stop="issuedRetry()">
-        <!-- {{$t('复制目标')}} -->
-        {{$t('configDetails.batchRetry')}}
+        {{$t('失败批量重试')}}
       </bk-button>
     </div>
     <div class="table-section">
@@ -89,7 +88,7 @@
                   href="javascript: ;" class="retry"
                   v-if="row.status === 'failed'"
                   @click.stop="issuedRetry('alone', renderItem, row)">
-                  {{ $t('configDetails.retry') }}
+                  {{ $t('重试') }}
                 </a>
               </template>
             </bk-table-column>
@@ -135,10 +134,10 @@ export default {
         failed: 'circle-red',
       },
       statusNameList: { // 状态中文名
-        all: this.$t('configDetails.all'),
-        success: this.$t('configDetails.succeed'),
-        failed: this.$t('configDetails.failed'),
-        running: this.$t('configDetails.Pending'),
+        all: this.$t('全部'),
+        success: this.$t('正常'),
+        failed: this.$t('失败'),
+        running: this.$t('执行中'),
       },
       timer: null,
       renderTitleList: [], // 当前活跃的目标

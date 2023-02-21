@@ -54,7 +54,7 @@ export const menuArr = [
     }],
   },
   {
-    name: i18n.t('nav.extract'),
+    name: i18n.t('日志提取'),
     id: 'extract',
     level: 1,
   },
@@ -69,17 +69,17 @@ export const menuArr = [
     level: 1,
     children: [
       {
-        name: i18n.t('nav.alarmStrategy'),
+        name: i18n.t('告警策略'),
         id: 'alarmStrategy',
         level: 2,
         children: [
           {
-            name: i18n.t('nav.addstrategy'),
+            name: i18n.t('新建告警策略'),
             id: 'addstrategy',
             level: 3,
           },
           {
-            name: i18n.t('nav.editstrategy'),
+            name: i18n.t('编辑告警策略'),
             id: 'editstrategy',
             level: 3,
           },
@@ -94,47 +94,47 @@ export const menuArr = [
     dropDown: true,
     children: [
       {
-        name: i18n.t('nav.dataSource'),
+        name: i18n.t('数据接入'),
         id: 'manage',
         level: 2,
         children: [
           {
-            name: i18n.t('nav.collectAccess'),
+            name: i18n.t('采集接入'),
             id: 'collectAccess',
             level: 3,
             children: [
               {
-                name: i18n.t('nav.New_acquisition'),
+                name: i18n.t('新增采集'),
                 id: 'collectAdd',
                 level: 4,
               },
               {
-                name: i18n.t('nav.Edit_collection'),
+                name: i18n.t('编辑采集项'),
                 id: 'collectEdit',
                 level: 4,
               },
               {
-                name: i18n.t('nav.Enable_collections'),
+                name: i18n.t('启用采集项'),
                 id: 'collectStart',
                 level: 4,
               },
               {
-                name: i18n.t('nav.Disable_collection'),
+                name: i18n.t('停用采集项'),
                 id: 'collectStop',
                 level: 4,
               },
               {
-                name: i18n.t('nav.Field_extraction'),
+                name: i18n.t('字段清洗'),
                 id: 'collectField',
                 level: 4,
               },
               {
-                name: i18n.t('nav.Configuration_details'),
+                name: i18n.t('配置详情'),
                 id: 'allocation',
                 level: 4,
                 children: [
                   {
-                    name: i18n.t('nav.Data_sampling'),
+                    name: i18n.t('数据采样'),
                     id: 'jsonFormat',
                     level: 5,
                   },
@@ -143,24 +143,24 @@ export const menuArr = [
             ],
           },
           {
-            name: i18n.t('nav.esAccess'),
+            name: i18n.t('ES源接入'),
             id: 'esAccess',
             level: 3,
           },
         ],
       },
       {
-        name: i18n.t('nav.indexSet'),
+        name: i18n.t('索引集管理'),
         id: 'indexSet',
         level: 2,
         children: [
           {
-            name: i18n.t('nav.addIndexSet'),
+            name: i18n.t('新建索引集'),
             id: 'addIndexSet',
             level: 3,
           },
           {
-            name: i18n.t('nav.editIndexSet'),
+            name: i18n.t('编辑索引集'),
             id: 'editIndexSet',
             level: 3,
           },
@@ -172,17 +172,17 @@ export const menuArr = [
         level: 2,
       },
       {
-        name: i18n.t('nav.permissionGroup'),
+        name: i18n.t('用户组配置'),
         id: 'permissionGroup',
         level: 2,
       },
       {
-        name: i18n.t('nav.v3Migrate'),
+        name: i18n.t('v3迁移'),
         id: 'migrate',
         level: 2,
       },
       {
-        name: i18n.t('nav.extractManage'),
+        name: i18n.t('日志提取配置'),
         id: 'manageExtract',
         level: 2,
       },

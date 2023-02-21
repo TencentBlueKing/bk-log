@@ -36,7 +36,7 @@
         <!-- 数据ID -->
         <bk-form-item
           required
-          :label="$t('customReport.dataID')"
+          :label="$t('数据ID')"
           :property="'bk_data_id'"
           v-if="isEdit">
           <bk-input
@@ -45,14 +45,14 @@
             v-model="formData.bk_data_id">
           </bk-input>
         </bk-form-item>
-        <!-- <bk-form-item :label="$t('customReport.token')" required :property="'name'">
+        <!-- <bk-form-item :label="$t('数据token')" required :property="'name'">
           <bk-input class="form-input" :disabled="true" v-model="formData.name"></bk-input>
         </bk-form-item> -->
         <!-- 数据名称 -->
         <bk-form-item
           required
           :disabled="submitLoading"
-          :label="$t('customReport.dataName')"
+          :label="$t('数据名称')"
           :property="'collector_config_name'"
           :rules="baseRules.collector_config_name">
           <bk-input
@@ -65,7 +65,7 @@
         <!-- 数据类型 -->
         <bk-form-item
           required
-          :label="$t('customReport.typeOfData')"
+          :label="$t('数据类型')"
           :property="'name'">
           <div style="margin-top: -4px">
             <div class="bk-button-group">
@@ -79,14 +79,14 @@
                 {{item.name}}
               </bk-button>
             </div>
-            <p class="group-tip" slot="tip">{{$t('customReport.typeTips')}}</p>
+            <p class="group-tip" slot="tip">{{$t('自定义上报数据，可以通过采集器，或者指定协议例如otlp等方式进行上报，自定义上报有一定的使用要求，具体可以查看使用说明')}}</p>
           </div>
         </bk-form-item>
         <bk-form-item
           required
           ext-cls="en-bk-form"
           :icon-offset="120"
-          :label="$t('customReport.englishName')"
+          :label="$t('英文名')"
           :property="'collector_config_name_en'"
           :rules="baseRules.collector_config_name_en">
           <div class="en-name-box">
@@ -98,7 +98,7 @@
                 data-test-id="addNewCustomBox_input_englishName"
                 v-model="formData.collector_config_name_en"
                 :disabled="submitLoading || isEdit"
-                :placeholder="$t('dataSource.en_name_tips')"></bk-input>
+                :placeholder="$t('支持数字、字母、下划线，长短5～50字符')"></bk-input>
               <span v-if="!isTextValid" class="text-error">{{formData.collector_config_name_en}}</span>
             </div>
             <span v-bk-tooltips.top="$t('自动转换成正确的英文名格式')">
@@ -109,7 +109,7 @@
         <!-- 数据分类 -->
         <bk-form-item
           required
-          :label="$t('customReport.dataClassification')"
+          :label="$t('数据分类')"
           :property="'category_id'"
           :rules="baseRules.category_id">
           <bk-select
@@ -129,24 +129,24 @@
             </template>
           </bk-select>
         </bk-form-item>
-        <bk-form-item :label="$t('customReport.instruction')">
+        <bk-form-item :label="$t('说明')">
           <bk-input
             class="form-input"
             type="textarea"
             v-model="formData.description"
             data-test-id="addNewCustomBox_input_description"
             :disabled="submitLoading"
-            :placeholder="$t('customReport.notEntered')"
+            :placeholder="$t('未输入')"
             :maxlength="100"></bk-input>
         </bk-form-item>
       </div>
       <!-- 存储设置 -->
       <div class="create-form">
-        <div class="form-title">{{$t('customReport.storageSettings')}}</div>
+        <div class="form-title">{{$t('存储设置')}}</div>
         <!-- 存储集群 -->
         <bk-form-item
           required
-          :label="$t('dataSource.storage_cluster_name')"
+          :label="$t('存储集群')"
           :property="'data_link_id'">
           <cluster-table
             :table-list="clusterList"
@@ -163,7 +163,7 @@
         <bk-form-item
           required
           v-if="!isCloseDataLink"
-          :label="$t('customReport.dataLink')"
+          :label="$t('数据链路')"
           :rules="storageRules.data_link_id"
           :property="'data_link_id'">
           <bk-select
@@ -182,7 +182,7 @@
         </bk-form-item>
         <!-- 索引集名称 -->
         <bk-form-item
-          :label="$t('configDetails.storageIndexName')"
+          :label="$t('存储索引名')"
           class="form-inline-div"
           :rules="storageRules.table_id"
           :property="'table_id'">
@@ -193,14 +193,14 @@
             data-test-id="addNewCustomBox_input_configName"
             maxlength="50"
             minlength="5"
-            :placeholder="$t('dataManage.input_number')">
+            :placeholder="$t('英文或者数字，5～50长度')">
             <template slot="prepend">
               <div class="group-text">{{showGroupText}}</div>
             </template>
           </bk-input>
         </bk-form-item>
         <!-- 过期时间 -->
-        <bk-form-item :label="$t('configDetails.expirationTime')">
+        <bk-form-item :label="$t('过期时间')">
           <bk-select
             style="width: 500px;"
             v-model="formData.retention"
@@ -218,7 +218,7 @@
                 v-model="customRetentionDay"
                 size="small"
                 type="number"
-                :placeholder="$t('输入自定义天数')"
+                :placeholder="$t('输入自定义天数，按 Enter 确认')"
                 :show-controls="false"
                 @enter="enterCustomDay($event, 'retention')"
               ></bk-input>
@@ -226,7 +226,7 @@
           </bk-select>
         </bk-form-item>
         <!-- 副本数 -->
-        <bk-form-item :label="$t('configDetails.copyNumber')">
+        <bk-form-item :label="$t('副本数')">
           <bk-input
             data-test-id="addNewCustomBox_input_copyNumber"
             v-model="formData.storage_replies"
@@ -276,7 +276,7 @@
                 size="small"
                 type="number"
                 data-test-id="storageBox_input_customize"
-                :placeholder="$t('输入自定义天数')"
+                :placeholder="$t('输入自定义天数，按 Enter 确认')"
                 :show-controls="false"
                 @enter="enterCustomDay($event, 'hot')"
               ></bk-input>
@@ -396,7 +396,7 @@ export default {
           },
           {
             validator: this.checkEnNameValidator,
-            message: this.$t('enNameValidatorTips'),
+            message: this.$t('只支持输入字母，数字，下划线'),
             trigger: 'blur',
           },
         ],
@@ -622,7 +622,7 @@ export default {
   beforeRouteLeave(to, from, next) {
     if (!this.isSubmit) {
       this.$bkInfo({
-        title: this.$t('pageLeaveTips'),
+        title: this.$t('是否放弃本次操作？'),
         confirmFn: () => {
           next();
         },
@@ -660,6 +660,7 @@ export default {
         font-size: 12px;
         color: transparent;
         pointer-events: none;
+
         /* stylelint-disable-next-line declaration-no-important */
         text-decoration: red wavy underline !important;
       }

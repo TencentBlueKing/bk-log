@@ -40,7 +40,7 @@
           form-type="vertical"
           ref="validateForm"
           class="king-form">
-          <div class="add-collection-title">{{ $t('dataSource.basic_information') }}</div>
+          <div class="add-collection-title">{{ $t('基础信息') }}</div>
           <bk-form-item :label="$t('数据源名称')" required property="cluster_name">
             <bk-input
               data-test-id="esAccessFromBox_input_fillName"
@@ -244,7 +244,7 @@
                         v-model="customRetentionDay"
                         size="small"
                         type="number"
-                        :placeholder="$t('输入自定义天数')"
+                        :placeholder="$t('输入自定义天数，按 Enter 确认')"
                         :show-controls="false"
                         @enter="enterCustomDay($event, 'retention')"
                       ></bk-input>
@@ -274,7 +274,7 @@
                         v-model="customMaxDay"
                         size="small"
                         type="number"
-                        :placeholder="$t('输入自定义天数')"
+                        :placeholder="$t('输入自定义天数，按 Enter 确认')"
                         :show-controls="false"
                         @enter="enterCustomDay($event, 'max')"
                       ></bk-input>
@@ -405,7 +405,7 @@
               </bk-form-item>
             </div>
             <!-- 集群负责人 -->
-            <bk-form-item :label="$t('集群负责人')" :desc="$t('集群负责人Tips')" required>
+            <bk-form-item :label="$t('集群负责人')" :desc="$t('集群负责人可以用于容量审核等')" required>
               <div class="principal">
                 <bk-user-selector
                   :class="isAdminError && 'is-error'"
@@ -727,7 +727,7 @@ export default {
     inUseProjectPopover(isUse) {
       return {
         theme: 'light',
-        content: this.$t('inUseProjectTip'),
+        content: this.$t('该业务已有采集使用，无法取消可见'),
         disabled: !isUse,
       };
     },
@@ -1136,8 +1136,8 @@ export default {
     checkSelectItem() {
       let messageType;
       const { visible_type: visibleType } = this.formData.visible_config;
-      visibleType === 'multi_biz' && !this.visibleList.length && (messageType = this.$t('multiBizTip'));
-      visibleType === 'biz_attr' && !this.bkBizLabelsList.length && (messageType = this.$t('bizAttrTip'));
+      visibleType === 'multi_biz' && !this.visibleList.length && (messageType = this.$t('可见类型为业务属性时，业务标签不能为空'));
+      visibleType === 'biz_attr' && !this.bkBizLabelsList.length && (messageType = this.$t('可见类型为多业务时，可见业务范围不能为空'));
       if (!!messageType) {
         this.$bkMessage({
           theme: 'error',
@@ -1158,7 +1158,7 @@ export default {
       return new Promise((reject) => {
         this.$bkInfo({
           type: 'warning',
-          title: this.$t('pageLeaveTips'),
+          title: this.$t('是否放弃本次操作？'),
           confirmFn: () => {
             reject(true);
           },

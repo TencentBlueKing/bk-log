@@ -24,7 +24,7 @@
   <div class="restore-slider-container">
     <bk-sideslider
       transfer
-      :title="isEdit ? $t('logArchive.editRestore') : $t('logArchive.createRestore')"
+      :title="isEdit ? $t('编辑回溯') : $t('新增回溯')"
       :is-show="showSlider"
       :width="676"
       :quick-close="true"
@@ -47,9 +47,9 @@
               data-test-id="addNewRestore_input_indexSetName"
               :disabled="isEdit"></bk-input>
           </bk-form-item>
-          <!-- <bk-alert type="info" :title="$t('logArchive.restoreIndexTip')"></bk-alert> -->
+          <!-- <bk-alert type="info" :title="$t('COS的自动创建和关联，只能用于腾讯云')"></bk-alert> -->
           <bk-form-item
-            :label="$t('logArchive.archiveItem')"
+            :label="$t('归档项')"
             required
             property="archive_config_id">
             <bk-select
@@ -67,7 +67,7 @@
             </bk-select>
           </bk-form-item>
           <bk-form-item
-            :label="$t('logArchive.timeRange')"
+            :label="$t('时间范围')"
             required
             property="datePickerValue">
             <bk-date-picker
@@ -88,7 +88,7 @@
               @change="handleExpiredChange">
             </bk-date-picker>
           </bk-form-item>
-          <bk-form-item :label="$t('logArchive.notifiedUser')" required property="notice_user">
+          <bk-form-item :label="$t('结果通知人')" required property="notice_user">
             <validate-user-selector
               style="width: 500px;"
               data-test-id="addNewRestore_input_notifiedUser"
@@ -374,7 +374,7 @@ export default {
       return new Promise((reject) => {
         this.$bkInfo({
           type: 'warning',
-          title: this.$t('pageLeaveTips'),
+          title: this.$t('是否放弃本次操作？'),
           confirmFn: () => {
             reject(true);
           },

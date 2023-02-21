@@ -109,7 +109,7 @@
             <div class="title">
               <!-- 已选项列表 -->
               <span>{{ $t('已选项列表') + '(' + shadowSort.length + ')' }}</span>
-              <span class="icon log-icon icon-info-fill" v-bk-tooltips="$t('retrieve.sortTips')"></span>
+              <span class="icon log-icon icon-info-fill" v-bk-tooltips="$t('支持拖拽更改顺序，排在上面的拥有更高的排序权重')"></span>
               <span class="clear-all text-action" @click="deleteAllField">{{ $t('取消') }}</span>
             </div>
             <div class="sort-list-header">
@@ -260,7 +260,7 @@ export default {
     /** 保存或应用 */
     async confirmModifyFields() {
       if (this.shadowVisible.length === 0) {
-        this.messageWarn(this.$t('retrieve.mustSetVisible'));
+        this.messageWarn(this.$t('显示字段不能为空'));
         return;
       }
       try {

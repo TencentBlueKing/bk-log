@@ -21,7 +21,7 @@
   -->
 
 <template>
-  <!-- :empty-text="$t('retrieve.notData')" -->
+  <!-- :empty-text="$t('未查询到数据')" -->
   <bk-table
     ref="resultTable"
     :class="['king-table', { 'is-wrap': isWrap }]"

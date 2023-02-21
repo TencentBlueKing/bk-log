@@ -69,7 +69,7 @@
           <div v-else>
             <bk-input @enter="handleEnterCompared"></bk-input>
             <div class="compared-select-icon">
-              <span v-bk-tooltips="$t('customizeTips')" class="top-end">
+              <span v-bk-tooltips="$t('自定义输入格式: 如 1h 代表一小时 h小时')" class="top-end">
                 <i class="log-icon icon-help"></i>
               </span>
             </div>
