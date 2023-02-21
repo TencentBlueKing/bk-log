@@ -182,7 +182,10 @@ export default {
     checkMark(splitItem) {
       if (!this.markList.length) return false;
       // 以句号开头或句号结尾的分词符匹配成功也高亮展示
-      return this.markList.some(item => item === splitItem || new RegExp(`^\\.${item}|${item}\\.$`).test(splitItem));
+      return this.markList.some(item => item === splitItem
+       || splitItem.startsWith(`.${item}`)
+       || splitItem.endsWith(`${item}.`),
+      );
     },
     handleMenuClick(event) {
       this.menuClick(event, this.curValue);
