@@ -13,7 +13,7 @@
     cursor: col-resize;
 
     &::after {
-      content: " ";
+      content: ' ';
       position: absolute;
       right: 0px;
       display: inline-block;
@@ -25,6 +25,7 @@
     &.drag-ing,
     &:hover {
       &::after {
+        width: 2px;
         background-color: #3a84ff;
       }
     }

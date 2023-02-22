@@ -99,6 +99,13 @@ export default {
     topFiveList() {
       const totalList = Object.entries(this.statisticalFieldData);
       totalList.sort((a, b) => b[1] - a[1]);
+      totalList.forEach((item) => {
+        const markList = item[0].toString().match(/(<mark>).*?(<\/mark>)/g) || [];
+        if (markList.length) {
+          item[0] = markList.map(item => item.replace(/<mark>/g, '')
+            .replace(/<\/mark>/g, '')).join(',');
+        }
+      });
       this.shouldShowMore = totalList.length > 5;
       return this.showAllList ? totalList : totalList.filter((item, index) => index < 5);
     },

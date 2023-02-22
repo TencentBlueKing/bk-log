@@ -208,7 +208,7 @@ export default {
      */
     handleChangeTrigger() {
       if (!this.interactType) {
-        this.popoverInstance.set({
+        this.popoverInstance?.set({
           trigger: 'click',
           hideOnClick: true,
         });

@@ -86,7 +86,6 @@
           :favorite-loading="favoriteLoading"
           :favorite-list="favoriteList"
           :style="{ width: collectWidth + 'px' }"
-          :favorite-request-i-d="favoriteRequestID"
           :active-favorite="activeFavorite"
           :active-favorite-i-d="activeFavoriteID"
           :visible-fields="visibleFields"
@@ -167,6 +166,7 @@
                     :dropdown-data="retrieveDropdownData"
                     :is-show-ui-type="isShowUiType"
                     @inputBlur="handleBlurSearchInput"
+                    @isCanSearch="val => isCanStorageFavorite = val"
                     @retrieve="retrieveLog" />
                 </template>
                 <template v-else>
@@ -175,7 +175,8 @@
                     :keyword="retrieveParams.keyword"
                     :active-favorite="activeFavorite"
                     :is-clear-condition="isClearCondition"
-                    @updateKeyWords="updateKeyWords" />
+                    @updateKeyWords="updateKeyWords"
+                    @isCanSearch="val => isCanStorageFavorite = val" />
                 </template>
                 <!-- 添加过滤条件 -->
                 <div class="tab-item-title flex-item-title">
@@ -242,6 +243,7 @@
                     <bk-button
                       v-show="isFavoriteNewSearch"
                       ext-cls="favorite-btn"
+                      :disabled="!isCanStorageFavorite"
                       data-test-id="dataQuery_button_collection"
                       @click="handleClickFavorite">
                       <span class="favorite-btn-text">
@@ -256,7 +258,7 @@
                     <bk-button
                       v-show="!isFavoriteNewSearch"
                       ext-cls="favorite-btn"
-                      :disabled="!isFavoriteUpdate || favoriteUpdateLoading"
+                      :disabled="!isFavoriteUpdate || favoriteUpdateLoading || !isCanStorageFavorite"
                       @click="handleUpdateFavorite">
                       <span v-bk-tooltips="{ content: $t('当前收藏有更新，点击保存当前修改'), disabled: !isFavoriteUpdate }">
                         <span class="favorite-btn-text">
@@ -273,7 +275,7 @@
                     </bk-button>
                   </div>
                   <span v-bk-tooltips="{ content: $t('清空'), delay: 200 }">
-                    <div class="clear-params-btn" @click="clearCondition">
+                    <div class="clear-params-btn" @click="() => clearCondition('*')">
                       <bk-button data-test-id="dataQuery_button_phrasesClear"></bk-button>
                       <span class="log-icon icon-brush"></span>
                     </div>
@@ -411,6 +413,7 @@ import { handleTransformToTimestamp } from '../../components/time-range/utils';
 import indexSetSearchMixin from '@/mixins/indexSet-search-mixin';
 import axios from 'axios';
 import * as authorityMap from '../../common/authority-map';
+import { deepClone } from '../../components/monitor-echarts/utils';
 
 export default {
   name: 'Retrieve',
@@ -528,6 +531,7 @@ export default {
       isThollteField: false,
       globalsData: {},
       random,
+      isCanStorageFavorite: true,
       cleanConfig: {},
       clusteringData: { // 日志聚类参数
         name: '',
@@ -560,7 +564,6 @@ export default {
       inputSearchList: [], // 鼠标失焦后的表单模式列表
       filterAllOperators: {},
       addFavoriteData: {}, // 新增收藏所需的参数
-      favoriteRequestID: 0, // 参数改变更新收藏
       replaceFavoriteData: {}, // 收藏判断不同后的替换参数
       searchMap: { // 检索按钮
         search: { // 查询
@@ -664,6 +667,7 @@ export default {
       this.$store.commit('updateIndexId', val);
       this.retrieveSearchNumber = 0; // 切换索引集 检索次数设置为0;
       val && this.requestSearchHistory(val);
+      this.clearCondition('*', false);
     },
     spaceUid: {
       async handler() {
@@ -1057,10 +1061,14 @@ export default {
         this.retrieveLog();
       }
     },
-    // 清空条件
-    clearCondition() {
+    /**
+     * @desc: 清空条件
+     * @param {String} clearStr 检索keywords
+     * @param {Boolean} isRetrieveLog 是否检索表格
+     */
+    clearCondition(clearStr = '*', isRetrieveLog = true) {
       Object.assign(this.retrieveParams, {
-        keyword: '',
+        keyword: this.isSqlSearchType ? clearStr : this.retrieveParams.keyword, // 若是表单模式的清空则不删除keyword
         host_scopes: {
           modules: [],
           ips: '',
@@ -1070,7 +1078,8 @@ export default {
         addition: [],
       });
       this.isClearCondition = !this.isClearCondition;
-      this.retrieveLog();
+      if (this.isSqlSearchType) this.handleBlurSearchInput('*');
+      if (isRetrieveLog) this.retrieveLog();
     },
     // 搜索记录
     retrieveFavorite({ index_set_id: indexSetID, params }) {
@@ -1257,7 +1266,6 @@ export default {
           this.requestChart();
           this.requestSearchHistory(this.indexId);
         }
-
         await this.handleResetTimer();
         await this.requestTable();
         if (this.isAfterRequestFavoriteList) await this.getFavoriteList();
@@ -1488,6 +1496,7 @@ export default {
         this.computeRetrieveDropdownData(this.logList);
       } catch (err) {
         this.$refs.resultMainRef.isPageOver = false;
+        this.isCanStorageFavorite = false; // 不能收藏
       } finally {
         this.requesting = false;
         if (this.isNextTime) {
@@ -1745,6 +1754,12 @@ export default {
         } = this.activeFavorite;
         const { search_fields } = params;
         const { host_scopes, addition, keyword } = this.retrieveParams;
+        const fRes = await this.$http.request('favorite/getSearchFields', {
+          data: { keyword },
+        });
+        const searchFilterList = fRes.data
+          .filter(v => search_fields.includes(v.name))
+          .map(item => item.name);
         const data = {
           name,
           group_id,
@@ -1753,7 +1768,7 @@ export default {
           host_scopes,
           addition,
           keyword,
-          search_fields,
+          search_fields: searchFilterList,
         };
         if (!data.search_fields.length) this.isSqlSearchType = true;
         const res = await this.$http.request('favorite/updateFavorite', {
@@ -1789,7 +1804,7 @@ export default {
           addition: this.retrieveParams.addition,
           keyword: this.retrieveParams.keyword,
         },
-        display_fields: this.visibleFields.map(item => item.field_name),
+        display_fields: this.visibleFields.map(item => item?.field_name),
       };
     },
 
@@ -1835,11 +1850,11 @@ export default {
       }
     },
     handleClickSearchType() {
-      if (this.isSqlSearchType) {
-        this.$refs.formTipsRef?.instance.set({ trigger: 'click' });
-      }
       // 如果当前为sql模式，且检索的keywords和收藏的keywords不一致 则不允许切换
       if (this.isSqlSearchType && !this.isCanUseUiType) return;
+      this.retrieveLog();
+      this.handleBlurSearchInput(this.retrieveParams.keyword);
+      // this.initSearchList();
       // 切换表单模式或者sql模式
       this.isSqlSearchType = !this.isSqlSearchType;
       // 如果是sql模式切到表单模式 则缓存keywords  表单切回sql模式时回填缓存的keywords
@@ -1851,8 +1866,8 @@ export default {
         this.retrieveLog();
       }
     },
-    handleSubmitFavorite({ isCreate, resValue }) {
-      this.favoriteRequestID += 1; // 编辑或新增刷新收藏列表
+    async handleSubmitFavorite({ isCreate, resValue }) {
+      await this.getFavoriteList(); // 编辑或新增刷新收藏列表
       if (isCreate) { // 新建收藏 刷新收藏列表同时高亮显示新增的收藏
         this.handleClickFavoriteItem(resValue);
         if (!this.isShowCollect) this.collectWidth = 240;
@@ -1868,7 +1883,7 @@ export default {
         this.activeFavorite = {};
         this.isSqlSearchType = true;
         this.isFavoriteSearch = false;
-        this.clearCondition();
+        this.clearCondition('*');
         return;
       }
       // 无host_scopes补充空的 host_scopes
@@ -1879,7 +1894,7 @@ export default {
       }
       this.addFavoriteData = {}; // 清空新增收藏的数据
       this.isFavoriteSearch = true;
-      this.activeFavorite = value;
+      this.activeFavorite = deepClone(value);
       this.activeFavoriteID = value.id;
       this.retrieveFavorite(value);
     },
@@ -2353,5 +2368,11 @@ export default {
     .tippy-tooltip {
       padding: 0;
     }
+  }
+
+  .bk-dialog-wrapper .bk-info-box .bk-dialog-type-header .header {
+    white-space: normal;
+    text-overflow: inherit;
+    overflow: hidden;
   }
 </style>

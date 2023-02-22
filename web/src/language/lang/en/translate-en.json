@@ -862,5 +862,14 @@
   "个节点": "nodes",
   "全部": "All",
   "行": "line",
-  "每15分钟按照CMDB最新拓扑自动部署或取消采集": "Automatically deploy or cancel collection every 15 minutes according to the latest topology of CMDB"
+  "每15分钟按照CMDB最新拓扑自动部署或取消采集": "Automatically deploy or cancel collection every 15 minutes according to the latest topology of CMDB",
+  "不能多于30个字符": "Cannot be longer than 30 characters",
+  "本业务可见": "This business is visible",
+  "仅个人可见": "Personal only",
+  "未分组": "Ungrouped",
+  "个人收藏": "Private group",
+  "{n}, （长度30个字符）": "{n} (30 characters)",
+  "填写收藏名": "Fill in the favorite name",
+  "全文检索": "Full-text search",
+  "采集插件": "Collection plug-in"
 }

@@ -61,7 +61,7 @@
                 v-for="option in archiveList"
                 :key="option.archive_config_id"
                 :id="option.archive_config_id"
-                :name="option.collector_config_name"
+                :name="option.instance_name"
                 :disabled="!option.permission[authorityMap.MANAGE_COLLECTION_AUTH]">
               </bk-option>
             </bk-select>
@@ -294,7 +294,7 @@ export default {
       const hour = date.getHours() >= 10 ? date.getHours() : `0${date.getHours()}`;
       const min = date.getMinutes() >= 10 ? date.getMinutes() : `0${date.getMinutes()}`;
       const dateStr = `${year}${month}${day}${hour}${min}`;
-      this.formData.index_set_name  = selectArchive ? `${selectArchive?.collector_config_name}-回溯-${dateStr}` : '';
+      this.formData.index_set_name  = selectArchive ? `${selectArchive?.instance_name}-回溯-${dateStr}` : '';
     },
     updateDaysList() {
       const retentionDaysList = [...this.globalsData.storage_duration_time].filter((item) => {

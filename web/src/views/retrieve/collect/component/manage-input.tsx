@@ -64,6 +64,7 @@ export default class ManageInput extends tsc<IProps> {
             vModel={this.inputStr}
             ref="inputRef"
             onBlur={this.blurInput}
+            maxlength={30}
           ></Input>
         ) : (
           <div class="collect-name">

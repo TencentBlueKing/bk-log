@@ -291,7 +291,7 @@
                   class="table-link"
                   :style="`color:${isSetDisabled ? '#dcdee5' : '#3a84ff'};`"
                   @click="isDisableOperate(props.row)">
-                  {{ props.row.is_delete ? '复原' : '隐藏' }}
+                  {{ props.row.is_delete ? $t('复原') : $t('隐藏') }}
                 </span>
               </template>
             </bk-table-column>

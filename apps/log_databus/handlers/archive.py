@@ -23,7 +23,7 @@ from django.forms import model_to_dict
 from django.utils.translation import ugettext_lazy as _
 
 from apps.api import TransferApi
-from apps.log_databus.constants import RESTORE_INDEX_SET_PREFIX
+from apps.log_databus.constants import ArchiveInstanceType, RESTORE_INDEX_SET_PREFIX
 from apps.log_databus.exceptions import (
     ArchiveNotFound,
     RestoreNotFound,
@@ -44,10 +44,10 @@ from bkm_space.utils import bk_biz_id_to_space_uid
 
 class ArchiveHandler:
     def __init__(self, archive_config_id=None):
-        self.archive: ArchiveConfig = None
+        self.archive = None
         if archive_config_id is not None:
             try:
-                self.archive = ArchiveConfig.objects.get(archive_config_id=archive_config_id)
+                self.archive: ArchiveConfig = ArchiveConfig.objects.get(archive_config_id=archive_config_id)
             except ArchiveConfig.DoesNotExist:
                 raise ArchiveNotFound
 
@@ -68,7 +68,8 @@ class ArchiveHandler:
         table_ids = [archive.table_id for archive in archive_objs]
         archive_detail = array_group(TransferApi.list_result_table_snapshot({"table_ids": table_ids}), "table_id", True)
         for archive in archive_objs:
-            archive_group[archive.archive_config_id]["collector_config_name"] = archive.collector_config_name
+            archive_group[archive.archive_config_id]["instance_name"] = archive.instance_name
+            archive_group[archive.archive_config_id]["_collector_config_id"] = archive.collector_config_id
             for field in ["doc_count", "store_size", "index_count"]:
                 archive_group[archive.archive_config_id][field] = archive_detail[archive.table_id][field]
         return archives
@@ -112,14 +113,14 @@ class ArchiveHandler:
             meta_update_params = {"table_id": self.archive.table_id, "snapshot_days": self.archive.snapshot_days}
             TransferApi.modify_result_table_snapshot(meta_update_params)
             return
-        try:
-            collector: CollectorConfig = CollectorConfig.objects.get(
-                collector_config_id=params.get("collector_config_id")
-            )
-        except CollectorConfig.DoesNotExist:
-            raise CollectorConfigNotExistException
-        if not collector.is_active:
-            raise CollectorActiveException
+        # 只有采集项类型需要确认结果表状态
+        if params["instance_type"] == ArchiveInstanceType.COLLECTOR_CONFIG.value:
+            try:
+                collector: CollectorConfig = CollectorConfig.objects.get(collector_config_id=params["instance_id"])
+            except CollectorConfig.DoesNotExist:
+                raise CollectorConfigNotExistException
+            if not collector.is_active:
+                raise CollectorActiveException
         create_obj = ArchiveConfig.objects.create(**params)
         meta_create_params = {
             "table_id": create_obj.table_id,
@@ -178,7 +179,7 @@ class ArchiveHandler:
             {
                 "bk_biz_id": self.archive.bk_biz_id,
                 "result_table_id": f"{RESTORE_INDEX_SET_PREFIX}*{self.archive.table_id.replace('.', '_')}_*",
-                "result_table_name": self.archive.collector_config_name,
+                "result_table_name": self.archive.instance_name,
                 "time_field": DEFAULT_TIME_FIELD,
             }
         ]
@@ -195,7 +196,7 @@ class ArchiveHandler:
             scenario_id=Scenario.ES,
             view_roles=[],
             indexes=indexes,
-            category_id=self.archive.collector_config.category_id,
+            category_id=self.archive.instance.category_id,
             collector_config_id=self.archive.collector_config_id,
             time_field=DEFAULT_TIME_FIELD,
             time_field_type=TimeFieldTypeEnum.DATE.value,
@@ -214,8 +215,9 @@ class ArchiveHandler:
         return [
             {
                 "archive_config_id": archive.archive_config_id,
-                "collector_config_name": archive.collector_config_name,
-                "collector_config_id": archive.collector_config.collector_config_id,
+                "instance_name": archive.instance_name,
+                "instance_id": archive.instance_id,
+                "_collector_config_id": archive.collector_config_id
             }
             for archive in ArchiveConfig.objects.filter(bk_biz_id=bk_biz_id)
         ]
@@ -240,9 +242,11 @@ class ArchiveHandler:
                         "start_time": cls.to_user_time_format(instance.start_time),
                         "end_time": cls.to_user_time_format(instance.end_time),
                         "expired_time": cls.to_user_time_format(instance.expired_time),
-                        "collector_config_name": instance.archive.collector_config_name,
                         "total_store_size": instance.total_store_size,
-                        "collector_config_id": instance.archive.collector_config_id,
+                        "instance_id": instance.archive.instance_id,
+                        "instance_name": instance.archive.instance_name,
+                        "instance_type": instance.archive.instance_type,
+                        "_collector_config_id": instance.archive.collector_config_id,
                         "archive_config_id": instance.archive.archive_config_id,
                         "notice_user": instance.notice_user.split(","),
                         "is_expired": instance.is_expired(),
