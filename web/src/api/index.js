@@ -37,6 +37,7 @@ import mockList from '@/mock/index.js';
 import serviceList from '@/services/index.js';
 import { context, trace } from '@opentelemetry/api';
 import { makeMessage } from '@/common/util';
+import i18n from '@/language/i18n';
 
 const baseURL = window.AJAX_URL_PREFIX || '/api/v1';
 // axios 实例
@@ -237,7 +238,7 @@ function handleReject(error, config) {
       }
       return Promise.reject(nextError);
     } if (status === 500) {
-      nextError.message = '系统出现异常';
+      nextError.message = i18n.t('系统出现异常');
     } else if (data && data.message) {
       nextError.message = data.message;
     }
@@ -254,7 +255,7 @@ function handleReject(error, config) {
   }
 
   if (config.globalError && code !== 0) {
-    const message = error.message || '系统出现异常';
+    const message = error.message || i18n.t('系统出现异常');
     if (code !== 0 && code !== '0000' && code !== '00') {
       if (code === 4003) {
         bus.$emit('show-apply-perm', error.data);

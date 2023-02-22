@@ -209,9 +209,9 @@ export default class TimeRange extends tsc<IProps, IEvents> {
           <div
             slot="header"
             class="time-range-custom">
-            <span>{this.$t('retrieve.从')}</span>
+            <span>{this.$t('从')}</span>
             <bk-input class="custom-input" v-model={this.localValue[0]} onInput={() => this.isPanelTimeRange = false}/>
-            <span>{this.$t('retrieve.至')}</span>
+            <span>{this.$t('至')}</span>
             <bk-input class="custom-input" v-model={this.localValue[1]} onInput={() => this.isPanelTimeRange = false}/>
           </div>
           <div slot="footer" class="time-range-footer">

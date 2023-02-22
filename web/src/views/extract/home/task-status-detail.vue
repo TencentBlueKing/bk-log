@@ -29,7 +29,7 @@
     <bk-table :data="statusData">
       <bk-table-column :label="$t('步骤')" prop="name_display"></bk-table-column>
       <bk-table-column :label="$t('开始时间')" prop="start_time" width="150"></bk-table-column>
-      <bk-table-column :label="$t('耗时')" width="100">
+      <bk-table-column :label="$t('耗时(s)')" width="100">
         <template slot-scope="{ row }">
           <span>
             {{ row.finish_time ?

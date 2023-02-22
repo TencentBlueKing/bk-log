@@ -61,7 +61,7 @@
       <span class="text">{{ $t('暂无数据') }}</span>
     </div>
     <div class="converge-cycle" v-if="!isEmptyChart && !isFold">
-      <span>{{ $t('retrieve.convergeCycle') }}</span>
+      <span>{{ $t('汇聚周期') }}</span>
       <bk-select
         style="width: 80px"
         v-model="chartInterval"

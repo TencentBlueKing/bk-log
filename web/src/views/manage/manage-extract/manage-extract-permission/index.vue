@@ -39,7 +39,7 @@
       </bk-button>
     </div>
     <bk-table class="king-table" :data="strategyList" row-key="strategy_id">
-      <bk-table-column :label="$t('用户组')" min-width="100">
+      <bk-table-column :label="$t('名称')" min-width="100">
         <div class="table-ceil-container" slot-scope="{ row }">
           <span v-bk-overflow-tips>{{row.strategy_name}}</span>
         </div>
@@ -275,7 +275,7 @@ export default {
       return new Promise((reject) => {
         this.$bkInfo({
           type: 'warning',
-          title: this.$t('pageLeaveTips'),
+          title: this.$t('是否放弃本次操作？'),
           confirmFn: () => {
             reject(true);
           },

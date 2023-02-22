@@ -34,13 +34,15 @@
             <div class="suggest-title">{{$t('您可以按照以下方式进行检索')}}</div>
             <div class="suggest-list">
               <span>
-                1. {{$t('当前是否有数据源，如果没有请')}}
-                <span class="blue-btn" @click="handleBtnClick('goToConfig')">{{$t('前往配置')}}</span>
+                1. <i18n path="当前是否有数据源，如果没有请 {0}">
+                  <span class="blue-btn" @click="handleBtnClick('goToConfig')">{{$t('前往配置')}}</span>
+                </i18n>
               </span>
               <span> 2. {{$t('检查查询条件是否完整，是否有报错')}}</span>
               <span>
-                3. {{$t('当前可能是手动查询，请')}}
-                <span class="blue-btn" @click="handleBtnClick('clickToQuery')">{{$t('点击查询')}}</span>
+                3. <i18n path="当前可能是手动查询，请 {0}">
+                  <span class="blue-btn" @click="handleBtnClick('clickToQuery')">{{$t('点击查询')}}</span>
+                </i18n>
               </span>
             </div>
           </div>
@@ -59,9 +61,9 @@
             <div class="suggest-title">{{$t('您可以按照以下方式优化检索结果')}}</div>
             <div class="suggest-list">
               <span>
-                1. {{$t('检查')}}
-                <span class="blue-btn" @click="handleBtnClick('indexConfig')">{{$t('数据源配置')}}</span>
-                {{$t('情况')}}
+                1. <i18n path="检查 {0} 情况">
+                  <span class="blue-btn" @click="handleBtnClick('indexConfig')">{{$t('数据源配置')}}</span>
+                </i18n>
               </span>
               <span>2. {{$t('检查右上角的索时间范围')}}</span>
               <span>3. {{$t('优化查询语句')}}</span>
@@ -104,7 +106,7 @@ export default {
         },
         {
           key: this.$t('模糊检索使用通配符'),
-          value: `abc* ${this.$t('或')} ab?c`,
+          value: this.$t('abc* 或 ab?c'),
         },
         {
           key: this.$t('双引号匹配完整字符串'),

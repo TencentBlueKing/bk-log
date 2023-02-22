@@ -61,9 +61,9 @@
         <div v-if="matchLines !== null" class="test-result">
           <span :class="matchLines ? 'bk-icon icon-check-circle-shape' : 'bk-icon icon-close-circle-shape'"></span>
           <template v-if="matchLines">
-            {{ $t('成功匹配') }}
-            <span class="match-counts">{{ matchLines }}</span>
-            {{ $t('条日志') }}
+            <i18n path="成功匹配 {0} 条日志">
+              <span class="match-counts">{{ matchLines }}</span>
+            </i18n>
           </template>
           <template v-else>{{ $t('未成功匹配') }}</template>
         </div>

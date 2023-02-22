@@ -24,7 +24,7 @@
   <div class="archive-slider-container">
     <bk-sideslider
       transfer
-      :title="isEdit ? $t('logArchive.editArchive') : $t('logArchive.createArchive')"
+      :title="isEdit ? $t('编辑归档') : $t('新增归档')"
       :is-show="showSlider"
       :width="676"
       :quick-close="true"
@@ -42,7 +42,7 @@
           ref="validateForm"
           class="king-form">
           <bk-form-item
-            :label="$t('logArchive.collectFormLabel')"
+            :label="$t('选择采集项/采集插件')"
             required
             property="instance_id">
             <bk-select
@@ -73,7 +73,7 @@
             </bk-select>
           </bk-form-item>
           <bk-form-item
-            :label="$t('logArchive.archiveRepository')"
+            :label="$t('归档仓库')"
             required
             property="target_snapshot_repository_name">
             <bk-select
@@ -109,7 +109,7 @@
                   v-model="customRetentionDay"
                   size="small"
                   type="number"
-                  :placeholder="$t('输入自定义天数')"
+                  :placeholder="$t('输入自定义天数，按 Enter 确认')"
                   :show-controls="false"
                   @enter="enterCustomDay($event)"
                 ></bk-input>
@@ -392,7 +392,7 @@ export default {
       return new Promise((reject) => {
         this.$bkInfo({
           type: 'warning',
-          title: this.$t('pageLeaveTips'),
+          title: this.$t('是否放弃本次操作？'),
           confirmFn: () => {
             reject(true);
           },

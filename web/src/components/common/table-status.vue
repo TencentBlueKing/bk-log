@@ -23,11 +23,11 @@
 <template>
   <div class="table-status-container failed" v-if="isError">
     <i class="bk-icon icon-close-circle-shape icon-fai"></i>
-    <span class="text">{{$t('dataSource.failed')}}</span>
+    <span class="text">{{$t('失败')}}</span>
   </div>
   <div class="table-status-container success" v-else>
     <i class="bk-icon icon-check-circle-shape icon-sec"></i>
-    <span class="text">{{$t('configDetails.success')}}</span>
+    <span class="text">{{$t('成功')}}</span>
   </div>
 </template>
 

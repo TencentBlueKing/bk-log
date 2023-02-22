@@ -25,7 +25,7 @@
     <!-- 检索页首页 -->
     <div v-if="hasAuth && isRetrieveHome" class="retrieve-home-container">
       <div class="retrieve-home" data-test-id="retrieve_div_frontPageSearchBox">
-        <div class="retrieve-home-title">{{ $t('nav.retrieve') }}</div>
+        <div class="retrieve-home-title">{{ $t('检索') }}</div>
         <div class="retrieve-home-condition">
           <!-- 选择索引集 -->
           <select-indexSet
@@ -137,7 +137,7 @@
                       style="color: #d7473f; display: inline-block; transform: translateY(-2px);"
                       class="bk-icon icon-exclamation-circle-shape">
                     </span>
-                    <span>{{$t('表单Tips')}}</span>
+                    <span>{{$t('收藏的内容已修改，不能切回表单模式')}}</span>
                   </div>
                 </bk-popover>
               </div>
@@ -260,7 +260,7 @@
                       ext-cls="favorite-btn"
                       :disabled="!isFavoriteUpdate || favoriteUpdateLoading || !isCanStorageFavorite"
                       @click="handleUpdateFavorite">
-                      <span v-bk-tooltips="{ content: $t('保存Tips'), disabled: !isFavoriteUpdate }">
+                      <span v-bk-tooltips="{ content: $t('当前收藏有更新，点击保存当前修改'), disabled: !isFavoriteUpdate }">
                         <span class="favorite-btn-text">
                           <span :class="[
                             'icon',
@@ -1700,9 +1700,9 @@ export default {
     initToolTipsMessage(config) {
       const { contextAndRealtime, bkmonitor } = config;
       return {
-        monitorWeb: bkmonitor.is_active ? this.$t('retrieve.monitorAlarm') : bkmonitor?.extra.reason,
-        realTimeLog: contextAndRealtime.is_active ? this.$t('retrieve.log') : contextAndRealtime?.extra.reason,
-        contextLog: contextAndRealtime.is_active ? this.$t('retrieve.context') : contextAndRealtime?.extra.reason,
+        monitorWeb: bkmonitor.is_active ? this.$t('监控告警') : bkmonitor?.extra.reason,
+        realTimeLog: contextAndRealtime.is_active ? this.$t('实时日志') : contextAndRealtime?.extra.reason,
+        contextLog: contextAndRealtime.is_active ? this.$t('上下文') : contextAndRealtime?.extra.reason,
       };
     },
     // 点击新增收藏
@@ -2367,7 +2367,7 @@ export default {
     }
   }
 
-  .bk-dialog-wrapper .bk-info-box .bk-dialog-type-header .header{
+  .bk-dialog-wrapper .bk-info-box .bk-dialog-type-header .header {
     white-space: normal;
     text-overflow: inherit;
     overflow: hidden;

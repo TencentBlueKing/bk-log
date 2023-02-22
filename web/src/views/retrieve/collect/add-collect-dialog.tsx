@@ -141,7 +141,7 @@ export default class CollectDialog extends tsc<IProps> {
       },
       {
         validator: this.checkSpecification,
-        message: window.mainComponent.$t('收藏名不规范'),
+        message: window.mainComponent.$t('{n}不规范, 包含特殊符号', { n: window.mainComponent.$t('收藏名') }),
         trigger: 'blur',
       },
       {
@@ -166,7 +166,7 @@ export default class CollectDialog extends tsc<IProps> {
     groupName: [
       {
         validator: this.checkName,
-        message: window.mainComponent.$t('组名不规范，包含了特殊符号.'),
+        message: window.mainComponent.$t('{n}不规范, 包含特殊符号', { n: window.mainComponent.$t('组名') }),
         trigger: 'blur',
       },
       {
@@ -474,7 +474,7 @@ export default class CollectDialog extends tsc<IProps> {
               <Input
                 class="collect-name"
                 vModel={this.favoriteData.name}
-                placeholder={this.$t('填写收藏名（长度30个字符）')}
+                placeholder={this.$t('{n}, （长度30个字符）', { n: this.$t('填写收藏名') })}
               ></Input>
             </FormItem>
             <FormItem
@@ -491,7 +491,7 @@ export default class CollectDialog extends tsc<IProps> {
           </div>
           <div class="form-item-container">
             <FormItem label={this.$t('所属组')}>
-              <span v-bk-tooltips={{ content: this.$t('私有Tips'), disabled: !this.isDisableSelect }}>
+              <span v-bk-tooltips={{ content: this.$t('私有的只支持默认的“个人收藏”'), disabled: !this.isDisableSelect }}>
                 <Select
                   vModel={this.favoriteData.group_id}
                   disabled={this.isDisableSelect}
@@ -522,7 +522,7 @@ export default class CollectDialog extends tsc<IProps> {
                           <FormItem property="groupName">
                             <Input
                               clearable
-                              placeholder={`${this.$t('请输入组名')}${this.$t('（长度30个字符）')}`}
+                              placeholder={this.$t('{n}, （长度30个字符）', { n: this.$t('请输入组名') })}
                               vModel={this.verifyData.groupName}
                             ></Input>
                           </FormItem>
@@ -543,7 +543,7 @@ export default class CollectDialog extends tsc<IProps> {
           </div>
           <FormItem label={this.$t('表单模式')}>
             <div class="explanation-field">
-              {this.$t('表单模式显示字段文案')}
+              {this.$t('该功能指从查询语句中获取相应的字段，当勾选对应的字段时，将以表单的填写方式显示给收藏的使用者。（字段说明：没有字段时，为全文检索；重复的字段增加显示序号(N) ，默认不勾选任何字段)')}
             </div>
             <CheckboxGroup vModel={this.favoriteData.params.search_fields}>
               {this.searchFieldsList.map(item => (
@@ -558,7 +558,7 @@ export default class CollectDialog extends tsc<IProps> {
             desc-type="icon"
             labelWidth={400}
             desc={{
-              content: `${this.$t('是否同时显示字段文案')}`,
+              content: `${this.$t('当打开时，使用该收藏将同时显示如下字段，不影响用户字段显示设置。')}`,
               placements: ['right'],
             }}
           >

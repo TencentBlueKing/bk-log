@@ -76,7 +76,7 @@
               data-test-id="newlogIndexSetBox_select_selectCluster"
               v-model="formData.storage_cluster_id"
               v-bk-tooltips.top="{
-                content: $t('cannotCrossSetClusterTips'),
+                content: $t('不能跨集群添加多个索引，切换集群请先清空索引'),
                 delay: 300,
                 disabled: !formData.indexes.length }"
               :clearable="false"
@@ -254,7 +254,7 @@ export default {
   beforeRouteLeave(to, from, next) {
     if (!this.isSubmit && !this.showRouterLeaveTip) {
       this.$bkInfo({
-        title: this.$t('pageLeaveTips'),
+        title: this.$t('是否放弃本次操作？'),
         confirmFn: () => {
           next();
         },
@@ -511,7 +511,7 @@ export default {
           window.location.assign(redirectUrl);
         }
       } else {
-        this.messageSuccess(this.isEdit ? this.$t('common.configSuccessfully') : this.$t('common.createdSuccessfully'));
+        this.messageSuccess(this.isEdit ? this.$t('设置成功') : this.$t('创建成功'));
         this.returnIndexList();
       }
     },
