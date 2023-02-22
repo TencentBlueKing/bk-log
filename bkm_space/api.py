@@ -85,4 +85,4 @@ class SpaceApiProxy(object):
         self._api = import_string(api_class)
 
 
-SpaceApi = SpaceApiProxy()
+SpaceApi: AbstractSpaceApi = SpaceApiProxy()

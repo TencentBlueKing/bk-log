@@ -23,6 +23,7 @@ import datetime
 import os
 import time
 from collections import defaultdict
+from typing import Union, List
 
 from django.core.cache import cache
 from django.conf import settings
@@ -76,6 +77,7 @@ from apps.log_search.constants import (
     INDEX_SET_NOT_EXISTED,
 )
 from bkm_space.api import AbstractSpaceApi
+from bkm_space.define import Space as SpaceDefine
 from bkm_space.utils import space_uid_to_bk_biz_id
 from apps.utils.time_handler import timestamp_to_datetime, datetime_to_timestamp, timestamp_to_timeformat
 
@@ -846,10 +848,7 @@ class FavoriteGroup(OperateRecordModel):
         ungrouped_group = cls.get_or_create_ungrouped_group(space_uid=space_uid)
         groups[ungrouped_group.id] = model_to_dict(ungrouped_group)
         # 公共组
-        public_groups = cls.objects.filter(
-            group_type=FavoriteGroupType.PUBLIC.value,
-            space_uid=space_uid,
-        )
+        public_groups = cls.objects.filter(group_type=FavoriteGroupType.PUBLIC.value, space_uid=space_uid,)
         for gi in public_groups:
             groups[gi.id] = model_to_dict(gi)
         return groups
@@ -1061,7 +1060,7 @@ class Space(SoftDeleteModel):
 
     id = models.AutoField(_("空间自增ID"), primary_key=True)
 
-    space_uid = models.CharField(_("空间唯一标识"), max_length=256, unique=True)
+    space_uid = models.CharField(_("空间唯一标识"), max_length=256)
     bk_biz_id = models.IntegerField(_("业务ID"), unique=True)
 
     space_type_id = models.CharField(_("空间类型英文名称"), max_length=64)
@@ -1084,17 +1083,34 @@ class SpaceApi(AbstractSpaceApi):
     """
 
     @classmethod
-    def get_space_detail(cls, space_uid: str = "", id: int = 0):
+    def _init_space(cls, space: Space) -> SpaceDefine:
+        # 补充 space_type 描述
+        return SpaceDefine(
+            id=space.id,
+            space_type_id=space.space_type_id,
+            space_id=space.space_id,
+            space_name=space.space_name,
+            status=space.properties.get("status"),
+            space_code=space.space_code,
+            space_uid=space.space_uid,
+            type_name=space.space_type_name,
+            bk_biz_id=space.bk_biz_id,
+            extend=space.properties,
+        )
+
+    @classmethod
+    def get_space_detail(cls, space_uid: str = "", id: int = 0) -> Union[None, SpaceDefine]:
         space = None
         if space_uid:
             space = Space.objects.filter(space_uid=space_uid).first()
         if not space and id:
             space = Space.objects.filter(id=id).first()
-        return space
+        if space:
+            return cls._init_space(space)
 
     @classmethod
-    def list_spaces(cls):
-        return list(Space.objects.all())
+    def list_spaces(cls) -> List[SpaceDefine]:
+        return [cls._init_space(space) for space in Space.objects.all()]
 
 
 class IndexSetFieldsConfig(models.Model):
