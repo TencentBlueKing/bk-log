@@ -41,6 +41,7 @@
           :clearable="true"
           :right-icon="'bk-icon icon-search'"
           v-model="params.keyword"
+          @change="handleSearchChange"
           @enter="search">
         </bk-input>
       </div>
@@ -427,6 +428,9 @@
             @setting-change="handleSettingChange">
           </bk-table-setting-content>
         </bk-table-column>
+        <div slot="empty">
+          <empty-status :empty-type="emptyType" @operation="handleOperation" />
+        </div>
       </bk-table>
     </section>
     <collection-report-view
@@ -443,11 +447,13 @@ import collectedItemsMixin from '@/mixins/collected-items-mixin';
 import { mapGetters } from 'vuex';
 import * as authorityMap from '../../../../../common/authority-map';
 import CollectionReportView from '../../components/collection-report-view';
+import EmptyStatus from '../../../../../components/empty-status';
 
 export default {
   name: 'CollectionItem',
   components: {
     CollectionReportView,
+    EmptyStatus,
   },
   mixins: [collectedItemsMixin],
   data() {
@@ -545,6 +551,7 @@ export default {
       reportDetailShow: false,
       // 一键检测采集项标识
       checkRecordId: '',
+      emptyType: 'empty',
     };
   },
   computed: {
@@ -598,6 +605,11 @@ export default {
     this.stopStatusPolling();
   },
   methods: {
+    handleSearchChange(val) {
+      if (val === '') {
+        this.requestData();
+      }
+    },
     search() {
       this.pagination.current = 1;
       this.requestData();
@@ -732,6 +744,7 @@ export default {
     },
     requestData() {
       this.isTableLoading = true;
+      this.emptyType = this.params.keyword ? 'search-empty' : 'empty';
       this.$http.request('collect/getCollectList', {
         query: {
           bk_biz_id: this.bkBizId,
@@ -763,9 +776,27 @@ export default {
           this.requestCollectStatus();
         }
       })
+        .catch(() => {
+          this.emptyType = '500';
+        })
         .finally(() => {
           this.isTableLoading = false;
         });
+    },
+    handleOperation(type) {
+      if (type === 'clear-filter') {
+        this.params.keyword = '';
+        this.pagination.current = 1;
+        this.requestData();
+        return;
+      }
+
+      if (type === 'refresh') {
+        this.emptyType = 'empty';
+        this.pagination.current = 1;
+        this.requestData();
+        return;
+      }
     },
     requestCollectList() {
       return new Promise((resolve, reject) => {
