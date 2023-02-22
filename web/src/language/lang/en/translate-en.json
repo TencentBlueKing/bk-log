@@ -871,5 +871,11 @@
   "{n}, （长度30个字符）": "{n} (30 characters)",
   "填写收藏名": "Fill in the favorite name",
   "全文检索": "Full-text search",
-  "采集插件": "Collection plug-in"
+  "采集插件": "Collection plug-in",
+  "可以尝试{0}或{1}": "You can try {0} or {1}",
+  "搜索结果为空": "search result is empty",
+  "数据获取异常": "Data acquisition exception",
+  "无业务权限": "No business authority",
+  "调整关键词": "adjust keywords",
+  "清空筛选条件": "clear filter"
 }
