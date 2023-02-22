@@ -32,7 +32,7 @@
     <div class="ip-select-container" v-bkloading="{ isLoading }">
       <div class="select-title">
         <div class="server-info">
-          {{$t('共') + ' ' + selectedIpNodes.length + ' ' + $t('台')}}：
+          {{$t('共 {n} 台', { n: selectedIpNodes.length })}}：
         </div>
         <div class="server-options">
           <bk-button @click="copyIp">{{$t('复制IP')}}</bk-button>
@@ -44,7 +44,7 @@
           <input
             type="text"
             class="bk-form-input tree-filter-input"
-            :placeholder="$t('btn.search') + '...'"
+            :placeholder="$t('搜索') + '...'"
             v-model="searchWord"
             @keyup.enter="search">
           <bk-big-tree
@@ -60,13 +60,13 @@
           <bk-table
             class="king-table scroll-table"
             :data="selectedIpNodes"
-            :empty-text="$t('retrieve.no_data')"
+            :empty-text="$t('暂无数据')"
             :height="400">
             <bk-table-column prop="ip" label="IP"></bk-table-column>
-            <bk-table-column prop="bk_cloud_name" :label="$t('retrieve.Cloud_area')"></bk-table-column>
-            <bk-table-column :label="$t('indexSetList.operation')" align="center">
+            <bk-table-column prop="bk_cloud_name" :label="$t('云区域')"></bk-table-column>
+            <bk-table-column :label="$t('操作')" align="center">
               <template slot-scope="scope">
-                <bk-button text @click="handleRemoveIp(scope)">{{$t('retrieve.remove')}}</bk-button>
+                <bk-button text @click="handleRemoveIp(scope)">{{$t('移除')}}</bk-button>
               </template>
             </bk-table-column>
           </bk-table>

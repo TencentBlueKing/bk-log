@@ -27,10 +27,10 @@
       theme="primary"
       :value="isFormatDate"
       @change="handleChange"
-      v-bk-tooltips="$t('btn.timeFormatTips')"
+      v-bk-tooltips="$t('开启后将表格内的 UNIX 时间戳格式化为可读时间')"
     ></bk-switcher>
     <!-- <transition name="fade">
-      <span class="time-zone-text" v-if="isFormatDate">{{$t('retrieve.time_zone') + timeZone}}</span>
+      <span class="time-zone-text" v-if="isFormatDate">{{$t('当前时区') + timeZone}}</span>
     </transition> -->
   </div>
 </template>

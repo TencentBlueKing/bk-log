@@ -55,12 +55,12 @@
           <div class="error-tips-container" v-if="indexErrorText">
             <span class="log-icon icon-info-fill" v-bk-tooltips="{ width: 440, content: indexErrorText }"></span>
           </div>
-          <div class="input-tips">{{ $t('indexSetList.tips') }}</div>
+          <div class="input-tips">{{ $t('支持“*”匹配，不支持其他特殊符号') }}</div>
         </bk-form-item>
         <bk-form-item label="">
           <div class="result-tips" v-if="matchedTableIds.length">
             <i class="bk-icon icon-check-circle-shape"></i>
-            {{ $t('成功匹配x条索引', { x: matchedTableIds.length }) }}
+            {{ $t('成功匹配 {x} 条索引', { x: matchedTableIds.length }) }}
           </div>
           <bk-table
             v-bkloading="{ isLoading: tableLoading }"

@@ -50,12 +50,12 @@
         @filter-change="handleFilterChange"
         @page-change="handlePageChange"
         @page-limit-change="handleLimitChange">
-        <bk-table-column :label="$t('logArchive.esID')" width="120">
+        <bk-table-column :label="$t('ES集群ID')" width="120">
           <template slot-scope="props">
             {{ props.row.cluster_id }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('logArchive.repositoryName')">
+        <bk-table-column :label="$t('仓库名称')">
           <template slot-scope="props">
             {{ props.row.repository_name }}
           </template>
@@ -66,7 +66,7 @@
           </template>
         </bk-table-column>
         <bk-table-column
-          :label="$t('logArchive.repositoryType')"
+          :label="$t('仓库类型')"
           prop="type"
           class-name="filter-column"
           column-key="type"
@@ -97,7 +97,7 @@
             {{ props.row.create_time }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('dataSource.operation')" width="160">
+        <bk-table-column :label="$t('操作')" width="160">
           <div class="repository-table-operate" slot-scope="props">
             <!-- 编辑 -->
             <!-- <bk-button
@@ -115,7 +115,7 @@
               class="mr10 king-button"
               v-cursor="{ active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_ES_SOURCE_AUTH]) }"
               @click.stop="operateHandler(props.row, 'delete')">
-              {{ $t('btn.delete') }}
+              {{ $t('删除') }}
             </bk-button>
           </div>
         </bk-table-column>
@@ -167,7 +167,7 @@ export default {
       },
       repoTypeMap: {
         hdfs: 'HDFS',
-        fs: this.$t('logArchive.sharedDirectory'),
+        fs: this.$t('共享目录'),
         cos: 'COS',
       },
     };
@@ -321,7 +321,7 @@ export default {
       if (operateType === 'delete') {
         this.$bkInfo({
           type: 'warning',
-          subTitle: `${this.$t('当前仓库名称为')} ${row.repository_name}，${this.$t('确认要删除')}`,
+          subTitle: this.$t('当前仓库名称为{n}，确认要删除？', { n: row.repository_name }),
           confirmFn: () => {
             this.requestDeleteRepo(row);
           },
