@@ -342,7 +342,7 @@ export default {
       Object.assign(this.fingerOperateData, {
         patternSize: patternLevel - 1,
         sliderMaxVal: clusterLevel.length - 1,
-        patternList: clusterLevel,
+        patternList: clusterLevel.sort((a, b) => Number(b) - Number(a)),
         comparedList: yearOnYearList,
       });
       Object.assign(this.requestData, {
