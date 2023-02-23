@@ -22,7 +22,7 @@ the project delivered to anyone in the future.
 
 from typing import Union, List, Dict
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 
 from apps.iam.exceptions import ActionNotExistError
 from apps.iam.handlers.resources import ResourceEnum
