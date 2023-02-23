@@ -1190,6 +1190,9 @@ class SearchHandler(object):
             return log
         host_key = bk_host_id if bk_host_id else server_ip
         host_info = CmdbHostCache.get(bk_biz_id, host_key)
+        # 当主机被迁移业务或者删除的时候, 会导致缓存中没有该主机信息, 放空处理
+        if not host_info:
+            return log
 
         if bk_host_id and host_info:
             host = host_info
