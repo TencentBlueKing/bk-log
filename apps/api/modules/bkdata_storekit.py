@@ -36,7 +36,7 @@ class _BkDataStorekitApi:
             module=self.MODULE,
             method="GET",
             url_keys=["result_table_id"],
-            description="查询结果表的表结构",
+            description=_("查询结果表的表结构"),
             default_return_value=None,
             before_request=add_esb_info_before_request_for_bkdata_user,
         )
@@ -44,7 +44,7 @@ class _BkDataStorekitApi:
             url=STOREKIT_APIGATEWAY_ROOT + "storage_cluster_configs/{cluster_name}/",
             module=self.MODULE,
             method="GET",
-            description="查询集群详情",
+            description=_("查询集群详情"),
             before_request=add_esb_info_before_request_for_bkdata_user,
             url_keys=["cluster_name"],
         )
@@ -52,7 +52,7 @@ class _BkDataStorekitApi:
             url=STOREKIT_APIGATEWAY_ROOT + "es/route/",
             module=self.MODULE,
             method="GET",
-            description="ES GET 请求转发",
+            description=_("ES GET 请求转发"),
             before_request=add_esb_info_before_request_for_bkdata_user,
         )
 

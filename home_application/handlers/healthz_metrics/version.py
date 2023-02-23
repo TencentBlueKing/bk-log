@@ -20,6 +20,7 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import logging
+from django.utils.translation import ugettext_lazy as _
 
 from django.conf import settings
 
@@ -52,6 +53,6 @@ class VersionMetric(object):
         except Exception as e:  # pylint: disable=broad-except
             logger.exception("get VERSION failed: {}".format(e))
             result.message = str(e)
-            result.suggestion = "缺少VERSION, 请检查打包流程是否正确"
+            result.suggestion = _("缺少VERSION, 请检查打包流程是否正确")
 
         return result

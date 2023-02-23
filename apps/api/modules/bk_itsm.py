@@ -35,49 +35,49 @@ class _BkItsm(object):
             method="POST",
             url=ITSM_APIGATEWAY_ROOT_V2 + "create_ticket/",
             module=self.MODULE,
-            description="创建单据接口",
+            description=_("创建单据接口"),
             before_request=add_esb_info_before_request,
         )
         self.callback_failed_ticket = DataAPI(
             method="POST",
             url=ITSM_APIGATEWAY_ROOT_V2 + "callback_failed_ticket/",
             module=self.MODULE,
-            description="回调失败的单号",
+            description=_("回调失败的单号"),
             before_request=add_esb_info_before_request,
         )
         self.get_ticket_status = DataAPI(
             method="POST",
             url=ITSM_APIGATEWAY_ROOT_V2 + "get_ticket_status/",
             module=self.MODULE,
-            description="单据状态查询，支持根据单号查询单据的状态（携带基本信息）",
+            description=_("单据状态查询，支持根据单号查询单据的状态（携带基本信息）"),
             before_request=add_esb_info_before_request,
         )
         self.token_verify = DataAPI(
             method="POST",
             url=ITSM_APIGATEWAY_ROOT_V2 + "token/verify/",
             module=self.MODULE,
-            description="token校验接口",
+            description=_("token校验接口"),
             before_request=add_esb_info_before_request,
         )
         self.ticket_approval_result = DataAPI(
             method="POST",
             url=ITSM_APIGATEWAY_ROOT_V2 + "ticket_approval_result/",
             module=self.MODULE,
-            description="单据详情查询，支持根据单号查询单据的详情（携带基本信息和提单信息）",
+            description=_("单据详情查询，支持根据单号查询单据的详情（携带基本信息和提单信息）"),
             before_request=add_esb_info_before_request,
         )
         self.get_ticket_info = DataAPI(
             method="POST",
             url=ITSM_APIGATEWAY_ROOT_V2 + "get_ticket_info/",
             module=self.MODULE,
-            description="单据详情查询，支持根据单号查询单据的详情（携带基本信息和提单信息）",
+            description=_("单据详情查询，支持根据单号查询单据的详情（携带基本信息和提单信息）"),
             before_request=add_esb_info_before_request,
         )
         self.get_services = DataAPI(
             method="GET",
             url=ITSM_APIGATEWAY_ROOT_V2 + "get_services/",
             module=self.MODULE,
-            description="服务列表查询，支持根据指定的目录查询服务列表",
+            description=_("服务列表查询，支持根据指定的目录查询服务列表"),
             before_request=add_esb_info_before_request,
         )
 

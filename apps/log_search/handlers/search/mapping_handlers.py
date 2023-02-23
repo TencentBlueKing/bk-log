@@ -938,7 +938,7 @@ class MappingHandlers(object):
             result["async_export_fields"] = scenario_fields
             result["async_export_usable"] = True
         else:
-            result["async_export_usable_reason"] = "检查{}字段是否为聚合字段".format(",".join(scenario_fields))
+            result["async_export_usable_reason"] = _("检查{}字段是否为聚合字段").format(",".join(scenario_fields))
         return result
 
     @classmethod

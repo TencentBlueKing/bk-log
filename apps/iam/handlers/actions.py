@@ -81,7 +81,7 @@ class ActionEnum:
 
     VIEW_BUSINESS = ActionMeta(
         id="view_business_v2",
-        name="业务访问",
+        name=_("业务访问"),
         name_en="View Business",
         type="view",
         related_resource_types=[ResourceEnum.BUSINESS],
@@ -91,7 +91,7 @@ class ActionEnum:
 
     SEARCH_LOG = ActionMeta(
         id="search_log_v2",
-        name="日志检索",
+        name=_("日志检索"),
         name_en="Search Log",
         type="view",
         related_resource_types=[ResourceEnum.INDICES],
@@ -101,7 +101,7 @@ class ActionEnum:
 
     VIEW_COLLECTION = ActionMeta(
         id="view_collection_v2",
-        name="采集查看",
+        name=_("采集查看"),
         name_en="View Collection",
         type="view",
         related_resource_types=[ResourceEnum.COLLECTION],
@@ -111,7 +111,7 @@ class ActionEnum:
 
     CREATE_COLLECTION = ActionMeta(
         id="create_collection_v2",
-        name="采集新建",
+        name=_("采集新建"),
         name_en="Create Collection",
         type="create",
         related_resource_types=[ResourceEnum.BUSINESS],
@@ -121,7 +121,7 @@ class ActionEnum:
 
     MANAGE_COLLECTION = ActionMeta(
         id="manage_collection_v2",
-        name="采集管理",
+        name=_("采集管理"),
         name_en="Manage Collection",
         type="manage",
         related_resource_types=[ResourceEnum.COLLECTION],
@@ -131,7 +131,7 @@ class ActionEnum:
 
     CREATE_ES_SOURCE = ActionMeta(
         id="create_es_source_v2",
-        name="ES源配置新建",
+        name=_("ES源配置新建"),
         name_en="Create ES Source",
         type="create",
         related_resource_types=[ResourceEnum.BUSINESS],
@@ -141,7 +141,7 @@ class ActionEnum:
 
     MANAGE_ES_SOURCE = ActionMeta(
         id="manage_es_source_v2",
-        name="ES源配置管理",
+        name=_("ES源配置管理"),
         name_en="Manage ES Source",
         type="manage",
         related_resource_types=[ResourceEnum.ES_SOURCE],
@@ -151,7 +151,7 @@ class ActionEnum:
 
     CREATE_INDICES = ActionMeta(
         id="create_indices_v2",
-        name="索引集配置新建",
+        name=_("索引集配置新建"),
         name_en="Create Indices",
         type="create",
         related_resource_types=[ResourceEnum.BUSINESS],
@@ -161,7 +161,7 @@ class ActionEnum:
 
     MANAGE_INDICES = ActionMeta(
         id="manage_indices_v2",
-        name="索引集配置管理",
+        name=_("索引集配置管理"),
         name_en="Manage Indices",
         type="manage",
         related_resource_types=[ResourceEnum.INDICES],
@@ -171,7 +171,7 @@ class ActionEnum:
 
     MANAGE_EXTRACT_CONFIG = ActionMeta(
         id="manage_extract_config_v2",
-        name="提取配置管理",
+        name=_("提取配置管理"),
         name_en="Manage Extract Config",
         type="manage",
         related_resource_types=[ResourceEnum.BUSINESS],
@@ -181,7 +181,7 @@ class ActionEnum:
 
     VIEW_DASHBOARD = ActionMeta(
         id="view_dashboard_v2",
-        name="仪表盘查看",
+        name=_("仪表盘查看"),
         name_en="View Dashboard",
         type="view",
         related_resource_types=[ResourceEnum.BUSINESS],
@@ -191,7 +191,7 @@ class ActionEnum:
 
     MANAGE_DASHBOARD = ActionMeta(
         id="manage_dashboard_v2",
-        name="仪表盘管理",
+        name=_("仪表盘管理"),
         name_en="Manage Dashboard",
         type="manage",
         related_resource_types=[ResourceEnum.BUSINESS],

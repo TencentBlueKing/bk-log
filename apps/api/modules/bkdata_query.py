@@ -36,7 +36,7 @@ class _BkDataQueryApi:
             url=DATAQUERY_APIGATEWAY_ROOT + "query_sync/",
             method="POST",
             module=self.MODULE,
-            description=u"原始数据操作",
+            description=_("原始数据操作"),
             default_return_value=None,
             before_request=add_esb_info_before_request_for_bkdata_token,
         )

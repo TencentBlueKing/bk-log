@@ -66,7 +66,7 @@ class AccessorSignal(Signal):
 
         receiver_name = ".".join([receiver.__class__.__module__, receiver.__class__.__name__])
         if receiver_name != self.allowed_receiver:
-            raise BaseException(u"%s is not allowed to connect" % receiver_name)
+            raise BaseException("%s is not allowed to connect" % receiver_name)
         Signal.connect(self, receiver, sender, weak, dispatch_uid)
         self.bind_times += 1
 
@@ -104,7 +104,7 @@ class RequestProvider(MiddlewareMixin):
         if sender is None:
             sender = get_ident()
         if sender not in self._request_pool:
-            raise BaseException(u"get_request can't be called in a new thread.")
+            raise BaseException("get_request can't be called in a new thread.")
         return self._request_pool[sender]
 
 
@@ -131,7 +131,7 @@ class CommonMid(MiddlewareMixin):
         if settings.RUN_MODE == "TEST":
             test_switch = os.environ.get("BKAPP_ALLOW_TEST", False)
             if not test_switch:
-                return HttpResponse(_(u"S-mart应用仅支持正式环境部署！"))
+                return HttpResponse(_("S-mart应用仅支持正式环境部署！"))
 
         return None
 
@@ -142,7 +142,7 @@ class CommonMid(MiddlewareMixin):
 
         # 处理 Data APP 自定义异常
         if isinstance(exception, BaseException):
-            _msg = _(u"【APP 自定义异常】{message}, code={code}, args={args}").format(
+            _msg = _("【APP 自定义异常】{message}, code={code}, args={args}").format(
                 message=exception.message, code=exception.code, args=exception.args, data=exception.data
             )
             logger.warning(_msg)
@@ -154,7 +154,7 @@ class CommonMid(MiddlewareMixin):
         if isinstance(exception, BlueException):
 
             logger.warning(
-                (u"""捕获主动抛出异常, 具体异常堆栈->[%s] status_code->[%s] & """ u"""client_message->[%s] & args->[%s] """)
+                ("""捕获主动抛出异常, 具体异常堆栈->[%s] status_code->[%s] & """ """client_message->[%s] & args->[%s] """)
                 % (traceback.format_exc(), exception.error_code, exception.message, exception.args)
             )
 
@@ -167,7 +167,7 @@ class CommonMid(MiddlewareMixin):
 
         # 用户未主动捕获的异常
         logger.error(
-            (u"""捕获未处理异常,异常具体堆栈->[%s], 请求URL->[%s], """ u"""请求方法->[%s] 请求参数->[%s]""")
+            ("""捕获未处理异常,异常具体堆栈->[%s], 请求URL->[%s], """ """请求方法->[%s] 请求参数->[%s]""")
             % (traceback.format_exc(), request.path, request.method, json.dumps(getattr(request, request.method, None)))
         )
 
@@ -176,7 +176,7 @@ class CommonMid(MiddlewareMixin):
         if settings.DEBUG:
             return None
 
-        response = JsonResponse({"code": 50000, "message": u"系统异常,请联系管理员处理", "data": "", "result": False})
+        response = JsonResponse({"code": 50000, "message": _("系统异常,请联系管理员处理"), "data": "", "result": False})
         response.status_code = 500
 
         return response

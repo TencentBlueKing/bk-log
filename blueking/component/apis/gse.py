@@ -20,6 +20,7 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 from ..base import ComponentAPI
+from django.utils.translation import ugettext_lazy as _
 
 
 class CollectionsGSE(object):
@@ -32,29 +33,29 @@ class CollectionsGSE(object):
             client=self.client,
             method="POST",
             path="/api/c/compapi{bk_api_ver}/gse/get_agent_info/",
-            description=u"Agent心跳信息查询",
+            description=_("Agent心跳信息查询"),
         )
         self.get_agent_status = ComponentAPI(
             client=self.client,
             method="POST",
             path="/api/c/compapi{bk_api_ver}/gse/get_agent_status/",
-            description=u"Agent在线状态查询",
+            description=_("Agent在线状态查询"),
         )
         self.proc_create_session = ComponentAPI(
             client=self.client,
             method="POST",
             path="/api/c/compapi{bk_api_ver}/gse/proc_create_session/",
-            description=u"进程管理：新建 session",
+            description=_("进程管理：新建 session"),
         )
         self.proc_get_task_result_by_id = ComponentAPI(
             client=self.client,
             method="GET",
             path="/api/c/compapi{bk_api_ver}/gse/proc_get_task_result_by_id/",
-            description=u"进程管理：获取任务结果",
+            description=_("进程管理：获取任务结果"),
         )
         self.proc_run_command = ComponentAPI(
             client=self.client,
             method="POST",
             path="/api/c/compapi{bk_api_ver}/gse/proc_run_command/",
-            description=u"进程管理：执行命令",
+            description=_("进程管理：执行命令"),
         )

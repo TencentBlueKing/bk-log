@@ -130,7 +130,7 @@ class ThirdParty(object):
         except Exception as e:  # pylint: disable=broad-except
             logger.error(f"failed to ping iam, err: {e}")
             result["message"] = str(e)
-            result["suggestion"] = "确认IAM的域名配置, 若配置无误, 则确认服务是否正常"
+            result["suggestion"] = _("确认IAM的域名配置, 若配置无误, 则确认服务是否正常")
         spend_time = time.time() - start_time
         result["data"] = "{}ms".format(int(spend_time * 1000))
 

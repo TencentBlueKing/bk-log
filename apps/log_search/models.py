@@ -340,9 +340,11 @@ class LogIndexSet(SoftDeleteModel):
 
     def list_operate(self):
         return format_html(
-            '<a href="../logindexsetdata/?index_set_id=%s">详情</a>&nbsp;&nbsp;' % self.index_set_id
-            + '<a href="../../log_auth/authpolicyinfo/?action_id=index_set.retrieve&resource_scope_id=%s">'
-            "查看权限</a>&nbsp;&nbsp;" % self.index_set_id
+            _(
+                '<a href="../logindexsetdata/?index_set_id={index_set_id}">详情</a>&nbsp;&nbsp;'
+                '<a href="../../log_auth/authpolicyinfo/?action_id=index_set.retrieve'
+                '&resource_scope_id={index_set_id}">查看权限</a>&nbsp;&nbsp;'
+            ).format(index_set_id=self.index_set_id)
         )
 
     list_operate.__name__ = "操作列表"
@@ -623,7 +625,7 @@ class LogIndexSetData(SoftDeleteModel):
     apply_status = models.CharField(_("审核状态"), max_length=64, choices=Status.StatusChoices, default=Status.PENDING)
 
     def list_operate(self):
-        return format_html('<a href="../logindexset/?index_set_id=%s">索引集</a>&nbsp;&nbsp;' % self.index_set_id)
+        return format_html(_('<a href="../logindexset/?index_set_id=%s">索引集</a>&nbsp;&nbsp;') % self.index_set_id)
 
     list_operate.__name__ = "操作列表"
 

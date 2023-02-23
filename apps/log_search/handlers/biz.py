@@ -462,13 +462,13 @@ class BizHandler(APIModel):
         if free_set:
             free_set = dict(
                 bk_obj_id="set",
-                bk_obj_name="集群",
+                bk_obj_name=_("集群"),
                 bk_inst_id=free_set["bk_set_id"],
                 bk_inst_name=free_set["bk_set_name"],
                 child=[
                     dict(
                         bk_obj_id="module",
-                        bk_obj_name="模块",
+                        bk_obj_name=_("模块"),
                         bk_inst_id=m["bk_module_id"],
                         bk_inst_name=m["bk_module_name"],
                         child=[],
@@ -935,7 +935,10 @@ class BizHandler(APIModel):
             tmp_host = {"bk_host_innerip": host["host"]["bk_host_innerip"], "bk_cloud_id": host["host"]["bk_cloud_id"]}
             if bk_obj_id in (CCInstanceType.BUSINESS.value):
                 tmp_host["parent_inst_id"] = [self.bk_biz_id]
-            if bk_obj_id in (CCInstanceType.MODULE.value, TemplateType.SERIVCE_TEMPLATE.value,):
+            if bk_obj_id in (
+                CCInstanceType.MODULE.value,
+                TemplateType.SERIVCE_TEMPLATE.value,
+            ):
                 tmp_host["parent_inst_id"] = [
                     module["bk_module_id"] for topo in host["topo"] for module in topo["module"]
                 ]

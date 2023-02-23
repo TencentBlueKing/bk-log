@@ -21,6 +21,7 @@ the project delivered to anyone in the future.
 """
 from home_application.handlers.metrics import register_healthz_metric, HealthzMetric, NamespaceData
 from home_application.utils.kafka import KafkaClient
+from django.utils.translation import ugettext_lazy as _
 
 
 class KafkaMetric(object):
@@ -48,7 +49,7 @@ class KafkaMetric(object):
             metric_name="ping",
             metric_value=result["data"],
             message=result["message"],
-            suggestion="确认Kafka集群是否可用",
+            suggestion=_("确认Kafka集群是否可用"),
         )
 
     @staticmethod

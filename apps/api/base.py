@@ -759,7 +759,7 @@ class DataDRFAPISet(object):
             url, url_keys = self.to_url(key, self.custom_config[key], is_standard=True)
 
         if action is None:
-            raise Exception("请求方法%s不存在" % key)
+            raise Exception(_("请求方法%s不存在") % key)
 
         method = action.method
 
@@ -831,7 +831,7 @@ class PassThroughAPI(DataAPI):
         if not is_supported:
             logger.error("【API ERROR】%s 暂不支持透传" % sub_url)
             raise PermissionError(
-                "非法请求，模块【{module}】，方法【{method}】，接口【{sub_url}】".format(module=module, method=method, sub_url=sub_url)
+                _("非法请求，模块【{module}】，方法【{method}】，接口【{sub_url}】").format(module=module, method=method, sub_url=sub_url)
             )
 
 

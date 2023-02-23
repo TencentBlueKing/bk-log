@@ -20,6 +20,7 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 from ..base import ComponentAPI
+from django.utils.translation import ugettext_lazy as _
 
 
 class CollectionsBkPaas(object):
@@ -32,5 +33,5 @@ class CollectionsBkPaas(object):
             client=self.client,
             method="GET",
             path="/api/c/compapi{bk_api_ver}/bk_paas/get_app_info/",
-            description=u"获取应用信息",
+            description=_("获取应用信息"),
         )

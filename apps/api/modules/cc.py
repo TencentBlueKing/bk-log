@@ -55,7 +55,7 @@ class _CCApi:
             method="POST",
             url=CC_APIGATEWAY_ROOT_V2 + "search_business/",
             module=self.MODULE,
-            description="查询业务列表",
+            description=_("查询业务列表"),
             before_request=get_supplier_account_before,
             cache_time=60,
         )
@@ -63,49 +63,49 @@ class _CCApi:
             method="POST",
             url=CC_APIGATEWAY_ROOT_V2 + "search_inst_by_object/",
             module=self.MODULE,
-            description="查询CC对象列表",
+            description=_("查询CC对象列表"),
             before_request=get_supplier_account_before,
         )
         self.search_biz_inst_topo = DataAPI(
             method="POST",
             url=CC_APIGATEWAY_ROOT_V2 + "search_biz_inst_topo/",
             module=self.MODULE,
-            description="查询业务TOPO，显示各个层级",
+            description=_("查询业务TOPO，显示各个层级"),
             before_request=get_supplier_account_before,
         )
         self.search_module = DataAPI(
             method="POST",
             url=CC_APIGATEWAY_ROOT_V2 + "search_module",
             module=self.MODULE,
-            description="查询模块",
+            description=_("查询模块"),
             before_request=get_supplier_account_before,
         )
         self.get_host_info = DataAPI(
             method="GET",
             url=CC_APIGATEWAY_ROOT_V2 + "search_module",
             module=self.MODULE,
-            description="查询模块",
+            description=_("查询模块"),
             before_request=get_supplier_account_before,
         )
         self.get_biz_internal_module = DataAPI(
             method="GET",
             url=CC_APIGATEWAY_ROOT_V2 + "get_biz_internal_module",
             module=self.MODULE,
-            description="查询内部业务模块",
+            description=_("查询内部业务模块"),
             before_request=get_supplier_account_before,
         )
         self.search_object_attribute = DataAPI(
             method="POST",
             url=CC_APIGATEWAY_ROOT_V2 + "search_object_attribute",
             module=self.MODULE,
-            description="查询对象属性",
+            description=_("查询对象属性"),
             before_request=filter_bk_field_prefix_before,
         )
         self.list_biz_hosts = DataAPI(
             method="POST",
             url=CC_APIGATEWAY_ROOT_V2 + "list_biz_hosts",
             module=self.MODULE,
-            description="查询业务下的主机",
+            description=_("查询业务下的主机"),
             before_request=get_supplier_account_before,
             after_request=filter_abnormal_ip_hosts,
         )
@@ -113,7 +113,7 @@ class _CCApi:
             method="POST",
             url=CC_APIGATEWAY_ROOT_V2 + "list_biz_hosts_topo",
             module=self.MODULE,
-            description="查询业务下的主机和拓扑信息",
+            description=_("查询业务下的主机和拓扑信息"),
             before_request=get_supplier_account_before,
             after_request=filter_abnormal_ip_hosts_topo,
         )
@@ -121,63 +121,63 @@ class _CCApi:
             method="POST",
             url=CC_APIGATEWAY_ROOT_V2 + "search_cloud_area",
             module=self.MODULE,
-            description="查询云区域",
+            description=_("查询云区域"),
             before_request=get_supplier_account_before,
         )
         self.find_host_topo_relation = DataAPI(
             method="POST",
             url=CC_APIGATEWAY_ROOT_V2 + "find_host_topo_relation",
             module=self.MODULE,
-            description="获取主机与拓扑的关系",
+            description=_("获取主机与拓扑的关系"),
             before_request=get_supplier_account_before,
         )
         self.search_set = DataAPI(
             method="POST",
             url=CC_APIGATEWAY_ROOT_V2 + "search_set",
             module=self.MODULE,
-            description="查询集群",
+            description=_("查询集群"),
             before_request=get_supplier_account_before,
         )
         self.list_service_template = DataAPI(
             method="POST",
             url=CC_APIGATEWAY_ROOT_V2 + "list_service_template",
             module=self.MODULE,
-            description="获取服务模板列表",
+            description=_("获取服务模板列表"),
             before_request=get_supplier_account_before,
         )
         self.list_set_template = DataAPI(
             method="POST",
             url=CC_APIGATEWAY_ROOT_V2 + "list_set_template",
             module=self.MODULE,
-            description="获取集群模板列表",
+            description=_("获取集群模板列表"),
             before_request=get_supplier_account_before,
         )
         self.find_module_with_relation = DataAPI(
             method="POST",
             url=CC_APIGATEWAY_ROOT_V2 + "find_module_with_relation",
             module=self.MODULE,
-            description="根据条件查询业务下的模块",
+            description=_("根据条件查询业务下的模块"),
             before_request=get_supplier_account_before,
         )
         self.search_dynamic_group = DataAPI(
             method="POST",
             url=CC_APIGATEWAY_ROOT_V2 + "search_dynamic_group",
             module=self.MODULE,
-            description="查询动态分组列表",
+            description=_("查询动态分组列表"),
             before_request=get_supplier_account_before,
         )
         self.execute_dynamic_group = DataAPI(
             method="POST",
             url=CC_APIGATEWAY_ROOT_V2 + "execute_dynamic_group",
             module=self.MODULE,
-            description="根据指定动态分组规则查询获取数据",
+            description=_("根据指定动态分组规则查询获取数据"),
             before_request=get_supplier_account_before,
         )
         self.find_host_by_topo = DataAPI(
             method="POST",
             url=CC_APIGATEWAY_ROOT_V2 + "find_host_by_topo",
             module=self.MODULE,
-            description="查询拓扑节点下的主机",
+            description=_("查询拓扑节点下的主机"),
             before_request=get_supplier_account_before,
         )
 

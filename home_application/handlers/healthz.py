@@ -20,6 +20,7 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import json
+from django.utils.translation import ugettext_lazy as _
 
 from home_application.handlers.metrics import HealthzMetricCollector
 
@@ -110,7 +111,7 @@ class HealthzHandler(object):
                     output = "\033[31m[-]{} {}\033[0m\n".format(output, metric_data["message"])
                 outputs.append(output)
                 if not metric_data["status"] and metric_data.get("suggestion", ""):
-                    output = "\033[33m[建议]: {}\033[0m\n".format(metric_data["suggestion"])
+                    output = _("\033[33m[建议]: {}\033[0m\n").format(metric_data["suggestion"])
                     outputs.append(output)
             outputs.append("\n")
 

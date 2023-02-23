@@ -22,6 +22,7 @@ the project delivered to anyone in the future.
 
 from django.core.management.base import BaseCommand
 from django.db.models import Q
+from django.utils.translation import ugettext_lazy as _
 
 from apps.api import TransferApi
 from apps.log_databus.models import DataLinkConfig, CollectorConfig
@@ -72,7 +73,7 @@ class Command(BaseCommand):
                 "transfer_cluster_id": transfer_cluster_id,
                 "es_cluster_ids": default_es_cluster_ids,
                 "is_active": True,
-                "description": "默认数据链路",
+                "description": _("默认数据链路"),
             },
             link_group_name="default",
             is_deleted=False,

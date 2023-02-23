@@ -28,14 +28,14 @@ from config.domains import BK_PAAS_APIGATEWAY_ROOT, BK_PAAS_V3_APIGATEWAY_ROOT
 
 class _BKPAASApi:
 
-    MODULE = _(u"PaaS平台")
+    MODULE = _("PaaS平台")
 
     def __init__(self):
         self.get_app_info = DataAPI(
             method="GET",
             url=BK_PAAS_APIGATEWAY_ROOT + "get_app_info/",
             module=self.MODULE,
-            description=u"获取app信息",
+            description=_("获取app信息"),
             before_request=add_esb_info_before_request,
         )
 
@@ -44,7 +44,7 @@ class _BKPAASApi:
             method="GET",
             url=BK_PAAS_V3_APIGATEWAY_ROOT + "bkapps/applications/lists/minimal/",
             module=self.MODULE,
-            description=u"获取app信息",
+            description=_("获取app信息"),
             before_request=add_esb_info_before_request,
         )
 
@@ -52,7 +52,7 @@ class _BKPAASApi:
             method="GET",
             url=BK_PAAS_V3_APIGATEWAY_ROOT + "system/uni_applications/query/by_id/",
             module=self.MODULE,
-            description=u"通过app_id查看app信息",
+            description=_("通过app_id查看app信息"),
             before_request=add_esb_info_before_request,
         )
 

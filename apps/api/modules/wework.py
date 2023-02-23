@@ -33,14 +33,14 @@ class _WeWork(object):
             method="POST",
             url=WEWORK_APIGATEWAY_ROOT + "create_appchat/",
             module=self.MODULE,
-            description="创建企业微信群聊",
+            description=_("创建企业微信群聊"),
             before_request=add_esb_info_before_request,
         )
         self.send_appchat = DataAPI(
             method="POST",
             url=WEWORK_APIGATEWAY_ROOT + "send_appchat/",
             module=self.MODULE,
-            description="发送企业微信群聊",
+            description=_("发送企业微信群聊"),
             before_request=add_esb_info_before_request,
         )
 
