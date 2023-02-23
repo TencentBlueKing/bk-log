@@ -93,7 +93,7 @@
           <div class="empty-text">
             <span class="bk-table-empty-icon bk-icon icon-empty"></span>
             <p v-if="indexSetItem.scenario_id !== 'log' && !isHaveAnalyzed">
-              <i18n path="无分词字段 请前往 {n} 调整清洗">
+              <i18n path="无分词字段 请前往 {0} 调整清洗">
                 <span class="empty-leave" @click="handleLeaveCurrent">{{$t('计算平台')}}</span>
               </i18n>
             </p>
