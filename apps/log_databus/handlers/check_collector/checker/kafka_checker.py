@@ -80,7 +80,7 @@ class KafkaChecker(Checker):
             # 获取topic分区信息
             topic_partitions = consumer.partitions_for_topic(topic)
             if not topic_partitions:
-                self.append_error_info(f"获取topic[{topic}] partition信息失败")
+                self.append_error_info("获取topic[{topic}] partition信息失败".format(topic=topic))
                 return
 
             for _partition in topic_partitions:
@@ -112,11 +112,11 @@ class KafkaChecker(Checker):
             consumer.close()
 
         except Exception as e:  # pylint: disable=broad-except
-            message = f"创建kafka消费者失败, err: {str(e)}"
+            message = "创建kafka消费者失败, err: {e}".format(e=e)
             logger.error(message)
             self.append_error_info(message)
 
         if not log_content:
-            self.append_error_info(f"{host}:{port}, topic: {topic}, 无数据")
+            self.append_error_info("{host}:{port}, topic: {topic}, 无数据".format(host=host, port=port, topic=topic))
         else:
-            self.append_normal_info(f"{host}:{port}, topic: {topic}, 有数据")
+            self.append_normal_info("{host}:{port}, topic: {topic}, 有数据".format(host=host, port=port, topic=topic))

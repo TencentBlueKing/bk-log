@@ -266,10 +266,11 @@ class AccessSourceConfig(SoftDeleteModel):
                     and source.source_id != self.source_id
                 ):
                     raise SourceDuplicateException(
-                        _(
-                            f"此空间[{self.space_uid}]下已存在"
-                            f"{self.properties['es_host']}:{self.properties['es_port']}的ES数据源"
-                            f"——名称为：[{source.source_name}]"
+                        _("此空间[{space_uid}]下已存在 {es_host}:{es_port}的ES数据源 ——名称为：[{source_name}]").format(
+                            space_uid=self.space_uid,
+                            es_host=self.properties["es_host"],
+                            es_port=self.properties["es_port"],
+                            source_name=source.source_name,
                         )
                     )
 
@@ -848,7 +849,10 @@ class FavoriteGroup(OperateRecordModel):
         ungrouped_group = cls.get_or_create_ungrouped_group(space_uid=space_uid)
         groups[ungrouped_group.id] = model_to_dict(ungrouped_group)
         # 公共组
-        public_groups = cls.objects.filter(group_type=FavoriteGroupType.PUBLIC.value, space_uid=space_uid,)
+        public_groups = cls.objects.filter(
+            group_type=FavoriteGroupType.PUBLIC.value,
+            space_uid=space_uid,
+        )
         for gi in public_groups:
             groups[gi.id] = model_to_dict(gi)
         return groups

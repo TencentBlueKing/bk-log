@@ -61,7 +61,11 @@ class CollectorScenario(object):
             )
             return collector_scenario()
         except ImportError as error:
-            raise NotImplementedError(f"{collector_scenario_id}场景对应的采集器功能暂未实现, error: {error}")
+            raise NotImplementedError(
+                "{collector_scenario_id}场景对应的采集器功能暂未实现, error: {error}".format(
+                    collector_scenario_id=collector_scenario_id, error=error
+                )
+            )
 
     def get_subscription_steps(self, data_id, params):
         """
@@ -261,7 +265,7 @@ class CollectorScenario(object):
                 "field_type": "string",
                 "tag": "dimension",
                 "alias_name": f"dist_{pattern_level}",
-                "description": f"聚类数字签名{pattern_level}",
+                "description": "聚类数字签名{pattern_level}".format(pattern_level=pattern_level),
                 "option": build_es_option_type("keyword", es_version),
                 "is_built_in": False,
                 "is_time": False,

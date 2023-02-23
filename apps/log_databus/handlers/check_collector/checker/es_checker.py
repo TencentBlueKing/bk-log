@@ -54,7 +54,7 @@ class EsChecker(Checker):
             self.cluster_config = self.result_table.get("cluster_config", {})
             self.cluster_id = self.cluster_config.get("cluster_id", 0)
         except Exception as e:
-            self.append_error_info(f"[TransferApi] [get_result_table_storage] 失败, err: {e}")
+            self.append_error_info("[TransferApi] [get_result_table_storage] 失败, err: {e}".format(e=e))
 
     def _run(self):
         self.pre_run()
@@ -74,7 +74,7 @@ class EsChecker(Checker):
                 if indices is not None:
                     break
             except Exception as e:  # disable
-                self.append_warning_info(f"获取物理索引失败第{i + 1}次, err: {e}")
+                self.append_warning_info("获取物理索引失败第{cnt}次, err: {e}".format(cnt=i + 1, e=e))
         if not indices:
             self.append_error_info("获取物理索引为空")
             return
@@ -128,7 +128,7 @@ class EsChecker(Checker):
                 if es_client is not None:
                     break
             except Exception as e:
-                self.append_warning_info(f"创建es_client失败第{i + 1}次, err: {e}")
+                self.append_warning_info("创建es_client失败第{cnt}次, err: {e}".format(cnt=i + 1, e=e))
 
         if es_client and not es_client.ping(params={"request_timeout": 10}):
             self.append_error_info(EsConnectFailException().message)
@@ -156,11 +156,11 @@ class EsChecker(Checker):
             physical_index = i["index"]
             aliases = index_alias_info_dict.get(physical_index)
             if not aliases:
-                self.append_error_info(f"物理索引: {physical_index} 不存在alias别名")
+                self.append_error_info("物理索引: {physical_index} 不存在alias别名".format(physical_index=physical_index))
                 continue
 
             if physical_index.startswith(INDEX_WRITE_PREFIX):
-                self.append_warning_info(f"集群存在 write_ 开头的索引: \n{physical_index}")
+                self.append_warning_info("集群存在 write_ 开头的索引: \n{physical_index}".format(physical_index=physical_index))
                 return
 
             if aliases.get(now_read_index_alias):
@@ -169,8 +169,16 @@ class EsChecker(Checker):
                 now_write_index_alias_exist = True
 
             if now_read_index_alias_exist and now_write_index_alias_exist:
-                self.append_normal_info(f"索引: [{self.index_pattern}] 当天[{now_datetime}]读写别名已成功创建")
+                self.append_normal_info(
+                    "索引: [{index_pattern}] 当天[{now_datetime}]读写别名已成功创建".format(
+                        index_pattern=self.index_pattern, now_datetime=now_datetime
+                    )
+                )
                 return
 
         if self.index_pattern:
-            self.append_error_info(f"索引: [{self.index_pattern}] 当天[{now_datetime}]读写别名未成功创建")
+            self.append_error_info(
+                "索引: [{index_pattern}] 当天[{now_datetime}]读写别名未成功创建".format(
+                    index_pattern=self.index_pattern, now_datetime=now_datetime
+                )
+            )

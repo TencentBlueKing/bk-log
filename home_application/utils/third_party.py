@@ -96,14 +96,14 @@ class ThirdParty(object):
         try:
             activate_request(generate_request())
             kwargs = THIRD_PARTY_CHECK_API[module].get("kwargs", {})
-            _ = THIRD_PARTY_CHECK_API[module]["method"](kwargs)
+            THIRD_PARTY_CHECK_API[module]["method"](kwargs)
             result["status"] = True
         except ApiResultError:
             result["status"] = True
         except Exception as e:  # pylint: disable=broad-except
             logger.error(f"failed to check {module}, err: {e}")
             result["message"] = str(e)
-            result["suggestion"] = f"确认{module.upper()}的域名配置, 若配置无误, 则确认服务是否正常"
+            result["suggestion"] = _("确认{module}的域名配置, 若配置无误, 则确认服务是否正常").format(module=module.upper())
 
         spend_time = time.time() - start_time
         result["data"] = "{}ms".format(int(spend_time * 1000))

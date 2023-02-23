@@ -45,7 +45,7 @@ class RouteChecker(Checker):
         for r in self.route:
             self.query_stream_to(r)
         if not self.kafka:
-            self.append_error_info(f"bk_data_id[{self.bk_data_id}]对应的route为空")
+            self.append_error_info("bk_data_id[{bk_data_id}]对应的route为空".format(bk_data_id=self.bk_data_id))
         for r in self.kafka:
             self.append_normal_info(
                 "route_name: {}, stream_name: {}, topic_name: {}, ip: {}, port: {}".format(
@@ -63,7 +63,9 @@ class RouteChecker(Checker):
             if data[0].get("metadata", {}).get("channel_id", 0):
                 self.route = data[0]["route"]
         except Exception as e:
-            message = f"[请求GseAPI] [query_route] 获取route[bk_data_id: {self.bk_data_id}]失败, err: {e}"
+            message = "[请求GseAPI] [query_route] 获取route[bk_data_id: {bk_data_id}]失败, err: {e}".format(
+                bk_data_id=self.bk_data_id, e=e
+            )
             logger.error(message)
             self.append_error_info(message)
 
@@ -97,6 +99,6 @@ class RouteChecker(Checker):
                             kafka_info[item] = data[0][item]
                     self.kafka.append(kafka_info)
         except Exception as e:
-            message = f"[请求GseAPI] [query_stream_to] 获取stream[{stream_id}]失败, err: {e}"
+            message = "[请求GseAPI] [query_stream_to] 获取stream[{stream_id}]失败, err: {e}".format(stream_id=stream_id, e=e)
             logger.error(message)
             self.append_error_info(message)

@@ -86,7 +86,7 @@ class AgentChecker(Checker):
                 params["script_content"] = base64.b64encode(f.read().encode()).decode()
                 f.close()
         except Exception as e:  # pylint: disable=broad-except
-            self.append_error_info(f"[快速执行脚本] 打开脚本{script_pwd}失败, 报错为: {e}")
+            self.append_error_info("[快速执行脚本] 打开脚本{script_pwd}失败, 报错为: {e}".format(script_pwd=script_pwd, e=e))
             return
 
         try:
@@ -94,7 +94,7 @@ class AgentChecker(Checker):
             self.job_instance_id = result.get("job_instance_id", 0)
             self.step_instance_id = result.get("step_instance_id", 0)
         except Exception as e:  # pylint: disable=broad-except
-            self.append_error_info(f"[快速执行脚本], 报错为: {e}")
+            self.append_error_info("[快速执行脚本], 报错为: {e}".format(e=e))
             return
 
     def get_job_ip_status(self):
@@ -109,22 +109,30 @@ class AgentChecker(Checker):
             "return_ip_result": True,
         }
         for i in range(RETRY_TIMES):
-            self.append_normal_info(f"[获取作业执行状态] 作业: {self.job_instance_id}, 执行次数: {i + 1}")
+            self.append_normal_info(
+                "[获取作业执行状态] 作业: {job_instance_id}, 执行次数: {cnt}".format(job_instance_id=self.job_instance_id, cnt=i + 1)
+            )
             time.sleep(WAIT_FOR_RETRY)
             try:
                 result = JobApi.get_job_instance_status_v3(params=params, request_cookies=False)
                 if result.get("finished"):
                     step_instance_status = result.get("step_instance_list", [])
                     if not step_instance_status:
-                        error_msg = f"[获取作业执行状态] 作业: {self.job_instance_id}, 执行状态为空"
+                        error_msg = "[获取作业执行状态] 作业: {job_instance_id}, 执行状态为空".format(
+                            job_instance_id=self.job_instance_id
+                        )
                     for step in step_instance_status:
                         if step["step_instance_id"] == self.step_instance_id:
                             self.ip_status = step.get("step_ip_result_list", [])
             except Exception as e:  # pylint: disable=broad-except
-                error_msg = f"[获取作业执行状态] 作业: {self.job_instance_id}] 报错为: {e}"
+                error_msg = "[获取作业执行状态] 作业: {job_instance_id}] 报错为: {e}".format(
+                    job_instance_id=self.job_instance_id, e=e
+                )
 
         if not self.ip_status and not error_msg:
-            error_msg = f"[获取作业执行状态] 作业: {self.job_instance_id}, 超时: {RETRY_TIMES * WAIT_FOR_RETRY}s"
+            error_msg = "[获取作业执行状态] 作业: {job_instance_id}, 超时: {excess_time}s".format(
+                job_instance_id=self.job_instance_id, excess_time=RETRY_TIMES * WAIT_FOR_RETRY
+            )
 
         if error_msg != "":
             self.append_error_info(error_msg)
@@ -149,11 +157,13 @@ class AgentChecker(Checker):
             result = JobApi.batch_get_job_instance_ip_log_v3(params=params, request_cookies=False)
             self.ip_logs = result.get("script_task_logs", [])
         except Exception as e:  # pylint: disable=broad-except
-            error_msg = f"[获取作业执行结果] 作业: {self.job_instance_id}, 报错为: {e}"
+            error_msg = "[获取作业执行结果] 作业: {job_instance_id}, 报错为: {e}".format(job_instance_id=self.job_instance_id, e=e)
         if not self.ip_logs:
-            error_msg = f"[获取作业执行结果] 作业: {self.job_instance_id}, 数据为空"
+            error_msg = "[获取作业执行结果] 作业: {job_instance_id}, 数据为空".format(job_instance_id=self.job_instance_id)
         if len(self.ip_status) != len(self.ip_logs):
-            self.append_warning_info(f"[获取作业执行结果] 作业: {self.job_instance_id}, 数据不完整")
+            self.append_warning_info(
+                "[获取作业执行结果] 作业: {job_instance_id}, 数据不完整".format(job_instance_id=self.job_instance_id)
+            )
         if error_msg != "":
             self.append_error_info(error_msg)
 
@@ -178,20 +188,32 @@ class AgentChecker(Checker):
                     try:
                         log_content = json.loads(log_content)
                         if not log_content["status"]:
-                            self.append_error_info(f"[{host}] 失败, 查看详情")
+                            self.append_error_info("[{host}] 失败, 查看详情".format(host=host))
                         else:
-                            self.append_normal_info(f"[{host}] 成功")
+                            self.append_normal_info("[{host}] 成功".format(host=host))
 
                         for step in log_content["data"]:
                             module = step["module"]
                             item = CHECK_AGENT_STEP.get(step["item"], "gse agent检查")
                             message = step["message"]
                             if step["status"]:
-                                self.append_normal_info(f"[{module}] [{item}] [成功] {message}")
+                                self.append_normal_info(
+                                    "[{module}] [{item}] [成功] {message}".format(
+                                        module=module, item=item, message=message
+                                    )
+                                )
                             else:
-                                self.append_error_info(f"[{module}] [{item}] [失败] {message}")
+                                self.append_error_info(
+                                    "[{module}] [{item}] [失败] {message}".format(
+                                        module=module, item=item, message=message
+                                    )
+                                )
 
                     except Exception as e:  # pylint: disable=broad-except
-                        self.append_error_info(f"[获取作业执行结果] [{host}] 获取脚本执行结果失败, 报错为: {str(e)}")
+                        self.append_error_info("[获取作业执行结果] [{host}] 获取脚本执行结果失败, 报错为: {e}".format(host=host, e=str(e)))
             else:
-                self.append_error_info(f"[获取作业执行结果] [{host}] 脚本执行结果, 执行状态为: {JOB_STATUS.get(status, status)}")
+                self.append_error_info(
+                    "[获取作业执行结果] [{host}] 脚本执行结果, 执行状态为: {status}".format(
+                        host=host, status=JOB_STATUS.get(status, status)
+                    )
+                )

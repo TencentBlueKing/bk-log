@@ -160,7 +160,9 @@ class FeatureToggleObject(object):
         """
         feature_toggle_cls = get_feature_toggle(name)
         if not issubclass(feature_toggle_cls, FeatureToggleBase):
-            raise BaseException(f"{feature_toggle_cls} 没有继承自FutureToggleBase")
+            raise BaseException(
+                "{feature_toggle_cls} 没有继承自FutureToggleBase".format(feature_toggle_cls=feature_toggle_cls)
+            )
         return feature_toggle_cls().set_status(param=param)
 
     @classmethod

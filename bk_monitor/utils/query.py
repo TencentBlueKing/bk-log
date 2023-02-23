@@ -49,6 +49,8 @@ class CustomTable(object):
         try:
             monitor_report_config = MonitorReportConfig.objects.get(data_name=self.data_name, is_enable=True)
         except MonitorReportConfig.DoesNotExist:
-            raise GetTsDataException(ErrorEnum.TABLE_ID_NOT_EXIST, _(f"{self.data_name} data_name 不存在， 请先初始化"))
+            raise GetTsDataException(
+                ErrorEnum.TABLE_ID_NOT_EXIST, _("{data_name} data_name 不存在，请先初始化").format(data_name=self.data_name)
+            )
 
         return monitor_report_config.table_id

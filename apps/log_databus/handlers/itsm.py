@@ -178,7 +178,7 @@ class ItsmHandler(object):
             {"label": "日志字符集：", "scheme": "base_text_scheme", "value": collector.data_encoding},
         ]
         paths = [
-            {"label": f"日志路径-{index}：", "scheme": "base_text_scheme", "value": path}
+            {"label": "日志路径-{index}：".format(index=index), "scheme": "base_text_scheme", "value": path}
             for index, path in enumerate(collector.params.get("paths", []), 1)
         ]
         form_value.extend(paths)

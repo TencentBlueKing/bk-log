@@ -69,7 +69,7 @@ class DataAccessHandler(BaseAiopsHandler):
                 "data_source": "kafka",
                 "data_encoding": "UTF-8",
                 "sensitivity": "private",
-                "description": f"接入配置 ({collector_config.description})",
+                "description": "接入配置 ({description})".format(description=collector_config.description),
                 "tags": [],
                 "data_source_tags": ["src_kafka"],
             },
