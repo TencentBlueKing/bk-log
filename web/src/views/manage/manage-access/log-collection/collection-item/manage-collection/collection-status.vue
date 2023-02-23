@@ -113,7 +113,7 @@
                   <div class="text-style">
                     <span @click.stop="viewDetail(props.row)">{{ $t('部署详情') }}</span>
                     <span
-                      v-if="enableCheckCollector"
+                      v-if="enableCheckCollector && collectorData.environment === 'linux'"
                       @click.stop="viewReport(props.row)">
                       {{ $t('一键检测') }}
                     </span>
