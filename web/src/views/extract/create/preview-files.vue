@@ -89,7 +89,7 @@
           :sort-by="['size', 'mtime', 'path']">
         </bk-table-column>
         <div slot="empty">
-          <empty-status empty-type="empty"></empty-status>
+          <empty-status empty-type="empty" />
         </div>
       </bk-table>
     </div>
