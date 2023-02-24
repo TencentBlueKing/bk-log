@@ -71,7 +71,9 @@
               property="result_table_id"
               min-width="490">
             </bk-table-column>
-            <div slot="empty"><empty-status empty-type="empty" /></div>
+            <div slot="empty">
+              <empty-status empty-type="empty" />
+            </div>
           </bk-table>
         </bk-form-item>
         <bk-form-item
@@ -108,7 +110,9 @@
             </bk-option>
           </bk-select>
         </bk-form-item>
-        <div slot="empty"><empty-status empty-type="empty" /></div>
+        <div slot="empty">
+          <empty-status empty-type="empty" />
+        </div>
       </bk-form>
       <div slot="footer" class="button-footer">
         <bk-button

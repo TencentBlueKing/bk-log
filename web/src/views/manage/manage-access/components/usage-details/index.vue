@@ -76,7 +76,9 @@
             {{ (row.duration / 1000).toFixed(3) }}
           </template>
         </bk-table-column>
-        <div slot="empty"><empty-status empty-type="empty" /></div>
+        <div slot="empty">
+          <empty-status empty-type="empty" />
+        </div>
       </bk-table>
     </section>
   </div>

@@ -89,7 +89,9 @@
             <span v-if="row.field_name === timeField" class="log-icon icon-date-picker"></span>
           </template>
         </bk-table-column>
-        <div slot="empty"><empty-status empty-type="empty" /></div>
+        <div slot="empty">
+          <empty-status empty-type="empty" />
+        </div>
       </bk-table>
     </section>
   </div>
