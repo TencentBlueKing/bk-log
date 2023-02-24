@@ -27,7 +27,7 @@
         <span class="bk-icon icon-text-file" :style="`color:${isOpenWindow ? '#3A84FF;' : ''}`"></span>
       </div>
       <div class="top-title">
-        <p> {{$t('customReport.helpDocument')}}</p>
+        <p> {{$t('帮助文档')}}</p>
         <div class="create-btn close" @click="handleActiveDetails(false)">
           <span class="bk-icon icon-minus-line"></span>
         </div>

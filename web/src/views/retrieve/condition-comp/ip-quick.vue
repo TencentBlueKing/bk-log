@@ -23,7 +23,10 @@
 <template>
   <div class="ip-quick-container">
     <div v-if="nodeCount" class="tag" @click="openDialog">
-      {{ $t('已选择') + ' ' + nodeCount + ' ' + `${$t('个')}${nodeUnit}` }}
+      <i18n path="已选择 {0} 个{1}">
+        <span>{{nodeCount}}</span>
+        <span>{{nodeUnit}}</span>
+      </i18n>
       <span class="bk-icon icon-close-line" @click.stop="removeSelections"></span>
     </div>
   </div>

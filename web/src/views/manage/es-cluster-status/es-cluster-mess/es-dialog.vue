@@ -81,7 +81,7 @@ export default {
         const isHot = this.type === 'hot';
         const name = isHot ? this.formData.hot_attr_name : this.formData.warm_attr_name;
         const value = isHot ? this.formData.hot_attr_value : this.formData.warm_attr_value;
-        this.title = `${this.$t('包含属性')} ${name}:${value} ${this.$t('的节点列表')}`;
+        this.title = this.$t('包含属性 {n} 的节点列表', { n: `${name}:${value}` });
       }
     },
   },

@@ -25,7 +25,7 @@
     <!-- 检索页首页 -->
     <div v-if="hasAuth && isRetrieveHome" class="retrieve-home-container">
       <div class="retrieve-home" data-test-id="retrieve_div_frontPageSearchBox">
-        <div class="retrieve-home-title">{{ $t('nav.retrieve') }}</div>
+        <div class="retrieve-home-title">{{ $t('检索') }}</div>
         <div class="retrieve-home-condition">
           <!-- 选择索引集 -->
           <select-indexSet
@@ -137,7 +137,7 @@
                       style="color: #d7473f; display: inline-block; transform: translateY(-2px);"
                       class="bk-icon icon-exclamation-circle-shape">
                     </span>
-                    <span>{{$t('表单Tips')}}</span>
+                    <span>{{$t('收藏的内容已修改，不能切回表单模式')}}</span>
                   </div>
                 </bk-popover>
               </div>
@@ -260,7 +260,7 @@
                       ext-cls="favorite-btn"
                       :disabled="!isFavoriteUpdate || favoriteUpdateLoading || !isCanStorageFavorite"
                       @click="handleUpdateFavorite">
-                      <span v-bk-tooltips="{ content: $t('保存Tips'), disabled: !isFavoriteUpdate }">
+                      <span v-bk-tooltips="{ content: $t('当前收藏有更新，点击保存当前修改'), disabled: !isFavoriteUpdate }">
                         <span class="favorite-btn-text">
                           <span :class="[
                             'icon',
@@ -275,7 +275,7 @@
                     </bk-button>
                   </div>
                   <span v-bk-tooltips="{ content: $t('清空'), delay: 200 }">
-                    <div class="clear-params-btn" @click="() => clearCondition('*')">
+                    <div class="clear-params-btn" @click="() => clearCondition()">
                       <bk-button data-test-id="dataQuery_button_phrasesClear"></bk-button>
                       <span class="log-icon icon-brush"></span>
                     </div>
@@ -668,7 +668,7 @@ export default {
       this.$store.commit('updateIndexId', val);
       this.retrieveSearchNumber = 0; // 切换索引集 检索次数设置为0;
       val && this.requestSearchHistory(val);
-      this.clearCondition();
+      this.clearCondition(false);
     },
     spaceUid: {
       async handler() {
@@ -1073,8 +1073,12 @@ export default {
         this.retrieveLog();
       }
     },
-    // 清空条件
-    clearCondition() {
+    /**
+     * @desc: 清空条件
+     * @param {String} clearStr 检索keywords
+     * @param {Boolean} isRetrieveLog 是否检索表格
+     */
+    clearCondition(isRetrieveLog = true) {
       Object.assign(this.retrieveParams, {
         keyword: '',
         // host_scopes: {
@@ -1088,7 +1092,7 @@ export default {
       });
       this.isClearCondition = !this.isClearCondition;
       if (this.isSqlSearchType) this.handleBlurSearchInput('*');
-      this.retrieveLog();
+      if (isRetrieveLog) this.retrieveLog();
     },
     // 搜索记录
     retrieveFavorite({ index_set_id: indexSetID, params }) {
@@ -1722,9 +1726,9 @@ export default {
     initToolTipsMessage(config) {
       const { contextAndRealtime, bkmonitor } = config;
       return {
-        monitorWeb: bkmonitor.is_active ? this.$t('retrieve.monitorAlarm') : bkmonitor?.extra.reason,
-        realTimeLog: contextAndRealtime.is_active ? this.$t('retrieve.log') : contextAndRealtime?.extra.reason,
-        contextLog: contextAndRealtime.is_active ? this.$t('retrieve.context') : contextAndRealtime?.extra.reason,
+        monitorWeb: bkmonitor.is_active ? this.$t('监控告警') : bkmonitor?.extra.reason,
+        realTimeLog: contextAndRealtime.is_active ? this.$t('实时日志') : contextAndRealtime?.extra.reason,
+        contextLog: contextAndRealtime.is_active ? this.$t('上下文') : contextAndRealtime?.extra.reason,
       };
     },
     // 点击新增收藏
@@ -1904,7 +1908,7 @@ export default {
         this.activeFavorite = {};
         this.isSqlSearchType = true;
         this.isFavoriteSearch = false;
-        this.clearCondition('*');
+        this.clearCondition();
         return;
       }
       const data = deepClone(value);

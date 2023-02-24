@@ -41,9 +41,9 @@
               <span class="collapse-title-left">
                 <i :class="['bk-icon icon-angle-right', { expand: activeName.includes(item.id) }]"></i>
                 <slot name="collapse-title" v-bind="{ item }">
-                  <span>{{ $t('已选') }}</span>
-                  <span class="num">{{ item.data.length }}</span>
-                  <span>{{ `${$t('个')}${item.name}` }}</span>
+                  <i18n path="已选 {0} 个">
+                    <span class="num">{{ item.data.length }}</span>
+                  </i18n>
                 </slot>
               </span>
               <span class="collapse-title-right" @click.stop="handleShowMenu($event, item)">

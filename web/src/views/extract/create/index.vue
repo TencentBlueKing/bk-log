@@ -36,10 +36,10 @@
             data-test-id="addNewExtraction_button_selectTheServer"
           >{{ $t('选择服务器') }}</bk-button>
           <div class="select-text">
-            {{ $t('已选择') }}
-            <span class="primary" v-if="ipList.length">{{ ipList.length }}</span>
-            <span class="error" v-else>{{ ipList.length }}</span>
-            {{ $t('retrieve.main_engines') }}
+            <i18n path="已选择{0}个节点">
+              <span class="primary" v-if="ipList.length">{{ ipList.length }}</span>
+              <span class="error" v-else>{{ ipList.length }}</span>
+            </i18n>
           </div>
         </div>
         <log-ip-selector
@@ -62,7 +62,10 @@
       <div class="title">
         {{ $t('目录或文件名') }}
         <span class="required">*</span>
-        <span class="log-icon icon-info-fill" v-bk-tooltips="$t('查询目录提示')"></span>
+        <span
+          class="log-icon icon-info-fill"
+          v-bk-tooltips="`${$t('以')}/${$t('结尾查询指定目录下内容，否则默认查询该目录及其子目录下所有文件')}`">
+        </span>
       </div>
       <div class="content">
         <files-input

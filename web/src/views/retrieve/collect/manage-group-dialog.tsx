@@ -462,7 +462,7 @@ export default class GroupDialog extends tsc<IProps> {
 
   handleDeleteFavorite(row) {
     this.$bkInfo({
-      subTitle: `${this.$t('当前收藏名为')} ${row.name} ，${this.$t('是否删除')}？`,
+      subTitle: this.$t('当前收藏名为 {n}，确认是否删除？', { n: row.name }),
       type: 'warning',
       confirmFn: () => {
         this.deleteTableIDList.push(row.id);
@@ -581,7 +581,7 @@ export default class GroupDialog extends tsc<IProps> {
             name: 'bk-tooltips',
             value: {
               width: 400,
-              content: this.$t('表单模式显示字段文案'),
+              content: this.$t('该功能指从查询语句中获取相应的字段，当勾选对应的字段时，将以表单的填写方式显示给收藏的使用者。（字段说明：没有字段时，为全文检索；重复的字段增加显示序号(N) ，默认不勾选任何字段)'),
             },
           },
         ],
@@ -600,7 +600,7 @@ export default class GroupDialog extends tsc<IProps> {
             name: 'bk-tooltips',
             value: {
               width: 400,
-              content: this.$t('是否同时显示字段文案'),
+              content: this.$t('当打开时，使用该收藏将同时显示如下字段，不影响用户字段显示设置。'),
             },
           },
         ],
@@ -760,9 +760,9 @@ export default class GroupDialog extends tsc<IProps> {
       >
         <div class={`top-operate ${!this.selectCount && 'is-not-select'}`}>
           <div class="favorite-size">
-            {this.$t('共')}&nbsp;
-            <span class="size-weight">{this.showFavoriteCount}</span>
-            &nbsp;{this.$t('个收藏')}
+            <i18n path="共 {0} 个收藏">
+              <span class="size-weight">{this.showFavoriteCount}</span>
+            </i18n>
           </div>
           <Input
             class="operate-input"
@@ -776,9 +776,9 @@ export default class GroupDialog extends tsc<IProps> {
         {this.selectCount ? (
           <div class="table-top-operate">
             <span>
-              {this.$t('当前已选择')}
-              <span class="operate-message">{this.selectCount}</span>
-              {this.$t('条数据')}
+              <i18n path="当前已选择 {0} 条数据">
+                <span class="operate-message">{this.selectCount}</span>
+              </i18n>
             </span>
             <DropdownMenu trigger="click">
               <div class="dropdown-trigger-text" slot="dropdown-trigger">
