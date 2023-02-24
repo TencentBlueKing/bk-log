@@ -41,7 +41,7 @@ def forwards_func(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("log_search", "0061_migrate_old_userindexconfig"),
+        ("log_search", "0062_rename_private_group_name"),
     ]
 
     operations = [migrations.RunPython(forwards_func)]
