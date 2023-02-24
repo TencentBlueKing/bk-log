@@ -1190,6 +1190,9 @@ class SearchHandler(object):
             return log
         host_key = bk_host_id if bk_host_id else server_ip
         host_info = CmdbHostCache.get(bk_biz_id, host_key)
+        # 当主机被迁移业务或者删除的时候, 会导致缓存中没有该主机信息, 放空处理
+        if not host_info:
+            return log
 
         if bk_host_id and host_info:
             host = host_info
@@ -1201,7 +1204,7 @@ class SearchHandler(object):
         if not host:
             log["__module__"] = ""
             log["__set__"] = ""
-            log["ipv6"] = ""
+            log["__ipv6__"] = ""
             return log
 
         set_list, module_list = [], []
@@ -1217,7 +1220,7 @@ class SearchHandler(object):
 
         log["__set__"] = " | ".join(set_list)
         log["__module__"] = " | ".join(module_list)
-        log["ipv6"] = host.get("bk_host_innerip_v6", "")
+        log["__ipv6__"] = host.get("bk_host_innerip_v6", "")
         return log
 
     def _deal_query_result(self, result_dict: dict) -> dict:

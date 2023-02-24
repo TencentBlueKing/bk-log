@@ -179,7 +179,7 @@ class MappingHandlers(object):
             field_list.append(
                 {
                     "field_type": "__virtual__",
-                    "field_name": "ipv6",
+                    "field_name": "__ipv6__",
                     "field_alias": "IPv6",
                     "is_display": False,
                     "is_editable": True,
