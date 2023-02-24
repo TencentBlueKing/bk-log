@@ -41,7 +41,7 @@ def forwards_func(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("log_search", "0062_rename_private_group_name"),
+        ("log_search", "0063_alter_space_space_uid"),
     ]
 
     operations = [migrations.RunPython(forwards_func)]
