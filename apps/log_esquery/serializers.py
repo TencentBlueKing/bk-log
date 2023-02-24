@@ -108,7 +108,7 @@ class EsQuerySearchAttrSerializer(serializers.Serializer):
             attrs["indices"] = indices
             attrs["scenario_id"] = scenario_id
             attrs["storage_cluster_id"] = storage_cluster_id
-            attrs["time_field"] = time_field
+            attrs["time_field"] = attrs.get("time_field") or time_field
         else:
             scenario_id = attrs.get("scenario_id")
             if scenario_id in [Scenario.ES] and not attrs.get("storage_cluster_id"):
@@ -116,8 +116,8 @@ class EsQuerySearchAttrSerializer(serializers.Serializer):
 
             # time_field
             if scenario_id in [Scenario.BKDATA, Scenario.LOG]:
-                attrs["time_field"] = "dtEventTimeStamp"
-            elif not attrs["time_field"]:
+                attrs["time_field"] = attrs.get("time_field") or "dtEventTimeStamp"
+            elif not attrs.get("time_field"):
                 raise ValidationError(_("请提供时间字段"))
 
         new_filter: list = self.deal_filter(attrs)

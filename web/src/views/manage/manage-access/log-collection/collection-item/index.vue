@@ -412,7 +412,7 @@
                     }"
                     @click.stop="operateHandler(props.row, 'clone')">{{ $t('克隆') }}</a>
                 </li>
-                <li v-if="enableCheckCollector">
+                <li v-if="enableCheckCollector && props.row.environment === 'linux'">
                   <a href="javascript:;" @click.stop="handleShowReport(props.row)">
                     {{ $t('一键检测') }}
                   </a>
