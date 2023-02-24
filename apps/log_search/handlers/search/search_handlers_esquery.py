@@ -1204,7 +1204,7 @@ class SearchHandler(object):
         if not host:
             log["__module__"] = ""
             log["__set__"] = ""
-            log["ipv6"] = ""
+            log["__ipv6__"] = ""
             return log
 
         set_list, module_list = [], []
@@ -1220,7 +1220,7 @@ class SearchHandler(object):
 
         log["__set__"] = " | ".join(set_list)
         log["__module__"] = " | ".join(module_list)
-        log["ipv6"] = host.get("bk_host_innerip_v6", "")
+        log["__ipv6__"] = host.get("bk_host_innerip_v6", "")
         return log
 
     def _deal_query_result(self, result_dict: dict) -> dict:
