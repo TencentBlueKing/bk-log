@@ -25,7 +25,7 @@
     <div class="flex-box">
       <bk-select
         v-model="previewIp"
-        style="width: 190px;margin-right: 20px;background-color: #fff;"
+        style="width: 190px; margin-right: 20px;background-color: #fff;"
         data-test-id="addNewExtraction_div_selectPreviewAddress"
         :clearable="false"
         multiple
@@ -59,7 +59,7 @@
         class="preview-scroll-table"
         style="background-color: #fff;"
         :data="explorerList"
-        :height="300"
+        :height="360"
         @selection-change="handleSelect">
         <bk-table-column type="selection" width="60" :selectable="row => row.size !== '0'"></bk-table-column>
         <bk-table-column prop="path" :label="$t('文件名')" min-width="80" sortable :sort-by="['path', 'mtime', 'size']">
@@ -88,6 +88,9 @@
           sortable
           :sort-by="['size', 'mtime', 'path']">
         </bk-table-column>
+        <div slot="empty">
+          <empty-status empty-type="empty"></empty-status>
+        </div>
       </bk-table>
     </div>
   </div>
@@ -96,10 +99,12 @@
 <script>
 import { formatDate } from '@/common/util';
 import FileDatePicker from '@/views/extract/home/file-date-picker';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   components: {
     FileDatePicker,
+    EmptyStatus,
   },
   model: {
     prop: 'downloadFiles',

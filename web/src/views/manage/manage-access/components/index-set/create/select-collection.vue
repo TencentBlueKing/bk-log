@@ -59,9 +59,10 @@
           <bk-table
             v-bkloading="{ isLoading: tableLoading }"
             :data="tableData"
-            max-height="259">
+            max-height="400">
             <bk-table-column :label="$t('字段')" prop="field_name" min-width="240"></bk-table-column>
             <bk-table-column :label="$t('类型')" prop="field_type" min-width="250"></bk-table-column>
+            <div slot="empty"><empty-status empty-type="empty" /></div>
           </bk-table>
         </bk-form-item>
       </bk-form>
@@ -83,8 +84,12 @@
 <script>
 import { mapState } from 'vuex';
 import * as authorityMap from '../../../../../../common/authority-map';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
+  components: {
+    EmptyStatus,
+  },
   props: {
     parentData: {
       type: Object,

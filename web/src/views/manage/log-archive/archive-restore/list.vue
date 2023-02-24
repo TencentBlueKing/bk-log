@@ -36,7 +36,8 @@
           :right-icon="'bk-icon icon-search'"
           v-model="params.keyword"
           data-test-id="restoreContainer_input_searchRestoreItem"
-          @enter="search">
+          @enter="search"
+          @change="handleSearchChange">
         </bk-input>
       </div>
     </section>
@@ -128,6 +129,9 @@
             </bk-button>
           </div>
         </bk-table-column>
+        <div slot="empty">
+          <empty-status :empty-type="emptyType" @operation="handleOperation" />
+        </div>
       </bk-table>
     </section>
     <!-- 新增/编辑回溯 -->
@@ -145,11 +149,13 @@ import { mapGetters } from 'vuex';
 import RestoreSlider from './restore-slider';
 import { formatFileSize } from '@/common/util';
 import * as authorityMap from '../../../../common/authority-map';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   name: 'ArchiveRestore',
   components: {
     RestoreSlider,
+    EmptyStatus,
   },
   data() {
     return {
@@ -171,6 +177,7 @@ export default {
       params: {
         keyword: '',
       },
+      emptyType: 'empty',
     };
   },
   computed: {
@@ -274,12 +281,15 @@ export default {
     },
     requestData() {
       this.isTableLoading = true;
+      this.emptyType = this.params.keyword ? 'search-empty' : 'empty';
       Promise.all([this.requestRestoreList()]).then(() => {
         if (this.restoreIds.length) {
           this.requestRestoreStatus();
         }
       })
-        .catch(() => {})
+        .catch(() => {
+          this.emptyType = '500';
+        })
         .finally(() => {
           this.isTableLoading = false;
         });
@@ -416,6 +426,24 @@ export default {
         console.warn(err);
       } finally {
         this.isTableLoading = false;
+      }
+    },
+    handleSearchChange(val) {
+      if (val === '' && !this.isTableLoading) {
+        this.search();
+      }
+    },
+    handleOperation(type) {
+      if (type === 'clear-filter') {
+        this.params.keyword = '';
+        this.search();
+        return;
+      }
+
+      if (type === 'refresh') {
+        this.emptyType = 'empty';
+        this.search();
+        return;
       }
     },
   },

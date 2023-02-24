@@ -90,8 +90,7 @@
         class="no-text-table"
         :data="[]">
         <div slot="empty">
-          <div class="empty-text">
-            <span class="bk-table-empty-icon bk-icon icon-empty"></span>
+          <empty-status class="empty-text" empty-type="empty" :show-text="false">
             <p v-if="indexSetItem.scenario_id !== 'log' && !isHaveAnalyzed">
               <i18n path="无分词字段 请前往 {n} 调整清洗">
                 <span class="empty-leave" @click="handleLeaveCurrent">{{$t('计算平台')}}</span>
@@ -103,7 +102,7 @@
                 {{exhibitOperate}}
               </span>
             </div>
-          </div>
+          </empty-status>
         </div>
       </bk-table>
 
@@ -124,6 +123,7 @@ import IgnoreTable from './ignore-table';
 import ClusteringLoader from '@/skeleton/clustering-loader';
 import fingerOperate from './components/finger-operate';
 import { mapGetters } from 'vuex';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   components: {
@@ -131,6 +131,7 @@ export default {
     IgnoreTable,
     ClusteringLoader,
     fingerOperate,
+    EmptyStatus,
   },
   props: {
     retrieveParams: {

@@ -41,10 +41,11 @@
       <bk-input
         style="width: 300px;"
         data-test-id="logIndexSetBox_input_searchIndexSet"
-        :right-icon="'bk-icon icon-search'"
         v-model="searchParams.keyword"
+        :right-icon="'bk-icon icon-search'"
+        :placeholder="$t('请输入索引集名称')"
         @enter="reFilter"
-        :placeholder="$t('请输入索引集名称')">
+        @change="handleSearchChange">
       </bk-input>
     </div>
     <bk-table
@@ -128,6 +129,9 @@
           </bk-button>
         </template>
       </bk-table-column>
+      <div slot="empty">
+        <empty-status :empty-type="emptyType" @operation="handleOperation" />
+      </div>
     </bk-table>
   </section>
 </template>
@@ -136,9 +140,13 @@
 import { projectManages } from '@/common/util';
 import { mapGetters } from 'vuex';
 import * as authorityMap from '../../../../../../common/authority-map';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   name: 'IndexSetList',
+  components: {
+    EmptyStatus,
+  },
   data() {
     const scenarioId = this.$route.name.split('-')[0];
     return {
@@ -155,9 +163,10 @@ export default {
         count: 0,
         limit: 10,
       },
-      isTableLoading: true,
+      isTableLoading: false,
       isCreateLoading: false, // 新建索引集
       isAllowedCreate: null,
+      emptyType: 'empty',
     };
   },
   computed: {
@@ -204,17 +213,22 @@ export default {
      * 获取索引集列表
      */
     getIndexSetList() {
+      this.isTableLoading = true;
       const query = JSON.parse(JSON.stringify(this.searchParams));
       query.page = this.pagination.current;
       query.pagesize = this.pagination.limit;
       query.space_uid = this.spaceUid;
+      this.emptyType = this.searchParams.keyword ? 'search-empty' : 'empty';
       this.$http.request('/indexSet/list', {
         query,
       }).then((res) => {
         this.indexSetList = res.data.list;
         this.pagination.count = res.data.total;
-        this.isTableLoading = false;
-      });
+      })
+        .catch(() => {
+          this.emptyType = '500';
+        })
+        .finally(() => this.isTableLoading = false);
     },
     /**
      * 分页变换
@@ -244,7 +258,6 @@ export default {
      */
     reFilter() {
       this.pagination.page = 1;
-      this.isTableLoading = true;
       this.getIndexSetList();
     },
     /**
@@ -349,6 +362,26 @@ export default {
               });
           },
         });
+      }
+    },
+    handleSearchChange(val) {
+      if (val === '' && !this.isTableLoading) {
+        this.getIndexSetList();
+      }
+    },
+    handleOperation(type) {
+      if (type === 'clear-filter') {
+        this.searchParams.keyword = '';
+        this.pagination.current = 1;
+        this.getIndexSetList();
+        return;
+      }
+
+      if (type === 'refresh') {
+        this.emptyType = 'empty';
+        this.pagination.current = 1;
+        this.getIndexSetList();
+        return;
       }
     },
   },

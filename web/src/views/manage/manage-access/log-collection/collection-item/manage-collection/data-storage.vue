@@ -62,6 +62,9 @@
             {{ getFileSize(row['store.size']) }}
           </template>
         </bk-table-column>
+        <div slot="empty">
+          <empty-status empty-type="empty" />
+        </div>
       </bk-table>
     </section>
     <section class="partial-content">
@@ -86,6 +89,7 @@
             <span v-if="row.field_name === timeField" class="log-icon icon-date-picker"></span>
           </template>
         </bk-table-column>
+        <div slot="empty"><empty-status empty-type="empty" /></div>
       </bk-table>
     </section>
   </div>
@@ -93,7 +97,11 @@
 
 <script>
 import { formatFileSize } from '@/common/util';
+import EmptyStatus from '@/components/empty-status';
 export default {
+  components: {
+    EmptyStatus,
+  },
   props: {
     collectorData: {
       type: Object,

@@ -702,3 +702,12 @@ export const deepClone = (obj, hash = new WeakMap()) => {
   }
   return Object.assign(result, ...Object.keys(obj).map(key => ({ [key]: deepClone(obj[key], hash) })));
 };
+
+export const clearTableFilter =  (refInstance) => {
+  if (refInstance.$refs.tableHeader.filterPanels) {
+    const filterPanels = refInstance.$refs.tableHeader.filterPanels;
+    for (const key in filterPanels) {
+      filterPanels[key].handleReset();
+    };
+  }
+};

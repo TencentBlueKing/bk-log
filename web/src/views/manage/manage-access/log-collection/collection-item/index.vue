@@ -50,10 +50,11 @@
       <bk-table
         class="collect-table"
         data-test-id="logCollectionBox_table_logCollectionTable"
+        v-bkloading="{ isLoading: isTableLoading }"
+        ref="collectTable"
         :empty-text="$t('暂无内容')"
         :data="collectList"
         :size="size"
-        v-bkloading="{ isLoading: isTableLoading }"
         :pagination="pagination"
         :limit-list="pagination.limitList"
         @filter-change="handleFilterChange"
@@ -442,7 +443,7 @@
 </template>
 
 <script>
-import { projectManages } from '@/common/util';
+import { projectManages, clearTableFilter } from '@/common/util';
 import collectedItemsMixin from '@/mixins/collected-items-mixin';
 import { mapGetters } from 'vuex';
 import * as authorityMap from '../../../../../common/authority-map';
@@ -552,6 +553,8 @@ export default {
       // 一键检测采集项标识
       checkRecordId: '',
       emptyType: 'empty',
+      filterSearchObj: {},
+      isFilterSearch: false,
     };
   },
   computed: {
@@ -606,7 +609,7 @@ export default {
   },
   methods: {
     handleSearchChange(val) {
-      if (val === '') {
+      if (val === '' && !this.isTableLoading) {
         this.requestData();
       }
     },
@@ -717,6 +720,8 @@ export default {
       Object.keys(data).forEach((item) => {
         this.params[item] = data[item].join('');
       });
+      Object.entries(data).forEach(([key, value]) => this.filterSearchObj[key] = value.length);
+      this.isFilterSearch = Object.values(this.filterSearchObj).reduce((pre, cur) => ((pre += cur), pre), 0);
       this.search();
     },
     handleSettingChange({ fields }) {
@@ -744,7 +749,7 @@ export default {
     },
     requestData() {
       this.isTableLoading = true;
-      this.emptyType = this.params.keyword ? 'search-empty' : 'empty';
+      this.emptyType = (this.params.keyword || this.isFilterSearch) ? 'search-empty' : 'empty';
       this.$http.request('collect/getCollectList', {
         query: {
           bk_biz_id: this.bkBizId,
@@ -787,6 +792,7 @@ export default {
       if (type === 'clear-filter') {
         this.params.keyword = '';
         this.pagination.current = 1;
+        clearTableFilter(this.$refs.collectTable);
         this.requestData();
         return;
       }

@@ -69,6 +69,9 @@
                 <bk-button text @click="handleRemoveIp(scope)">{{$t('移除')}}</bk-button>
               </template>
             </bk-table-column>
+            <div slot="empty">
+              <empty-status empty-type="empty"></empty-status>
+            </div>
           </bk-table>
         </div>
       </div>
@@ -78,8 +81,12 @@
 
 <script>
 import { copyMessage } from '@/common/util';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
+  components: {
+    EmptyStatus,
+  },
   props: {
     showSelectDialog: {
       type: Boolean,

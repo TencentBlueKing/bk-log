@@ -41,7 +41,8 @@
             data-test-id="customContainer_input_searchTableItem"
             :placeholder="$t('搜索名称、存储索引名')"
             :right-icon="'bk-icon icon-search'"
-            @enter="search">
+            @enter="search"
+            @change="handleSearchChange">
           </bk-input>
         </div>
       </div>
@@ -211,6 +212,9 @@
               </bk-dropdown-menu>
             </div>
           </bk-table-column>
+          <div slot="empty">
+            <empty-status :empty-type="emptyType" @operation="handleOperation" />
+          </div>
         </bk-table>
       </div>
     </section>
@@ -222,9 +226,13 @@ import { projectManages } from '@/common/util';
 import collectedItemsMixin from '@/mixins/collected-items-mixin';
 import { mapGetters } from 'vuex';
 import * as authorityMap from '../../../../common/authority-map';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   name: 'CustomReportList',
+  components: {
+    EmptyStatus,
+  },
   mixins: [collectedItemsMixin],
   data() {
     return {
@@ -242,6 +250,7 @@ export default {
         limit: 10,
         limitList: [10, 20, 50, 100],
       },
+      emptyType: 'empty',
     };
   },
   computed: {
@@ -349,6 +358,7 @@ export default {
     },
     requestData() {
       this.isRequest = true;
+      this.emptyType = this.inputKeyWords ? 'search-empty' : 'empty';
       this.$http.request('collect/getCollectList', {
         query: {
           bk_biz_id: this.bkBizId,
@@ -364,9 +374,32 @@ export default {
           this.pagination.count = data.total;
         }
       })
+        .catch(() => {
+          this.emptyType = '500';
+        })
         .finally(() => {
           this.isRequest = false;
         });
+    },
+    handleSearchChange(val) {
+      if (val === '' && !this.isRequest) {
+        this.requestData();
+      }
+    },
+    handleOperation(type) {
+      if (type === 'clear-filter') {
+        this.inputKeyWords = '';
+        this.pagination.current = 1;
+        this.requestData();
+        return;
+      }
+
+      if (type === 'refresh') {
+        this.emptyType = 'empty';
+        this.pagination.current = 1;
+        this.requestData();
+        return;
+      }
     },
   },
 };
