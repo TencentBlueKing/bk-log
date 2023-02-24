@@ -23,7 +23,7 @@ from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
 from apps.api.base import DataAPI
-from apps.api.modules.utils import add_esb_info_before_request, filter_abnormal_ip_hosts_topo, filter_abnormal_ip_hosts
+from apps.api.modules.utils import add_esb_info_before_request
 from config.domains import CC_APIGATEWAY_ROOT_V2
 
 
@@ -107,7 +107,6 @@ class _CCApi:
             module=self.MODULE,
             description="查询业务下的主机",
             before_request=get_supplier_account_before,
-            after_request=filter_abnormal_ip_hosts,
         )
         self.list_biz_hosts_topo = DataAPI(
             method="POST",
@@ -115,7 +114,6 @@ class _CCApi:
             module=self.MODULE,
             description="查询业务下的主机和拓扑信息",
             before_request=get_supplier_account_before,
-            after_request=filter_abnormal_ip_hosts_topo,
         )
         self.search_cloud_area = DataAPI(
             method="POST",
