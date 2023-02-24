@@ -30,7 +30,7 @@
       :model="formData">
       <!-- 聚类字段 -->
       <bk-form-item
-        :label="$t('retrieveSetting.clusterField')"
+        :label="$t('聚类字段')"
         :required="true"
         :rules="rules.clustering_fields"
         :property="'clustering_fields'">
@@ -50,7 +50,7 @@
           </bk-select>
           <span
             v-bk-tooltips="{
-              content: $t('retrieveSetting.fieldTips'),
+              content: $t('只能基于一个字段进行聚类，并且字段是为text的分词类型，默认为log字段'),
               placements: ['right'],
               delay: 300
             }">
@@ -60,18 +60,18 @@
       </bk-form-item>
 
       <div class="setting-item ">
-        <span class="left-word">{{$t('retrieveSetting.ignoreNumbers')}}</span>
-        <span style="color: #979ba5;">{{$t('retrieveSetting.ignoreNumbersTips')}}</span>
+        <span class="left-word">{{$t('忽略数字')}}</span>
+        <span style="color: #979ba5;">{{$t('前端忽略所有的数字')}}</span>
       </div>
       <div class="setting-item ">
-        <span class="left-word">{{$t('retrieveSetting.ignoreCharacters')}}</span>
-        <span style="color: #979ba5;">{{$t('retrieveSetting.ignoreCharactersTips')}}</span>
+        <span class="left-word">{{$t('忽略字符')}}</span>
+        <span style="color: #979ba5;">{{$t('前端忽略数字和所有的常见符号，只保留日志具体内容')}}</span>
       </div>
       <div class="setting-item ">
-        <span class="left-word">{{$t('retrieveSetting.dataFingerprint')}}</span>
+        <span class="left-word">{{$t('数据指纹')}}</span>
         <div @click="handleChangeFinger">
           <span
-            v-bk-tooltips="$t('fingerTips')"
+            v-bk-tooltips="$t('暂时未开放聚类关闭功能，如有关闭需求，可联系平台管理员')"
             class="top-middle"
             :disabled="!isShowFingerTips">
             <bk-switcher
@@ -85,14 +85,17 @@
             </bk-switcher>
           </span>
         </div>
-        <bk-alert style="width: 800px" type="info" :title="$t('retrieveSetting.dataFingerprintTips')"></bk-alert>
+        <bk-alert
+          style="width: 800px"
+          type="info"
+          :title="$t('通过AI学习能力，提取日志的数据指纹实现日志聚类，注意训练时间越久效果越好，存储将增加10%')"></bk-alert>
       </div>
 
       <!-- 字段长度 -->
       <div class="rule-container">
         <bk-form-item
           required
-          :label="$t('retrieveSetting.fieldLength')"
+          :label="$t('最大字段长度')"
           :rules="rules.max_log_length"
           :property="'max_log_length'">
           <div class="setting-item ">
@@ -105,10 +108,10 @@
               :max="2000000"
               :precision="0"
               :disabled="!globalEditable"></bk-input>
-            <span style="margin-left: 8px">{{$t('retrieveSetting.byte')}}</span>
+            <span style="margin-left: 8px">{{$t('字节')}}</span>
             <span
               v-bk-tooltips="{
-                content: $t('retrieveSetting.fieldLengthTips'),
+                content: $t('聚类字段的最大长度，如果超过这个长度将直接丢弃，设置越大将消耗更多的资源'),
                 placements: ['right'],
                 delay: 300
               }">
@@ -118,7 +121,7 @@
         </bk-form-item>
         <!-- 过滤规则 -->
         <div style="margin-bottom: 40px;">
-          <p style="height: 32px">{{$t('retrieveSetting.filtrationRule')}}</p>
+          <p style="height: 32px">{{$t('过滤规则')}}</p>
           <div class="filter-rule">
             <div class="filter-rule filter-rule-item" v-for="(item, index) of formData.filter_rules" :key="index">
               <bk-select
@@ -177,7 +180,7 @@
                   v-model="item.value"
                   allow-create
                   allow-auto-match
-                  :placeholder="$t('form.pleaseEnter')"
+                  :placeholder="$t('请输入')"
                   :class="['mr-neg1 min-100 above', !item.value.length && isFilterRuleError ? 'rule-error' : '']"
                   :list="item.valueList"
                   :content-width="232"
@@ -219,9 +222,9 @@
             style="margin-left: 8px"
             data-test-id="LogCluster_button_reset"
             :disabled="!globalEditable"
-            :title="$t('dataManage.Reset')"
+            :title="$t('重置')"
             @click="resetPage">
-            {{ $t('dataManage.Reset') }}
+            {{ $t('重置') }}
           </bk-button>
         </bk-form-item>
       </div>
@@ -235,13 +238,13 @@
       :mask-close="false"
       :show-footer="false">
       <div class="submit-dialog-container">
-        <p class="submit-dialog-title">{{$t('retrieveSetting.saveToTakeEffect')}}</p>
-        <p class="submit-dialog-text">{{$t('retrieveSetting.saveEffectMessage')}}</p>
+        <p class="submit-dialog-title">{{$t('保存待生效')}}</p>
+        <p class="submit-dialog-text">{{$t('该保存需要1小时生效,请耐心等待')}}</p>
         <bk-button
           theme="primary"
           class="submit-dialog-btn"
           @click="isShowSubmitDialog = false">
-          {{$t('retrieveSetting.iSee')}}</bk-button>
+          {{$t('我知道了')}}</bk-button>
       </div>
     </bk-dialog>
   </div>
@@ -435,7 +438,7 @@ export default {
       if (this.fingerSwitch) {
         this.fingerSwitch = false;
         // this.$bkInfo({
-        //   title: this.$t('retrieveSetting.closeFinger'),
+        //   title: this.$t('是否关闭数据指纹'),
         //   confirmFn: () => {
         //     this.fingerSwitch = false;
         //   },
@@ -449,7 +452,7 @@ export default {
         }
         if (!this.configID) {
           this.$bkInfo({
-            title: this.$t('retrieveSetting.notCollector'),
+            title: this.$t('当前索引集为非采集项,无法设置数据指纹'),
             confirmFn: () => {},
           });
           return;

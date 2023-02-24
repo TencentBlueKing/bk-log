@@ -25,16 +25,16 @@
     <bk-table
       v-bkloading="{ isLoading: loading }"
       :data="data"
-      :empty-text="$t('btn.vacancy')"
+      :empty-text="$t('暂无内容')"
       :size="size">
       <bk-table-column
         type="index"
-        :label="$t('configDetails.number')"
+        :label="$t('序号')"
         align="center"
         width="120"
         style="margin-top: 13px">
       </bk-table-column>
-      <bk-table-column :label="$t('configDetails.originalLog')">
+      <bk-table-column :label="$t('原始日志')">
         <template slot-scope="props">
           <div
             :class="{ 'text-style': true, 'expand-style': expandIndex === props.$index }"
@@ -45,16 +45,16 @@
           </div>
         </template>
       </bk-table-column>
-      <bk-table-column :label="$t('configDetails.gatherTime')" width="200">
+      <bk-table-column :label="$t('采集时间')" width="200">
         <template slot-scope="props">
           <div>{{ props.row.etl.datetime }}</div>
         </template>
       </bk-table-column>
-      <bk-table-column :label="$t('dataSource.operation')" width="200">
+      <bk-table-column :label="$t('操作')" width="200">
         <template slot-scope="props">
           <div>
-            <span class="option-text" @click="copyText(props.row.etl.batch, 'log')">{{ $t('btn.copy') }}</span>
-            <span class="option-text" @click="chickFile(props.row)">{{ $t('configDetails.report') }}</span>
+            <span class="option-text" @click="copyText(props.row.etl.batch, 'log')">{{ $t('复制') }}</span>
+            <span class="option-text" @click="chickFile(props.row)">{{ $t('查看上报日志') }}</span>
           </div>
         </template>
       </bk-table-column>
@@ -67,7 +67,7 @@
       :modal="false"
       :width="596">
       <div slot="header">{{ customSettings.title }}
-        <span @click="copyText(JSON.stringify(jsonText))">{{ $t('btn.copy') }}</span></div>
+        <span @click="copyText(JSON.stringify(jsonText))">{{ $t('复制') }}</span></div>
       <div class="p20 json-text-style" slot="content">
         <VueJsonPretty :deep="5" :data="jsonText" />
       </div>
@@ -92,7 +92,7 @@ export default {
       instance: null,
       customSettings: {
         isShow: false,
-        title: this.$t('configDetails.logDetails'),
+        title: this.$t('上报日志详情'),
       },
       jsonText: '',
       defaultSettings: {
@@ -120,7 +120,7 @@ export default {
     },
     handleEnter(e) {
       this.instance = this.$bkPopover(e.target, {
-        content: this.$t('dataManage.Click_all'),
+        content: this.$t('点击展示全部'),
         arrow: true,
         placement: 'top',
       });
@@ -152,7 +152,7 @@ export default {
           style: {
             textAlign: 'center',
           },
-        }, this.$t('retrieve.copySuccess')),
+        }, this.$t('复制成功')),
         offsetY: 80,
       });
     },

@@ -25,8 +25,8 @@ export const stepsConf = {
   itsm: [
     { title: window.mainComponent.$t('采集配置'), icon: '' },
     { title: window.mainComponent.$t('采集下发'), icon: '' },
-    { title: window.mainComponent.$t('btn.Field'), icon: '' },
-    { title: window.mainComponent.$t('dataManage.storage'), icon: '' },
+    { title: window.mainComponent.$t('字段清洗'), icon: '' },
+    { title: window.mainComponent.$t('存储'), icon: '' },
     { title: window.mainComponent.$t('完成'), icon: '' },
   ],
 
@@ -34,47 +34,47 @@ export const stepsConf = {
   add: [
     { title: window.mainComponent.$t('采集配置'), icon: '' },
     { title: window.mainComponent.$t('采集下发'), icon: '' },
-    { title: window.mainComponent.$t('btn.Field'), icon: '' },
-    { title: window.mainComponent.$t('dataManage.storage'), icon: '' },
+    { title: window.mainComponent.$t('字段清洗'), icon: '' },
+    { title: window.mainComponent.$t('存储'), icon: '' },
     { title: window.mainComponent.$t('完成'), icon: '' },
   ],
   // 采集修改
   edit: [
     { title: window.mainComponent.$t('采集配置'), icon: '' },
     { title: window.mainComponent.$t('采集下发'), icon: '' },
-    { title: window.mainComponent.$t('btn.Field'), icon: '' },
-    { title: window.mainComponent.$t('dataManage.storage'), icon: '' },
+    { title: window.mainComponent.$t('字段清洗'), icon: '' },
+    { title: window.mainComponent.$t('存储'), icon: '' },
     { title: window.mainComponent.$t('完成'), icon: '' },
   ],
   // 采集修改
   editFinish: [
     { title: window.mainComponent.$t('采集配置'), icon: '' },
     { title: window.mainComponent.$t('采集下发'), icon: '' },
-    { title: window.mainComponent.$t('btn.Field'), icon: '' },
-    { title: window.mainComponent.$t('dataManage.storage'), icon: '' },
+    { title: window.mainComponent.$t('字段清洗'), icon: '' },
+    { title: window.mainComponent.$t('存储'), icon: '' },
     { title: window.mainComponent.$t('完成'), icon: '' },
   ],
   // 字段提取
   field: [
     { title: window.mainComponent.$t('采集配置'), icon: '' },
     { title: window.mainComponent.$t('采集下发'), icon: '' },
-    { title: window.mainComponent.$t('btn.Field'), icon: '' },
-    { title: window.mainComponent.$t('dataManage.storage'), icon: '' },
+    { title: window.mainComponent.$t('字段清洗'), icon: '' },
+    { title: window.mainComponent.$t('存储'), icon: '' },
     { title: window.mainComponent.$t('完成'), icon: '' },
   ],
   // 存储
   storage: [
     { title: window.mainComponent.$t('采集配置'), icon: '' },
     { title: window.mainComponent.$t('采集下发'), icon: '' },
-    { title: window.mainComponent.$t('btn.Field'), icon: '' },
-    { title: window.mainComponent.$t('dataManage.storage'), icon: '' },
+    { title: window.mainComponent.$t('字段清洗'), icon: '' },
+    { title: window.mainComponent.$t('存储'), icon: '' },
     { title: window.mainComponent.$t('完成'), icon: '' },
   ],
   // 容器日志
   container: [
     { title: window.mainComponent.$t('采集配置'), icon: '' },
-    { title: window.mainComponent.$t('btn.Field'), icon: '' },
-    { title: window.mainComponent.$t('dataManage.storage'), icon: '' },
+    { title: window.mainComponent.$t('字段清洗'), icon: '' },
+    { title: window.mainComponent.$t('存储'), icon: '' },
     { title: window.mainComponent.$t('完成'), icon: '' },
   ],
   // 开始采集

@@ -107,9 +107,9 @@
             </div>
             <div class="hit-title">
               <span>
-                {{$t('已命中')}}
-                <span class="hit-number">{{hitResultList.length}}</span>
-                {{$t('个内容')}}
+                <i18n path="已命中 {0} 个内容">
+                  <span class="hit-number">{{hitResultList.length}}</span>
+                </i18n>
               </span>
               <span class="hit-number" @click="handleClearHit">{{$t('清空')}}</span>
             </div>

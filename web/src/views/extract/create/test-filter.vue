@@ -55,19 +55,18 @@
     </div>
     <!-- 关键字范围 -->
     <div class="filter-content" v-show="filterType === 'match_range'">
-      {{ $t('从匹配') }}
-      <bk-input
-        style="width: 180px;margin: 0 6px;"
-        :maxlength="64"
-        v-model="filterContent.start">
-      </bk-input>
-      {{ $t('开始到匹配') }}
-      <bk-input
-        style="width: 180px;margin: 0 6px;"
-        :maxlength="64"
-        v-model="filterContent.end">
-      </bk-input>
-      {{ $t('之间的所有行') }}
+      <i18n path="从匹配{0}开始到匹配{1}之间的所有行">
+        <bk-input
+          style="width: 180px;margin: 0 6px;"
+          :maxlength="64"
+          v-model="filterContent.start">
+        </bk-input>
+        <bk-input
+          style="width: 180px;margin: 0 6px;"
+          :maxlength="64"
+          v-model="filterContent.end">
+        </bk-input>
+      </i18n>
     </div>
     <!-- 最新行数 -->
     <div class="filter-content" v-show="filterType === 'tail_line'">
@@ -82,25 +81,24 @@
     </div>
     <!-- 按行过滤 -->
     <div class="filter-content" v-show="filterType === 'line_range'">
-      {{ $t('从第') }}
-      <bk-input
-        style="width: 120px;margin: 0 6px;"
-        type="number"
-        :placeholder="$t('请输入整数')"
-        :precision="0"
-        :value="filterContent.start_line"
-        @change="handleChangeNumber('start_line', $event)">
-      </bk-input>
-      {{ $t('行到第') }}
-      <bk-input
-        style="width: 120px;margin: 0 6px;"
-        type="number"
-        :placeholder="$t('请输入整数')"
-        :precision="0"
-        :value="filterContent.end_line"
-        @change="handleChangeNumber('end_line', $event)"
-      ></bk-input>
-      {{ $t('行') }}
+      <i18n path="从第{0}行到第{1}行">
+        <bk-input
+          style="width: 120px;margin: 0 6px;"
+          type="number"
+          :placeholder="$t('请输入整数')"
+          :precision="0"
+          :value="filterContent.start_line"
+          @change="handleChangeNumber('start_line', $event)">
+        </bk-input>
+        <bk-input
+          style="width: 120px;margin: 0 6px;"
+          type="number"
+          :placeholder="$t('请输入整数')"
+          :precision="0"
+          :value="filterContent.end_line"
+          @change="handleChangeNumber('end_line', $event)"
+        ></bk-input>
+      </i18n>
     </div>
   </div>
 </template>

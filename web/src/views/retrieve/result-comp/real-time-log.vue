@@ -30,7 +30,7 @@
       <!-- IP -->
       <span style="margin-right: 10px;">IP: {{params.ip || params.serverIp}}</span>
       <!-- 日志路径 -->
-      <span>{{ $t('retrieve.logPath') + ': ' + (params.path || params.logfile) }}</span>
+      <span>{{ $t('日志路径') + ': ' + (params.path || params.logfile) }}</span>
     </div>
     <div class="dialog-bars">
       <log-filter :is-screen-full="isScreenFull" @handle-filter="handleFilter" />
@@ -61,7 +61,7 @@
         :ignore-case="ignoreCase"
         :interval="interval" />
     </div>
-    <p class="handle-tips">{{ $t('retrieve.quickOperation') }}</p>
+    <p class="handle-tips">{{ $t('快捷键  Esc:退出; PageUp: 向上翻页; PageDn: 向下翻页') }}</p>
   </section>
 </template>
 
@@ -241,7 +241,7 @@ export default {
       }
       this.$bkMessage({
         theme: 'success',
-        message: this.$t('retrieve.copySuccess'),
+        message: this.$t('复制成功'),
       });
     },
     filterLog(value) {
