@@ -32,7 +32,7 @@
     <!-- IP 日志路径 -->
     <div class="dialog-label">
       <span style="margin-right: 10px;">IP: {{params.ip || params.serverIp}}</span>
-      <span>{{ $t('retrieve.logPath') + ': ' + (params.path || params.logfile) }}</span>
+      <span>{{ $t('日志路径') + ': ' + (params.path || params.logfile) }}</span>
     </div>
 
     <div class="dialog-bars">
@@ -65,7 +65,7 @@
         :interval="interval" />
     </div>
 
-    <p class="handle-tips">{{ $t('retrieve.quickOperation') }}</p>
+    <p class="handle-tips">{{ $t('快捷键  Esc:退出; PageUp: 向上翻页; PageDn: 向下翻页') }}</p>
     <!--        <div class="scroll-bar">-->
     <!--            <span class="icon log-icon icon-up" @click.stop="scrollPage('up')"></span>-->
     <!--            <span class="icon log-icon icon-down" @click.stop="scrollPage('down')"></span>-->
@@ -244,7 +244,7 @@ export default {
           } else {
             const zeroIndex = res.data.zero_index;
             if ((!zeroIndex && zeroIndex !== 0) || zeroIndex === -1) {
-              this.logList.splice(this.logList.length, 0, this.$t('retrieve.unableLocate'));
+              this.logList.splice(this.logList.length, 0, this.$t('无法定位上下文'));
             } else {
               this.logList.push(...stringList.slice(zeroIndex, stringList.length));
               this.rawList.push(...list.slice(zeroIndex, list.length));
@@ -308,7 +308,7 @@ export default {
           this.logList = this.formatStringList(this.rawList, this.displayFieldNames);
           this.reverseLogList = this.formatStringList(this.reverseRawList, this.displayFieldNames);
           this.$refs.fieldsConfigRef._tippy.hide();
-          this.messageSuccess(this.$t('common.configSuccessfully'));
+          this.messageSuccess(this.$t('设置成功'));
         }
       } catch (err) {
         console.warn(err);

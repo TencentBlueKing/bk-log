@@ -23,13 +23,13 @@
 <template>
   <div class="advance-clean-land" v-bkloading="{ isLoading: loading }">
     <span class="log-icon icon-shijian"></span>
-    <p class="title">{{ $t('logClean.cleaning') }}</p>
+    <p class="title">{{ $t('高级清洗中') }}</p>
     <p class="remark">
       <span v-if="isInit">
-        <span v-if="resultList.length">{{ `${resultList.join('、')}${$t('logClean.finishClean')}` }}</span>
-        <span v-else>{{ $t('logClean.cleaningConfirmTips') }}</span>
+        <span v-if="resultList.length">{{ `${resultList.join('、')}${$t('清洗已完成')}` }}</span>
+        <span v-else>{{ $t('高级清洗仍在进行中') }}</span>
       </span>
-      <span v-else>{{ $t('logClean.cleaningTips') }}</span>
+      <span v-else>{{ $t('当前流程已跳转至计算平台进行清洗，若清洗完成可及时刷新页面更新状态') }}</span>
     </p>
     <div class="refresh-button">
       <span class="bk-icon icon-refresh-line"></span>

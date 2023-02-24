@@ -23,11 +23,11 @@
 <template>
   <div class="field-table-container" v-bkloading="{ isLoading: isExtracting }">
     <div class="field-method-head" v-if="!isPreviewMode">
-      <!-- <span class="field-method-link fr mr10" @click.stop="isReset = true">{{ $t('dataManage.Reset') }}</span> -->
+      <!-- <span class="field-method-link fr mr10" @click.stop="isReset = true">{{ 重置 }}</span> -->
       <div :class="{ 'table-setting': true, 'disabled-setting': isSettingDisable || isSetDisabled }">
         <div class="fr form-item-flex bk-form-item">
-          <!-- <label class="bk-label has-desc" v-bk-tooltips="$t('dataManage.confirm_append')">
-            <span>{{ $t('dataManage.keep_log') }}</span>
+          <!-- <label class="bk-label has-desc" v-bk-tooltips="$t('确认保留原始日志,会存储在log字段. 其他字段提取内容会进行追加')">
+            <span>{{ $t('保留原始日志') }}</span>
           </label> -->
           <div class="bk-form-content">
             <bk-checkbox
@@ -37,8 +37,8 @@
               :disabled="isSettingDisable || isSetDisabled"
               v-model="retainOriginalText"
               @change="handleKeepLog">
-              <label class="bk-label has-desc" v-bk-tooltips="$t('dataManage.confirm_append')">
-                <span>{{ $t('dataManage.keep_log') }}</span>
+              <label class="bk-label has-desc" v-bk-tooltips="$t('确认保留原始日志,会存储在log字段. 其他字段提取内容会进行追加')">
+                <span>{{ $t('保留原始日志') }}</span>
               </label>
             </bk-checkbox>
             <!-- <bk-switcher size="small" theme="primary" v-model="retainOriginalText"></bk-switcher> -->
@@ -57,13 +57,13 @@
           @click="visibleHandle">
         </span>
         <span class="visible-deleted-text">
-          {{ $t('dataManage.Hide_deleted') + ` ${deletedNum} ` + $t('dataManage.Row')}}
+          {{ $t('已隐藏 {n} 项', { n: deletedNum })}}
         </span>
         <span
           v-if="!isTempField"
           class="field-method-link fr"
           @click.stop="viewStandard">
-          {{ $t('dataManage.View_fields') }}
+          {{ $t('查看内置字段') }}
         </span>
 
       </div>
@@ -74,12 +74,12 @@
         <bk-table
           class="field-table"
           size="small"
-          :empty-text="$t('btn.vacancy')"
+          :empty-text="$t('暂无内容')"
           :row-key="extractMethod === 'bk_log_delimiter' ? 'field_index' : 'field_name'"
           :data="deletedVisible ? hideDeletedTable : tableList">
           <template>
             <!-- <bk-table-column -->
-            :label="$t('configDetails.column')"
+            :label="$t('列')"
             align="center"
             :resizable="false"
             width="40"
@@ -89,7 +89,7 @@
             </template>
             <!-- </bk-table-column> -->
             <!-- 字段名 -->
-            <bk-table-column :label="$t('dataManage.Field_name')" :resizable="false" min-width="100">
+            <bk-table-column :label="$t('字段名')" :resizable="false" min-width="100">
               <template slot-scope="props">
                 <span v-if="isPreviewMode">{{ props.row.field_name }}</span>
                 <bk-form-item v-else :class="{ 'is-required is-error': props.row.fieldErr }">
@@ -143,7 +143,7 @@
               </template>
             </bk-table-column>
             <!-- 类型 -->
-            <bk-table-column :label="$t('indexSetList.field_type')" :resizable="false" min-width="100">
+            <bk-table-column :label="$t('类型')" :resizable="false" min-width="100">
               <template slot-scope="props">
                 <span v-if="isPreviewMode">{{ props.row.field_type }}</span>
                 <!-- <bk-form-item v-else
@@ -189,14 +189,14 @@
                     <i
                       class="bk-icon icon-exclamation-circle-shape tooltips-icon"
                       style="right: 8px;"
-                      v-bk-tooltips.top="$t('form.must')"></i>
+                      v-bk-tooltips.top="$t('必填项')"></i>
                   </template>
                 </bk-form-item>
               </template>
             </bk-table-column>
-            <!--<bk-table-column :label="$t('dataManage.Polymeric')" align="center" :resizable="false" width="50">
+            <!--<bk-table-column :label="聚合" align="center" :resizable="false" width="50">
               <template slot-scope="props">
-                <bk-popover v-if="props.row.is_time" :content="$t('dataManage.time_dimensions')">
+                <bk-popover v-if="props.row.is_time" :content="$t('时间字段默认设置可以聚合')">
                   <bk-checkbox
                     disabled
                     v-model="props.row.is_dimension">
@@ -223,7 +223,7 @@
               </template>
             </bk-table-column>
             <!-- 时间 -->
-            <bk-table-column :label="$t('dataManage.time')" align="center" :resizable="false" width="60">
+            <bk-table-column :label="$t('时间')" align="center" :resizable="false" width="60">
               <template slot-scope="props">
                 <template v-if="isPreviewMode">
                   <div class="field-date field-date-disable">
@@ -266,7 +266,7 @@
                     <template v-else>
                       <div v-if="hasDateField"
                            class="field-date"
-                           v-bk-tooltips.right="$t('dataManage.only_data_time')"
+                           v-bk-tooltips.right="$t('只能设置一个数据时间，如果要更改请先取消原来的')"
                            @click.stop="setDateFormat(props.row)">
                         <i class="log-icon icon-date-picker"></i>
                       </div>
@@ -280,7 +280,7 @@
             </bk-table-column>
             <!-- 操作 -->
             <bk-table-column
-              :label="$t('permission.operation')"
+              :label="$t('操作')"
               :resizable="false"
               align="center"
               width="60"
@@ -291,18 +291,18 @@
                   class="table-link"
                   :style="`color:${isSetDisabled ? '#dcdee5' : '#3a84ff'};`"
                   @click="isDisableOperate(props.row)">
-                  {{ props.row.is_delete ? '复原' : '隐藏' }}
+                  {{ props.row.is_delete ? $t('复原') : $t('隐藏') }}
                 </span>
               </template>
             </bk-table-column>
-            <div slot="empty" class="empty-text">{{ $t('dataManage.emptyText') }}</div>
+            <div slot="empty" class="empty-text">{{ $t('请先选择字段提取模式') }}</div>
           </template>
         </bk-table>
       </bk-form>
     </div>
 
     <div class="preview-panel-right">
-      <div class="preview-title preview-item">{{ $t('dataManage.Preview') }}</div>
+      <div class="preview-title preview-item">{{ $t('预览（值）') }}</div>
       <template v-if="deletedVisible">
         <div
           class="preview-item"
@@ -330,18 +330,18 @@
       ext-cls="field-date-dialog"
       :header-position="'left'"
       :mask-close="false"
-      :title="$t('dataManage.select_format')"
+      :title="$t('选择时间格式')"
       :auto-close="false"
       @cancel="resetDateDialog">
       <div slot style="width: 560px; padding-left: 12px;">
-        <p class="prompt">{{$t('dataManage.set')}}</p>
+        <p class="prompt">{{$t('设置了时间格式后将替换默认的数据时间')}}</p>
         <!-- <p class="prompt">时间指<span>数据时间</span>，而非录入时间</p> -->
         <bk-form :label-width="145" :model="dialogField" ref="dateForm">
-          <bk-form-item :label="$t('dataManage.Data_time')" :property="'source_name'">
-            <bk-input v-model="dialogField.time_value" :placeholder="$t('dataManage.Field_value')" disabled></bk-input>
+          <bk-form-item :label="$t('数据时间')" :property="'source_name'">
+            <bk-input v-model="dialogField.time_value" :placeholder="$t('字段的预览值')" disabled></bk-input>
           </bk-form-item>
           <bk-form-item
-            :label="$t('dataManage.Time_format')"
+            :label="$t('时间格式')"
             required
             :rules="rules.time_format"
             :property="'time_format'">
@@ -355,7 +355,7 @@
             </bk-select>
           </bk-form-item>
           <bk-form-item
-            :label="$t('dataManage.Zone_selection')"
+            :label="$t('时区选择')"
             required
             :rules="rules.time_zone"
             :property="'time_zone'">
@@ -377,24 +377,24 @@
           theme="primary"
           :disabled="!dialogField.time_value || checkLoading"
           @click.stop="requestCheckTime">
-          {{ $t('btn.affirm') }}
+          {{ $t('确定') }}
         </bk-button>
         <bk-button
           v-else
           theme="primary"
           :icon="checkLoading ? 'loading' : ''"
           @click.stop="confirmHandle">
-          {{ $t('btn.affirm') }}
+          {{ $t('确定') }}
         </bk-button>
-        <bk-button @click.stop="resetDateDialog">{{ $t('btn.cancel') }}</bk-button>
+        <bk-button @click.stop="resetDateDialog">{{ $t('取消') }}</bk-button>
       </div>
     </bk-dialog>
     <bk-dialog
       v-model="isReset"
       @confirm="resetField"
       theme="primary"
-      :title="$t('dataManage.Reset_confirmation')">
-      {{$t('dataManage.Reset_content')}}
+      :title="$t('重置确认')">
+      {{$t('重置将丢失当前的配置信息，重置为上一次保存的配置内容。确认请继续。')}}
     </bk-dialog>
   </div>
 </template>
@@ -624,8 +624,8 @@ export default {
       };
       if ((!row.is_time || (row.is_time && row.is_delete)) && this.hasDateField) {
         this.$bkInfo({
-          title: this.$t('dataManage.Reset_bar'),
-          subTitle: this.$t('dataManage.column_want'),
+          title: this.$t('重设时间列'),
+          subTitle: this.$t('将此列设置为时间，会将取消已设为时间的列，是否继续？'),
           type: 'warning',
           confirmFn: () => {
             Object.assign(this.dialogField, option);
@@ -729,7 +729,7 @@ export default {
               style: {
                 whiteSpace: 'normal',
               },
-            }, this.$t('dataManage.After_exception')),
+            }, this.$t('更改字段类型后在同时检索新老数据时可能会出现异常，确认请继续')),
             type: 'warning',
             confirmFn: () => {
               this.formData.tableList[$index].field_type = val;
@@ -828,11 +828,11 @@ export default {
       /* eslint-disable */
       if (!is_delete) {
         if (!field_name) {
-          result = this.$t('form.must')
+          result = this.$t('必填项')
         } else if (this.extractMethod !== 'bk_log_json' && !/^(?!_)(?!.*?_$)^[A-Za-z0-9_]+$/ig.test(field_name)) {
-          result = this.$t('dataManage.can_cannot')
+          result = this.$t('只能包含a-z、A-Z、0-9和_，且不能以_开头和结尾')
         } else if (this.extractMethod !== 'bk_log_json' && this.globalsData.field_built_in.find(item => item.id === field_name.toLocaleLowerCase())) {
-          result = this.extractMethod === 'bk_log_regexp' ? this.$t('dataManage.field_expression') : this.$t('dataManage.field_same')
+          result = this.extractMethod === 'bk_log_regexp' ? this.$t('字段名与系统字段重复，必须修改正则表达式') : this.$t('字段名与系统内置字段重复')
         } else {
           result = ''
         }
@@ -874,17 +874,17 @@ export default {
         // 设置了别名
         if (!/^(?!^\d)[\w]+$/ig.test(aliasName)) {
           // 别名只支持【英文、数字、下划线】，并且不能以数字开头
-          row.aliasErr = this.$t('dataManage.Alias_only_supports');
+          row.aliasErr = this.$t('别名只支持【英文、数字、下划线】，并且不能以数字开头');
           return false;
         }
         if (this.globalsData.field_built_in.find(item => item.id === aliasName.toLocaleLowerCase())) {
           // 别名不能与内置字段名相同
-          row.aliasErr = this.$t('dataManage.Alias_field');
+          row.aliasErr = this.$t('别名不能与内置字段名相同');
           return false;
         }
       } else if (this.globalsData.field_built_in.find(item => item.id === fieldName.toLocaleLowerCase())) {
         // 字段名与内置字段冲突，必须设置别名
-        row.aliasErr = this.$t('dataManage.Field_alias');
+        row.aliasErr = this.$t('字段名与内置字段冲突，必须设置别名');
         return false;
       }
 
@@ -931,14 +931,14 @@ export default {
       return h('div', {
         class: 'render-header',
       }, [
-        h('span', this.$t('dataManage.Alias')),
-        h('span', this.$t('dataManage.Optional')),
+        h('span', this.$t('重命名')),
+        h('span', this.$t('(选填)')),
         h('span', {
           class: 'icon log-icon icon-info-fill',
           directives: [
             {
               name: 'bk-tooltips',
-              value: this.$t('dataManage.alias_replaced'),
+              value: this.$t('非必填字段，填写后将会替代字段名；字段名与内置字段重复时，必须重新命名。'),
             },
           ],
         }),
@@ -948,8 +948,8 @@ export default {
       return h('div', {
         class: 'render-header',
       }, [
-        h('span', this.$t('dataManage.Field_description')),
-        h('span', this.$t('dataManage.Optional')),
+        h('span', this.$t('字段说明')),
+        h('span', this.$t('(选填)')),
       ]);
     },
     renderHeaderParticipleName(h) {
@@ -957,13 +957,13 @@ export default {
         directives: [
           {
             name: 'bk-tooltips',
-            value: this.$t('dataManage.Selected_participle'),
+            value: this.$t('选中分词,适用于分词检索,不能用于指标和维度'),
           },
         ],
       }, [
         h('span', {
           class: 'render-Participle',
-        }, this.$t('dataManage.Participle')),
+        }, this.$t('分词')),
       ]);
     },
     isDisableOperate(row) {
