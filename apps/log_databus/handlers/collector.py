@@ -3700,7 +3700,8 @@ class CollectorHandler(object):
                         {
                             "start_line_number": 0,
                             "end_line_number": 0,
-                            "message": _("配置校验失败: namespaceSelector 共享集群下 any 不允许为 true，" "且 matchNames 不允许为空，请检查"),
+                            "message": _("配置校验失败: namespaceSelector 共享集群下 any 不允许为 true，"
+                                         "且 matchNames 不允许为空，请检查"),
                         }
                     ],
                 }
