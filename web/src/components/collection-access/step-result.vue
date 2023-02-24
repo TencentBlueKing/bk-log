@@ -39,11 +39,11 @@
         <bk-button
           @click="routeChange('complete')"
           data-test-id="finishBox_button_backToList"
-        >{{ $t('dataManage.Return_list') }}</bk-button>
+        >{{ $t('返回列表') }}</bk-button>
         <bk-button
           theme="primary" @click="routeChange('search')"
           data-test-id="finishBox_button_goToSearch"
-        >{{ $t('dataManage.To_retrieve') }}</bk-button>
+        >{{ $t('前往检索') }}</bk-button>
       </div>
     </div>
   </div>
@@ -93,14 +93,14 @@ export default {
   data() {
     return {
       finish: {
-        add: this.$t('dataManage.add'),
-        edit: this.$t('dataManage.edit'),
-        editFinish: this.$t('dataManage.editFinish'),
-        field: this.$t('dataManage.field'),
-        start: this.$t('dataManage.start'),
-        stop: this.$t('dataManage.stop'),
-        storage: this.$t('dataManage.editFinish'),
-        container: this.$t('dataManage.editFinish'),
+        add: this.$t('采集项创建完成'),
+        edit: this.$t('采集项修改完成'),
+        editFinish: this.$t('采集项修改完成'),
+        field: this.$t('采集项修改完成'),
+        start: this.$t('采集项启用完成'),
+        stop: this.$t('采集项停用完成'),
+        storage: this.$t('采集项修改完成'),
+        container: this.$t('采集项修改完成'),
       },
     };
   },

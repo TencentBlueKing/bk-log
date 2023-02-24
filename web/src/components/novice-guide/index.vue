@@ -35,7 +35,7 @@
         <div slot="content">{{ currentStep.content }}</div>
         <template slot="action">
           <template v-if="!isLast">
-            <div class="action-text" @click="handleStepChange('stop')">{{ $t('dataManage.skip') }}</div>
+            <div class="action-text" @click="handleStepChange('stop')">{{ $t('跳过') }}</div>
             <div class="action-btn" @click="handleStepChange('next')">{{ $t('下一步') }}</div>
           </template>
           <div v-else class="action-btn" @click="handleStepChange('finish')">{{ $t('完成') }}</div>

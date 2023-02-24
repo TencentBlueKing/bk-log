@@ -26,7 +26,7 @@
       :class="{ 'operation-icon': true, 'disabled-icon': !queueStatus }"
       @click="exportLog"
       data-test-id="fieldForm_div_exportData"
-      v-bk-tooltips="queueStatus ? $t('btn.export') : undefined">
+      v-bk-tooltips="queueStatus ? $t('导出') : undefined">
       <span class="icon log-icon icon-xiazai"></span>
     </div> -->
     <div
@@ -38,8 +38,8 @@
 
     <div v-show="false">
       <div class="download-box" ref="downloadTips">
-        <span @click="exportLog">{{$t('exportHistory.downloadLog')}}</span>
-        <span @click="downloadTable">{{$t('exportHistory.downloadHistory')}}</span>
+        <span @click="exportLog">{{$t('下载日志')}}</span>
+        <span @click="downloadTable">{{$t('下载历史')}}</span>
       </div>
     </div>
 
@@ -86,22 +86,22 @@
           <div v-if="asyncExportUsable && isShowAsyncDownload" class="style-line"></div>
         </div>
         <template v-if="!asyncExportUsable">
-          <span>{{`${$t('retrieve.reasonFor')}${asyncExportUsableReason}${$t('retrieve.reasonDesc')}`}}</span>
+          <span>{{$t('当前因{n}导致无法进行异步下载， 可直接下载前1万条数据', { n: asyncExportUsableReason })}}</span>
           <div class="cannot-async-btn">
-            <bk-button theme="primary" @click="openDownloadUrl">{{ $t('retrieve.immediateExport') }}</bk-button>
+            <bk-button theme="primary" @click="openDownloadUrl">{{ $t('直接下载') }}</bk-button>
             <bk-button style="margin-left: 10px;" @click="() => isShowExportDialog = false">{{ $t('取消') }}</bk-button>
           </div>
         </template>
         <template v-if="asyncExportUsable && isShowAsyncDownload">
           <div class="export-type immediate-export">
             <span class="bk-icon icon-info-circle"></span>
-            <span class="export-text">{{ $t('retrieve.immediateExportDesc') }}</span>
-            <bk-button theme="primary" @click="openDownloadUrl">{{ $t('retrieve.immediateExport') }}</bk-button>
+            <span class="export-text">{{ $t('直接下载仅下载前1万条数据') }}</span>
+            <bk-button theme="primary" @click="openDownloadUrl">{{ $t('直接下载') }}</bk-button>
           </div>
           <div class="export-type async-export">
             <span class="bk-icon icon-info-circle"></span>
             <span class="export-text">{{ getAsyncText }}</span>
-            <bk-button @click="downloadAsync">{{ $t('retrieve.asyncExport') }}</bk-button>
+            <bk-button @click="downloadAsync">{{ $t('异步下载') }}</bk-button>
           </div>
         </template>
       </div>
@@ -169,10 +169,12 @@ export default {
       bkBizId: 'bkBizId',
     }),
     getAsyncText() { // 异步下载按钮前的文案
-      return this.totalCount > this.exportSecondComparedSize ? this.$t('retrieve.asyncExportMoreDesc') : this.$t('retrieve.asyncExportDesc');
+      return this.totalCount > this.exportSecondComparedSize
+        ? this.$t('建议缩小查询范围，异步下载只能下载前200w条，注意查看邮件')
+        : this.$t('异步下载可打包下载所有数据，请注意查收下载通知邮件');
     },
     getExportTitle() { // 超过下载临界值，当前数据超过多少条文案
-      return this.totalCount > this.exportSecondComparedSize ? this.$t('retrieve.dataMoreThanMillion') : this.$t('retrieve.dataMoreThan');
+      return this.$t('当前数据超过{n}万条', { n: this.totalCount > this.exportSecondComparedSize ? 200 : 1 });
     },
     getDialogTitle() { // 异步下载临界值，dialog标题
       return this.totalCount < this.exportFirstComparedSize ? this.$t('下载范围选择') : '';
@@ -212,8 +214,8 @@ export default {
       if (!this.totalCount) {
         const infoDialog = this.$bkInfo({
           type: 'error',
-          title: this.$t('retrieve.exportFailed'),
-          subTitle: this.$t('retrieve.dataNone'),
+          title: this.$t('导出失败'),
+          subTitle: this.$t('检索结果条数为0'),
           showFooter: false,
         });
         setTimeout(() => infoDialog.close(), 3000);

@@ -282,14 +282,17 @@ class MappingHandlers(object):
     def _get_time_field(cls, index_set_id: int):
         """获取索引时间字段"""
         index_set_obj: LogIndexSet = LogIndexSet.objects.filter(index_set_id=index_set_id).first()
+        if index_set_obj.scenario_id in [Scenario.BKDATA, Scenario.LOG]:
+            return "dtEventTimeStamp"
+
         if index_set_obj.time_field:
             return index_set_obj.time_field
-
-        index_set_obj: LogIndexSetData = LogIndexSetData.objects.filter(index_set_id=index_set_id).first()
-        if not index_set_obj:
-            raise SearchNotTimeFieldType()
-
-        return index_set_obj.time_field
+        # 遍历index_set_data取任意一个不为空的时间字段
+        time_field_list = LogIndexSetData.objects.filter(index_set_id=index_set_id).values_list("time_field", flat=True)
+        for time_field in time_field_list:
+            if time_field:
+                return time_field
+        raise SearchNotTimeFieldType()
 
     def _get_object_field(self, final_fields_list):
         """获取对象字段"""

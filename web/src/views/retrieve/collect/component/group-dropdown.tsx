@@ -64,7 +64,7 @@ export default class CollectGroup extends tsc<IProps> {
     groupEditName: [
       {
         validator: this.checkName,
-        message: window.mainComponent.$t('组名不规范，包含了特殊符号.'),
+        message: window.mainComponent.$t('{n}不规范, 包含特殊符号.', { n: window.mainComponent.$t('组名') }),
         trigger: 'blur',
       },
       {
@@ -75,6 +75,11 @@ export default class CollectGroup extends tsc<IProps> {
       {
         required: true,
         message: window.mainComponent.$t('必填项'),
+        trigger: 'blur',
+      },
+      {
+        max: 30,
+        message: window.mainComponent.$t('不能多于30个字符'),
         trigger: 'blur',
       },
     ],
@@ -119,7 +124,8 @@ export default class CollectGroup extends tsc<IProps> {
 
   checkName() {
     if (this.verifyData.groupEditName.trim() === '') return true;
-    return /^[\u4e00-\u9fa5_a-zA-Z0-9`~!@#$%^&*()_\-+=<>?:"\s{}|,.\/;'\\[\]·~！@#￥%……&*（）——\-+={}|《》？：“”【】、；‘'，。、]+$/im.test(this.verifyData.groupEditName.trim());
+    // eslint-disable-next-line no-useless-escape
+    return /^[\u4e00-\u9fa5_a-zA-Z0-9`~!@#$%^&*()_\-+=<>?:"{}|,.\/;'\\[\]·~！@#￥%……&*（）——\-+={}|《》？：“”【】、；‘'，。、]+$/im.test(this.verifyData.groupEditName.trim());
   }
 
   checkExistName() {
@@ -277,9 +283,8 @@ export default class CollectGroup extends tsc<IProps> {
                 <FormItem property="groupEditName">
                   <Input
                     clearable
-                    placeholder={`${this.$t('请输入组名')}${this.$t('（长度30个字符）')}`}
+                    placeholder={this.$t('{n}, （长度30个字符）', { n: this.$t('请输入组名') })}
                     vModel={this.verifyData.groupEditName}
-                    maxlength={30}
                     onEnter={v => this.handleGroupKeyDown(v, 'reset')}
                   ></Input>
                 </FormItem>
@@ -337,7 +342,7 @@ export default class CollectGroup extends tsc<IProps> {
           ))}
           <li class="add-new-group">
             {this.isShowNewGroupInput ? (
-              <li class="add-new-page-input">
+              <li class="new-page-input">
                 <Form
                   labelWidth={0}
                   style={{ width: '100%' }}
@@ -351,9 +356,8 @@ export default class CollectGroup extends tsc<IProps> {
                   <FormItem property="groupEditName">
                     <Input
                       clearable
-                      placeholder={`${this.$t('请输入组名')}${this.$t('（长度30个字符）')}`}
+                      placeholder={this.$t('{n}, （长度30个字符）', { n: this.$t('请输入组名') })}
                       vModel={this.verifyData.groupEditName}
-                      maxlength={30}
                       onEnter={v => this.handleGroupKeyDown(v, 'add')}
                     ></Input>
                   </FormItem>

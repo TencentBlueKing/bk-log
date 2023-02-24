@@ -218,7 +218,9 @@
 
       <template slot="append" v-if="isShowBottomTips">
         <div class="bottom-tips">
-          {{$t('allLoadTips')}} <span @click="handleReturnTop">{{$t('返回顶部')}}</span>
+          <i18n path="已加载完全部数据，如需查看更多查询条件可以{0}">
+            <span @click="handleReturnTop">{{$t('返回顶部')}}</span>
+          </i18n>
         </div>
       </template>
 
@@ -298,15 +300,13 @@ export default {
     getTipsMessage() {
       // 当有选中的元素时显示选中数量及是否批量告警
       return this.selectList.length
-        ? `${this.$t('fingerChoose')}
-        <span>${this.selectSize}</span>
-        ${this.$t('fingerSizeData')} ,
-        ${this.$t('fingerTotalData')}
-        <span>${this.allFingerList.length}</span>
-        ${this.$t('fingerSizeData')}`
-        : `${this.$t('fingerTotalData')}
-        <span>${this.allFingerList.length}</span>
-        ${this.$t('fingerSizeData')}`;
+        ? `<i18n path="当前已选择{0}条数据, 共有{1}条数据">
+          <span>${this.selectSize}</span>
+          <span>${this.allFingerList.length}</span>
+        </i18n>`
+        : `<i18n path="共有{0}条数据">
+          <span>${this.allFingerList.length}</span>
+        </i18n>`;
     },
     bkBizId() {
       return this.$store.state.bkBizId;
@@ -315,7 +315,7 @@ export default {
       return this.fingerList.length >= 50 && this.fingerList.length === this.allFingerList.length;
     },
     getLeaveText() {
-      return !this.clusterSwitch ? this.$t('goSettingMessage') : this.$t('goFingerMessage');
+      return !this.clusterSwitch ? this.$t('当前日志聚类未启用，请前往设置') : this.$t('当前数据指纹未启用，请前往设置');
     },
   },
   watch: {

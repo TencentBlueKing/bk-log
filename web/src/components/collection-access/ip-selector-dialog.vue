@@ -25,7 +25,7 @@
     width="1100"
     header-position="left"
     ext-cls="king-dialog-ip-selector"
-    :title="$t('retrieve.select_target')"
+    :title="$t('选择目标')"
     :position="{ top: dialogTop }"
     :auto-close="false"
     :value="showDialog"

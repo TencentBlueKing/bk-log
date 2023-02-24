@@ -40,14 +40,14 @@
       <!-- 存储索索引名 -->
       <div class="form-div mt">
         <bk-form-item
-          :label="$t('configDetails.storageIndexName')"
+          :label="$t('存储索引名')"
           class="form-inline-div"
           :rules="rules.table_id"
           :property="'table_id'">
           <!-- <div class="prefix">{{formData.table_id_prefix}}</div> -->
           <bk-input
             style="width: 320px"
-            :placeholder="$t('dataManage.input_number')"
+            :placeholder="$t('英文或者数字，5～50长度')"
             :disabled="isUnmodfyIndexName"
             v-model="formData.table_id"
             maxlength="50"
@@ -57,10 +57,10 @@
             </template>
           </bk-input>
         </bk-form-item>
-        <!-- <div class="tips">{{ $t('dataManage.start_bk') }}</div> -->
+        <!-- <div class="tips">{{ $t('以业务ID+bklog_开头,补充字母、数字或下划线，5~50长度') }}</div> -->
       </div>
       <!-- 过期时间 -->
-      <bk-form-item :label="$t('configDetails.expirationTime')">
+      <bk-form-item :label="$t('过期时间')">
         <bk-select
           style="width: 320px;"
           v-model="formData.retention"
@@ -78,7 +78,7 @@
               size="small"
               type="number"
               data-test-id="storageBox_input_customDayNumber"
-              :placeholder="$t('输入自定义天数')"
+              :placeholder="$t('输入自定义天数，按 Enter 确认')"
               :show-controls="false"
               @enter="enterCustomDay($event, 'retention')"
             ></bk-input>
@@ -105,7 +105,7 @@
               size="small"
               type="number"
               data-test-id="storageBox_input_customize"
-              :placeholder="$t('输入自定义天数')"
+              :placeholder="$t('输入自定义天数，按 Enter 确认')"
               :show-controls="false"
               @enter="enterCustomDay($event, 'hot')"
             ></bk-input>
@@ -117,7 +117,7 @@
         </span>
       </bk-form-item>
       <!-- 副本数 -->
-      <bk-form-item :label="$t('configDetails.copyNumber')">
+      <bk-form-item :label="$t('副本数')">
         <bk-input
           class="copy-number-input"
           v-model="formData.storage_replies"
@@ -157,13 +157,14 @@
       <div v-show="isShowAssessment && isCanUseAssessment">
         <div class="capacity-illustrate">
           <p class="illustrate-title">{{$t('容量说明')}}</p>
-          <p>{{$t('clusterTips1')}}</p>
-          <p>{{$t('clusterTips2')}}</p>
-          <p>{{$t('clusterTips3_1_1')}}
-            {{formData.storage_replies * 1 + 1}}
-            {{$t('clusterTips3_1_2')}}
-            {{formData.storage_replies}}
-            {{$t('clusterTips3_2')}}</p>
+          <p>{{$t('容量计算公式：单机日志增量主机数量存储转化率分片数（日志保留天数 + 1）')}}</p>
+          <p>{{$t('存储转化率（1.5）：即原始日志增加日志采集元数据并存储到ES到实际占有的空间')}}</p>
+          <p>{{$t('分片数（{x}）：1个主分片+{n}个副本数，避免节点故障导致数据丢失',
+                  {
+                    x: formData.storage_replies * 1 + 1,
+                    n: formData.storage_replies
+                  }
+          )}}</p>
         </div>
 
         <bk-form-item :label="$t('每日单台日志量')">
@@ -195,7 +196,7 @@
             :show-icon="false">
             <div class="approval-alert" slot="title">
               <span class="bk-icon icon-exclamation-circle"></span>
-              <p>{{$t('approvalTips')}}</p>
+              <p>{{$t('勾选需要审批后需等待审批通过后，才会继续进行存储流程')}}</p>
             </div>
           </bk-alert>
         </div>
@@ -207,7 +208,7 @@
       <!-- 查看权限 -->
       <!-- <bk-form-item
         v-if="accessUserManage"
-        :label="$t('indexSetList.jurisdiction')"
+        :label="$t('查看权限')"
         required
         :property="'view_roles'"
         :rules="rules.view_roles"
@@ -218,7 +219,7 @@
           v-model="formData.view_roles"
           searchable
           multiple
-          :placeholder="$t('btn.select')"
+          :placeholder="$t('请选择')"
           show-select-all>
           <bk-option
             v-for="(role, index) in roleList"
@@ -233,10 +234,10 @@
           theme="default"
           class="mr10"
           data-test-id="storageBox_button_previousPage"
-          :title="$t('dataManage.last')"
+          :title="$t('上一步')"
           :disabled="isLoading"
           @click="prevHandler">
-          {{$t('dataManage.last')}}
+          {{$t('上一步')}}
         </bk-button>
         <bk-button
           theme="primary"
@@ -245,7 +246,7 @@
           :loading="isLoading"
           :disabled="!collectProject"
           @click.stop.prevent="finish">
-          {{$t('dataManage.perform')}}
+          {{$t('完成')}}
         </bk-button>
         <bk-button
           theme="default"

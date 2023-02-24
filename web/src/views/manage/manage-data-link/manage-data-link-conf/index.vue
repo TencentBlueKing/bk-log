@@ -32,7 +32,7 @@
     </div>
     <bk-table
       :data="tableData"
-      :empty-text="$t('btn.vacancy')"
+      :empty-text="$t('暂无内容')"
       v-bkloading="{ isLoading: tableLoading }"
       data-test-id="linkConfigBox_table_linkConfigTable">
       <bk-table-column

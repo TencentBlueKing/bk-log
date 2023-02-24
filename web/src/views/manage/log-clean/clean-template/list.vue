@@ -52,13 +52,13 @@
         @filter-change="handleFilterChange"
         @page-change="handlePageChange"
         @page-limit-change="handleLimitChange">
-        <bk-table-column :label="$t('logClean.templateName')">
+        <bk-table-column :label="$t('模板名称')">
           <template slot-scope="props">
             {{ props.row.name }}
           </template>
         </bk-table-column>
         <bk-table-column
-          :label="$t('logClean.etlConfig')"
+          :label="$t('格式化方法')"
           prop="clean_type"
           class-name="filter-column"
           column-key="clean_type"
@@ -68,7 +68,7 @@
             {{ getFormatName(props.row) }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('dataSource.operation')" width="200">
+        <bk-table-column :label="$t('操作')" width="200">
           <div class="collect-table-operate" slot-scope="props">
             <!-- 编辑 -->
             <bk-button
@@ -84,7 +84,7 @@
               text
               class="mr10 king-button"
               @click.stop="operateHandler(props.row, 'delete')">
-              {{ $t('btn.delete') }}
+              {{ $t('删除') }}
             </bk-button>
           </div>
         </bk-table-column>
@@ -217,7 +217,7 @@ export default {
       if (operateType === 'delete') {
         this.$bkInfo({
           type: 'warning',
-          subTitle: `${this.$t('当前模板名称为')} ${row.name}，${this.$t('确认要删除')}`,
+          subTitle: this.$t('当前模板名称为{n}，确认要删除？', { n: row.name }),
           confirmFn: () => {
             this.requestDeleteTemp(row);
           },

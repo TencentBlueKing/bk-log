@@ -146,7 +146,7 @@ export default {
         this.$store.commit('updateRouterLeaveTip', true);
 
         this.$bkInfo({
-          title: this.$t('pageLeaveTips'),
+          title: this.$t('是否放弃本次操作？'),
           confirmFn: () => {
             this.spaceChange(spaceUid);
           },

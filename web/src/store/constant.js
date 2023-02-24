@@ -64,7 +64,7 @@ export const fieldTypeMap = {
     icon: 'bk-icon icon-exclamation-triangle',
   },
   __virtual__: {
-    name: i18n.t('unKnowIconTips'),
+    name: i18n.t('该字段为平台补充 不可检索'),
     icon: 'log-icon icon-ext',
   },
 };

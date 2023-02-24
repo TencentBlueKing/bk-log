@@ -1319,7 +1319,7 @@ export default {
     occupySize: 'Resource occupation',
     remain: 'Remain',
     restoreStatus: 'Restore Status',
-    collectName: 'Collect Name',
+    collectName: 'Name',
     expired: 'Expired',
     totalSize: 'Total Size',
     indexCount: 'Index Count',
@@ -1629,4 +1629,5 @@ export default {
   保存的显示字段: 'Saved display field',
   '填写收藏名（长度30个字符）': 'Fill in the collection name (length 30 characters)',
   '（长度30个字符）': '(length 30 characters)',
+  不能多于30个字符: 'Cannot be longer than 30 characters',
 };

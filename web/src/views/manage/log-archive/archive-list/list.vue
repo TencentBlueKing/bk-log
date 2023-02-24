@@ -28,7 +28,7 @@
         theme="primary"
         data-test-id="archiveList_button_newArchive"
         @click="handleCreate">
-        {{ $t('logArchive.archive') }}
+        {{ $t('归档') }}
       </bk-button>
       <div class="list-search fr">
         <bk-input
@@ -63,35 +63,35 @@
             {{ props.row.archive_config_id }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('logArchive.collectName')">
+        <bk-table-column :label="$t('采集项名称')">
           <template slot-scope="props">
-            {{ props.row.collector_config_name }}
+            {{ props.row.instance_name }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('logArchive.expired')">
+        <bk-table-column :label="$t('过期设置')">
           <template slot-scope="props">
             <!-- `${props.row.snapshot_days}天` -->
             {{ getExpiredDays(props) }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('logArchive.totalSize')">
+        <bk-table-column :label="$t('总大小')">
           <template slot-scope="props">
             {{ getFileSize(props.row.store_size) }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('logArchive.indexCount')">
+        <bk-table-column :label="$t('索引数量')">
           <template slot-scope="props">
             {{ props.row.index_count }}
           </template>
         </bk-table-column>
         <bk-table-column
-          :label="$t('logArchive.archiveRepository')"
+          :label="$t('归档仓库')"
           prop="target_snapshot_repository_name">
           <template slot-scope="props">
             {{ props.row.target_snapshot_repository_name }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('dataSource.operation')" width="200">
+        <bk-table-column :label="$t('操作')" width="200">
           <div class="collect-table-operate" slot-scope="props">
             <!-- 回溯 -->
             <bk-button
@@ -102,7 +102,7 @@
                 active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
               }"
               @click.stop="operateHandler(props.row, 'restore')">
-              {{ $t('logArchive.restore') }}
+              {{ $t('回溯') }}
             </bk-button>
             <!-- 编辑 -->
             <bk-button
@@ -124,7 +124,7 @@
                 active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
               }"
               @click.stop="operateHandler(props.row, 'delete')">
-              {{ $t('btn.delete') }}
+              {{ $t('删除') }}
             </bk-button>
           </div>
         </bk-table-column>
@@ -264,7 +264,7 @@ export default {
           action_ids: [authorityMap.MANAGE_COLLECTION_AUTH],
           resources: [{
             type: 'collection',
-            id: row.collector_config_id,
+            id: row.instance_id,
           }],
         });
       }
@@ -283,7 +283,7 @@ export default {
       if (operateType === 'delete') {
         this.$bkInfo({
           type: 'warning',
-          subTitle: `${this.$t('当前归档ID为')} ${row.archive_config_id}，${this.$t('确认要删除')}`,
+          subTitle: this.$t('当前归档ID为{n}，确认要删除？', { n: row.archive_config_id }),
           confirmFn: () => {
             this.requestDelete(row);
           },

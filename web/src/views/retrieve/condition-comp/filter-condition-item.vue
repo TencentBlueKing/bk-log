@@ -48,10 +48,10 @@
         <!-- <div class="tag symbol-tag" v-if="index !== filterCondition.length - 1">and</div> -->
       </div>
       <div class="add-condition-filter-popover" slot="content">
-        <div class="filter-title">{{ $t('retrieve.addFilter') }}</div>
+        <div class="filter-title">{{ $t('添加过滤条件') }}</div>
         <div class="add-filter-content">
           <div class="option-item">
-            <label>{{ $t('indexSetList.field_name') }}</label>
+            <label>{{ $t('字段') }}</label>
             <bk-select
               :value="coreData.field"
               style="width: 240px;"
@@ -65,7 +65,7 @@
             </bk-select>
           </div>
           <div class="option-item" style="margin-right: 0">
-            <label>{{ $t('indexSetList.operation') }}</label>
+            <label>{{ $t('操作') }}</label>
             <bk-select
               :value="coreData.operator"
               :clearable="false"
@@ -82,7 +82,7 @@
             </bk-select>
           </div>
           <div class="option-item" v-if="!isShowValue">
-            <label style="margin-left: 10px;">{{ $t('indexSetList.field_value') }}</label>
+            <label style="margin-left: 10px;">{{ $t('值') }}</label>
             <bk-tag-input
               v-model="coreData.value"
               style="width: 240px;"
@@ -101,8 +101,8 @@
           </div>
         </div>
         <div class="filter-footer">
-          <bk-button theme="primary" @click="handleConfirm">{{ $t('btn.confirm') }}</bk-button>
-          <bk-button @click="handleCancel">{{ $t('btn.cancel') }}</bk-button>
+          <bk-button theme="primary" @click="handleConfirm">{{ $t('确定') }}</bk-button>
+          <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
         </div>
       </div>
     </bk-popover>
@@ -314,7 +314,7 @@ export default {
       if (this.isHaveCompared) this.coreData.value = [this.coreData.value[0] || ''];
       for (const item of this.filterOperators) {
         if (item.operator === operator) {
-          this.filterPlaceholder = item.placeholder || this.$t('form.pleaseEnter');
+          this.filterPlaceholder = item.placeholder || this.$t('请输入');
           break;
         }
       }
