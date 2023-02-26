@@ -559,7 +559,7 @@ MENUS = [
                 "name": _("仪表盘"),
                 "feature": "on",
                 "icon": "",
-                "keyword": _("仪表"),
+                "keyword": _("仪表盘"),
                 "children": [
                     {"id": "default_dashboard", "name": _("默认仪表盘"), "feature": "on", "icon": "block-shape"},
                     {"id": "create_dashboard", "name": _("新建仪表盘"), "feature": "on", "icon": "plus-circle-shape"},
@@ -695,7 +695,13 @@ MENUS = [
                         "scenes": "scenario_bkdata",
                         "icon": "cc-cabinet",
                     },
-                    {"id": "bk_data_track", "name": _("第三方ES"), "feature": "off", "scenes": "scenario_es", "icon": ""},
+                    {
+                        "id": "third_party_es_trace",
+                        "name": _("第三方ES"),
+                        "feature": "off",
+                        "scenes": "scenario_es",
+                        "icon": "",
+                    },
                     {"id": "sdk_track", "name": _("SDK接入"), "feature": "off", "icon": ""},
                 ],
             },
