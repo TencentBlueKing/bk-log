@@ -164,9 +164,9 @@ export default {
         time_field_unit: 'microsecond',
       },
       timeUnits: [
-        { name: '秒（second）', id: 'second' },
-        { name: '毫秒（millisecond）', id: 'millisecond' },
-        { name: '微秒（microsecond）', id: 'microsecond' },
+        { name: this.$t('秒（second）'), id: 'second' },
+        { name: this.$t('毫秒（millisecond）'), id: 'millisecond' },
+        { name: this.$t('微秒（microsecond）'), id: 'microsecond' },
       ],
       formRules: {
         resultTableId: [{

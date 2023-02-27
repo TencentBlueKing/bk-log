@@ -864,7 +864,7 @@ export default {
     toggleCollect(row) {
       const { isActive, status, statusName } = row;
       row.status = 'running';
-      row.status_name = '部署中';
+      row.status_name = this.$t('部署中');
       this.$http.request('collect/startCollect', {
         params: {
           collector_config_id: row.collector_config_id,
