@@ -2,7 +2,7 @@
   <div class="empty-status-container">
     <bk-exception :type="emptyType" :scene="scene">
       <div class="empty-text-content">
-        <p class="empty-text">{{ typeText }}</p>
+        <p v-if="showText" class="empty-text">{{ typeText }}</p>
         <template v-if="$slots.default">
           <slot />
         </template>
@@ -42,6 +42,10 @@ export default {
       default: 'part',
     },
     showOperation: {
+      type: Boolean,
+      default: true,
+    },
+    showText: {
       type: Boolean,
       default: true,
     },

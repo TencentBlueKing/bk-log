@@ -82,16 +82,21 @@
         </div>
       </template>
     </bk-table-column>
+    <div slot="empty">
+      <empty-status empty-type="empty" />
+    </div>
   </bk-table>
 </template>
 
 <script>
 import ExpandView from '../original-log/expand-view.vue';
 import { copyMessage } from '@/common/util';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   components: {
     ExpandView,
+    EmptyStatus,
   },
   props: {
     active: {

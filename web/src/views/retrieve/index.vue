@@ -335,7 +335,6 @@
               :index-set-item="indexSetItem"
               :operator-config="operatorConfig"
               :retrieve-search-number="retrieveSearchNumber"
-              :retrieve-config-id="retrieveConfigId"
               @request-table-data="requestTableData"
               @fieldsUpdated="handleFieldsUpdated"
               @shouldRetrieve="retrieveLog"
@@ -582,7 +581,6 @@ export default {
         },
       },
       retrieveSearchNumber: 0, // 切换采集项或初始进入页面时 检索次数初始化为0 检索一次次数+1;
-      retrieveConfigId: null, // 当前索引集关联的采集项ID
     };
   },
   computed: {
@@ -657,7 +655,6 @@ export default {
       this.indexSetItem = option ? option : { index_set_name: '', indexName: '', scenario_name: '', scenario_id: '' };
       // eslint-disable-next-line camelcase
       this.isSearchAllowed = !!option?.permission?.[authorityMap.SEARCH_LOG_AUTH];
-      this.retrieveConfigId = option?.collector_config_id;
       if (this.isSearchAllowed) {
         this.authPageInfo = null;
         this.hasAuth = true;

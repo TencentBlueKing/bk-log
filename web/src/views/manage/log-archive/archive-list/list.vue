@@ -36,7 +36,8 @@
           :right-icon="'bk-icon icon-search'"
           v-model="keyword"
           data-test-id="archiveList_input_searchListItem"
-          @enter="search">
+          @enter="search"
+          @change="handleSearchChange">
         </bk-input>
       </div>
     </section>
@@ -128,6 +129,9 @@
             </bk-button>
           </div>
         </bk-table-column>
+        <div slot="empty">
+          <empty-status :empty-type="emptyType" @operation="handleOperation" />
+        </div>
       </bk-table>
     </section>
     <!-- 新增/编辑归档 -->
@@ -152,8 +156,9 @@ import { mapGetters } from 'vuex';
 import StateTable from './components/state-table.vue';
 import ArchiveSlider from './components/archive-slider';
 import RestoreSlider from '../archive-restore/restore-slider.vue';
-import { formatFileSize } from '@/common/util';
+import { formatFileSize, clearTableFilter } from '@/common/util';
 import * as authorityMap from '../../../../common/authority-map';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   name: 'ArchiveList',
@@ -161,6 +166,7 @@ export default {
     StateTable,
     ArchiveSlider,
     RestoreSlider,
+    EmptyStatus,
   },
   data() {
     return {
@@ -230,6 +236,7 @@ export default {
     },
     requestData() {
       this.isTableLoading = true;
+      this.emptyType = this.keyword ? 'search-empty' : 'empty';
       this.$http.request('archive/getArchiveList', {
         query: {
           ...this.params,
@@ -326,6 +333,25 @@ export default {
     },
     getExpiredDays(props) {
       return props.row.snapshot_days ? `${props.row.snapshot_days}天` : this.$t('永久');
+    },
+    handleSearchChange(val) {
+      if (val === '' && !this.isTableLoading) {
+        this.search();
+      }
+    },
+    handleOperation(type) {
+      if (type === 'clear-filter') {
+        this.keyword = '';
+        clearTableFilter(this.$refs.cleanTable);
+        this.search();
+        return;
+      }
+
+      if (type === 'refresh') {
+        this.emptyType = 'empty';
+        this.search();
+        return;
+      }
     },
   },
 };

@@ -713,7 +713,7 @@ export default class GroupDialog extends tsc<IProps> {
           searchable
           multiple
           display-tag
-          placeholder={' '}
+          placeholder={this.$t('未设置')}
           clearable={false}
           on-change={nVal => this.handleChangeSearchList(row, nVal)}
           on-toggle={status => this.handleClickFieldsList(row, status)}

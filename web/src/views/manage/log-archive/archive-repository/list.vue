@@ -36,7 +36,8 @@
           :right-icon="'bk-icon icon-search'"
           v-model="params.keyword"
           data-test-id="storehouseContainer_input_searchTableItem"
-          @enter="handleSearch">
+          @enter="handleSearch"
+          @change="handleSearchChange">
         </bk-input>
       </div>
     </section>
@@ -47,6 +48,7 @@
         v-bkloading="{ isLoading: isTableLoading }"
         :pagination="pagination"
         :limit-list="pagination.limitList"
+        ref="repositoryTable"
         @filter-change="handleFilterChange"
         @page-change="handlePageChange"
         @page-limit-change="handleLimitChange">
@@ -119,6 +121,9 @@
             </bk-button>
           </div>
         </bk-table-column>
+        <div slot="empty">
+          <empty-status :empty-type="emptyType" @operation="handleOperation" />
+        </div>
       </bk-table>
     </section>
     <!-- 新增/编辑归档仓库 -->
@@ -135,11 +140,14 @@
 import { mapGetters } from 'vuex';
 import RepositorySlider from './repository-slider.vue';
 import * as authorityMap from '../../../../common/authority-map';
+import { clearTableFilter } from '@/common/util';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   name: 'ArchiveRepository',
   components: {
     RepositorySlider,
+    EmptyStatus,
   },
   data() {
     return {
@@ -170,6 +178,9 @@ export default {
         fs: this.$t('共享目录'),
         cos: 'COS',
       },
+      emptyType: 'empty',
+      filterSearchObj: {},
+      isFilterSearch: false,
     };
   },
   computed: {
@@ -208,6 +219,7 @@ export default {
   },
   methods: {
     handleSearch() {
+      this.isTableLoading = true;
       if (this.params.keyword) {
         this.tableDataSearched = this.tableDataOrigin.filter((item) => {
           if (item.repository_name) {
@@ -220,6 +232,9 @@ export default {
       this.pagination.current = 1;
       this.pagination.count = this.tableDataSearched.length;
       this.computePageData();
+      setTimeout(() => {
+        this.isTableLoading = false;
+      }, 300);
     },
     getTableData() {
       this.isTableLoading = true;
@@ -239,6 +254,7 @@ export default {
       })
         .catch((err) => {
           console.warn(err);
+          this.emptyType = '500';
         })
         .finally(() => {
           this.isTableLoading = false;
@@ -246,6 +262,7 @@ export default {
     },
     // 根据分页数据过滤表格
     computePageData() {
+      this.emptyType = (this.params.keyword || this.isFilterSearch) ? 'search-empty' : 'empty';
       const { current, limit } = this.pagination;
       const start = (current - 1) * limit;
       const end = this.pagination.current * this.pagination.limit;
@@ -256,15 +273,13 @@ export default {
         this.tableDataSearched = this.tableDataOrigin.filter((repo) => {
           this.filterConditions[item] = Object.values(data)[0][0];
           const { type, cluster_source_type: clusterType } = this.filterConditions;
-          if (!type && !clusterType) {
-            return true;
-          }
-          if (type && clusterType) {
-            return repo.type === type && repo.cluster_source_type === clusterType;
-          }
+          if (!type && !clusterType) return true;
+          if (type && clusterType) return repo.type === type && repo.cluster_source_type === clusterType;
           return repo.type === type || repo.cluster_source_type === clusterType;
         });
       });
+      Object.entries(data).forEach(([key, value]) => this.filterSearchObj[key] = value.length);
+      this.isFilterSearch = Object.values(this.filterSearchObj).reduce((pre, cur) => ((pre += cur), pre), 0);
       this.pagination.current = 1;
       this.pagination.count = this.tableDataSearched.length;
       this.computePageData();
@@ -358,6 +373,28 @@ export default {
         console.warn(err);
       } finally {
         this.isTableLoading = false;
+      }
+    },
+    handleSearchChange(val) {
+      if (val === '' && this.isTableLoading) {
+        this.pagination.current = 1;
+        this.handleSearch();
+      }
+    },
+    handleOperation(type) {
+      if (type === 'clear-filter') {
+        this.params.keyword = '';
+        this.pagination.current = 1;
+        clearTableFilter(this.$refs.repositoryTable);
+        this.handleSearch();
+        return;
+      }
+
+      if (type === 'refresh') {
+        this.emptyType = 'empty';
+        this.pagination.current = 1;
+        this.handleSearch();
+        return;
       }
     },
   },

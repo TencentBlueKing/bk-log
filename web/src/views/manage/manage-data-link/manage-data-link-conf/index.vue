@@ -73,6 +73,9 @@
           <!--<bk-button theme="primary" text @click="deleteConfig(props.row)">{{ $t('删除') }}</bk-button>-->
         </template>
       </bk-table-column>
+      <div slot="empty">
+        <empty-status :empty-type="emptyType" @operation="handleOperation" />
+      </div>
     </bk-table>
     <config-dialog
       :visible.sync="dialogSetting.visible"
@@ -86,11 +89,13 @@
 
 <script>
 import ConfigDialog from './config-dialog';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   name: 'LinkConfiguration',
   components: {
     ConfigDialog,
+    EmptyStatus,
   },
   data() {
     return {
@@ -106,6 +111,7 @@ export default {
         transfer: [],
         es: [],
       },
+      emptyType: 'empty',
     };
   },
   computed: {
@@ -141,6 +147,7 @@ export default {
         });
       } catch (e) {
         console.warn(e);
+        this.emptyType = '500';
       } finally {
         this.tableLoading = false;
       }
@@ -208,6 +215,13 @@ export default {
         type: 'edit',
         dataSource: item,
       };
+    },
+    handleOperation(type) {
+      if (type === 'refresh') {
+        this.emptyType = 'empty';
+        this.init();
+        return;
+      }
     },
     // async deleteConfig (item) {
     //     try {

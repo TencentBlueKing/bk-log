@@ -58,6 +58,11 @@
           </div>
         </template>
       </bk-table-column>
+      <div slot="empty">
+        <empty-status empty-type="empty" :show-text="false">
+          <span>{{$t('暂无内容')}}</span>
+        </empty-status>
+      </div>
     </bk-table>
     <bk-sideslider
       transfer
@@ -76,7 +81,11 @@
 </template>
 
 <script>
+import EmptyStatus from '@/components/empty-status';
 export default {
+  components: {
+    EmptyStatus,
+  },
   props: {
     loading: {
       type: Boolean,
