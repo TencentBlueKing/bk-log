@@ -184,8 +184,9 @@ export default {
       const ip = row.serverIp || row.ip;
       const cloudId = row.cloudId?.toString() || row.cloudid?.toString();
       const id = cloudId ? `-${cloudId}` : '';
+      const endStr = row?.bk_host_id ? row.bk_host_id : `${ip}${id}`;
       const host = /\//.test(window.MONITOR_URL) ? window.MONITOR_URL : `${window.MONITOR_URL}/`;
-      const url = `${host}?bizId=${this.bkBizId}#/performance/detail/${ip}${id}`;
+      const url = `${host}?bizId=${this.bkBizId}#/performance/detail/${endStr}`;
 
       window.open(url);
     },
