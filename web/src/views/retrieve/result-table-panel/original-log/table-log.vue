@@ -181,11 +181,9 @@ export default {
         });
     },
     openMonitorWeb(row) {
-      const ip = row.serverIp || row.ip;
-      const cloudId = row.cloudId?.toString() || row.cloudid?.toString();
-      const id = cloudId ? `-${cloudId}` : '';
+      const bkHostId = row.bk_host_id;
       const host = /\//.test(window.MONITOR_URL) ? window.MONITOR_URL : `${window.MONITOR_URL}/`;
-      const url = `${host}?bizId=${this.bkBizId}#/performance/detail/${ip}${id}`;
+      const url = `${host}?bizId=${this.bkBizId}#/performance/detail/${bkHostId}`;
 
       window.open(url);
     },

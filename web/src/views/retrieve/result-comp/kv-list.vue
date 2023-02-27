@@ -244,9 +244,8 @@ export default {
           }
           break;
         // 主机监控
-        case 'serverIp':
-        case 'ip':
-          path = `/?bizId=${this.bkBizId}#/performance/detail/${this.data[field]}-0`;
+        case 'bk_host_id':
+          path = `/?bizId=${this.bkBizId}#/performance/detail/${this.data[field]}`;
           break;
         // 容器
         case 'container_id':
@@ -274,8 +273,7 @@ export default {
         case 'traceid':
           return this.$t('trace检索');
         // 主机监控
-        case 'serverip':
-        case 'ip':
+        case 'bk_host_id':
           return this.$t('主机');
         // 容器
         case 'container_id':
