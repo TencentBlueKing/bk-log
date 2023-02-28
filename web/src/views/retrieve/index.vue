@@ -643,10 +643,6 @@ export default {
       };
       return JSON.stringify(retrieveParams) !== JSON.stringify(favoriteParams);
     },
-    sessionShowFieldObj() { // 显示字段缓存
-      const showFieldStr = sessionStorage.getItem('showFieldSession');
-      return !showFieldStr ? {} : JSON.parse(showFieldStr);
-    },
   },
   provide() {
     return {
@@ -1282,7 +1278,7 @@ export default {
         // eslint-disable-next-line camelcase
         if (this.isFavoriteSearch && this.activeFavorite?.is_enable_display_fields) {
           const { display_fields: favoriteDisplayFields } = this.activeFavorite;
-          const sessionShownFieldList = this.sessionShowFieldObj?.[this.indexId] ?? [];
+          const sessionShownFieldList = this.sessionShowFieldObj()?.[this.indexId] ?? [];
           const displayFields = [...new Set([...sessionShownFieldList, ...favoriteDisplayFields])];
           this.handleFieldsUpdated(displayFields, undefined, false);
         };
@@ -1366,7 +1362,7 @@ export default {
         this.timeField = timeField;
         this.totalFields = fields;
         // 请求字段时 判断当前索引集是否有更改过字段 若更改过字段则使用session缓存的字段显示
-        const sessionShownFieldList = this.sessionShowFieldObj?.[this.indexId];
+        const sessionShownFieldList = this.sessionShowFieldObj()?.[this.indexId];
         // 后台给的 display_fields 可能有无效字段 所以进行过滤，获得排序后的字段
         this.initVisibleFields(sessionShownFieldList ?? displayFields);
         this.sortList = sortList;
@@ -1403,6 +1399,10 @@ export default {
         }
       }).filter(Boolean);
     },
+    sessionShowFieldObj() { // 显示字段缓存
+      const showFieldStr = sessionStorage.getItem('showFieldSession');
+      return !showFieldStr ? {} : JSON.parse(showFieldStr);
+    },
     /**
      * @desc: 字段设置更新了
      * @param {Array} displayFieldNames 展示字段
@@ -1413,7 +1413,7 @@ export default {
       this.$store.commit('updateClearTableWidth', 1);
       this.initVisibleFields(displayFieldNames);
       // 缓存展示字段
-      const showFieldObj = deepClone(this.sessionShowFieldObj);
+      const showFieldObj = this.sessionShowFieldObj();
       Object.assign(showFieldObj, { [this.indexId]: displayFieldNames });
       sessionStorage.setItem('showFieldSession', JSON.stringify(showFieldObj));
       if (showFieldAlias !== undefined) {
