@@ -8,11 +8,21 @@
     padding: 0 16px;
   }
 
-  .collect-name {
+  .collect-box {
     height: 42px;
+    display: flex;
+    align-items: center;
     padding: 0 16px;
     line-height: 44px;
     cursor: text;
+
+    .collect-name {
+      width: calc(100% - 20px);
+      display: inline-block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 
   .icon-shixiao {

@@ -67,7 +67,7 @@
           <span
             class="indexSet-name"
             v-cursor="{ active: !(row.permission && row.permission[authorityMap.MANAGE_INDICES_AUTH]) }"
-            :title="row.index_set_name"
+            v-bk-overflow-tips
             @click="manageIndexSet('manage', row)">
             {{ row.index_set_name }}
           </span>
