@@ -792,6 +792,8 @@ class MappingHandlers(object):
 
             analyze_fields_type_result = cls._analyze_fields_type(final_fields_list)
             if analyze_fields_type_result:
+                if "bk_host_id" in fields_list:
+                    judge.add("bk_host_id")
                 return {
                     "context_search_usable": context_search_usable,
                     "realtime_search_usable": realtime_search_usable,
@@ -800,6 +802,8 @@ class MappingHandlers(object):
                 }
             context_search_usable = True
             realtime_search_usable = True
+            if "bk_host_id" in fields_list:
+                judge.add("bk_host_id")
             return {
                 "context_search_usable": context_search_usable,
                 "realtime_search_usable": realtime_search_usable,

@@ -150,8 +150,8 @@ class IPChooser:
         # 同时兼容有host_id和cloud_id+ip两种情况
         host_id_rules = {"field": "bk_host_id", "operator": "in", "value": []}
         for host in host_list:
-            if host.get("bk_host_id"):
-                host_id_rules["value"].append(host["bk_host_id"])
+            if host.get("host_id"):
+                host_id_rules["value"].append(host["host_id"])
             else:
                 params["host_property_filter"]["rules"].append(
                     {
