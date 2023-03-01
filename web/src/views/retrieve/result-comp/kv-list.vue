@@ -138,8 +138,8 @@ export default {
     filedSettingConfigID() { // 当前索引集的显示字段ID
       return this.$store.state.retrieve.filedSettingConfigID;
     },
-    isHaveBkHostID() {
-      return this.fieldKeyMap.some(item => item === 'bk_host_id');
+    isHaveBkHostIDAndHaveValue() { // 当前是否有bk_host_id字段且有值
+      return !!this.data?.bk_host_id;
     },
   },
   methods: {
@@ -251,7 +251,7 @@ export default {
         case 'ip':
         case 'bk_host_id':
           {
-            const endStr = `${this.data[field]}${field === 'bk_host_id' ? '' : '-0'}`;
+            const endStr = `${this.data[field]}${(field === 'bk_host_id' && this.isHaveBkHostIDAndHaveValue) ? '' : '-0'}`;
             path = `/?bizId=${this.bkBizId}#/performance/detail/${endStr}`;
           }
           break;
@@ -275,7 +275,10 @@ export default {
      */
     getRelationMonitorField(field) {
       const key = field.toLowerCase();
-      if (this.isHaveBkHostID  && ['serverip', 'ip'].includes(key)) return;
+      if (this.isHaveBkHostIDAndHaveValue) {
+        if (['serverip', 'ip'].includes(key)) return;
+        if (key === 'bk_host_id') return this.$t('主机');
+      }
       switch (key) {
         // trace检索
         case 'trace_id':
@@ -284,7 +287,6 @@ export default {
         // 主机监控
         case 'serverip':
         case 'ip':
-        case 'bk_host_id':
           return this.$t('主机');
         // 容器
         case 'container_id':

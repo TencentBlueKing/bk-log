@@ -198,6 +198,7 @@ export default {
         if (Array.isArray(contextFields) && contextFields.length) {
           contextFields.push(config.timeField);
           for (const [key, val] of Object.entries(row)) {
+            if (key === 'bk_host_id' && !val) continue; // 点击上下文时 若配置有bk_host_id 但 bk_host_id无有效值时不传指定字段
             if (contextFields.includes(key)) dialogNewParams[key] = val;
           }
         } else {
