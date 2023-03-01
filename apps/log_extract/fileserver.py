@@ -53,7 +53,7 @@ class FileServer(object):
             "target_server": {},
         }
         if settings.ENABLE_DHCP:
-            kwargs["target_server"]["host_id_list"] = [{"bk_host_id": item["bk_host_id"]} for item in ip]
+            kwargs["target_server"]["host_id_list"] = [item["bk_host_id"] for item in ip]
         else:
             kwargs["target_server"]["ip_list"] = [{"ip": item["ip"], "bk_cloud_id": item["bk_cloud_id"]} for item in ip]
 
