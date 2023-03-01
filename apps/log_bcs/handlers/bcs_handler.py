@@ -61,6 +61,7 @@ class BcsHandler:
                     "status": cluster["status"],
                     "engine_type": cluster["engineType"],
                     "is_shared": cluster["is_shared"],
+                    "is_virtual": cluster["clusterType"] == "virtual",
                 }
             )
         return result
