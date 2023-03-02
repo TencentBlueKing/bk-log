@@ -241,7 +241,7 @@ export default class CollectIndex extends tsc<IProps> {
         break;
       case 'delete-favorite': // 删除收藏
         this.$bkInfo({
-          subTitle: this.$t('当前收藏名为 {0}，确认是否删除？', { n: value.name }),
+          subTitle: this.$t('当前收藏名为 {n}，确认是否删除？', { n: value.name }),
           type: 'warning',
           confirmFn: async () => {
             await this.deleteFavorite(value.id);
