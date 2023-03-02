@@ -131,6 +131,11 @@
                   </bk-button>
                 </template>
               </bk-table-column>
+              <div slot="empty">
+                <empty-status empty-type="empty" :show-text="false">
+                  <span>{{$t('暂无内容')}}</span>
+                </empty-status>
+              </div>
             </bk-table>
           </div>
         </div>
@@ -165,11 +170,13 @@
 import { projectManages } from '@/common/util';
 import containerStatus from './components/container-status.vue';
 import CollectionReportView from '../../../components/collection-report-view';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   components: {
     containerStatus,
     CollectionReportView,
+    EmptyStatus,
   },
   props: {
     collectorData: {

@@ -335,7 +335,6 @@
               :index-set-item="indexSetItem"
               :operator-config="operatorConfig"
               :retrieve-search-number="retrieveSearchNumber"
-              :retrieve-config-id="retrieveConfigId"
               @request-table-data="requestTableData"
               @fieldsUpdated="handleFieldsUpdated"
               @shouldRetrieve="retrieveLog"
@@ -582,7 +581,6 @@ export default {
         },
       },
       retrieveSearchNumber: 0, // 切换采集项或初始进入页面时 检索次数初始化为0 检索一次次数+1;
-      retrieveConfigId: null, // 当前索引集关联的采集项ID
     };
   },
   computed: {
@@ -657,7 +655,6 @@ export default {
       this.indexSetItem = option ? option : { index_set_name: '', indexName: '', scenario_name: '', scenario_id: '' };
       // eslint-disable-next-line camelcase
       this.isSearchAllowed = !!option?.permission?.[authorityMap.SEARCH_LOG_AUTH];
-      this.retrieveConfigId = option?.collector_config_id;
       if (this.isSearchAllowed) {
         this.authPageInfo = null;
         this.hasAuth = true;
@@ -1095,12 +1092,10 @@ export default {
     /**
      * @desc: 检索日志
      * @param {Any} historyParams 历史数据
-     * @param {Boolean} isMemoryFields 检索时是否需要记住当前展示的字段
      * @param {Boolean} isRequestChartsAndHistory 检索时是否请求历史记录和图表
      */
-    async retrieveLog(historyParams, isMemoryFields = false, isRequestChartsAndHistory = true) {
+    async retrieveLog(historyParams, isRequestChartsAndHistory = true) {
       if (!this.indexId) return;
-      const memoryFields = this.visibleFields.map(item => item.field_name);
       await this.$nextTick();
       this.basicLoading = true;
       this.showHistory = false;
@@ -1283,11 +1278,10 @@ export default {
         // eslint-disable-next-line camelcase
         if (this.isFavoriteSearch && this.activeFavorite?.is_enable_display_fields) {
           const { display_fields: favoriteDisplayFields } = this.activeFavorite;
-          const displayFields = [...new Set([...memoryFields, ...favoriteDisplayFields])];
+          const sessionShownFieldList = this.sessionShowFieldObj()?.[this.indexId] ?? [];
+          const displayFields = [...new Set([...sessionShownFieldList, ...favoriteDisplayFields])];
           this.handleFieldsUpdated(displayFields, undefined, false);
         };
-        // 检索完后 回显当前展示的字段
-        if (isMemoryFields && memoryFields.length) this.handleFieldsUpdated(memoryFields, undefined, false);
         if (this.isFavoriteSearch) {
           setTimeout(() => {
             this.initSearchList();
@@ -1367,14 +1361,10 @@ export default {
         this.asyncExportUsableReason = !asyncExport.is_active ? asyncExport.extra.usable_reason : '';
         this.timeField = timeField;
         this.totalFields = fields;
+        // 请求字段时 判断当前索引集是否有更改过字段 若更改过字段则使用session缓存的字段显示
+        const sessionShownFieldList = this.sessionShowFieldObj()?.[this.indexId];
         // 后台给的 display_fields 可能有无效字段 所以进行过滤，获得排序后的字段
-        this.visibleFields = displayFields.map((displayName) => {
-          for (const field of fields) {
-            if (field.field_name === displayName) {
-              return field;
-            }
-          }
-        }).filter(Boolean);
+        this.initVisibleFields(sessionShownFieldList ?? displayFields);
         this.sortList = sortList;
 
         const fieldAliasMap = {};
@@ -1397,6 +1387,23 @@ export default {
       }
     },
     /**
+     * @desc: 初始化展示字段
+     * @param {Array<str>} displayFieldNames 显示字段
+     */
+    initVisibleFields(displayFieldNames) {
+      this.visibleFields = displayFieldNames.map((displayName) => {
+        for (const field of this.totalFields) {
+          if (field.field_name === displayName) {
+            return field;
+          }
+        }
+      }).filter(Boolean);
+    },
+    sessionShowFieldObj() { // 显示字段缓存
+      const showFieldStr = sessionStorage.getItem('showFieldSession');
+      return !showFieldStr ? {} : JSON.parse(showFieldStr);
+    },
+    /**
      * @desc: 字段设置更新了
      * @param {Array} displayFieldNames 展示字段
      * @param {Boolean} showFieldAlias 是否别名
@@ -1404,13 +1411,11 @@ export default {
      */
     async handleFieldsUpdated(displayFieldNames, showFieldAlias, isRequestFields = true) {
       this.$store.commit('updateClearTableWidth', 1);
-      this.visibleFields = displayFieldNames.map((displayName) => {
-        for (const field of this.totalFields) {
-          if (field.field_name === displayName) {
-            return field;
-          }
-        }
-      });
+      this.initVisibleFields(displayFieldNames);
+      // 缓存展示字段
+      const showFieldObj = this.sessionShowFieldObj();
+      Object.assign(showFieldObj, { [this.indexId]: displayFieldNames });
+      sessionStorage.setItem('showFieldSession', JSON.stringify(showFieldObj));
       if (showFieldAlias !== undefined) {
         this.showFieldAlias = showFieldAlias;
         window.localStorage.setItem('showFieldAlias', showFieldAlias);
@@ -1854,7 +1859,6 @@ export default {
       if (this.isSqlSearchType && !this.isCanUseUiType) return;
       this.retrieveLog();
       this.handleBlurSearchInput(this.retrieveParams.keyword);
-      // this.initSearchList();
       // 切换表单模式或者sql模式
       this.isSqlSearchType = !this.isSqlSearchType;
       // 如果是sql模式切到表单模式 则缓存keywords  表单切回sql模式时回填缓存的keywords

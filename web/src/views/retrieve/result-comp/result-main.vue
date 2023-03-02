@@ -28,12 +28,14 @@
         <span class="total-count">{{ totalCount }}</span>
         <span>{{tookTime}}</span>
         <template v-if="showAddMonitor">
-          <i18n path=", 将搜索条件 {0}">
-            <a href="javascript:void(0);" class="monitor-link" @click="jumpMonitor">
-              {{ $t('添加为监控') }}
-              <span class="log-icon icon-lianjie"></span>
-            </a>
-          </i18n>
+          <span>
+            , <i18n path="将搜索条件 {0}">
+              <a href="javascript:void(0);" class="monitor-link" @click="jumpMonitor">
+                {{ $t('添加为监控') }}
+                <span class="log-icon icon-lianjie"></span>
+              </a>
+            </i18n>
+          </span>
         </template>
       </i18n>
     </div>

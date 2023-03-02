@@ -72,6 +72,9 @@
           <span class="task-operation" @click="handleDeleteStrategy(row)">{{$t('删除')}}</span>
         </div>
       </bk-table-column>
+      <div slot="empty">
+        <empty-status :empty-type="emptyType" @operation="handleOperation" />
+      </div>
     </bk-table>
 
     <bk-sideslider
@@ -96,11 +99,13 @@
 import { mapGetters } from 'vuex';
 import DirectoryManage from './directory-manage';
 import * as authorityMap from '../../../../common/authority-map';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   name: 'ManageExtract',
   components: {
     DirectoryManage,
+    EmptyStatus,
   },
   data() {
     return {
@@ -115,6 +120,7 @@ export default {
       type: '', // 新增或编辑策略
       strategyData: {}, // 新增或编辑策略时传递的数据
       userApi: '',
+      emptyType: 'empty',
     };
   },
   computed: {
@@ -156,6 +162,7 @@ export default {
         this.strategyList = res.data;
       } catch (e) {
         console.warn(e);
+        this.emptyType = '500';
       } finally {
         this.isLoading = false;
       }
@@ -284,6 +291,13 @@ export default {
           },
         });
       });
+    },
+    handleOperation(type) {
+      if (type === 'refresh') {
+        this.emptyType = 'empty';
+        this.initStrategyList();
+        return;
+      }
     },
   },
 };

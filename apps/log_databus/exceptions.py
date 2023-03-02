@@ -387,3 +387,8 @@ class AllNamespaceNotAllowedException(BaseCollectorConfigException):
 class NodeNotAllowedException(BaseCollectorConfigException):
     ERROR_CODE = "908"
     MESSAGE = _("共享集群下不允许采集node的日志，请检查")
+
+
+class VclusterNodeNotAllowedException(BaseCollectorConfigException):
+    ERROR_CODE = "909"
+    MESSAGE = _("虚拟集群下不允许采集node的日志，请检查")

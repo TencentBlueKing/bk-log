@@ -559,8 +559,8 @@ export default {
     }
 
     .king-input-retrieve {
-      ::v-deep .bk-form-input {
-        height: 64px;
+      ::v-deep .bk-form-textarea {
+        resize: vertical;
       }
     }
 

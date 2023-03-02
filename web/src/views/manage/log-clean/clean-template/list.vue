@@ -36,7 +36,8 @@
           data-test-id="cleanTemplateBox_input_cleanTemplateSearch"
           :right-icon="'bk-icon icon-search'"
           v-model="params.keyword"
-          @enter="search">
+          @enter="search"
+          @change="handleSearchChange">
         </bk-input>
       </div>
     </section>
@@ -49,6 +50,7 @@
         v-bkloading="{ isLoading: isTableLoading }"
         :pagination="pagination"
         :limit-list="pagination.limitList"
+        ref="cleanTable"
         @filter-change="handleFilterChange"
         @page-change="handlePageChange"
         @page-limit-change="handleLimitChange">
@@ -88,6 +90,9 @@
             </bk-button>
           </div>
         </bk-table-column>
+        <div slot="empty">
+          <empty-status :empty-type="emptyType" @operation="handleOperation" />
+        </div>
       </bk-table>
     </section>
   </section>
@@ -95,9 +100,14 @@
 
 <script>
 import { mapGetters } from 'vuex';
+import { clearTableFilter } from '@/common/util';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   name: 'CleanTemplate',
+  components: {
+    EmptyStatus,
+  },
   data() {
     return {
       isTableLoading: true,
@@ -113,6 +123,8 @@ export default {
         keyword: '',
         clean_type: '',
       },
+      emptyType: 'empty',
+      isFilterSearch: false,
     };
   },
   computed: {
@@ -155,6 +167,7 @@ export default {
       Object.keys(data).forEach((item) => {
         this.params[item] = data[item].join('');
       });
+      this.isFilterSearch = Object.values(data).reduce((pre, cur) => ((pre += cur.length), pre), 0);
       this.search();
     },
     /**
@@ -182,6 +195,7 @@ export default {
     },
     requestData() {
       this.isTableLoading = true;
+      this.emptyType = (this.params.keyword || this.isFilterSearch) ? 'search-empty' : 'empty';
       this.$http.request('clean/cleanTemplate', {
         query: {
           ...this.params,
@@ -254,6 +268,25 @@ export default {
         return conf.id === cleantype;
       });
       return matchItem ? matchItem.name : '';
+    },
+    handleSearchChange(val) {
+      if (val === '' && !this.isTableLoading) {
+        this.search();
+      }
+    },
+    handleOperation(type) {
+      if (type === 'clear-filter') {
+        this.params.keyword = '';
+        clearTableFilter(this.$refs.cleanTable);
+        this.search();
+        return;
+      }
+
+      if (type === 'refresh') {
+        this.emptyType = 'empty';
+        this.search();
+        return;
+      }
     },
   },
 };
