@@ -273,6 +273,9 @@
                   </bk-table-column>
                 </template>
               </template>
+              <div slot="empty">
+                <empty-status :empty-type="emptyType" @operation="handleOperation" />
+              </div>
             </bk-table>
           </div>
         </template>
@@ -298,6 +301,7 @@ import TimeFormatter from '@/components/common/time-formatter';
 import tableRowDeepViewMixin from '@/mixins/table-row-deep-view-mixin';
 import TraceDetail from '@/components/trace-detail';
 import * as authorityMap from '../../../common/authority-map';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   name: 'TraceIndex',
@@ -308,6 +312,7 @@ export default {
     chartView,
     TimeFormatter,
     TraceDetail,
+    EmptyStatus,
   },
   mixins: [tableRowDeepViewMixin],
   data() {
@@ -480,6 +485,7 @@ export default {
       showTraceDetail: false,
       traceId: '',
       indexSetName: '',
+      emptyType: 'empty',
     };
   },
   computed: {
@@ -724,6 +730,7 @@ export default {
         }],
       };
       if (this.isSearchAllowed === null) {
+        this.emptyType = 'empty';
         try {
           this.basicLoading = true;
           this.isTableLoading = true;
@@ -735,6 +742,7 @@ export default {
           }
         } catch (err) {
           console.warn(err);
+          this.emptyType = '500';
           return;
         } finally {
           this.basicLoading = false;
@@ -1035,6 +1043,13 @@ export default {
       this.initialCallShow = !this.initialCallShow;
       if (this.initialCallShow && !this.chartData[this.fieldName]) {
         this.requestDateHistogram(true);
+      }
+    },
+    handleOperation(type) {
+      if (type === 'refresh') {
+        this.emptyType = 'empty';
+        this.searchHandle();
+        return;
       }
     },
   },

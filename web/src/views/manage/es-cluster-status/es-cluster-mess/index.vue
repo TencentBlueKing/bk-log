@@ -46,8 +46,10 @@
         v-bkloading="{ isLoading: tableLoading }"
         data-test-id="esAccessBox_table_esAccessTableBox"
         class="king-table"
+        ref="clusterTable"
         :data="tableDataPaged"
         :pagination="pagination"
+        @filter-change="handleFilterChange"
         @page-change="handlePageChange"
         @page-limit-change="handleLimitChange">
         <bk-table-column
@@ -192,6 +194,9 @@
             @setting-change="handleSettingChange">
           </bk-table-setting-content>
         </bk-table-column>
+        <div slot="empty">
+          <empty-status :empty-type="emptyType" @operation="handleOperation" />
+        </div>
       </bk-table>
     </div>
 
@@ -224,14 +229,16 @@ import { mapGetters } from 'vuex';
 import EsSlider from './es-slider';
 import IntroPanel from './components/intro-panel.vue';
 import dragMixin from '@/mixins/drag-mixin';
-import { formatFileSize } from '../../../../common/util';
+import { formatFileSize, clearTableFilter } from '../../../../common/util';
 import * as authorityMap from '../../../../common/authority-map';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   name: 'EsClusterMess',
   components: {
     EsSlider,
     IntroPanel,
+    EmptyStatus,
   },
   mixins: [dragMixin],
   data() {
@@ -325,6 +332,9 @@ export default {
         selectedFields: settingFields.slice(0, 10),
       },
       introWidth: 0,
+      emptyType: 'empty',
+      filterSearchObj: {},
+      isFilterSearch: false,
     };
   },
   computed: {
@@ -378,8 +388,7 @@ export default {
      */
     async getTableData() {
       try {
-        this.tableLoading = true;
-        // 表格数据
+        this.tableLoading = true;// 表格数据
         const tableRes = await this.$http.request('/source/list', {
           query: {
             bk_biz_id: this.bkBizId,
@@ -462,6 +471,7 @@ export default {
       } else {
         this.tableDataSearched = this.tableDataOrigin;
       }
+      this.emptyType = (this.params.keyword || this.isFilterSearch) ? 'search-empty' : 'empty';
       this.pagination.current = 1;
       this.pagination.count = this.tableDataSearched.length;
       this.computePageData();
@@ -613,6 +623,25 @@ export default {
     },
     getPercent($row) {
       return (100 - $row.storage_usage) / 100;
+    },
+    handleFilterChange(data) {
+      Object.entries(data).forEach(([key, value]) => this.filterSearchObj[key] = value.length);
+      this.isFilterSearch = Object.values(this.filterSearchObj).reduce((pre, cur) => ((pre += cur), pre), 0);
+      this.searchCallback();
+    },
+    handleOperation(type) {
+      if (type === 'clear-filter') {
+        this.params.keyword = '';
+        clearTableFilter(this.$refs.clusterTable);
+        this.getTableData();
+        return;
+      }
+
+      if (type === 'refresh') {
+        this.emptyType = 'empty';
+        this.getTableData();
+        return;
+      }
     },
   },
 };

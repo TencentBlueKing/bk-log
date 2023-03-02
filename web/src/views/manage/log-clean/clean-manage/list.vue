@@ -36,7 +36,8 @@
           :right-icon="'bk-icon icon-search'"
           data-test-id="cleaningListBox_input_searchCleaningList"
           v-model="params.keyword"
-          @enter="search">
+          @enter="search"
+          @change="handleSearchChange">
         </bk-input>
         <div
           class="operation-icon"
@@ -56,6 +57,7 @@
         v-bkloading="{ isLoading: isTableLoading }"
         :pagination="pagination"
         :limit-list="pagination.limitList"
+        ref="cleanTable"
         @filter-change="handleFilterChange"
         @page-change="handlePageChange"
         @page-limit-change="handleLimitChange">
@@ -138,6 +140,9 @@
             </log-button>
           </div>
         </bk-table-column>
+        <div slot="empty">
+          <empty-status :empty-type="emptyType" @operation="handleOperation" />
+        </div>
       </bk-table>
     </section>
   </section>
@@ -146,9 +151,14 @@
 <script>
 import { mapGetters } from 'vuex';
 import * as authorityMap from '../../../../common/authority-map';
+import EmptyStatus from '@/components/empty-status';
+import { clearTableFilter } from '@/common/util';
 
 export default {
   name: 'CleanList',
+  components: {
+    EmptyStatus,
+  },
   data() {
     return {
       isTableLoading: true,
@@ -165,6 +175,8 @@ export default {
         keyword: '',
         etl_config: '',
       },
+      emptyType: 'empty',
+      isFilterSearch: false,
     };
   },
   computed: {
@@ -209,6 +221,7 @@ export default {
       Object.keys(data).forEach((item) => {
         this.params[item] = data[item].join('');
       });
+      this.isFilterSearch = Object.values(data).reduce((pre, cur) => ((pre += cur.length), pre), 0);
       this.pagination.current = 1;
       this.search();
     },
@@ -237,6 +250,7 @@ export default {
     },
     requestData() {
       this.isTableLoading = true;
+      this.emptyType = (this.params.keyword || this.isFilterSearch) ? 'search-empty' : 'empty';
       this.$http.request('clean/cleanList', {
         query: {
           ...this.params,
@@ -251,6 +265,7 @@ export default {
       })
         .catch((err) => {
           console.warn(err);
+          this.emptyType = '500';
         })
         .finally(() => {
           this.isTableLoading = false;
@@ -404,6 +419,25 @@ export default {
         .catch(() => {
           this.syncLoading = false;
         });
+    },
+    handleSearchChange(val) {
+      if (val === '' && !this.isTableLoading) {
+        this.search();
+      }
+    },
+    handleOperation(type) {
+      if (type === 'clear-filter') {
+        this.params.keyword = '';
+        clearTableFilter(this.$refs.cleanTable);
+        this.search();
+        return;
+      }
+
+      if (type === 'refresh') {
+        this.emptyType = 'empty';
+        this.search();
+        return;
+      }
     },
   },
 };

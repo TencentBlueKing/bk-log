@@ -65,12 +65,15 @@
           <bk-table
             v-bkloading="{ isLoading: tableLoading }"
             :data="matchedTableIds"
-            max-height="259">
+            max-height="400">
             <bk-table-column
               :label="$t('索引')"
               property="result_table_id"
               min-width="490">
             </bk-table-column>
+            <div slot="empty">
+              <empty-status empty-type="empty" />
+            </div>
           </bk-table>
         </bk-form-item>
         <bk-form-item
@@ -107,6 +110,9 @@
             </bk-option>
           </bk-select>
         </bk-form-item>
+        <div slot="empty">
+          <empty-status empty-type="empty" />
+        </div>
       </bk-form>
       <div slot="footer" class="button-footer">
         <bk-button
@@ -124,8 +130,12 @@
 
 <script>
 import { mapState } from 'vuex';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
+  components: {
+    EmptyStatus,
+  },
   props: {
     parentData: {
       type: Object,
@@ -154,9 +164,9 @@ export default {
         time_field_unit: 'microsecond',
       },
       timeUnits: [
-        { name: '秒（second）', id: 'second' },
-        { name: '毫秒（millisecond）', id: 'millisecond' },
-        { name: '微秒（microsecond）', id: 'microsecond' },
+        { name: this.$t('秒（second）'), id: 'second' },
+        { name: this.$t('毫秒（millisecond）'), id: 'millisecond' },
+        { name: this.$t('微秒（microsecond）'), id: 'microsecond' },
       ],
       formRules: {
         resultTableId: [{

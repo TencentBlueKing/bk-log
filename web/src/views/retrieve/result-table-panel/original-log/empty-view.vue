@@ -92,8 +92,8 @@ export default {
       type: Number,
       require: true,
     },
-    retrieveConfigId: {
-      type: Number,
+    indexSetItem: {
+      type: Object,
       require: true,
     },
   },
@@ -125,6 +125,13 @@ export default {
           value: 'log: (error OR info)',
         },
       ],
+      routeNameList: { // 路由跳转name
+        log: 'manage-collection',
+        custom: 'custom-report-detail',
+        manage: 'bkdata-index-set-manage',
+        indexManage: 'log-index-set-manage',
+      },
+      detailJumpRouteKey: 'log',
     };
   },
   computed: {
@@ -134,6 +141,25 @@ export default {
     }),
     isFirstSearch() {
       return this.retrieveSearchNumber <= 1;
+    },
+  },
+  watch: {
+    indexSetItem: {
+      handler(nVal) {
+        if (JSON.stringify(nVal) === '{}') return;
+        if (nVal.scenario_id === 'log') { // 索引集类型为采集项或自定义上报
+          if (nVal.collector_scenario_id === null) { // 若无日志类型 则类型为索引集
+            this.getDetailJumpRouteKey('setIndex');
+            return;
+          }
+          // 判断是否是自定义上报类型
+          this.getDetailJumpRouteKey(nVal.collector_scenario_id === 'custom' ? 'custom' : 'log');
+          return;
+        }
+        // 当scenario_id不为log（采集项，索引集，自定义上报）时
+        this.getDetailJumpRouteKey(nVal.scenario_id);
+      },
+      immediate: true,
     },
   },
   methods: {
@@ -147,15 +173,28 @@ export default {
           this.handleGotoLink('queryString');
           break;
         case 'indexConfig': { // 索引配置
-          if (!this.retrieveConfigId) {
+          if (JSON.stringify(this.indexSetItem) === '{}') {
             this.$bkMessage({
               theme: 'error',
               message: this.$t('未找到对应的采集项'),
             });
             return;
           }
-          const jumpUrl = `${baseUrl}#/manage/log-collection/collection-item/manage/${this.retrieveConfigId}?spaceUid=${this.spaceUid}`;
-          window.open(jumpUrl, '_blank');
+          const params = {};
+          if (['manage', 'indexManage'].includes(this.detailJumpRouteKey)) {
+            params.indexSetId = this.indexSetItem?.index_set_id;
+          } else {
+            params.collectorId = this.indexSetItem?.collector_config_id;
+          }
+          const { href } = this.$router.resolve({
+            name: this.routeNameList[this.detailJumpRouteKey],
+            params,
+            query: {
+              type: 'baseInfo',
+              spaceUid: this.$store.state.spaceUid,
+            },
+          });
+          window.open(href, '_blank');
         }
           break;
         case 'goToConfig': { // 前往配置
@@ -166,6 +205,15 @@ export default {
         case 'clickToQuery': // 点击查询
           this.$emit('shouldRetrieve');
           break;
+      }
+    },
+    getDetailJumpRouteKey(detailStr) {
+      if (['es', 'bkdata'].includes(detailStr)) {
+        this.detailJumpRouteKey = 'manage';
+      } else if (detailStr === 'setIndex') {
+        this.detailJumpRouteKey = 'indexManage';
+      } else {
+        this.detailJumpRouteKey = detailStr;
       }
     },
   },

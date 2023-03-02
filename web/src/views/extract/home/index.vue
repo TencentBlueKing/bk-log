@@ -40,7 +40,8 @@
         :left-icon="'bk-icon icon-search'"
         @clear="handleSearch"
         @left-icon-click="handleSearch"
-        @enter="handleSearch">
+        @enter="handleSearch"
+        @change="handleSearchChange">
       </bk-input>
     </div>
     <bk-table
@@ -118,6 +119,9 @@
           </span>
         </div>
       </bk-table-column>
+      <div slot="empty">
+        <empty-status :empty-type="emptyType" @operation="handleOperation" />
+      </div>
     </bk-table>
     <!-- 表格侧边栏 -->
     <bk-sideslider :is-show.sync="sideSlider.isShow" :quick-close="true" :title="$t('详情')" :width="660" transfer>
@@ -140,6 +144,7 @@ import ListBox from './list-box';
 import DownloadUrl from './download-url';
 import TaskStatusDetail from './task-status-detail';
 import TextFilterDetail from './text-filter-detail';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   name: 'ExtractHome',
@@ -148,6 +153,7 @@ export default {
     DownloadUrl,
     TaskStatusDetail,
     TextFilterDetail,
+    EmptyStatus,
   },
   data() {
     return {
@@ -173,6 +179,7 @@ export default {
       notLoadingStatus: ['downloadable', 'redownloadable', 'expired', 'failed'],
       // 不需要轮询的状态
       doneStatus: ['redownloadable', 'expired', 'failed'],
+      emptyType: 'empty',
     };
   },
   computed: {
@@ -196,6 +203,7 @@ export default {
       try {
         clearTimeout(this.timeoutID);
         this.isLoading = true;
+        this.emptyType = this.searchKeyword ? 'search-empty' : 'empty';
         const payload = {
           query: {
             bk_biz_id: this.$store.state.bkBizId,
@@ -213,6 +221,7 @@ export default {
         this.pollingTaskStatus();
       } catch (e) {
         console.warn(e);
+        this.emptyType = '500';
       } finally {
         this.isLoading = false;
       }
@@ -325,7 +334,26 @@ export default {
       }
       return ipList.map(item => `${item.bk_cloud_id}:${item.ip}`).join('; ');
     },
+    handleSearchChange(val) {
+      if (val === '' && !this.isLoading) {
+        this.initTaskList();
+      }
+    },
+    handleOperation(type) {
+      if (type === 'clear-filter') {
+        this.searchKeyword = '';
+        this.pagination.current = 1;
+        this.initTaskList();
+        return;
+      }
 
+      if (type === 'refresh') {
+        this.emptyType = 'empty';
+        this.pagination.current = 1;
+        this.initTaskList();
+        return;
+      }
+    },
   },
 };
 </script>

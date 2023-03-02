@@ -42,6 +42,7 @@
         <expand-view
           v-bind="$attrs"
           :data="originTableList[$index]"
+          :list-data="tableList[$index]"
           :total-fields="totalFields"
           :visible-fields="visibleFields"
           :retrieve-params="retrieveParams"

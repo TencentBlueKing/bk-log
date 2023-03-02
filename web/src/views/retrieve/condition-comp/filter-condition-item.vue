@@ -38,9 +38,12 @@
         {{ $t('添加条件') }}
       </span>
       <div class="condition-item-container" v-else>
-        <div class="tag text-tag field-tag" v-bk-overflow-tips>
-          <!-- <span class="bk-icon icon-close-circle-shape" @click="removeFilterCondition(coreData.field)"></span> -->
-          {{ localData.field + (fieldAliasMap[localData.field] ? `(${fieldAliasMap[localData.field]})` : '')}}
+        <div
+          class="tag text-tag field-tag"
+          v-bk-tooltips.top="{
+            content: fieldAliasMap[localData.field] ? `${localData.field}(${fieldAliasMap[localData.field]})` : ''
+          }">
+          {{localData.field}}
         </div>
         <div class="tag symbol-tag">{{ localData.operator }}</div>
         <div class="tag text-tag" v-bk-overflow-tips>{{ formaterValue(localData.value) }}</div>
