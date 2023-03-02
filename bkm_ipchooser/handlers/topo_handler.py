@@ -58,16 +58,20 @@ class TopoHandler:
     def trees(cls, scope_list: types.ScopeList) -> typing.List[typing.Dict]:
         if len(scope_list) == 0:
             return []
-
-        return [cls.format_tree(topo_tool.TopoTool.get_topo_tree_with_count(scope_list[0]["bk_biz_id"]))]
+        bk_biz_id = scope_list[0]["bk_biz_id"]
+        if bk_biz_id <= 0:
+            return []
+        return [cls.format_tree(topo_tool.TopoTool.get_topo_tree_with_count(bk_biz_id))]
 
     @staticmethod
     def query_path(
         scope_list: types.ScopeList, node_list: typing.List[types.TreeNode]
     ) -> typing.List[typing.List[types.TreeNode]]:
+        bk_biz_id = scope_list[0]["bk_biz_id"]
+        if bk_biz_id <= 0:
+            return []
         if not node_list:
             return []
-        bk_biz_id = scope_list[0]["bk_biz_id"]
         node_with_paths = topo_tool.TopoTool.find_topo_node_paths(
             bk_biz_id=bk_biz_id,
             node_list=[{"bk_inst_id": node["instance_id"], "bk_obj_id": node["object_id"]} for node in node_list],
@@ -126,6 +130,8 @@ class TopoHandler:
             # 不存在查询节点提前返回，减少非必要 IO
             return {"total": 0, "data": []}
         bk_biz_id = scope_list[0]["bk_biz_id"]
+        if bk_biz_id <= 0:
+            return {"total": 0, "data": []}
         # 获取主机信息
         resp = cls.query_cc_hosts(
             bk_biz_id, readable_node_list, conditions, start, page_size, fields, return_status=True
@@ -150,11 +156,12 @@ class TopoHandler:
         :param page_size: 拉取数据数量
         :return:
         """
+        bk_biz_id = scope_list[0]["bk_biz_id"]
+        if bk_biz_id <= 0:
+            return {"total": 0, "data": []}
         if not readable_node_list:
             # 不存在查询节点提前返回，减少非必要 IO
             return {"total": 0, "data": []}
-
-        bk_biz_id = scope_list[0]["bk_biz_id"]
         tree_node: types.TreeNode = cls.format2tree_node(bk_biz_id, readable_node_list[0])
 
         # TODO: 支持全量查询

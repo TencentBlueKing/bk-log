@@ -21,8 +21,7 @@ class HostHandler:
         """
 
         # 不支持多业务同时查询
-        biz_scope = [scope["bk_biz_id"] for scope in scope_list]
-        bk_biz_id = biz_scope[0]
+        bk_biz_id = scope_list[0]["bk_biz_id"]
 
         # 查询主机
         params = {
@@ -58,6 +57,9 @@ class HostHandler:
         :return:
         """
         if not scope_list:
+            return []
+        # 当没有CC业务时, 直接返回空列表
+        if not [scope["bk_biz_id"] for scope in scope_list if scope["bk_biz_id"] > 0]:
             return []
 
         inner_ip_set: typing.Set[str] = set()
