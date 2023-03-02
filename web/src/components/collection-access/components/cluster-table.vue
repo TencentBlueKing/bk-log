@@ -77,7 +77,7 @@
       <template v-else>
         <div class="noData-container">
           <div slot="empty">
-            <empty-status empty-type="empty">
+            <empty-status empty-type="empty" :show-text="false">
               <div class="noData-message">
                 <p class="empty-message">{{ tableShowType ? $t('当前还没有共享集群，请联系平台管理员提供') : $t('当前还没有业务独享集群，快去创建吧')}}</p>
                 <p v-if="!tableShowType" class="button-text" @click="handleCreateCluster">{{$t('创建集群')}}</p>
