@@ -37,7 +37,7 @@
                     <th>同比变化</th>
                 {% endif %}
                 <th>{{ log_col_show_type }}</th>
-                {% for header in group_by%}
+                {% for header in group_by %}
                     <th>{{ header }}</th>
                 {% endfor %}
             </tr>
@@ -54,7 +54,7 @@
                     <td>{{ pattern.year_on_year_percentage | round(2) }}%</td>
                 {% endif %}
                 <td>{{ pattern.pattern }}</td>
-                {% for group in pattern.group_by%}
+                {% for group in pattern.group %}
                     <td>{{ group }}</td>
                 {% endfor %}
             </tr>
@@ -76,7 +76,7 @@
                     <th>同比变化</th>
                 {% endif %}
                 <th>{{ log_col_show_type }}</th>
-                {% for header in group_by%}
+                {% for header in group_by %}
                     <th>{{ header }}</th>
                 {% endfor %}
             </tr>
@@ -93,7 +93,7 @@
                     <td>{{ pattern.year_on_year_percentage | round(2) }}%</td>
                 {% endif %}
                 <td>{{ pattern.pattern }}</td>
-                {% for group in pattern.group_by%}
+                {% for group in pattern.group %}
                     <td>{{ group }}</td>
                 {% endfor %}
             </tr>
