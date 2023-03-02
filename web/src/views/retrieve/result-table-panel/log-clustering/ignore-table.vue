@@ -32,7 +32,8 @@
       <template slot-scope="props">
         <expand-view
           v-bind="$attrs"
-          :data="props.row.sample"
+          :data="props.row.originSample"
+          :list-data="props.row.sample"
           :total-fields="totalFields"
           :visible-fields="visibleFields"
           @menuClick="handleMenuClick" />
@@ -111,6 +112,10 @@ export default {
       type: Array,
       required: true,
     },
+    tableList: {
+      type: Array,
+      required: true,
+    },
     visibleFields: {
       type: Array,
       required: true,
@@ -132,7 +137,7 @@ export default {
     active() {
       this.setTableData();
     },
-    originTableList: {
+    tableList: {
       immediate: true,
       handler() {
         this.setTableData();
@@ -143,7 +148,7 @@ export default {
     setTableData() {
       if (!this.clusteringField) return;
 
-      this.tableData = (this.originTableList || []).reduce((pre, next) => {
+      this.tableData = (this.tableList || []).reduce((pre, next, index) => {
         const regExp = this.active === 'ignoreNumbers' ? this.ignoreNumberReg : this.ignoreSymbolReg;
         const sampleField = next[this.clusteringField];
         const valStr = sampleField.toString().replace(regExp, '*')
@@ -154,6 +159,7 @@ export default {
             count: 1,
             content: valStr,
             sample: next,
+            originSample: this.originTableList[index],
           });
         } else {
           ascription.count = ascription.count + 1;
@@ -162,7 +168,7 @@ export default {
       }, []);
     },
     computedRate(count) {
-      return `${((count / this.originTableList.length) * 100).toFixed(2)}%`;
+      return `${((count / this.tableData.length) * 100).toFixed(2)}%`;
     },
     tableRowClick(row) {
       this.$refs.logClusterTable.toggleRowExpansion(row);

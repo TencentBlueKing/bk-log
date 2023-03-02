@@ -103,6 +103,10 @@ export default {
       type: Object,
       require: true,
     },
+    listData: {
+      type: Object,
+      default: () => {},
+    },
   },
   data() {
     return {
@@ -141,7 +145,10 @@ export default {
   },
   methods: {
     formatterStr(row, field) {
-      return this.tableRowDeepView(row, field, this.getFieldType(field));
+      // 判断当前类型是否为虚拟字段 若是虚拟字段则不使用origin_list而使用list里的数据
+      const fieldType = this.getFieldType(field);
+      const rowData = fieldType === '__virtual__' ? this.listData : row;
+      return this.tableRowDeepView(rowData, field, fieldType);
     },
     getHandleIcon(option, field) {
       if (option.id !== 'display') return option.icon;
@@ -169,7 +176,7 @@ export default {
     checkDisable(id, field) {
       const type = this.getFieldType(field);
       const isExist = this.filterIsExist(id, field);
-      return (['is', 'not'].includes(id) && type === 'text') || type === '__virtual__' || isExist  ? 'is-disabled' : '';
+      return ((['is', 'not'].includes(id) && type === 'text') || type === '__virtual__' || isExist)  ? 'is-disabled' : '';
     },
     getIconPopover(id, field) {
       const type = this.getFieldType(field);
@@ -372,8 +379,8 @@ export default {
           cursor: pointer;
         }
 
-        .icon-close-circle,
-        .icon-minus-circle,
+        .icon-enlarge-line,
+        .icon-narrow-line,
         .icon-arrows-up-circle,
         .icon-copy {
           &.is-disabled {
