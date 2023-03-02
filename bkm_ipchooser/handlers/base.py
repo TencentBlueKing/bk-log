@@ -3,6 +3,8 @@ import typing
 
 from pypinyin import lazy_pinyin
 
+from bkm_space.utils import bk_biz_id_to_space_uid
+
 from bkm_ipchooser import constants, types
 from bkm_ipchooser.api import BkApi
 from bkm_ipchooser.query import resource
@@ -13,13 +15,19 @@ from bkm_ipchooser.tools.batch_request import batch_request
 class BaseHandler:
     @staticmethod
     def get_meta_data(bk_biz_id: int) -> types.MetaData:
-        return {"scope_type": constants.ScopeType.BIZ.value, "scope_id": str(bk_biz_id), "bk_biz_id": bk_biz_id}
+        return {
+            "scope_type": constants.ScopeType.BIZ.value,
+            "scope_id": str(bk_biz_id),
+            "bk_biz_id": bk_biz_id,
+            "space_uid": bk_biz_id_to_space_uid(bk_biz_id),
+        }
 
     @classmethod
     def format_hosts(cls, hosts: typing.List[types.HostInfo], bk_biz_id: int) -> typing.List[types.FormatHostInfo]:
         """
         格式化主机信息
         :param hosts: 尚未进行格式化处理的主机信息
+        :param bk_biz_id: CC业务ID
         :return: 格式化后的主机列表
         """
         biz_id__info_map: typing.Dict[int, typing.Dict] = {
