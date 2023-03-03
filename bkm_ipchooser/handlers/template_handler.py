@@ -22,6 +22,8 @@ class Template:
         self.meta = BaseHandler.get_meta_data(self.bk_biz_id)
 
     def list_templates(self, template_id_list: List[int] = None) -> List[types.Template]:
+        if self.bk_biz_id <= 0:
+            return []
         templates = self.query_cc_templates(template_id_list)
         return self.format_templates(templates)
 

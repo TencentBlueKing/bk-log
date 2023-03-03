@@ -31,6 +31,7 @@ from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 
 from apps.exceptions import ValidationError
+from apps.log_esquery.constants import WILDCARD_PATTERN
 from apps.log_search.constants import InstanceTypeEnum, TemplateType, FavoriteListOrderType, FavoriteVisibleType
 from apps.log_search.models import ProjectInfo, Scenario
 from apps.utils.local import get_local_param
@@ -438,12 +439,24 @@ class UpdateFavoriteGroupOrderSerializer(serializers.Serializer):
     group_order = serializers.ListField(label=_("收藏组顺序"), child=serializers.IntegerField())
 
 
-class GetSearchFieldsSerializer(serializers.Serializer):
+class KeywordSerializer(serializers.Serializer):
     """
-    获取Query中查询字段序列化
+    检索关键词序列化
     """
 
     keyword = serializers.CharField(label=_("检索关键词"), required=True, allow_null=True, allow_blank=True)
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        if attrs["keyword"].strip() == "":
+            attrs["keyword"] = WILDCARD_PATTERN
+        return attrs
+
+
+class GetSearchFieldsSerializer(KeywordSerializer):
+    """获取检索语句中的字段序列化"""
+
+    pass
 
 
 class GenerateQueryParam(serializers.Serializer):
@@ -451,21 +464,20 @@ class GenerateQueryParam(serializers.Serializer):
     pos = serializers.IntegerField(label=_("字段坐标"), required=True)
 
 
-class GenerateQuerySerializer(serializers.Serializer):
+class GenerateQuerySerializer(KeywordSerializer):
     """
     生成Query中查询字段序列化
     """
 
-    keyword = serializers.CharField(label=_("检索关键词"), required=True)
     params = serializers.ListField(required=False, default=[], label=_("替换Query请求参数"), child=GenerateQueryParam())
 
 
-class InspectSerializer(serializers.Serializer):
+class InspectSerializer(KeywordSerializer):
     """
     语法检查以及转换序列化
     """
 
-    keyword = serializers.CharField(label=_("检索关键词"), required=True)
+    pass
 
 
 class FavoriteGroupListSerializer(serializers.Serializer):

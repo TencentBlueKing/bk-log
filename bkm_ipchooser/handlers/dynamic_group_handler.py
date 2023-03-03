@@ -22,6 +22,8 @@ class DynamicGroupHandler:
 
     def list(self, dynamic_group_list: List[Dict] = None) -> List[types.DynamicGroup]:
         """获取动态分组列表"""
+        if self.bk_biz_id <= 0:
+            return []
         dynamic_group_ids = [dynamic_group["id"] for dynamic_group in dynamic_group_list]
         params = {"bk_biz_id": self.bk_biz_id, "no_request": True}
         groups = batch_request(func=BkApi.search_dynamic_group, params=params)

@@ -1188,6 +1188,11 @@ class SearchHandler(object):
         bk_cloud_id = log.get("cloudId", log.get("cloudid"))
         if not bk_host_id and not server_ip:
             return log
+        # 以上情况说明请求不包含能去cmdb查询主机信息的字段，直接返回
+        log["__module__"] = ""
+        log["__set__"] = ""
+        log["__ipv6__"] = ""
+
         host_key = bk_host_id if bk_host_id else server_ip
         host_info = CmdbHostCache.get(bk_biz_id, host_key)
         # 当主机被迁移业务或者删除的时候, 会导致缓存中没有该主机信息, 放空处理
@@ -1202,9 +1207,6 @@ class SearchHandler(object):
             else:
                 host = host_info.get(str(bk_cloud_id))
         if not host:
-            log["__module__"] = ""
-            log["__set__"] = ""
-            log["__ipv6__"] = ""
             return log
 
         set_list, module_list = [], []
