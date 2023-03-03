@@ -72,9 +72,10 @@
       <template v-if="matchList.length">
         <bk-checkbox-group v-model="matchSelectList">
           <bk-checkbox v-for="item of matchList" :key="item.id" :value="item.id">
-            <div class="match-item justify-sb"
-                 @mouseenter="activeItemID = item.id"
-                 @mouseleave="activeItemID = -1">
+            <div
+              class="match-item justify-sb"
+              @mouseenter="activeItemID = item.id"
+              @mouseleave="activeItemID = -1">
               <div id="content-copy-html">
                 <span class="icon log-icon icon-copy" @click="copyContent(item.key)"></span>
               </div>
@@ -87,7 +88,7 @@
                 <span class="match-left">{{getOperateShow(item.operator)}}</span>
               </div>
               <div class="justify-sb">
-                <span>{{item.value}}</span>
+                <span v-bk-overflow-tips>{{item.value}}</span>
                 <span v-if="item.customize">
                   <span v-show="activeItemID === item.id"
                         class="bk-icon icon-close3-shape"

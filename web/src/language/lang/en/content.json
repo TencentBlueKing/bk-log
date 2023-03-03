@@ -869,6 +869,7 @@
   "存储转化率（1.5）：即原始日志增加日志采集元数据并存储到ES到实际占有的空间": "Storage conversion rate (1.5): that is, the original log increases the log collection metadata and stores it in ES to the actual occupied space",
   "容量说明": "Capacity description",
   "热数据天数": "Hot data days",
+  "更新成功": "Update completed",
   "调整预览地址": "adjust preview address",
   "调整文件日期": "adjust file date"
 }
