@@ -23,7 +23,7 @@ from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
 from apps.api.base import DataAPI
-from apps.api.modules.utils import add_esb_info_before_request, filter_abnormal_ip_hosts_topo, filter_abnormal_ip_hosts
+from apps.api.modules.utils import add_esb_info_before_request
 from config.domains import CC_APIGATEWAY_ROOT_V2
 
 
@@ -107,7 +107,6 @@ class _CCApi:
             module=self.MODULE,
             description="查询业务下的主机",
             before_request=get_supplier_account_before,
-            after_request=filter_abnormal_ip_hosts,
         )
         self.list_biz_hosts_topo = DataAPI(
             method="POST",
@@ -115,7 +114,6 @@ class _CCApi:
             module=self.MODULE,
             description="查询业务下的主机和拓扑信息",
             before_request=get_supplier_account_before,
-            after_request=filter_abnormal_ip_hosts_topo,
         )
         self.search_cloud_area = DataAPI(
             method="POST",
@@ -152,6 +150,20 @@ class _CCApi:
             description="获取集群模板列表",
             before_request=get_supplier_account_before,
         )
+        self.find_host_by_set_template = DataAPI(
+            method="POST",
+            url=CC_APIGATEWAY_ROOT_V2 + "find_host_by_set_template",
+            module=self.MODULE,
+            description="查询集群模板下的主机",
+            before_request=get_supplier_account_before,
+        )
+        self.find_host_by_service_template = DataAPI(
+            method="POST",
+            url=CC_APIGATEWAY_ROOT_V2 + "find_host_by_service_template",
+            module=self.MODULE,
+            description="查询服务模板下的主机",
+            before_request=get_supplier_account_before,
+        )
         self.find_module_with_relation = DataAPI(
             method="POST",
             url=CC_APIGATEWAY_ROOT_V2 + "find_module_with_relation",
@@ -178,6 +190,27 @@ class _CCApi:
             url=CC_APIGATEWAY_ROOT_V2 + "find_host_by_topo",
             module=self.MODULE,
             description="查询拓扑节点下的主机",
+            before_request=get_supplier_account_before,
+        )
+        self.list_host_total_mainline_topo = DataAPI(
+            method="POST",
+            url=CC_APIGATEWAY_ROOT_V2 + "list_host_total_mainline_topo",
+            module=self.MODULE,
+            description="查询主机及其对应拓扑",
+            before_request=get_supplier_account_before,
+        )
+        self.find_topo_node_paths = DataAPI(
+            method="POST",
+            url=CC_APIGATEWAY_ROOT_V2 + "find_topo_node_paths",
+            module=self.MODULE,
+            description="查询业务拓扑节点的拓扑路径",
+            before_request=get_supplier_account_before,
+        )
+        self.list_service_category = DataAPI(
+            method="POST",
+            url=CC_APIGATEWAY_ROOT_V2 + "list_service_category",
+            module=self.MODULE,
+            description="list_service_category",
             before_request=get_supplier_account_before,
         )
 

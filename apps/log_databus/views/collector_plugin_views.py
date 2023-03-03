@@ -262,6 +262,7 @@ class CollectorPluginViewSet(ModelViewSet):
         @apiParam {String} target_nodes.ip 主机实例ip （静态）
         @apiParam {Int} target_nodes.bk_cloud_id 蓝鲸云区域id （静态）
         @apiParam {Int} target_nodes.bk_supplier_id 供应商id （静态）
+        @apiParam {Int} target_nodes.bk_host_id 主机ID （静态）
         @apiParam {String} data_encoding 日志字符集 可选字段`UTF-8, GBK`
         @apiParam {String} description 备注说明
         @apiParam {json} params 插件参数（日志路径、过滤方式等）
@@ -363,6 +364,7 @@ class CollectorPluginViewSet(ModelViewSet):
         @apiParam {String} target_nodes.ip 主机实例ip （静态）
         @apiParam {Int} target_nodes.bk_cloud_id 蓝鲸云区域id （静态）
         @apiParam {Int} target_nodes.bk_supplier_id 供应商id （静态）
+        @apiParam {Int} target_nodes.bk_host_id 主机ID （静态）
         @apiParam {String} data_encoding 日志字符集 可选字段`UTF-8, GBK`
         @apiParam {String} description 备注说明
         @apiParam {json} params 插件参数（日志路径、过滤方式等）

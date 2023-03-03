@@ -99,6 +99,7 @@ PART_FAILED_INSTANCE_DATA = {
                         }
                     ],
                     "bk_host_innerip": "127.0.0.1",
+                    "bk_host_id": 1,
                 },
                 "service": {},
             },
@@ -127,6 +128,7 @@ PART_FAILED_INSTANCE_DATA = {
                         }
                     ],
                     "bk_host_innerip": "127.0.0.1",
+                    "bk_host_id": 1,
                 },
                 "service": {},
             },
@@ -276,6 +278,7 @@ STATUS_DATA_RETURN = [
         "plugin_version": "3.0.10",
         "bk_supplier_id": "0",
         "create_time": "2019-09-19T20:32:19.957883",
+        "bk_host_id": 1,
     },
     {
         "status": "SUCCESS",
@@ -288,6 +291,7 @@ STATUS_DATA_RETURN = [
         "plugin_version": "3.0.10",
         "bk_supplier_id": "0",
         "create_time": "2019-09-19T20:32:19.957883",
+        "bk_host_id": 1,
     },
 ]
 TOPO_TREE = [
@@ -680,6 +684,7 @@ TASK_DETAIL_DATA = {
                 }
             ],
             "bk_host_innerip": "127.0.0.1",
+            "bk_host_id": 1,
         },
         "service": {},
     },
@@ -771,6 +776,7 @@ TASK_STATUS_DATA = [
                     }
                 ],
                 "bk_host_innerip": "127.0.0.1",
+                "bk_host_id": 1,
             },
             "service": {},
         },
@@ -966,8 +972,7 @@ class TestCollector(TestCase):
         )
 
     @patch(
-        "apps.api.TransferApi.get_data_id",
-        get_data_id,
+        "apps.api.TransferApi.get_data_id", get_data_id,
     )
     @patch(
         "apps.api.TransferApi.get_result_table",
@@ -1010,8 +1015,7 @@ class TestCollector(TestCase):
         self._test_destroy(result["collector_config_id"])
 
     @patch(
-        "apps.api.TransferApi.get_data_id",
-        get_data_id,
+        "apps.api.TransferApi.get_data_id", get_data_id,
     )
     @patch(
         "apps.api.TransferApi.get_result_table",
@@ -1288,8 +1292,7 @@ class TestCollector(TestCase):
 
     @patch("apps.api.TransferApi.create_data_id", lambda _: {"bk_data_id": BK_DATA_ID})
     @patch(
-        "apps.api.TransferApi.get_data_id",
-        get_data_id,
+        "apps.api.TransferApi.get_data_id", get_data_id,
     )
     @patch(
         "apps.api.TransferApi.get_result_table",

@@ -31,6 +31,7 @@ from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 
 from apps.exceptions import ValidationError
+from apps.log_esquery.constants import WILDCARD_PATTERN
 from apps.log_search.constants import InstanceTypeEnum, TemplateType, FavoriteListOrderType, FavoriteVisibleType
 from apps.log_search.models import ProjectInfo, Scenario
 from apps.utils.local import get_local_param
@@ -145,8 +146,7 @@ class ResultTableAdaptSerializer(serializers.Serializer):
 
 class SearchAttrSerializer(serializers.Serializer):
     bk_biz_id = serializers.IntegerField(label=_("业务ID"), required=False, default=None)
-    # 从host scope 转换成ip
-    host_scopes = serializers.DictField(default={}, required=False)
+    ip_chooser = serializers.DictField(default={}, required=False)
     addition = serializers.ListField(allow_empty=True, required=False, default="")
 
     start_time = serializers.DateTimeField(required=False, format="%Y-%m-%d %H:%M:%S")
@@ -260,7 +260,7 @@ class SearchAsyncExportSerializer(serializers.Serializer):
     time_range = serializers.CharField(label=_("时间范围"), required=False)
     start_time = serializers.CharField(label=_("起始时间"), required=True)
     end_time = serializers.CharField(label=_("结束时间"), required=True)
-    host_scopes = serializers.DictField(label=_("检索模块ip等信息"), required=True)
+    ip_chooser = serializers.DictField(label=_("检索IP条件"), required=False, default={})
     addition = serializers.ListField(label=_("搜索条件"), required=False)
     begin = serializers.IntegerField(label=_("检索开始 offset"), required=True)
     size = serializers.IntegerField(label=_("检索结果大小"), required=True)
@@ -349,7 +349,7 @@ class CreateFavoriteSerializer(serializers.Serializer):
     index_set_id = serializers.IntegerField(label=_("索引集ID"), required=True)
     group_id = serializers.IntegerField(label=_("收藏组ID"), required=False)
     visible_type = serializers.ChoiceField(choices=FavoriteVisibleType.get_choices(), required=True)
-    host_scopes = serializers.DictField(default={}, required=False)
+    ip_chooser = serializers.DictField(default={}, required=False)
     addition = serializers.ListField(allow_empty=True, required=False, default="")
     keyword = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     search_fields = serializers.ListField(required=False, child=serializers.CharField(), default=[])
@@ -371,7 +371,7 @@ class UpdateFavoriteSerializer(serializers.Serializer):
     name = serializers.CharField(label=_("收藏组名"), max_length=256, required=False)
     group_id = serializers.IntegerField(label=_("收藏组ID"), required=False, default=0)
     visible_type = serializers.ChoiceField(choices=FavoriteVisibleType.get_choices(), required=False)
-    host_scopes = serializers.DictField(default={}, required=False)
+    ip_chooser = serializers.DictField(default={}, required=False)
     addition = serializers.ListField(allow_empty=True, required=False, default="")
     keyword = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     search_fields = serializers.ListField(required=False, child=serializers.CharField(), default=[])
@@ -439,12 +439,24 @@ class UpdateFavoriteGroupOrderSerializer(serializers.Serializer):
     group_order = serializers.ListField(label=_("收藏组顺序"), child=serializers.IntegerField())
 
 
-class GetSearchFieldsSerializer(serializers.Serializer):
+class KeywordSerializer(serializers.Serializer):
     """
-    获取Query中查询字段序列化
+    检索关键词序列化
     """
 
     keyword = serializers.CharField(label=_("检索关键词"), required=True, allow_null=True, allow_blank=True)
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        if attrs["keyword"].strip() == "":
+            attrs["keyword"] = WILDCARD_PATTERN
+        return attrs
+
+
+class GetSearchFieldsSerializer(KeywordSerializer):
+    """获取检索语句中的字段序列化"""
+
+    pass
 
 
 class GenerateQueryParam(serializers.Serializer):
@@ -452,21 +464,20 @@ class GenerateQueryParam(serializers.Serializer):
     pos = serializers.IntegerField(label=_("字段坐标"), required=True)
 
 
-class GenerateQuerySerializer(serializers.Serializer):
+class GenerateQuerySerializer(KeywordSerializer):
     """
     生成Query中查询字段序列化
     """
 
-    keyword = serializers.CharField(label=_("检索关键词"), required=True)
     params = serializers.ListField(required=False, default=[], label=_("替换Query请求参数"), child=GenerateQueryParam())
 
 
-class InspectSerializer(serializers.Serializer):
+class InspectSerializer(KeywordSerializer):
     """
     语法检查以及转换序列化
     """
 
-    keyword = serializers.CharField(label=_("检索关键词"), required=True)
+    pass
 
 
 class FavoriteGroupListSerializer(serializers.Serializer):

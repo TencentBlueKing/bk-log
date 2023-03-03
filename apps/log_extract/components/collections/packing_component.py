@@ -25,7 +25,10 @@ from django.utils.translation import ugettext_lazy as _
 from pipeline.component_framework.component import Component
 from pipeline.core.flow.activity import Service, StaticIntervalGenerator
 from apps.log_extract import constants
-from apps.log_extract.constants import PACK_TASK_SCRIPT_NOT_HAVE_ENOUGH_CAP_ERROR_CODE
+from apps.log_extract.constants import (
+    PACK_TASK_SCRIPT_NOT_HAVE_ENOUGH_CAP_ERROR_CODE,
+    BATCH_GET_JOB_INSTANCE_IP_LOG_IP_LIST_SIZE,
+)
 from apps.log_extract.fileserver import FileServer
 from apps.log_extract.models import Tasks
 from apps.log_extract.utils.packing import (
@@ -34,6 +37,8 @@ from apps.log_extract.utils.packing import (
     get_filter_content,
 )
 from apps.utils.pipline import BaseService
+from apps.utils.db import array_chunk
+from apps.utils.log import logger
 
 
 class FilePackingService(BaseService):
@@ -129,12 +134,11 @@ class FilePackingService(BaseService):
             ip_list = [ip_list]
         distribution_source_file_list = [
             {
-                "group_ids": "",
-                "account": data.get_one_of_inputs("account"),
+                "account": {"alias": data.get_one_of_inputs("account")},
                 # 转换IP格式
-                "ip_list": [ip],
+                "server": {"ip_list": [ip]},
                 # 这里是直接分发目录
-                "files": [f"{distribution_path}{packed_file_name}"],
+                "file_list": [f"{distribution_path}{packed_file_name}"],
             }
             for ip in ip_list
         ]
@@ -143,10 +147,10 @@ class FilePackingService(BaseService):
         return True
 
     def _schedule(self, data, parent_data, callback_data=None):
+        task_instance_id = data.get_one_of_outputs("task_instance_id")
+        bk_biz_id = data.get_one_of_inputs("bk_biz_id")
         query_result = self._poll_status(
-            task_instance_id=data.get_one_of_outputs("task_instance_id"),
-            operator=data.get_one_of_inputs("operator"),
-            bk_biz_id=data.get_one_of_inputs("bk_biz_id"),
+            task_instance_id=task_instance_id, operator=data.get_one_of_inputs("operator"), bk_biz_id=bk_biz_id,
         )
 
         # 判断脚本是否执行结束
@@ -156,25 +160,35 @@ class FilePackingService(BaseService):
         # 输出脚本内容, 如果所有IP都失败了，则返回异常
         has_success = False
         job_message = ""
-        for item in FileServer.get_detail_for_ips(query_result):
+        step_ip_result_list = FileServer.get_detail_for_ips(query_result)
+        for item in step_ip_result_list:
             if item["exit_code"] == 0:
                 has_success = True
                 break
             elif item["exit_code"] == PACK_TASK_SCRIPT_NOT_HAVE_ENOUGH_CAP_ERROR_CODE:
                 job_message = _("目标机器没有足够的储存")
             else:
-                job_message = FileServer.get_job_tag(query_result)
+                job_message = FileServer.get_job_tag(item)
 
         if not has_success:
             raise Exception(_("任务打包异常: {}").format(job_message))
 
-        data.outputs.task_script_output = FileServer.get_log_content_for_single_ip(query_result)
+        ip_list_group = array_chunk(
+            [{"ip": item["ip"], "bk_cloud_id": item["bk_cloud_id"]} for item in step_ip_result_list],
+            BATCH_GET_JOB_INSTANCE_IP_LOG_IP_LIST_SIZE,
+        )
         ip_log_output_kv = {}
-        for ip_log_content in FileServer.get_detail_for_ips(query_result):
-            content = html.unescape(ip_log_content["log_content"])
-            log_output_kv = FileServer.get_bk_kv_log(content)
-            log_output_kv = {kv[constants.BKLOG_LOG_KEY]: kv[constants.BKLOG_LOG_VALUE] for kv in log_output_kv}
-            ip_log_output_kv[ip_log_content["ip"]] = log_output_kv
+        step_instance_id = FileServer.get_step_instance_id(query_result)
+        try:
+            for ip_list in ip_list_group:
+                ip_list_log = FileServer.get_ip_list_log(ip_list, task_instance_id, step_instance_id, bk_biz_id)
+                for log_content in ip_list_log.get("script_task_logs", []):
+                    content = html.unescape(log_content.get("log_content"))
+                    log_output_kv = FileServer.get_bk_kv_log(content)
+                    log_output_kv = {kv[constants.BKLOG_LOG_KEY]: kv[constants.BKLOG_LOG_VALUE] for kv in log_output_kv}
+                    ip_log_output_kv[log_content["ip"]] = log_output_kv
+        except Exception as e:
+            logger.exception(f"[packing get bklog] get log content failed => {e}")
 
         task = Tasks.objects.get(task_id=data.get_one_of_inputs("task_id"))
         task.ex_data.update(ip_log_output_kv)

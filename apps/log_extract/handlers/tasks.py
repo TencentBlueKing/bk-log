@@ -36,7 +36,7 @@ from apps.utils.log import logger
 from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
 from apps.iam import ActionEnum, Permission
 from apps.log_extract import constants, exceptions
-from apps.log_extract.constants import TASK_IP_INDEX, TASK_BK_CLOUD_ID_INDEX, ExtractLinkType
+from apps.log_extract.constants import TASK_IP_INDEX, TASK_BK_CLOUD_ID_INDEX, ExtractLinkType, TASK_HOST_ID_INDEX
 from apps.log_extract.handlers.explorer import ExplorerHandler
 from apps.log_extract.handlers.extract import ExtractLinkBase
 from apps.log_extract.models import Tasks, ExtractLink
@@ -120,9 +120,16 @@ class TasksHandler(object):
             )
 
         # step 3：创建任务并启动pipeline
+        formatted_ip_list = []
+        for ip in ip_list:
+            ip_key = f"{ip['bk_cloud_id']}:{ip['ip']}"
+            if ip.get("bk_host_id"):
+                ip_key = f"{ip_key}:{ip['bk_host_id']}"
+            formatted_ip_list.append(ip_key)
+
         params = {
             "bk_biz_id": bk_biz_id,
-            "ip_list": [f"{ip['bk_cloud_id']}:{ip['ip']}" for ip in ip_list],
+            "ip_list": formatted_ip_list,
             "file_path": request_file_list,
             "filter_type": filter_type,
             "filter_content": {} if not filter_type else filter_content,
@@ -241,6 +248,10 @@ class TasksHandler(object):
                 component_status["state"]
             )
         task["task_step_status"] = component_status_list
+
+        # 主机显示优化
+        task["ip_list"] = [":".join(ip.split(":")[:2]) for ip in task["ip_list"]]
+
         return Response(task)
 
     def partial_update(self, tasks_views, *args, **kwargs):
@@ -305,12 +316,23 @@ class TasksHandler(object):
     @staticmethod
     def get_ip_and_bk_cloud_id(task_list):
         for task in task_list:
-            if ":" not in "".join(task["ip_list"]):
-                continue
-            task["ip_list"] = [
-                {"ip": ip.split(":")[TASK_IP_INDEX], "bk_cloud_id": int(ip.split(":")[TASK_BK_CLOUD_ID_INDEX])}
-                for ip in task["ip_list"]
-            ]
+            ip_list = []
+            for ip in task["ip_list"]:
+                if ":" not in ip:
+                    ip_list.append({"bk_host_id": ip})
+                else:
+                    items = ip.split(":")
+                    if len(items) == 2:
+                        ip_list.append({"ip": items[TASK_IP_INDEX], "bk_cloud_id": int(items[TASK_BK_CLOUD_ID_INDEX])})
+                    elif len(items) == 3:
+                        ip_list.append(
+                            {
+                                "ip": items[TASK_IP_INDEX],
+                                "bk_cloud_id": int(items[TASK_BK_CLOUD_ID_INDEX]),
+                                "bk_host_id": int(items[TASK_HOST_ID_INDEX]),
+                            }
+                        )
+            task["ip_list"] = ip_list
         return task_list
 
     @classmethod

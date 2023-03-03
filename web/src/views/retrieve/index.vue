@@ -198,10 +198,10 @@
                 </div>
                 <div class="add-filter-condition-container">
                   <ip-quick
-                    :target-node="retrieveParams.host_scopes.target_nodes"
-                    :target-node-type="retrieveParams.host_scopes.target_node_type"
+                    :target-node="retrieveParams.ip_chooser"
                     @openIpQuick="openIpQuick"
-                    @confirm="handleSaveIpQuick" />
+                    @confirm="handleIpSelectorValueChange"
+                  />
                   <div class="cut-line" v-if="showFilterCutline"></div>
                   <template v-for="(item, index) in retrieveParams.addition">
                     <filter-condition-item
@@ -275,7 +275,7 @@
                     </bk-button>
                   </div>
                   <span v-bk-tooltips="{ content: $t('清空'), delay: 200 }">
-                    <div class="clear-params-btn" @click="() => clearCondition('*')">
+                    <div class="clear-params-btn" @click="() => clearCondition()">
                       <bk-button data-test-id="dataQuery_button_phrasesClear"></bk-button>
                       <span class="log-icon icon-brush"></span>
                     </div>
@@ -359,12 +359,14 @@
     </div>
 
     <!-- 目标选择器 -->
-    <ip-selector-dialog
+    <log-ip-selector
+      mode="dialog"
+      :key="bkBizId"
+      :height="670"
       :show-dialog.sync="showIpSelectorDialog"
-      :show-dynamic-group="true"
-      :target-nodes="retrieveParams.host_scopes.target_nodes"
-      :target-node-type="retrieveParams.host_scopes.target_node_type"
-      @target-change="handleSaveIpQuick" />
+      :value="retrieveParams.ip_chooser"
+      @change="handleIpSelectorValueChange"
+    />
 
     <setting-modal
       :index-set-item="indexSetItem"
@@ -398,7 +400,8 @@ import RetrieveDetailInput from './condition-comp/retrieve-detail-input';
 import QueryStatement from './condition-comp/query-statement';
 import FilterConditionItem from './condition-comp/filter-condition-item';
 import IpQuick from './condition-comp/ip-quick';
-import IpSelectorDialog from '@/components/collection-access/ip-selector-dialog';
+import LogIpSelector from '@/components/log-ip-selector/log-ip-selector';
+// import IpSelectorDialog from '@/components/collection-access/ip-selector-dialog';
 import FieldFilter from './condition-comp/field-filter';
 import ResultHeader from './result-comp/result-header';
 import NoIndexSet from './result-comp/no-index-set';
@@ -425,7 +428,8 @@ export default {
     QueryStatement,
     FilterConditionItem,
     IpQuick,
-    IpSelectorDialog,
+    LogIpSelector,
+    // IpSelectorDialog,
     FieldFilter,
     ResultHeader,
     ResultMain,
@@ -485,6 +489,8 @@ export default {
           // 目标节点类型
           target_node_type: '',
         },
+        // 新版ip-selector选值
+        ip_chooser: {},
         // 过滤条件，可添加多个，每个过滤条件格式 {field: 'time', operator: 'is', value: 'xxx'}
         // field 为过滤的字段
         // operator 从接口获取，默认为 'is'
@@ -601,13 +607,8 @@ export default {
     //   return this.ipTopoSwitch;
     // },
     showFilterCutline() {
-      const { host_scopes: hostScopes, addition } = this.retrieveParams;
-      // return (host_scopes.modules.length || host_scopes.ips.length) && addition.length;
-      return (hostScopes?.modules?.length
-      || hostScopes?.ips?.length
-      // eslint-disable-next-line camelcase
-      || hostScopes?.target_nodes?.length)
-      && addition?.length;
+      const { ip_chooser, addition } = this.retrieveParams;
+      return (Object.keys(ip_chooser).length) && addition?.length;
     },
     showSearchPage() {
       return this.hasAuth || this.isNoIndexSet;
@@ -667,7 +668,7 @@ export default {
       this.$store.commit('updateIndexId', val);
       this.retrieveSearchNumber = 0; // 切换索引集 检索次数设置为0;
       val && this.requestSearchHistory(val);
-      this.clearCondition('*', false);
+      this.clearCondition(false);
     },
     spaceUid: {
       async handler() {
@@ -1002,7 +1003,8 @@ export default {
     },
     updateSearchParam(addition, host) {
       this.retrieveParams.addition = addition;
-      this.retrieveParams.host_scopes = host;
+      // this.retrieveParams.host_scopes = host;
+      this.retrieveParams.ip_chooser = host;
     },
     // 日期选择器选择时间完毕，检索
     retrieveWhenDateChange() {
@@ -1036,27 +1038,37 @@ export default {
     },
     // 打开 ip 选择弹窗
     openIpQuick() {
-      // this.$refs.ipQuick.openDialog();
       this.showIpSelectorDialog = true;
     },
     // IP 选择
-    handleSaveIpQuick(data) {
-      // this.retrieveParams.host_scopes = data;
-      const { target_node_type: targetNodeType, target_nodes: targetNodes } = data;
-      this.retrieveParams.host_scopes.target_node_type = targetNodes.length ? targetNodeType : '';
-      this.retrieveParams.host_scopes.target_nodes = targetNodes.map((node) => {
-        const targets = ['TOPO', 'SERVICE_TEMPLATE', 'SET_TEMPLATE'].includes(targetNodeType)
-          ? {
-            node_path: node.node_path,
-            bk_inst_name: node.bk_inst_name,
-            bk_inst_id: node.bk_inst_id,
-            bk_obj_id: node.bk_obj_id,
-          }
-          : targetNodeType === 'DYNAMIC_GROUP' ? { id: node.id, name: node.name, bk_obj_id: node.bk_obj_id }
-            : { ip: node.ip, bk_cloud_id: node.bk_cloud_id, bk_supplier_id: node.bk_supplier_id };
-        return targets;
-      });
-      this.showIpSelectorDialog = false;
+    // handleSaveIpQuick(data) {
+    //   const { target_node_type: targetNodeType, target_nodes: targetNodes } = data;
+    //   this.retrieveParams.host_scopes.target_node_type = targetNodes.length ? targetNodeType : '';
+    //   this.retrieveParams.host_scopes.target_nodes = targetNodes.map((node) => {
+    //     const targets = ['TOPO', 'SERVICE_TEMPLATE', 'SET_TEMPLATE'].includes(targetNodeType)
+    //       ? {
+    //         node_path: node.node_path,
+    //         bk_inst_name: node.bk_inst_name,
+    //         bk_inst_id: node.bk_inst_id,
+    //         bk_obj_id: node.bk_obj_id,
+    //       }
+    //       : targetNodeType === 'DYNAMIC_GROUP' ? { id: node.id, name: node.name, bk_obj_id: node.bk_obj_id }
+    //         : { ip: node.ip, bk_cloud_id: node.bk_cloud_id, bk_supplier_id: node.bk_supplier_id };
+    //     return targets;
+    //   });
+    //   this.showIpSelectorDialog = false;
+    //   if (this.isAutoQuery) {
+    //     this.retrieveLog();
+    //   }
+    // },
+    // ip 选择器选中值发生变化
+    handleIpSelectorValueChange(value) {
+      const ipChooserValue = {};
+      const nodeType = Object.keys(value).find(item => value[item].length);
+      if (nodeType) {
+        ipChooserValue[nodeType] = value[nodeType];
+      }
+      this.retrieveParams.ip_chooser = ipChooserValue;
       if (this.isAutoQuery) {
         this.retrieveLog();
       }
@@ -1066,15 +1078,16 @@ export default {
      * @param {String} clearStr 检索keywords
      * @param {Boolean} isRetrieveLog 是否检索表格
      */
-    clearCondition(clearStr = '*', isRetrieveLog = true) {
+    clearCondition(isRetrieveLog = true) {
       Object.assign(this.retrieveParams, {
-        keyword: this.isSqlSearchType ? clearStr : this.retrieveParams.keyword, // 若是表单模式的清空则不删除keyword
-        host_scopes: {
-          modules: [],
-          ips: '',
-          target_nodes: [],
-          target_node_type: '',
-        },
+        keyword: '',
+        // host_scopes: {
+        //   modules: [],
+        //   ips: '',
+        //   target_nodes: [],
+        //   target_node_type: '',
+        // },
+        ip_chooser: {},
         addition: [],
       });
       this.isClearCondition = !this.isClearCondition;
@@ -1169,6 +1182,7 @@ export default {
         const shouldCoverParamFields = [
           'keyword',
           'host_scopes',
+          'ip_chooser',
           'addition',
           'start_time',
           'end_time',
@@ -1212,6 +1226,11 @@ export default {
                 || this.retrieveParams[field].modules.length
                 || this.retrieveParams[field].target_nodes.length) {
                   queryParamsStr[field] = (JSON.stringify(this.retrieveParams[field]));
+                }
+                break;
+              case 'ip_chooser':
+                if (Object.keys(this.retrieveParams[field]).length) {
+                  queryParamsStr[field] = JSON.stringify(this.retrieveParams[field]);
                 }
                 break;
               case 'pickerTimeRange':
@@ -1482,16 +1501,20 @@ export default {
           return readBlobRespToJson(res.data);
         });
 
-        this.isNextTime = res.data.list.length < pageSize;
+        if (!res.data && res.message) { // 接口报错提示
+          this.messageError(res.message);
+        }
+
+        this.isNextTime = res.data?.list?.length < pageSize;
         if (this.isNextTime && (this.pollingStartTime <= this.startTimeStamp
         || this.requestInterval === 0)) { // 分片时间已结束
           this.finishPolling = true;
         }
 
         this.retrievedKeyword = this.retrieveParams.keyword;
-        this.tookTime = this.tookTime + Number(res.data.took) || 0;
-        this.tableData = { ...res.data, finishPolling: this.finishPolling };
-        this.logList = this.logList.concat(parseBigNumberList(res.data.list));
+        this.tookTime = this.tookTime + Number(res.data?.took) || 0;
+        this.tableData = { ...(res.data || {}), finishPolling: this.finishPolling };
+        this.logList = this.logList.concat(parseBigNumberList(res.data?.list ?? []));
         this.statisticalFieldsData = this.getStatisticalFieldsData(this.logList);
         this.computeRetrieveDropdownData(this.logList);
       } catch (err) {
@@ -1713,15 +1736,16 @@ export default {
       // 如果点击过收藏，进行参数判断
       const displayFields = this.visibleFields.map(item => item.field_name);
       const indexItem = this.indexSetList.find(item => item.index_set_id === String(this.indexId));
-      const { modules, ips, target_node_type, target_nodes } =  this.retrieveParams.host_scopes;
-      // eslint-disable-next-line camelcase
-      const host_scopes = { modules, ips, target_node_type, target_nodes }; // 初始化host传参
-      if (!modules) host_scopes.modules = [];
-      if (!ips) host_scopes.ips = '';
-      if (!host_scopes.target_node_type) {
-        host_scopes.target_node_type = '';
-        host_scopes.target_nodes = [];
-      }
+      // const { modules, ips, target_node_type, target_nodes } =  this.retrieveParams.host_scopes;
+      // // eslint-disable-next-line camelcase
+      // const host_scopes = { modules, ips, target_node_type, target_nodes }; // 初始化host传参
+      // if (!modules) host_scopes.modules = [];
+      // if (!ips) host_scopes.ips = '';
+      // if (!host_scopes.target_node_type) {
+      //   host_scopes.target_node_type = '';
+      //   host_scopes.target_nodes = [];
+      // }
+      const ipChooser = deepClone(this.retrieveParams.ip_chooser);
       const favoriteData = { // 新增收藏参数
         index_set_id: this.indexId,
         space_uid: this.spaceUid,
@@ -1731,7 +1755,8 @@ export default {
         name: '',
         is_enable_display_fields: false,
         params: {
-          host_scopes,
+          // host_scopes,
+          ip_chooser: ipChooser,
           keyword: Boolean(this.retrieveParams.keyword) ? this.retrieveParams.keyword : '*',
           addition: this.retrieveParams.addition,
           search_fields: [],
@@ -1753,7 +1778,7 @@ export default {
           id,
         } = this.activeFavorite;
         const { search_fields } = params;
-        const { host_scopes, addition, keyword } = this.retrieveParams;
+        const { ip_chooser, addition, keyword } = this.retrieveParams;
         const fRes = await this.$http.request('favorite/getSearchFields', {
           data: { keyword },
         });
@@ -1765,7 +1790,7 @@ export default {
           group_id,
           display_fields,
           visible_type,
-          host_scopes,
+          ip_chooser,
           addition,
           keyword,
           search_fields: searchFilterList,
@@ -1883,20 +1908,24 @@ export default {
         this.activeFavorite = {};
         this.isSqlSearchType = true;
         this.isFavoriteSearch = false;
-        this.clearCondition('*');
+        this.clearCondition();
         return;
       }
-      // 无host_scopes补充空的 host_scopes
-      if (!value.params?.host_scopes?.target_node_type) {
-        value.params.host_scopes = { ...value.params?.host_scopes };
-        value.params.host_scopes.target_node_type = '';
-        value.params.host_scopes.target_nodes = [];
+      const data = deepClone(value);
+      if (!Object.keys(data.params.ip_chooser || []).length) {
+        data.params.ip_chooser = {};
       }
+      // 无host_scopes补充空的 host_scopes
+      // if (!value.params?.host_scopes?.target_node_type) {
+      //   value.params.host_scopes = { ...value.params?.host_scopes };
+      //   value.params.host_scopes.target_node_type = '';
+      //   value.params.host_scopes.target_nodes = [];
+      // }
       this.addFavoriteData = {}; // 清空新增收藏的数据
       this.isFavoriteSearch = true;
-      this.activeFavorite = deepClone(value);
-      this.activeFavoriteID = value.id;
-      this.retrieveFavorite(value);
+      this.activeFavorite = deepClone(data);
+      this.activeFavoriteID = data.id;
+      this.retrieveFavorite(data);
     },
     // 收藏列表刷新, 判断当前是否有点击活跃的收藏 如有则进行数据更新
     updateActiveFavoriteData(value) {

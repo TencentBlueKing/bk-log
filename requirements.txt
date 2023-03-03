@@ -36,6 +36,7 @@ PyYAML==5.4.1
 dataclasses==0.7
 typing_extensions==3.7.4.3
 Markdown==3.3
+wrapt==1.13.3
 
 # for原生es
 elasticsearch==7.0.0
@@ -115,6 +116,9 @@ pika==1.2.1
 
 # luqum, ES Search SQL
 luqum==0.12.0
+
+# openapi
+drf-yasg==1.15.1
 
 # 各自环境所需的不同依赖, 通过 sites/${env}/deploy/requirements_env.txt得到
 -r requirements_env.txt

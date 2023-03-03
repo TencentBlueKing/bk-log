@@ -129,7 +129,7 @@ class FavoriteHandler(object):
     def create_or_update(
         self,
         name: str,
-        host_scopes: dict,
+        ip_chooser: dict,
         addition: list,
         keyword: str,
         visible_type: str,
@@ -140,7 +140,7 @@ class FavoriteHandler(object):
         group_id: int = None,
     ) -> dict:
         # 构建params
-        params = {"host_scopes": host_scopes, "addition": addition, "keyword": keyword, "search_fields": search_fields}
+        params = {"ip_chooser": ip_chooser, "addition": addition, "keyword": keyword, "search_fields": search_fields}
         space_uid = self.space_uid if self.space_uid else self.data.space_uid
 
         # 可见为个人时归类到个人组
@@ -201,7 +201,7 @@ class FavoriteHandler(object):
         for param in params:
             FavoriteHandler(favorite_id=param["id"]).create_or_update(
                 name=param["name"],
-                host_scopes=param["host_scopes"],
+                ip_chooser=param["ip_chooser"],
                 addition=param["addition"],
                 keyword=param["keyword"],
                 visible_type=param["visible_type"],

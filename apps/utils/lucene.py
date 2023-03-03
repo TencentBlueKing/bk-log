@@ -573,6 +573,7 @@ def generate_query_string(params: dict) -> str:
     if key_word is None:
         key_word = ""
     query_string = key_word
+    # 保留host_scopes相关逻辑是为了兼容旧版本
     host_scopes = params.get("host_scopes", {})
     target_nodes = host_scopes.get("target_nodes", [])
 
@@ -601,6 +602,26 @@ def generate_query_string(params: dict) -> str:
         host_scopes["target_nodes"] = [
             {"ip": ip, "bk_cloud_id": DEFAULT_BK_CLOUD_ID} for ip in host_scopes["ips"].split(",")
         ]
+
+    ipchooser = params.get("ip_chooser", {})
+    for node_type, node_value in ipchooser.items():
+        if node_type == "host_list":
+            _host_slice = []
+            _host_id_slice = []
+            for _node in node_value:
+                if _node.get("id"):
+                    _host_id_slice.append(str(_node["id"]))
+                    continue
+                # 这里key值是参考了format_hosts方法的返回值
+                _host_slice.append(f"{_node['cloud_area']['id']}:{_node['ip']}")
+            # 分开以便于前端展示
+            query_string += " AND (host_id: " + ",".join(_host_id_slice) + " AND (host: " + ",".join(_host_slice) + ")"
+        elif node_type == "node_list":
+            for _node in node_value:
+                query_string += " AND ({}: {})".format(_node["object_id"], _node["instance_id"])
+        else:
+            node_type_name = node_type.split("_list")[0].lower()
+            query_string += " AND ({}: {})".format(node_type_name, ",".join([str(i["id"]) for i in node_value]))
 
     additions = params.get("addition", [])
     if additions:

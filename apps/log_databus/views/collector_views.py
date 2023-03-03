@@ -365,6 +365,7 @@ class CollectorViewSet(ModelViewSet):
         @apiSuccess {String} target_nodes.ip 主机实例ip
         @apiSuccess {Int} target_nodes.bk_cloud_id 蓝鲸云主机id
         @apiSuccess {Int} target_nodes.bk_supplier_id 支撑id
+        @apiParam {Int} target_nodes.bk_host_id 主机ID （静态）
         @apiSuccess {String} data_encoding 日志字符集
         @apiSuccess {String} bk_data_id META-采集项ID
         @apiSuccess {String} bk_data_name META-采集项名称
@@ -530,6 +531,7 @@ class CollectorViewSet(ModelViewSet):
         @apiParam {String} target_nodes.ip 主机实例ip （静态）
         @apiParam {Int} target_nodes.bk_cloud_id 蓝鲸云区域id （静态）
         @apiParam {Int} target_nodes.bk_supplier_id 供应商id （静态）
+        @apiParam {Int} target_nodes.bk_host_id 主机ID （静态）
         @apiParam {String} data_encoding 日志字符集 可选字段`UTF-8, GBK`
         @apiParam {String} bk_data_name 存储索引名
         @apiParam {String} description 备注说明
@@ -637,6 +639,7 @@ class CollectorViewSet(ModelViewSet):
         @apiParam {String} target_nodes.ip 主机实例ip
         @apiParam {Int} target_nodes.bk_cloud_id 蓝鲸云主机id
         @apiParam {Int} target_nodes.bk_supplier_id 支撑id
+        @apiParam {Int} target_nodes.bk_host_id 主机ID （静态）
         @apiParam {String} data_encoding 日志字符集 可选字段`UTF-8, GBK`
         @apiParam {String} description 备注说明
         @apiParam {json} params 日志信息
@@ -850,6 +853,7 @@ class CollectorViewSet(ModelViewSet):
         @apiSuccess {String} contents.bk_obj_name 集群名称
         @apiSuccess {List} contents.child 主机实例列表
         @apiSuccess {String} contents.child.status 实例订阅状态 (FAILED:失败； SUCCESS：成功； PENDING：执行中)
+        @apiSuccess {String} contents.child.bk_host_id 主机ID
         @apiSuccess {String} contents.child.ip 实例IP
         @apiSuccess {String} contents.child.bk_cloud_id 云区域ID
         @apiSuccess {String} contents.child.instance_name 实例名称
@@ -870,6 +874,7 @@ class CollectorViewSet(ModelViewSet):
                         "bk_obj_id":"set",
                         "child":[
                             {
+                                "bk_host_id": 1,
                                 "status":"FAILED",
                                 "ip":"127.0.0.1",
                                 "bk_cloud_id":0,
@@ -885,6 +890,7 @@ class CollectorViewSet(ModelViewSet):
                                 "create_time": "2019-08-24T18:47:27",
                             },
                             {
+                                "bk_host_id": 2,
                                 "status":"FAILED",
                                 "ip":"127.0.0.1",
                                 "bk_cloud_id":0,
@@ -1406,6 +1412,7 @@ class CollectorViewSet(ModelViewSet):
         @apiParam {Int} target_nodes.bk_inst_id 节点实例id (动态)
         @apiParam {String} target_nodes.bk_obj_id 节点对象id （动态）
         @apiParam {String} target_nodes.ip 主机实例ip （静态）
+        @apiParam {String} target_nodes.bk_host_id 主机ID （静态）
         @apiParam {Int} target_nodes.bk_cloud_id 蓝鲸云区域id （静态）
         @apiParam {Int} target_nodes.bk_supplier_id 供应商id （静态）
         @apiParam {String} data_encoding 日志字符集 可选字段`UTF-8, GBK`
@@ -1502,6 +1509,7 @@ class CollectorViewSet(ModelViewSet):
         @apiParam {String} target_nodes.ip 主机实例ip （静态）
         @apiParam {Int} target_nodes.bk_cloud_id 蓝鲸云区域id （静态）
         @apiParam {Int} target_nodes.bk_supplier_id 供应商id （静态）
+        @apiParam {String} target_nodes.bk_host_id 主机ID （静态）
         @apiParam {String} data_encoding 日志字符集 可选字段`UTF-8, GBK`
         @apiParam {String} bk_data_name 存储索引名
         @apiParam {String} description 备注说明
@@ -2121,6 +2129,7 @@ class CollectorViewSet(ModelViewSet):
         @apiParam {String} target_nodes.ip 主机实例ip （静态）
         @apiParam {Int} target_nodes.bk_cloud_id 蓝鲸云区域id （静态）
         @apiParam {Int} target_nodes.bk_supplier_id 供应商id （静态）
+        @apiParam {String} target_nodes.bk_host_id 主机ID （静态）
         @apiParam {String} etl_config 清洗类型（格式化方式）
         @apiParam {Object} etl_params 清洗配置，不同的清洗类型的参数有所不同
         @apiParam {String} etl_params.separator 分隔符，当etl_config=="bk_log_delimiter"时需要传递
@@ -2193,6 +2202,7 @@ class CollectorViewSet(ModelViewSet):
         @apiParam {String} target_nodes.ip 主机实例ip （静态）
         @apiParam {Int} target_nodes.bk_cloud_id 蓝鲸云区域id （静态）
         @apiParam {Int} target_nodes.bk_supplier_id 供应商id （静态）
+        @apiParam {String} target_nodes.bk_host_id 主机ID （静态）
         @apiParam {String} etl_config 清洗类型（格式化方式）
         @apiParam {Object} etl_params 清洗配置，不同的清洗类型的参数有所不同
         @apiParam {String} etl_params.separator 分隔符，当etl_config=="bk_log_delimiter"时需要传递

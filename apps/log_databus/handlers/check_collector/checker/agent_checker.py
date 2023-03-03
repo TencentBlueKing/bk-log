@@ -90,7 +90,7 @@ class AgentChecker(Checker):
             return
 
         try:
-            result = JobApi.fast_execute_script_v3(params)
+            result = JobApi.fast_execute_script(params)
             self.job_instance_id = result.get("job_instance_id", 0)
             self.step_instance_id = result.get("step_instance_id", 0)
         except Exception as e:  # pylint: disable=broad-except
@@ -112,14 +112,17 @@ class AgentChecker(Checker):
             self.append_normal_info(f"[获取作业执行状态] 作业: {self.job_instance_id}, 执行次数: {i + 1}")
             time.sleep(WAIT_FOR_RETRY)
             try:
-                result = JobApi.get_job_instance_status_v3(params=params, request_cookies=False)
-                if result.get("finished"):
-                    step_instance_status = result.get("step_instance_list", [])
-                    if not step_instance_status:
-                        error_msg = f"[获取作业执行状态] 作业: {self.job_instance_id}, 执行状态为空"
-                    for step in step_instance_status:
-                        if step["step_instance_id"] == self.step_instance_id:
-                            self.ip_status = step.get("step_ip_result_list", [])
+                result = JobApi.get_job_instance_status(params=params, request_cookies=False)
+                if not result.get("finished"):
+                    continue
+                step_instance_status = result.get("step_instance_list", [])
+                if not step_instance_status:
+                    error_msg = f"[获取作业执行状态] 作业: {self.job_instance_id}, 执行状态为空"
+                for step in step_instance_status:
+                    if step["step_instance_id"] == self.step_instance_id:
+                        self.ip_status = step.get("step_ip_result_list", [])
+                break
+
             except Exception as e:  # pylint: disable=broad-except
                 error_msg = f"[获取作业执行状态] 作业: {self.job_instance_id}] 报错为: {e}"
 
@@ -135,18 +138,12 @@ class AgentChecker(Checker):
             return
         params = {
             "bk_biz_id": self.bk_biz_id,
-            "ip_list": [
-                {
-                    "bk_cloud_id": i["bk_cloud_id"],
-                    "ip": i["ip"],
-                }
-                for i in self.ip_status
-            ],
+            "ip_list": [{"bk_cloud_id": i["bk_cloud_id"], "ip": i["ip"]} for i in self.ip_status],
             "job_instance_id": self.job_instance_id,
             "step_instance_id": self.step_instance_id,
         }
         try:
-            result = JobApi.batch_get_job_instance_ip_log_v3(params=params, request_cookies=False)
+            result = JobApi.batch_get_job_instance_ip_log(params=params, request_cookies=False)
             self.ip_logs = result.get("script_task_logs", [])
         except Exception as e:  # pylint: disable=broad-except
             error_msg = f"[获取作业执行结果] 作业: {self.job_instance_id}, 报错为: {e}"

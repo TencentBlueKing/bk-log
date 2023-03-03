@@ -4,6 +4,9 @@ from apps.log_search.constants import TimeEnum
 from apps.utils import local
 from apps.utils.core.cache.cache_base import CacheBase
 from apps.utils.log import logger
+from apps.api import CCApi
+
+from bkm_ipchooser.constants import CommonEnum
 
 setattr(local, "host_info_cache", {})
 
@@ -13,8 +16,9 @@ class CmdbHostCache(CacheBase):
     CACHE_TIMEOUT = TimeEnum.ONE_DAY_SECOND.value
 
     @classmethod
-    def get(cls, bk_biz_id, host_ip):
-        host_id = f"{bk_biz_id}:{host_ip}"
+    def get(cls, bk_biz_id, host_key):
+        # host_key: bk_host_id or bk_cloud_id:bk_host_innerip
+        host_id = f"{bk_biz_id}:{host_key}"
         host = local.host_info_cache.get(host_id, None)
         if host is None:
             result = cls.cache.hget(cls.CACHE_KEY, host_id)
@@ -32,20 +36,21 @@ class CmdbHostCache(CacheBase):
 
     @classmethod
     def refresh_by_biz(cls, bk_biz_id):
-        from apps.log_search.handlers.biz import BizHandler
-
-        host_info = BizHandler(bk_biz_id).get_hosts()
+        fields = CommonEnum.SIMPLE_HOST_FIELDS.value
+        params = {"bk_biz_id": bk_biz_id, "fields": fields, "no_request": True}
+        hosts_with_topo = CCApi.list_biz_hosts_topo.bulk_request(params)
         result = defaultdict(dict)
-        for host in host_info:
+        for host in hosts_with_topo:
+            cache_host = {}
+            for _host_key in fields:
+                if _host_key in host["host"]:
+                    cache_host[_host_key] = host["host"][_host_key]
+            cache_host["topo"] = host["topo"]
+            # bk_host_id作为key
+            if cache_host.get("bk_host_id"):
+                result[cache_host["bk_host_id"]] = cache_host
+            # 兼容旧数据
             result[host["host"]["bk_host_innerip"]][str(host["host"]["bk_cloud_id"])] = host
-            # 按需使用
-            for key in ["topo", "host", "app_module", "biz"]:
-                host.pop(key, None)
-            # 去除children
-            for key in ["module", "set"]:
-                for target in host.get(key, []):
-                    target.pop("children", None)
-
         return result
 
     @classmethod

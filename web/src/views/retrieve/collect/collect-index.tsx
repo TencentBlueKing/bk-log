@@ -459,13 +459,13 @@ export default class CollectIndex extends tsc<IProps> {
       visible_type,
       id,
     } = favoriteData;
-    const { host_scopes, addition, keyword, search_fields } = params;
+    const { ip_chooser, addition, keyword, search_fields } = params;
     const data = {
       name,
       group_id,
       display_fields,
       visible_type,
-      host_scopes,
+      ip_chooser,
       addition,
       keyword,
       search_fields,

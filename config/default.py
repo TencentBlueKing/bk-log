@@ -83,6 +83,7 @@ INSTALLED_APPS += (
     "apps.feature_toggle",
     "apps.log_clustering",
     "bkm_space",
+    "bkm_ipchooser",
 )
 
 # BKLOG后台接口：默认否，后台接口session不写入本地数据库
@@ -290,7 +291,10 @@ BK_PAAS_HOST = os.environ.get("BK_PAAS_HOST", "")
 # ESB API调用前辍
 BK_PAAS_INNER_HOST = os.environ.get("BK_PAAS_INNER_HOST", BK_PAAS_HOST)
 PAAS_API_HOST = os.environ.get("BK_COMPONENT_API_URL") or BK_PAAS_INNER_HOST
-BK_CC_HOST = BK_PAAS_HOST.replace("paas", "cmdb")
+if "paas" in BK_PAAS_HOST:
+    BK_CC_HOST = BK_PAAS_HOST.replace("paas", "cmdb")
+else:
+    BK_CC_HOST = "://cmdb.".join(BK_PAAS_HOST.split("://"))
 BKDATA_URL = BK_PAAS_HOST
 MONITOR_URL = ""
 BK_DOC_URL = "https://bk.tencent.com/docs/"
@@ -882,6 +886,13 @@ IS_AJAX_PLAIN_MODE = True
 # 项目空间配置
 # ===============
 BKM_SPACE_API_CLASS = "apps.log_search.models.SpaceApi"
+
+# ===============
+# IP选择器配置
+# ===============
+BKM_IPCHOOSER_BKAPI_CLASS = "apps.utils.ipchooser.BkApi"
+# 是否开启动态主机配置协议适配
+ENABLE_DHCP = bool(os.getenv("BKAPP_ENABLE_DHCP", False))
 
 
 # ==============================================================================
