@@ -95,7 +95,7 @@
                 <div class="specify-box" v-if="isSelectorHaveValue(configItem.container)">
                   <template
                     v-for="([speKey, speValue], speIndex) in Object.entries(configItem.container)">
-                    <div class="specify-container" v-if="speValue" :key="speIndex">
+                    <div class="specify-container" v-if="speValue" :key="speIndex" v-bk-overflow-tips>
                       <span>{{specifyName[speKey]}}</span> : <span>{{speValue}}</span>
                     </div>
                   </template>
@@ -110,11 +110,11 @@
                     <div class="specify-box"
                          v-for="(matchItem, matchKey) of labItem"
                          :key="`${labKey}_${matchKey}`">
-                      <div class="specify-container justify-bt">
+                      <div class="specify-container justify-bt" v-bk-overflow-tips>
                         <span>{{matchItem.key}}</span>
                         <div class="operator">{{matchItem.operator}}</div>
                       </div>
-                      <div class="specify-container">
+                      <div class="specify-container" v-bk-overflow-tips>
                         <span>{{matchItem.value}}</span>
                       </div>
                     </div>
@@ -222,11 +222,11 @@
           <div>
             <div v-for="(extraItem, extraIndex) in extraLabelList" :key="extraIndex">
               <div class="specify-box">
-                <div class="specify-container justify-bt">
+                <div class="specify-container justify-bt" v-bk-overflow-tips>
                   <span>{{extraItem.key}}</span>
                   <div class="operator">=</div>
                 </div>
-                <div class="specify-container">
+                <div class="specify-container" v-bk-overflow-tips>
                   <span>{{extraItem.value}}</span>
                 </div>
               </div>

@@ -341,6 +341,7 @@
                     <div class="specify-box">
                       <div
                         class="specify-container"
+                        v-bk-overflow-tips
                         v-for="([speKey, speValue], speIndex) in Object.entries(conItem.container)"
                         :key="speIndex">
                         <span v-if="speValue">
@@ -362,11 +363,11 @@
                       <div class="specify-box"
                            v-for="(matchItem, matchKey) of labItem"
                            :key="`${labKey}_${matchKey}`">
-                        <div class="specify-container justify-bt">
+                        <div class="specify-container justify-bt" v-bk-overflow-tips>
                           <span>{{matchItem.key}}</span>
                           <div class="operator">{{matchItem.operator}}</div>
                         </div>
-                        <div class="specify-container">
+                        <div class="specify-container" v-bk-overflow-tips>
                           <span>{{matchItem.value}}</span>
                         </div>
                       </div>
