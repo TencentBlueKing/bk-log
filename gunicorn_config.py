@@ -38,7 +38,7 @@ except ImportError:
     from apps.utils.consul import BKConsul, consul
 
 
-bind = f"{os.getenv('LAN_IP', '')}:{os.getenv('BKLOG_API_PORT', '8000')}"
+bind = f"{os.getenv('LAN_IP', '0.0.0.0')}:{os.getenv('BKLOG_API_PORT', '8000')}"
 workers = 8
 # worker_class = 'gevent'
 accesslog = "-"
