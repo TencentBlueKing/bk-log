@@ -275,7 +275,7 @@
                     </bk-button>
                   </div>
                   <span v-bk-tooltips="{ content: $t('清空'), delay: 200 }">
-                    <div class="clear-params-btn" @click="() => clearCondition()">
+                    <div class="clear-params-btn" @click="() => clearCondition('*')">
                       <bk-button data-test-id="dataQuery_button_phrasesClear"></bk-button>
                       <span class="log-icon icon-brush"></span>
                     </div>
@@ -665,7 +665,7 @@ export default {
       this.$store.commit('updateIndexId', val);
       this.retrieveSearchNumber = 0; // 切换索引集 检索次数设置为0;
       val && this.requestSearchHistory(val);
-      this.clearCondition(false);
+      this.clearCondition('*', false);
     },
     spaceUid: {
       async handler() {
@@ -1075,9 +1075,9 @@ export default {
      * @param {String} clearStr 检索keywords
      * @param {Boolean} isRetrieveLog 是否检索表格
      */
-    clearCondition(isRetrieveLog = true) {
+    clearCondition(clearStr = '*', isRetrieveLog = true) {
       Object.assign(this.retrieveParams, {
-        keyword: '',
+        keyword: this.isSqlSearchType ? clearStr : this.retrieveParams.keyword, // 若是表单模式的清空则不删除keyword
         // host_scopes: {
         //   modules: [],
         //   ips: '',
@@ -1912,7 +1912,7 @@ export default {
         this.activeFavorite = {};
         this.isSqlSearchType = true;
         this.isFavoriteSearch = false;
-        this.clearCondition();
+        this.clearCondition('*');
         return;
       }
       const data = deepClone(value);
