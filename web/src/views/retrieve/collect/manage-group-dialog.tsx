@@ -40,6 +40,7 @@ import FingerSelectColumn from '../result-table-panel/log-clustering/components/
 import ManageInput from './component/manage-input';
 import $http from '../../../api';
 import { deepClone, random, formatDate } from '../../../common/util';
+import EmptyStatus from '@/components/empty-status';
 import './manage-group-dialog.scss';
 import jsCookie from 'js-cookie';
 
@@ -124,6 +125,7 @@ export default class GroupDialog extends tsc<IProps> {
   positionTop = 0;
   isCannotValueChange = false; // 用于分组时不进行数据更新
   maxHeight = 300;
+  emptyType = 'empty';
   tippyOption = {
     trigger: 'click',
     interactive: true,
@@ -245,10 +247,11 @@ export default class GroupDialog extends tsc<IProps> {
     this.tableLoading = true;
     let searchList;
     if (this.searchValue !== '') {
-      searchList = this.operateTableList.filter(item => item.name.includes(this.searchValue),
-      );
+      searchList = this.operateTableList.filter(item => item.name.includes(this.searchValue));
+      this.emptyType = 'search-empty';
     } else {
       searchList = this.operateTableList;
+      this.emptyType = 'empty';
     }
     setTimeout(() => {
       this.tableLoading = false;
@@ -256,6 +259,19 @@ export default class GroupDialog extends tsc<IProps> {
       this.searchAfterList = searchList;
       this.selectFavoriteList = [];
     }, 500);
+  }
+  handleOperation(type) {
+    if (type === 'clear-filter') {
+      this.searchValue = '';
+      this.handleSearchFilter();
+      return;
+    }
+
+    if (type === 'refresh') {
+      this.emptyType = 'empty';
+      this.getFavoriteList();
+      return;
+    }
   }
   handleInputSearchFavorite() {
     if (this.searchValue === '') this.handleSearchFilter();
@@ -318,6 +334,7 @@ export default class GroupDialog extends tsc<IProps> {
       this.operateTableList = initList;
       this.searchAfterList = initList;
     } catch (error) {
+      this.emptyType = '500';
     } finally {
       this.tableLoading = false;
       this.handleSearchFilter();
@@ -417,7 +434,8 @@ export default class GroupDialog extends tsc<IProps> {
   /** 单独修改组 */
   handleChangeGroup(row) {
     const visible_type = row.group_id === this.privateGroupID ? 'private' : 'public';
-    this.operateListChange(row, { visible_type });
+    const groupName = this.groupList.find(item => item.group_id === row.group_id).group_name;
+    this.operateListChange(row, { visible_type, group_name: groupName });
   }
   /** 用户操作 */
   operateListChange(row, operateObj = {}) {
@@ -655,6 +673,9 @@ export default class GroupDialog extends tsc<IProps> {
           ext-popover-cls="add-new-page-container"
           on-change={() => this.handleChangeGroup(row)}
         >
+          <div slot="trigger">
+            <span class="overflow-tips" style="padding: 0 10px;" v-bk-overflow-tips>{row.group_name}</span>
+          </div>
           {row[
             row.visible_type === 'private'
               ? 'group_option_private'
@@ -714,7 +735,7 @@ export default class GroupDialog extends tsc<IProps> {
           searchable
           multiple
           display-tag
-          placeholder={' '}
+          placeholder={this.$t('未设置')}
           clearable={false}
           on-change={nVal => this.handleChangeSearchList(row, nVal)}
           on-toggle={status => this.handleClickFieldsList(row, status)}
@@ -871,6 +892,11 @@ export default class GroupDialog extends tsc<IProps> {
               label={this.$t('变更人')}
               prop={'updated_by'}
               key={'column_update_by'}
+              scopedSlots={{
+                default: ({ row }) => [
+                  <span class="overflow-tips" v-bk-overflow-tips>{row.updated_by}</span>,
+                ],
+              }}
               filters={this.updateSourceFilters}
               filter-multiple={false}
               filter-method={this.sourceFilterMethod}
@@ -884,7 +910,7 @@ export default class GroupDialog extends tsc<IProps> {
               key={'column_update_time'}
               scopedSlots={{
                 default: ({ row }) => [
-                  <span>{formatDate(row.updated_at)}</span>,
+                  <span class="overflow-tips" v-bk-overflow-tips>{formatDate(row.updated_at)}</span>,
                 ],
               }}
             ></TableColumn>
@@ -917,6 +943,10 @@ export default class GroupDialog extends tsc<IProps> {
               on-setting-change={this.handleSettingChange}
             ></TableSettingContent>
           </TableColumn>
+
+          <div slot="empty">
+            <EmptyStatus emptyType={this.emptyType} onOperation={this.handleOperation} />
+          </div>
         </Table>
       </Dialog>
     );

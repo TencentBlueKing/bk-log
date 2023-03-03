@@ -76,6 +76,9 @@
             {{ (row.duration / 1000).toFixed(3) }}
           </template>
         </bk-table-column>
+        <div slot="empty">
+          <empty-status empty-type="empty" />
+        </div>
       </bk-table>
     </section>
   </div>
@@ -86,11 +89,13 @@ import { formatDate } from '@/common/util';
 import ChartComponent from './chart-component';
 import TimeRange from '@/components/time-range/time-range';
 import { handleTransformToTimestamp } from '@/components/time-range/utils';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   components: {
     ChartComponent,
     TimeRange,
+    EmptyStatus,
   },
   props: {
     indexSetId: {

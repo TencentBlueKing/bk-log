@@ -177,7 +177,7 @@
           </bk-form-item>
         </div>
         <div :class="['row-container', 'second',showType === 'horizontal' && 'pl115']">
-          <i18n path="最多匹配{0}行，最大耗时{1}秒">
+          <i18n path="最多匹配{0}行，最大耗时{1}秒" class="i18n-style">
             <bk-form-item :rules="rules.maxLine" property="params.multiline_max_lines">
               <bk-input
                 v-model="subFormData.params.multiline_max_lines"
@@ -660,6 +660,11 @@ export default {
     width: 184px;
     height: 32px;
   }
+}
+
+.i18n-style {
+  display: flex;
+  align-items: center;
 }
 
 .filter-title {

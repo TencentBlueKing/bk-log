@@ -458,7 +458,7 @@ export default {
           data,
         });
         if (this.activeFieldTab === 'sort') {
-          this.$emit('shouldRetrieve', undefined, true, false);
+          this.$emit('shouldRetrieve', undefined, false); // 不请求图表
         }
       } catch (error) {} finally {
         if (!this.isConfirmSubmit) this.initRequestConfigListShow();
