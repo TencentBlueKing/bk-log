@@ -100,16 +100,21 @@
         </bk-checkbox-group>
       </template>
       <div class="match-empty" v-else>
-        <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-        <p>{{!isLabel ? $t('请添加表达式') : $t('请添加标签')}}</p>
+        <empty-status empty-type="empty" :show-text="false">
+          <p>{{!isLabel ? $t('请添加表达式') : $t('请添加标签')}}</p>
+        </empty-status>
       </div>
     </div>
   </div>
 </template>
 <script>
 import { copyMessage, random } from '@/common/util';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
+  components: {
+    EmptyStatus,
+  },
   props: {
     matchLabelOption: {
       type: Array,
