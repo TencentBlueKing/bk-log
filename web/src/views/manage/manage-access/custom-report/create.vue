@@ -67,7 +67,7 @@
           required
           :label="$t('数据类型')"
           :property="'name'">
-          <div style="margin-top: -4px">
+          <div style="margin-top: -4px; min-width: 500px;">
             <div class="bk-button-group">
               <bk-button
                 v-for=" (item,index) of globalsData.databus_custom"

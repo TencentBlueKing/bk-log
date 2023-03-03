@@ -225,15 +225,13 @@
       </template>
 
       <div slot="empty">
-        <div class="empty-text" v-if="!clusterSwitch || !configData.extra.signature_switch">
-          <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-          <p>{{getLeaveText}}</p>
-          <span class="empty-leave" @click="handleLeaveCurrent">{{$t('去设置')}}</span>
-        </div>
-        <div class="empty-text" v-if="fingerList.length === 0 && configData.extra.signature_switch">
-          <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-          <p>{{$t('暂无数据')}}</p>
-        </div>
+        <empty-status empty-type="empty" :show-text="false">
+          <div class="empty-text" v-if="!clusterSwitch || !configData.extra.signature_switch">
+            <p>{{getLeaveText}}</p>
+            <span class="empty-leave" @click="handleLeaveCurrent">{{$t('去设置')}}</span>
+          </div>
+          <p v-if="fingerList.length === 0 && configData.extra.signature_switch">{{$t('暂无数据')}}</p>
+        </empty-status>
       </div>
     </bk-table>
   </div>
@@ -245,12 +243,14 @@ import ClusteringLoader from '@/skeleton/clustering-loader';
 import fingerSelectColumn from './components/finger-select-column';
 import { copyMessage } from '@/common/util';
 import TextHighlight from 'vue-text-highlight';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   components: {
     ClusterEventPopover,
     ClusteringLoader,
     TextHighlight,
+    EmptyStatus,
   },
   props: {
     fingerList: {

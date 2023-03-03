@@ -1,4 +1,5 @@
 @import '@/scss/mixins/flex.scss';
+@import '@/scss/mixins/overflow-tips.scss';
 
 .manage-group {
   .bk-dialog-header {
@@ -270,6 +271,10 @@
       color: #979ba5;
     }
   }
+}
+
+.overflow-tips {
+  @include overflow-tips;
 }
 
 .new-group-popover {

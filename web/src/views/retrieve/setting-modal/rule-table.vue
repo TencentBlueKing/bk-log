@@ -98,8 +98,9 @@
           </vue-draggable>
         </div>
         <div v-else class="no-cluster-rule">
-          <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-          <div>{{$t('暂无聚类规则')}}</div>
+          <empty-status empty-type="empty" :show-text="false">
+            <div>{{$t('暂无聚类规则')}}</div>
+          </empty-status>
         </div>
       </div>
     </div>
@@ -215,12 +216,14 @@ import VueDraggable from 'vuedraggable';
 import RegisterColumn from '@/views/retrieve/result-comp/register-column';
 import ClusterEventPopover from '@/views/retrieve/result-table-panel/log-clustering/components/cluster-event-popover';
 import { copyMessage, base64Encode, base64Decode } from '@/common/util';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   components: {
     VueDraggable,
     ClusterEventPopover,
     RegisterColumn,
+    EmptyStatus,
   },
   props: {
     globalEditable: {

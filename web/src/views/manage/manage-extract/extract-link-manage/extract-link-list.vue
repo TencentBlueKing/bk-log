@@ -59,6 +59,9 @@
           <span class="task-operation" @click="handleDeleteStrategy(row)">{{ $t('删除') }}</span>
         </div>
       </bk-table-column>
+      <div slot="empty">
+        <empty-status :empty-type="emptyType" @operation="handleOperation" />
+      </div>
     </bk-table>
   </div>
 </template>
@@ -66,9 +69,13 @@
 <script>
 import { mapGetters } from 'vuex';
 import * as authorityMap from '../../../../common/authority-map';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   name: 'ExtractLinkList',
+  components: {
+    EmptyStatus,
+  },
   data() {
     return {
       isLoading: true,
@@ -80,6 +87,7 @@ export default {
         qcloud_cos: this.$t('腾讯云链路'),
         bk_repo: this.$t('bk_repo链路'),
       },
+      emptyType: 'empty',
     };
   },
   computed: {
@@ -117,6 +125,7 @@ export default {
         this.extractLinkList = res.data;
       } catch (e) {
         console.warn(e);
+        this.emptyType = '500';
       } finally {
         this.isLoading = false;
       }
@@ -181,6 +190,13 @@ export default {
           }
         },
       });
+    },
+    handleOperation(type) {
+      if (type === 'refresh') {
+        this.emptyType = 'empty';
+        this.search();
+        return;
+      }
     },
   },
 };

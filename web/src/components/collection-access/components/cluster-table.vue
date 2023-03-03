@@ -76,10 +76,13 @@
       </template>
       <template v-else>
         <div class="noData-container">
-          <div class="noData-message">
-            <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-            <p class="empty-message">{{ tableShowType ? $t('当前还没有共享集群，请联系平台管理员提供') : $t('当前还没有业务独享集群，快去创建吧')}}</p>
-            <p v-if="!tableShowType" class="button-text" @click="handleCreateCluster">{{$t('创建集群')}}</p>
+          <div slot="empty">
+            <empty-status empty-type="empty" :show-text="false">
+              <div class="noData-message">
+                <p class="empty-message">{{ tableShowType ? $t('当前还没有共享集群，请联系平台管理员提供') : $t('当前还没有业务独享集群，快去创建吧')}}</p>
+                <p v-if="!tableShowType" class="button-text" @click="handleCreateCluster">{{$t('创建集群')}}</p>
+              </div>
+            </empty-status>
           </div>
         </div>
       </template>
@@ -89,8 +92,12 @@
 <script>
 import { formatFileSize } from '../../../common/util';
 import { mapGetters } from 'vuex';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
+  components: {
+    EmptyStatus,
+  },
   props: {
     tableList: {
       type: Array,
