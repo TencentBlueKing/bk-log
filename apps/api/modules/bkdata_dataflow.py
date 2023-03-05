@@ -34,7 +34,7 @@ class _BkDataDataFlowApi:
             url=DATAFLOW_APIGATEWAY_ROOT + "{flow_id}/export/",
             url_keys=["flow_id"],
             module=self.MODULE,
-            description=_("导出flow"),
+            description="导出flow",
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
         )
@@ -42,7 +42,7 @@ class _BkDataDataFlowApi:
             method="POST",
             url=DATAFLOW_APIGATEWAY_ROOT + "create/",
             module=self.MODULE,
-            description=_("创建flow"),
+            description="创建flow",
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
             default_timeout=300,
@@ -52,7 +52,7 @@ class _BkDataDataFlowApi:
             url=DATAFLOW_APIGATEWAY_ROOT + "{flow_id}/start/",
             module=self.MODULE,
             url_keys=["flow_id"],
-            description=_("启动flow"),
+            description="启动flow",
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
         )
@@ -61,7 +61,7 @@ class _BkDataDataFlowApi:
             url=DATAFLOW_APIGATEWAY_ROOT + "{flow_id}/stop/",
             module=self.MODULE,
             url_keys=["flow_id"],
-            description=_("停止flow"),
+            description="停止flow",
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
         )
@@ -70,7 +70,7 @@ class _BkDataDataFlowApi:
             url=DATAFLOW_APIGATEWAY_ROOT + "{flow_id}/restart/",
             module=self.MODULE,
             url_keys=["flow_id"],
-            description=_("重启flow"),
+            description="重启flow",
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
         )
@@ -79,7 +79,7 @@ class _BkDataDataFlowApi:
             url=DATAFLOW_APIGATEWAY_ROOT + "{flow_id}/graph/",
             module=self.MODULE,
             url_keys=["flow_id"],
-            description=_("获取DataFlow图信息"),
+            description="获取DataFlow图信息",
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
         )
@@ -88,7 +88,7 @@ class _BkDataDataFlowApi:
             url=DATAFLOW_APIGATEWAY_ROOT + "{flow_id}/nodes/",
             module=self.MODULE,
             url_keys=["flow_id"],
-            description=_("新增节点"),
+            description="新增节点",
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
         )
@@ -97,7 +97,7 @@ class _BkDataDataFlowApi:
             url=DATAFLOW_APIGATEWAY_ROOT + "{flow_id}/nodes/{node_id}/",
             module=self.MODULE,
             url_keys=["flow_id", "node_id"],
-            description=_("更新节点"),
+            description="更新节点",
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
         )
@@ -106,7 +106,7 @@ class _BkDataDataFlowApi:
             url=DATAFLOW_APIGATEWAY_ROOT + "{flow_id}/latest_deploy_data/",
             module=self.MODULE,
             url_keys=["flow_id"],
-            description=_("获取flow最近部署信息"),
+            description="获取flow最近部署信息",
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
         )
@@ -115,7 +115,7 @@ class _BkDataDataFlowApi:
             url=DATAFLOW_APIGATEWAY_ROOT + "{flow_id}/nodes/{node_id}/",
             module=self.MODULE,
             url_keys=["flow_id", "node_id"],
-            description=_("部分更新节点"),
+            description="部分更新节点",
             before_request=add_esb_info_before_request_for_bkdata_user,
             after_request=None,
         )

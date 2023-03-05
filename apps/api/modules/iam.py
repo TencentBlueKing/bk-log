@@ -38,7 +38,7 @@ class _IAMApi(object):
             method="POST",
             url=IAM_APIGATEWAY_ROOT_V2 + "authorization/batch_instance/",
             module=self.MODULE,
-            description=_("批量资源实例授权/回收"),
+            description="批量资源实例授权/回收",
             default_return_value=None,
             before_request=add_esb_info_before_request,
         )
@@ -46,7 +46,7 @@ class _IAMApi(object):
             method="POST",
             url=IAM_APIGATEWAY_ROOT_V2 + "authorization/batch_path/",
             module=self.MODULE,
-            description=_("批量资源拓扑授权/回收"),
+            description="批量资源拓扑授权/回收",
             default_return_value=None,
             before_request=add_esb_info_before_request,
         )
@@ -55,7 +55,7 @@ class _IAMApi(object):
             url=IAM_APIGATEWAY_ROOT_V2 + "share/systems/{system_id}/",
             module=self.MODULE,
             url_keys=["system_id"],
-            description=_("系统共享信息"),
+            description="系统共享信息",
             default_return_value=None,
             before_request=add_esb_info_before_request,
         )

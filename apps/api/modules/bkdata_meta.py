@@ -35,7 +35,7 @@ class _BkDataMetaApi:
             url=META_APIGATEWAY_ROOT + "result_tables/",
             module=self.MODULE,
             primary_key="result_table_id",
-            description=_("结果表操作"),
+            description="结果表操作",
             default_return_value=None,
             before_request=add_esb_info_before_request_for_bkdata_user,
             custom_config={

@@ -60,7 +60,7 @@ class _BcsCcApi(object):
             url=bcs_cc_url + "v1/clusters/{cluster_id}/cluster_config/",
             module=self.MODULE,
             url_keys=["cluster_id"],
-            description=_("根据集群id获取集群信息"),
+            description="根据集群id获取集群信息",
             header_keys=["X-BKAPI-AUTHORIZATION"],
             before_request=bcs_cc_before_request,
             after_request=bcs_get_cluster_config_after,
@@ -70,7 +70,7 @@ class _BcsCcApi(object):
             url=bcs_cc_url + "clusters/{cluster_id}/",
             module=self.MODULE,
             url_keys=["cluster_id"],
-            description=_("根据集群id获取集群信息"),
+            description="根据集群id获取集群信息",
             header_keys=["X-BKAPI-AUTHORIZATION"],
             before_request=bcs_cc_before_request,
         )
@@ -102,7 +102,7 @@ class _BcsCcApi(object):
             url=bcs_cc_url + "shared_clusters/{cluster_id}/",
             module=self.MODULE,
             url_keys=["cluster_id"],
-            description=_("获取公共集群下的命名空间信息"),
+            description="获取公共集群下的命名空间信息",
             header_keys=["X-BKAPI-AUTHORIZATION"],
             before_request=bcs_cc_before_request,
         )

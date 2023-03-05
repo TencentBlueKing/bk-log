@@ -60,7 +60,7 @@ class _BKLoginApi:
             method="GET",
             url=USER_MANAGE_APIGATEWAY_ROOT + "retrieve_user/",
             module=self.MODULE,
-            description=_("获取单个用户"),
+            description="获取单个用户",
             before_request=get_user_before,
             after_request=get_user_after,
         )

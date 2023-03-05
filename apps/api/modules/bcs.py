@@ -20,7 +20,6 @@ the project delivered to anyone in the future.
 """
 
 from django.conf import settings
-from django.utils.translation import ugettext_lazy as _
 
 from apps.api.base import DataAPI
 
@@ -43,7 +42,7 @@ class _BcsApi:
             method="GET",
             url=f"{bcs_apigateway_host}bcsapi/v4/clustermanager/v1/cluster",
             module=self.MODULE,
-            description=_("根据项目id获取集群信息"),
+            description="根据项目id获取集群信息",
             header_keys=["Authorization"],
             before_request=bcs_before_request,
         )
