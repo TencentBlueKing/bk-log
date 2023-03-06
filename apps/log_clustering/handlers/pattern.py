@@ -113,7 +113,7 @@ class PatternHandler:
                     "is_new_class": signature in new_class,
                     "year_on_year_count": year_on_year_compare,
                     "year_on_year_percentage": self._year_on_year_calculate_percentage(count, year_on_year_compare),
-                    "group": str(pattern.get("group", "")).split("|"),
+                    "group": str(pattern.get("group", "")).split("|") if pattern.get("group") else [],
                     "monitor": SignatureStrategySettings.get_monitor_config(
                         signature=signature, index_set_id=self._index_set_id, pattern_level=self._pattern_level
                     ),
