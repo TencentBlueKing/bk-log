@@ -51,34 +51,35 @@
         :limit-list="pagination.limitList"
         @page-change="handlePageChange"
         @page-limit-change="handleLimitChange">
-        <bk-table-column :label="$t('索引集名称')" min-width="200">
+        <bk-table-column :label="$t('索引集名称')" :render-header="$renderHeader" min-width="200">
           <template slot-scope="props">
             {{ props.row.index_set_name }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('归档项')">
+        <bk-table-column :label="$t('归档项')" :render-header="$renderHeader">
           <template slot-scope="props">
             {{ props.row.instance_name }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('时间范围')" min-width="240">
+        <bk-table-column :label="$t('时间范围')" :render-header="$renderHeader" min-width="240">
           <template slot-scope="props">
             {{ `${props.row.start_time} - ${props.row.end_time}` }}
           </template>
         </bk-table-column>
         <bk-table-column
           :label="$t('资源占用')"
+          :render-header="$renderHeader"
           class-name="filter-column">
           <template slot-scope="props">
             {{ getFileSize(props.row.total_store_size) }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('过期时间')" min-width="120">
+        <bk-table-column :label="$t('过期时间')" :render-header="$renderHeader" min-width="120">
           <template slot-scope="props">
             {{ props.row.expired_time }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('回溯状态')">
+        <bk-table-column :label="$t('回溯状态')" :render-header="$renderHeader">
           <template slot-scope="props">
             <div class="restore-status">
               <span :class="`status-icon is-${props.row.status}`"></span>
@@ -86,12 +87,12 @@
             </div>
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('是否过期')">
+        <bk-table-column :label="$t('是否过期')" :render-header="$renderHeader">
           <template slot-scope="props">
             {{ props.row.is_expired ? $t('是') : $t('否') }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('操作')" width="180">
+        <bk-table-column :label="$t('操作')" :render-header="$renderHeader" width="180">
           <div class="restore-table-operate" slot-scope="props">
             <!-- 检索 -->
             <log-button

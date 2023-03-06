@@ -64,35 +64,36 @@
             {{ props.row.archive_config_id }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('采集项名称')">
+        <bk-table-column :label="$t('采集项名称')" :render-header="$renderHeader">
           <template slot-scope="props">
             {{ props.row.instance_name }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('过期设置')">
+        <bk-table-column :label="$t('过期设置')" :render-header="$renderHeader">
           <template slot-scope="props">
             <!-- `${props.row.snapshot_days}天` -->
             {{ getExpiredDays(props) }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('总大小')">
+        <bk-table-column :label="$t('总大小')" :render-header="$renderHeader">
           <template slot-scope="props">
             {{ getFileSize(props.row.store_size) }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('索引数量')">
+        <bk-table-column :label="$t('索引数量')" :render-header="$renderHeader">
           <template slot-scope="props">
             {{ props.row.index_count }}
           </template>
         </bk-table-column>
         <bk-table-column
           :label="$t('归档仓库')"
+          :render-header="$renderHeader"
           prop="target_snapshot_repository_name">
           <template slot-scope="props">
             {{ props.row.target_snapshot_repository_name }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('操作')" width="200">
+        <bk-table-column :label="$t('操作')" :render-header="$renderHeader" width="200">
           <div class="collect-table-operate" slot-scope="props">
             <!-- 回溯 -->
             <bk-button

@@ -34,6 +34,7 @@ import 'vue-json-pretty/lib/styles.css';
 import cursor from '@/directives/cursor';
 import LogButton from '@/components/log-button';
 import docsLinkMixin from '@/mixins/docs-link-mixin';
+import { renderHeader } from './common/util';
 import './common/global';
 import './static/icons/log-icons.css';
 // 接入OTLP
@@ -54,6 +55,7 @@ registerInstrumentations({
   )],
 });
 const tracer = provider.getTracer('bk-log');
+Vue.prototype.$renderHeader = renderHeader;
 Vue.prototype.tracer = tracer;
 
 try {

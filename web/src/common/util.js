@@ -703,6 +703,10 @@ export const deepClone = (obj, hash = new WeakMap()) => {
   return Object.assign(result, ...Object.keys(obj).map(key => ({ [key]: deepClone(obj[key], hash) })));
 };
 
+/**
+ * @desc: 清空bk-table表头的过滤条件
+ * @param {HTMLElement} refInstance ref实例
+ */
 export const clearTableFilter =  (refInstance) => {
   if (refInstance.$refs.tableHeader.filterPanels) {
     const filterPanels = refInstance.$refs.tableHeader.filterPanels;
@@ -710,6 +714,13 @@ export const clearTableFilter =  (refInstance) => {
       filterPanels[key].handleReset();
     };
   }
+};
+
+/**
+ * @desc: 适合未作处理的bk-table表头添加title
+ */
+export const renderHeader = (h, { column }) => {
+  return h('span', { attrs: { title: column.label } }, column.label);
 };
 
 /**
