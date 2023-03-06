@@ -82,6 +82,7 @@ export default {
   },
   methods: {
     async getSearchFieldsList(keyword, fieldsList = []) {
+      if (!keyword) keyword = '*';
       this.loading = true;
       try {
         const res = await this.$http.request('favorite/getSearchFields', {
