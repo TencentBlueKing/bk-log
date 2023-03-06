@@ -52,23 +52,24 @@
         @filter-change="handleFilterChange"
         @page-change="handlePageChange"
         @page-limit-change="handleLimitChange">
-        <bk-table-column :label="$t('ES集群ID')" width="120">
+        <bk-table-column :label="$t('ES集群ID')" :render-header="$renderHeader" width="120">
           <template slot-scope="props">
             {{ props.row.cluster_id }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('仓库名称')">
+        <bk-table-column :label="$t('仓库名称')" :render-header="$renderHeader">
           <template slot-scope="props">
             {{ props.row.repository_name }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('ES集群')">
+        <bk-table-column :label="$t('ES集群')" :render-header="$renderHeader">
           <template slot-scope="props">
             {{ props.row.cluster_name }}
           </template>
         </bk-table-column>
         <bk-table-column
           :label="$t('仓库类型')"
+          :render-header="$renderHeader"
           prop="type"
           class-name="filter-column"
           column-key="type"
@@ -80,6 +81,7 @@
         </bk-table-column>
         <bk-table-column
           :label="$t('来源')"
+          :render-header="$renderHeader"
           prop="cluster_source_type"
           class-name="filter-column"
           column-key="cluster_source_type"
@@ -89,17 +91,17 @@
             {{ props.row.cluster_source_name }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('创建人')">
+        <bk-table-column :label="$t('创建人')" :render-header="$renderHeader">
           <template slot-scope="props">
             {{ props.row.creator }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('创建时间')">
+        <bk-table-column :label="$t('创建时间')" :render-header="$renderHeader">
           <template slot-scope="props">
             {{ props.row.create_time }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('操作')" width="160">
+        <bk-table-column :label="$t('操作')" :render-header="$renderHeader" width="160">
           <div class="repository-table-operate" slot-scope="props">
             <!-- 编辑 -->
             <!-- <bk-button

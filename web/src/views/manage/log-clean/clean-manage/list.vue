@@ -61,18 +61,19 @@
         @filter-change="handleFilterChange"
         @page-change="handlePageChange"
         @page-limit-change="handleLimitChange">
-        <bk-table-column :label="$t('采集项名称')">
+        <bk-table-column :label="$t('采集项名称')" :render-header="$renderHeader">
           <template slot-scope="props">
             {{ props.row.collector_config_name }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('存储索引')">
+        <bk-table-column :label="$t('存储索引')" :render-header="$renderHeader">
           <template slot-scope="props">
             {{ props.row.result_table_id }}
           </template>
         </bk-table-column>
         <bk-table-column
           :label="$t('格式化方法')"
+          :render-header="$renderHeader"
           prop="etl_config"
           class-name="filter-column"
           column-key="etl_config"
@@ -82,17 +83,17 @@
             {{ getFormatName(props.row) }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('更新人')">
+        <bk-table-column :label="$t('更新人')" :render-header="$renderHeader">
           <template slot-scope="props">
             {{ props.row.updated_by }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('更新时间')">
+        <bk-table-column :label="$t('更新时间')" :render-header="$renderHeader">
           <template slot-scope="props">
             {{ props.row.updated_at }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('操作')" width="200">
+        <bk-table-column :label="$t('操作')" :render-header="$renderHeader" width="200">
           <div class="collect-table-operate" slot-scope="props">
             <!-- bkdata_auth_url不为null则表示需要跳转计算平台检索 -->
             <!-- 高级清洗授权 -->

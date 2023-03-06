@@ -138,10 +138,10 @@
         <div class="custom-content">
           <ul class="host-list" ref="hostListRef">
             <li class="host-item header">
-              <div class="min-box dir-container">{{ $t('挂载目录') }}</div>
-              <div class="min-box id-container">{{ $t('主机云区域ID') }}</div>
-              <div class="min-box ip-container">{{ $t('主机IP') }}</div>
-              <div class="min-box operation-container">{{ $t('操作') }}</div>
+              <div class="min-box dir-container" :title="$t('挂载目录')">{{ $t('挂载目录') }}</div>
+              <div class="min-box id-container" :title="$t('主机云区域ID')">{{ $t('主机云区域ID') }}</div>
+              <div class="min-box ip-container" :title="$t('主机IP')">{{ $t('主机IP') }}</div>
+              <div class="min-box operation-container" :title="$t('操作')">{{ $t('操作') }}</div>
             </li>
             <li
               class="host-item"
