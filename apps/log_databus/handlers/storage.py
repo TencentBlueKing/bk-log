@@ -906,21 +906,27 @@ class StorageHandler(object):
         self, domain_name: str, port: int, username="", password="", version_info=False, schema=DEFAULT_ES_SCHEMA
     ) -> Union[bool, tuple]:
         # 对host和port的连通性进行验证
-        cs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        es_address = (str(domain_name), int(port))
-        cs.settimeout(2)
+        es_address: tuple = (str(domain_name), int(port))
         try:
-            status = cs.connect_ex(es_address)
-            # this status is returnback from tcpserver
-            if status != 0:
-                raise StorageConnectInfoException(
-                    StorageConnectInfoException.MESSAGE.format(info=_("IP or PORT can not be reached"))
-                )
+            # 先尝试ipv4
+            cs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            cs.settimeout(2)
+            status: int = cs.connect_ex(es_address)
+        except socket.gaierror:  # ip协议不匹配时, 会抛出gaierror
+            # ipv4失败，尝试ipv6
+            cs = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+            cs.settimeout(2)
+            status: int = cs.connect_ex(es_address)
         except Exception as e:  # pylint: disable=broad-except
             raise StorageConnectInfoException(
                 StorageConnectInfoException.MESSAGE.format(info=_("IP or PORT can not be reached, %s" % e))
             )
+        if status != 0:
+            raise StorageConnectInfoException(
+                StorageConnectInfoException.MESSAGE.format(info=_("IP or PORT can not be reached"))
+            )
         cs.close()
+        # 利用es_client对用户名和密码的连通性进行验证
         http_auth = (username, password) if username and password else None
         es_client = Elasticsearch(
             [domain_name], http_auth=http_auth, scheme=schema, port=port, sniffer_timeout=600, verify_certs=False
