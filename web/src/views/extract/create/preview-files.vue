@@ -62,7 +62,13 @@
         :height="360"
         @selection-change="handleSelect">
         <bk-table-column type="selection" width="60" :selectable="row => row.size !== '0'"></bk-table-column>
-        <bk-table-column prop="path" :label="$t('文件名')" min-width="80" sortable :sort-by="['path', 'mtime', 'size']">
+        <bk-table-column
+          prop="path"
+          :label="$t('文件名')"
+          :render-header="$renderHeader"
+          min-width="80"
+          sortable
+          :sort-by="['path', 'mtime', 'size']">
           <div class="table-ceil-container" slot-scope="{ row }">
             <span
               v-if="row.size === '0'"
@@ -77,13 +83,15 @@
         <bk-table-column
           prop="mtime"
           :label="$t('最后修改时间')"
+          :render-header="$renderHeader"
           min-width="50"
           sortable
           :sort-by="['mtime', 'path', 'size']">
         </bk-table-column>
         <bk-table-column
           prop="size"
-          :label="'尺寸'"
+          :label="$t('尺寸')"
+          :render-header="$renderHeader"
           min-width="40"
           sortable
           :sort-by="['size', 'mtime', 'path']">
