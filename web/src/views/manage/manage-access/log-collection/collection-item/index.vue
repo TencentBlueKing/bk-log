@@ -63,6 +63,7 @@
         <bk-table-column
           v-if="checkcFields('bk_data_id')"
           :label="$t('数据ID')"
+          :render-header="$renderHeader"
           min-width="60">
           <template slot-scope="props">
             <span>
@@ -70,7 +71,7 @@
             </span>
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('名称')" min-width="90">
+        <bk-table-column :label="$t('名称')" min-width="90" :render-header="$renderHeader">
           <template slot-scope="props">
             <span
               class="text-active"
@@ -88,6 +89,7 @@
         <bk-table-column
           v-if="checkcFields('table_id')"
           :label="$t('存储名')"
+          :render-header="$renderHeader"
           min-width="80">
           <template slot-scope="props">
             <span
@@ -99,6 +101,7 @@
         <bk-table-column
           v-if="checkcFields('storage_cluster_name')"
           :label="$t('存储集群')"
+          :render-header="$renderHeader"
           min-width="70">
           <template slot-scope="props">
             <span :class="{ 'text-disabled': props.row.status === 'stop' }">
@@ -109,6 +112,7 @@
         <bk-table-column
           v-if="checkcFields('collector_scenario_name')"
           :label="$t('日志类型')"
+          :render-header="$renderHeader"
           min-width="50"
           class-name="filter-column"
           prop="collector_scenario_id"
@@ -125,6 +129,7 @@
         <bk-table-column
           v-if="checkcFields('category_name')"
           :label="$t('数据类型')"
+          :render-header="$renderHeader"
           min-width="50"
           class-name="filter-column"
           prop="category_id"
@@ -141,6 +146,7 @@
         <bk-table-column
           v-if="checkcFields('retention')"
           :label="$t('过期时间')"
+          :render-header="$renderHeader"
           min-width="50">
           <template slot-scope="props">
             <span :class="{ 'text-disabled': props.row.status === 'stop' }">
@@ -152,6 +158,7 @@
           v-if="checkcFields('es_host_state')"
           :class-name="'td-status'"
           :label="$t('采集状态')"
+          :render-header="$renderHeader"
           min-width="55">
           <template slot-scope="props">
             <bk-popover placement="bottom" :always="true" v-if="needGuide && props.$index === 0">
@@ -228,6 +235,7 @@
         </bk-table-column>
         <bk-table-column
           v-if="checkcFields('updated_by')"
+          :render-header="$renderHeader"
           :label="$t('更新人')"
           min-width="55">
           <template slot-scope="props">
@@ -236,13 +244,18 @@
         </bk-table-column>
         <bk-table-column
           v-if="checkcFields('updated_at')"
+          :render-header="$renderHeader"
           :label="$t('更新时间')"
           width="190">
           <template slot-scope="props">
             <span :class="{ 'text-disabled': props.row.status === 'stop' }">{{ props.row.updated_at }}</span>
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('操作')" class-name="operate-column" width="160">
+        <bk-table-column
+          :label="$t('操作')"
+          :render-header="$renderHeader"
+          class-name="operate-column"
+          width="160">
           <div class="collect-table-operate" slot-scope="props">
             <!-- 检索 -->
             <!-- 启用状态下 且存在 index_set_id 才能检索 -->

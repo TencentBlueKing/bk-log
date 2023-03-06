@@ -89,7 +89,11 @@
             </template>
             <!-- </bk-table-column> -->
             <!-- 字段名 -->
-            <bk-table-column :label="$t('字段名')" :resizable="false" min-width="100">
+            <bk-table-column
+              :label="$t('字段名')"
+              :render-header="$renderHeader"
+              :resizable="false"
+              min-width="100">
               <template slot-scope="props">
                 <div v-if="isPreviewMode" class="overflow-tips" v-bk-overflow-tips>
                   <span>{{ props.row.field_name }}</span>
@@ -149,7 +153,11 @@
               </template>
             </bk-table-column>
             <!-- 类型 -->
-            <bk-table-column :label="$t('类型')" :resizable="false" min-width="100">
+            <bk-table-column
+              :label="$t('类型')"
+              :render-header="$renderHeader"
+              :resizable="false"
+              min-width="100">
               <template slot-scope="props">
                 <div v-if="isPreviewMode" class="overflow-tips" v-bk-overflow-tips>
                   <span>{{ props.row.field_type }}</span>
@@ -231,7 +239,12 @@
               </template>
             </bk-table-column>
             <!-- 时间 -->
-            <bk-table-column :label="$t('时间')" align="center" :resizable="false" width="60">
+            <bk-table-column
+              :label="$t('时间')"
+              :render-header="$renderHeader"
+              align="center"
+              :resizable="false"
+              width="60">
               <template slot-scope="props">
                 <template v-if="isPreviewMode">
                   <div class="field-date field-date-disable">
@@ -289,6 +302,7 @@
             <!-- 操作 -->
             <bk-table-column
               :label="$t('操作')"
+              :render-header="$renderHeader"
               :resizable="false"
               align="center"
               width="60"
@@ -939,7 +953,7 @@ export default {
       return h('div', {
         class: 'render-header',
       }, [
-        h('span', this.$t('重命名')),
+        h('span', { attrs: { title: this.$t('重命名') } }, this.$t('重命名')),
         h('span', this.$t('(选填)')),
         h('span', {
           class: 'icon log-icon icon-info-fill',
@@ -956,7 +970,7 @@ export default {
       return h('div', {
         class: 'render-header',
       }, [
-        h('span', this.$t('字段说明')),
+        h('span', { attrs: { title: this.$t('字段说明') } }, this.$t('字段说明')),
         h('span', this.$t('(选填)')),
       ]);
     },
@@ -971,6 +985,7 @@ export default {
       }, [
         h('span', {
           class: 'render-Participle',
+          attrs: { title: this.$t('分词') },
         }, this.$t('分词')),
       ]);
     },

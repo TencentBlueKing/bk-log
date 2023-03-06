@@ -254,7 +254,7 @@ export default {
               },
             ],
           }),
-          h('span', fieldName),
+          h('span', { attrs: { title: fieldName } }, fieldName),
         ]);
       }
     },

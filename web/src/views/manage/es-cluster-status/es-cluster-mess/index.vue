@@ -54,15 +54,17 @@
         @page-limit-change="handleLimitChange">
         <bk-table-column
           label="ID"
+          :render-header="$renderHeader"
           prop="cluster_config.cluster_id"
           min-width="60">
         </bk-table-column>
         <bk-table-column
           :label="$t('名称')"
+          :render-header="$renderHeader"
           prop="cluster_config.cluster_name"
           min-width="170">
         </bk-table-column>
-        <bk-table-column :label="$t('地址')" min-width="170">
+        <bk-table-column :label="$t('地址')" :render-header="$renderHeader" min-width="170">
           <template slot-scope="props">
             {{ props.row.cluster_config.domain_name || '--' }}
           </template>
@@ -70,6 +72,7 @@
         <bk-table-column
           v-if="checkcFields('source_type')"
           :label="$t('来源')"
+          :render-header="$renderHeader"
           prop="source_type"
           min-width="80"
           class-name="filter-column"
@@ -84,18 +87,21 @@
         <bk-table-column
           v-if="checkcFields('port')"
           :label="$t('端口')"
+          :render-header="$renderHeader"
           prop="cluster_config.port"
           min-width="80">
         </bk-table-column>
         <bk-table-column
           v-if="checkcFields('schema')"
           :label="$t('协议')"
+          :render-header="$renderHeader"
           prop="cluster_config.schema"
           min-width="80">
         </bk-table-column>
         <bk-table-column
           v-if="checkcFields('cluster_config')"
           :label="$t('连接状态')"
+          :render-header="$renderHeader"
           min-width="80"
           class-name="filter-column"
           prop="cluster_config.cluster_id"
@@ -112,6 +118,7 @@
         <bk-table-column
           v-if="checkcFields('enable_hot_warm')"
           :label="$t('冷热数据')"
+          :render-header="$renderHeader"
           min-width="80">
           <template slot-scope="{ row }">
             {{ row.cluster_config.enable_hot_warm ? $t('开') : $t('关') }}
@@ -120,6 +127,7 @@
         <bk-table-column
           v-if="checkcFields('storage_total')"
           width="90"
+          :render-header="$renderHeader"
           :label="$t('总量')">
           <template slot-scope="{ row }">
             <span>{{formatFileSize(row.storage_total)}}</span>
@@ -128,6 +136,7 @@
         <bk-table-column
           v-if="checkcFields('storage_usage')"
           width="110"
+          :render-header="$renderHeader"
           :label="$t('空闲率')">
           <template slot-scope="{ row }">
             <div class="percent">
@@ -141,18 +150,20 @@
         <bk-table-column
           v-if="checkcFields('creator')"
           :label="$t('创建人')"
+          :render-header="$renderHeader"
           prop="cluster_config.creator"
           min-width="80">
         </bk-table-column>
         <bk-table-column
           v-if="checkcFields('create_time')"
           :label="$t('创建时间')"
+          :render-header="$renderHeader"
           class-name="filter-column"
           prop="cluster_config.create_time"
           min-width="170"
           sortable>
         </bk-table-column>
-        <bk-table-column :label="$t('操作')" width="180">
+        <bk-table-column :label="$t('操作')" :render-header="$renderHeader" width="180">
           <template slot-scope="props">
             <!-- 共享集群，平台默认时 无法新建索引集 -->
             <log-button

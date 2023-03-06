@@ -51,32 +51,34 @@
       data-test-id="fromBox_table_tableBox"
       @page-change="handlePageChange"
       @page-limit-change="handlePageLimitChange">
-      <bk-table-column :label="$t('下载目标')" min-width="140">
+      <bk-table-column :label="$t('下载目标')" :render-header="$renderHeader" min-width="140">
         <div class="table-ceil-container" slot-scope="{ row }">
           <span v-bk-overflow-tips>{{ ipList(row.ip_list) }}</span>
         </div>
       </bk-table-column>
-      <bk-table-column :label="$t('文件')" min-width="240">
+      <bk-table-column :label="$t('文件')" :render-header="$renderHeader" min-width="240">
         <div class="table-ceil-container" slot-scope="{ row }">
           <span v-bk-overflow-tips>{{ row.file_path.join('; ') }}</span>
         </div>
       </bk-table-column>
       <bk-table-column
         :label="$t('创建时间')"
+        :render-header="$renderHeader"
         prop="created_at"
         min-width="120">
       </bk-table-column>
-      <bk-table-column :label="$t('备注')" min-width="120">
+      <bk-table-column :label="$t('备注')" :render-header="$renderHeader" min-width="120">
         <div class="table-ceil-container" slot-scope="{ row }">
           <span v-bk-overflow-tips>{{ row.remark || '--' }}</span>
         </div>
       </bk-table-column>
       <bk-table-column
         :label="$t('创建人')"
+        :render-header="$renderHeader"
         prop="created_by"
         min-width="100">
       </bk-table-column>
-      <bk-table-column :label="$t('任务状态')" min-width="100">
+      <bk-table-column :label="$t('任务状态')" :render-header="$renderHeader" min-width="100">
         <div
           slot-scope="{ row }"
           :class="{
@@ -92,7 +94,7 @@
             v-bk-tooltips="row.task_process_info"></span>
         </div>
       </bk-table-column>
-      <bk-table-column :label="$t('操作')" min-width="100">
+      <bk-table-column :label="$t('操作')" :render-header="$renderHeader" min-width="100">
         <div slot-scope="{ row }" class="task-operation-container">
           <span class="task-operation" @click="viewDetail(row)">{{ $t('详情') }}</span>
           <span

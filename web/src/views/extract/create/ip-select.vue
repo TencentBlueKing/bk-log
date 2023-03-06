@@ -63,8 +63,8 @@
             :empty-text="$t('暂无数据')"
             :height="400">
             <bk-table-column prop="ip" label="IP"></bk-table-column>
-            <bk-table-column prop="bk_cloud_name" :label="$t('云区域')"></bk-table-column>
-            <bk-table-column :label="$t('操作')" align="center">
+            <bk-table-column prop="bk_cloud_name" :label="$t('云区域')" :render-header="$renderHeader"></bk-table-column>
+            <bk-table-column :label="$t('操作')" :render-header="$renderHeader" align="center">
               <template slot-scope="scope">
                 <bk-button text @click="handleRemoveIp(scope)">{{$t('移除')}}</bk-button>
               </template>

@@ -58,6 +58,7 @@
           @page-limit-change="handleLimitChange">
           <bk-table-column
             :label="$t('数据ID')"
+            :render-header="$renderHeader"
             prop="collector_config_id"
             width="100">
             <template slot-scope="props">
@@ -66,51 +67,57 @@
               </span>
             </template>
           </bk-table-column>
-          <bk-table-column :label="$t('名称')" prop="collector_config_name">
+          <bk-table-column :label="$t('名称')" :render-header="$renderHeader" prop="collector_config_name">
             <template slot-scope="props">
               <span class="collector-config-name" @click="operateHandler(props.row, 'view')">
                 {{ props.row.collector_config_name || '--' }}
               </span>
             </template>
           </bk-table-column>
-          <bk-table-column :label="$t('监控对象')" prop="category_name">
+          <bk-table-column :label="$t('监控对象')" :render-header="$renderHeader" prop="category_name">
             <template slot-scope="props">
               <span>
                 {{ props.row.category_name || '--' }}
               </span>
             </template>
           </bk-table-column>
-          <bk-table-column :label="$t('数据类型')" prop="custom_name">
+          <bk-table-column :label="$t('数据类型')" :render-header="$renderHeader" prop="custom_name">
             <template slot-scope="props">
               <span>
                 {{ props.row.custom_name || '--' }}
               </span>
             </template>
           </bk-table-column>
-          <bk-table-column
-            :label="$t('过期时间')"
-            min-width="50">
+          <bk-table-column :label="$t('过期时间')" :render-header="$renderHeader" min-width="50">
             <template slot-scope="props">
               <span>
                 {{ props.row.retention ? `${props.row.retention}${$t('天')}` : '--' }}
               </span>
             </template>
           </bk-table-column>
-          <bk-table-column :label="$t('创建记录')" prop="created_at">
+          <bk-table-column :label="$t('创建记录')" :render-header="$renderHeader" prop="created_at">
             <template slot-scope="props">
               <span>
                 {{ props.row.created_at || '--' }}
               </span>
             </template>
           </bk-table-column>
-          <bk-table-column :label="$t('更新记录')" prop="updated_at" width="239">
+          <bk-table-column
+            :label="$t('更新记录')"
+            :render-header="$renderHeader"
+            prop="updated_at"
+            width="239">
             <template slot-scope="props">
               <span>
                 {{ props.row.updated_at || '--' }}
               </span>
             </template>
           </bk-table-column>
-          <bk-table-column :label="$t('操作')" width="202" class-name="operate-column">
+          <bk-table-column
+            :label="$t('操作')"
+            :render-header="$renderHeader"
+            class-name="operate-column"
+            width="202">
             <div class="collect-table-operate" slot-scope="props">
               <bk-button
                 class="king-button"
