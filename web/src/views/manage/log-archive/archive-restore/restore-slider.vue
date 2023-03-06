@@ -72,7 +72,7 @@
             property="datePickerValue">
             <bk-date-picker
               format="yyyy-MM-dd HH:mm"
-              :placeholder="'选择日期时间范围'"
+              :placeholder="$t('选择日期时间范围')"
               :type="'datetimerange'"
               :disabled="isEdit"
               v-model="formData.datePickerValue"
@@ -294,7 +294,7 @@ export default {
       const hour = date.getHours() >= 10 ? date.getHours() : `0${date.getHours()}`;
       const min = date.getMinutes() >= 10 ? date.getMinutes() : `0${date.getMinutes()}`;
       const dateStr = `${year}${month}${day}${hour}${min}`;
-      this.formData.index_set_name  = selectArchive ? `${selectArchive?.instance_name}-回溯-${dateStr}` : '';
+      this.formData.index_set_name  = selectArchive ? `${selectArchive?.instance_name}-${this.$t('回溯')}-${dateStr}` : '';
     },
     updateDaysList() {
       const retentionDaysList = [...this.globalsData.storage_duration_time].filter((item) => {
