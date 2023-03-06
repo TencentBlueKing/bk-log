@@ -152,10 +152,16 @@ class CommonMid(MiddlewareMixin):
 
         # 用户自我感知的异常抛出
         if isinstance(exception, BlueException):
-
             logger.warning(
-                ("""捕获主动抛出异常, 具体异常堆栈->[%s] status_code->[%s] & """ """client_message->[%s] & args->[%s] """)
-                % (traceback.format_exc(), exception.error_code, exception.message, exception.args)
+                (
+                    """Catch automatic exceptions, specific exceptional stack->[{stack}] status_code->[{code}] & """
+                    """client_message->[{client_message}] & args->[{args}] """
+                ).format(
+                    stack=traceback.format_exc(),
+                    code=exception.error_code,
+                    client_message=exception.message,
+                    args=exception.args,
+                )
             )
 
             response = JsonResponse(
@@ -167,8 +173,15 @@ class CommonMid(MiddlewareMixin):
 
         # 用户未主动捕获的异常
         logger.error(
-            ("""捕获未处理异常,异常具体堆栈->[%s], 请求URL->[%s], """ """请求方法->[%s] 请求参数->[%s]""")
-            % (traceback.format_exc(), request.path, request.method, json.dumps(getattr(request, request.method, None)))
+            (
+                """Catch unhandled exception, specific exceptional stack->[{stack}], URL->[{url}], """
+                """method->[{method}] args->[{args}]"""
+            ).format(
+                stack=traceback.format_exc(),
+                url=request.path,
+                method=request.method,
+                args=json.dumps(getattr(request, request.method, None)),
+            )
         )
 
         # 判断是否在debug模式中,

@@ -22,7 +22,6 @@ the project delivered to anyone in the future.
 
 from celery.schedules import crontab
 from celery.task import periodic_task, task
-from django.utils.translation import ugettext_lazy as _
 
 from apps.api.modules.bkdata_access import BkDataAccessApi
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
@@ -117,9 +116,9 @@ def review_bkdata_data_id():
     for collector_config in collector_configs:
         if collector_config.bkdata_data_id_sync_times >= MAX_CREATE_BKDATA_DATA_ID_FAIL_COUNT:
             logger.error(
-                _("{collector_config_name} 创建bkdata_data_id超过最大重试次数: {count}").format(
+                "{collector_config_name} Creating bkdata_data_id exceeded the maximum number of retries: {cnt}".format(
                     collector_config_name=collector_config.collector_config_name,
-                    count=MAX_CREATE_BKDATA_DATA_ID_FAIL_COUNT,
+                    cnt=MAX_CREATE_BKDATA_DATA_ID_FAIL_COUNT,
                 )
             )
             continue

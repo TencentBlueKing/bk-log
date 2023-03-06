@@ -20,8 +20,6 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 
-from django.utils.translation import ugettext_lazy as _
-
 
 def cmp(src_json_obj, target_json_obj, ignore_keys=None):
     if not ignore_keys:
@@ -29,14 +27,14 @@ def cmp(src_json_obj, target_json_obj, ignore_keys=None):
     if isinstance(src_json_obj, list):
         if not isinstance(target_json_obj, list):
             print(
-                _("list类型不匹配: {src_json_obj} - {target_json_obj}").format(
+                "list类型不匹配: {src_json_obj} - {target_json_obj}".format(
                     src_json_obj=src_json_obj, target_json_obj=target_json_obj
                 )
             )
             return
         if len(src_json_obj) != len(target_json_obj):
             print(
-                _("数组长度不匹配: {src_json_obj} - {target_json_obj}").format(
+                "数组长度不匹配: {src_json_obj} - {target_json_obj}".format(
                     src_json_obj=src_json_obj, target_json_obj=target_json_obj
                 )
             )
@@ -46,17 +44,17 @@ def cmp(src_json_obj, target_json_obj, ignore_keys=None):
 
     if isinstance(src_json_obj, dict):
         if not isinstance(target_json_obj, dict):
-            print(_("dict类型不匹配: "), src_json_obj)
+            print("dict类型不匹配: ", src_json_obj)
             return
         for key, val in target_json_obj.items():
             if key in ignore_keys:
                 continue
             if key not in src_json_obj.keys():
-                print(_("源dict为:{dict} 未包含对应{key}: ").format(dict=src_json_obj, key=key))
+                print("源dict为:{dict} 未包含对应{key}: ".format(dict=src_json_obj, key=key))
                 continue
             if isinstance(src_json_obj[key], (dict, list)):
                 cmp(src_json_obj[key], target_json_obj[key], ignore_keys=ignore_keys)
                 continue
             if src_json_obj[key] != val:
-                print(_("源dict为:{dict} key的对应值不匹配: {key}-{val}").format(dict=src_json_obj, key=key, val=val))
+                print("源dict为:{dict} key的对应值不匹配: {key}-{val}".format(dict=src_json_obj, key=key, val=val))
                 continue

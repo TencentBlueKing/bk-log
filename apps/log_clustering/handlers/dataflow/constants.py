@@ -251,7 +251,7 @@ DEFAULT_MODEL_OUTPUT_FIELDS = [
     },
     {
         "field_alias": _("用户索引"),
-        "data_field_alias": "用户索引",
+        "data_field_alias": _("用户索引"),
         "components": ["__group_id__", "timestamp"],
         "roles": ["index"],
         "properties": {

@@ -20,7 +20,6 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 from ..base import ComponentAPI
-from django.utils.translation import ugettext_lazy as _
 
 
 class CollectionsITSM(object):
@@ -33,59 +32,59 @@ class CollectionsITSM(object):
             client=self.client,
             method="POST",
             path="/api/c/compapi{bk_api_ver}/itsm/create_ticket/",
-            description=_("创建单据"),
+            description="创建单据",
         )
         self.get_service_catalogs = ComponentAPI(
             client=self.client,
             method="GET",
             path="/api/c/compapi{bk_api_ver}/itsm/get_service_catalogs/",
-            description=_("服务目录查询"),
+            description="服务目录查询",
         )
         self.get_service_detail = ComponentAPI(
             client=self.client,
             method="GET",
             path="/api/c/compapi{bk_api_ver}/itsm/get_service_detail/",
-            description=_("服务详情查询"),
+            description="服务详情查询",
         )
         self.get_services = ComponentAPI(
             client=self.client,
             method="GET",
             path="/api/c/compapi{bk_api_ver}/itsm/get_services/",
-            description=_("服务列表查询"),
+            description="服务列表查询",
         )
         self.get_ticket_info = ComponentAPI(
             client=self.client,
             method="GET",
             path="/api/c/compapi{bk_api_ver}/itsm/get_ticket_info/",
-            description=_("单据详情查询"),
+            description="单据详情查询",
         )
         self.get_ticket_logs = ComponentAPI(
             client=self.client,
             method="GET",
             path="/api/c/compapi{bk_api_ver}/itsm/get_ticket_logs/",
-            description=_("单据日志查询"),
+            description="单据日志查询",
         )
         self.get_ticket_status = ComponentAPI(
             client=self.client,
             method="GET",
             path="/api/c/compapi{bk_api_ver}/itsm/get_ticket_status/",
-            description=_("单据状态查询"),
+            description="单据状态查询",
         )
         self.get_tickets = ComponentAPI(
             client=self.client,
             method="POST",
             path="/api/c/compapi{bk_api_ver}/itsm/get_tickets/",
-            description=_("获取单据列表"),
+            description="获取单据列表",
         )
         self.operate_node = ComponentAPI(
             client=self.client,
             method="POST",
             path="/api/c/compapi{bk_api_ver}/itsm/operate_node/",
-            description=_("处理单据节点"),
+            description="处理单据节点",
         )
         self.operate_ticket = ComponentAPI(
             client=self.client,
             method="POST",
             path="/api/c/compapi{bk_api_ver}/itsm/operate_ticket/",
-            description=_("处理单据"),
+            description="处理单据",
         )
