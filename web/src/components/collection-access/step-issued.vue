@@ -117,7 +117,7 @@
                     :label="$t('详情')">
                     <template slot-scope="props">
                       <p>
-                        <span class="detail-text">{{ props.row.log }}</span>
+                        <span class="overflow-tips" v-bk-overflow-tips>{{ props.row.log }}</span>
                         <a href="javascript: ;" class="more" @click.stop="viewDetail(props.row)">
                           {{ $t('更多') }}
                         </a>
@@ -617,6 +617,7 @@ export default {
   @import '@/scss/mixins/scroller.scss';
   @import '@/scss/mixins/clearfix';
   @import '@/scss/conf';
+  @import '@/scss/mixins/overflow-tips.scss';
 
   .step-issued-wrapper {
     position: relative;
