@@ -31,22 +31,20 @@
       <span class="match">{{data.filter_content.keyword}}</span>
     </div>
     <div class="content" v-else-if="data.filter_type === 'match_range'">
-      <span>{{$t('关键字范围') + '：' + $t('从匹配')}}</span>
-      <span class="match">{{data.filter_content.start}}</span>
-      <span>{{$t('开始到匹配')}}</span>
-      <span class="match">{{data.filter_content.end}}</span>
-      <span>{{$t('之间的所有行')}}</span>
+      <i18n path="关键字范围: 从匹配{0}开始到匹配{1}之间的所有行">
+        <span class="match">{{data.filter_content.start}}</span>
+        <span class="match">{{data.filter_content.end}}</span>
+      </i18n>
     </div>
     <div class="content" v-else-if="data.filter_type === 'tail_line'">
       <span>{{$t('最新行数')}}：</span>
       <span class="match">{{data.filter_content.line_num}}</span>
     </div>
     <div class="content" v-else-if="data.filter_type === 'line_range'">
-      <span>{{$t('按行过滤') + '：' + $t('从第')}}</span>
-      <span class="match"> {{data.filter_content.start_line}} </span>
-      <span>{{$t('行到第')}}</span>
-      <span class="match"> {{data.filter_content.end_line}} </span>
-      <span>{{$t('行')}}</span>
+      <i18n path="按行过滤: 从第{0}行到第{1}行">
+        <span class="match"> {{data.filter_content.start_line}} </span>
+        <span class="match"> {{data.filter_content.end_line}} </span>
+      </i18n>
     </div>
   </div>
 </template>
