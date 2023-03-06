@@ -103,13 +103,14 @@ class ExplorerHandler(object):
 
         query_result = self.get_finished_result(task_result["job_instance_id"], operator, bk_biz_id)
         success_step = self.get_success_step(query_result)
-        ip_list = [
-            {"ip": ip["ip"], "bk_cloud_id": ip["bk_cloud_id"]} for ip in success_step.get("step_ip_result_list", [])
+        host_list = [
+            {"ip": ip["ip"], "bk_cloud_id": ip["bk_cloud_id"], "bk_host_id": ip.get("bk_host_id", 0)}
+            for ip in success_step.get("step_ip_result_list", [])
         ]
-        ip_logs = self.get_all_ip_logs(
-            ip_list, task_result["job_instance_id"], success_step["step_instance_id"], bk_biz_id
+        host_logs = self.get_all_host_logs(
+            host_list, task_result["job_instance_id"], success_step["step_instance_id"], bk_biz_id
         )
-        res = self.job_log_to_file_list(ip_logs, allowed_dir_file_list)
+        res = self.job_log_to_file_list(host_logs, allowed_dir_file_list)
         res = sorted(res, key=lambda k: k["mtime"], reverse=True)
         return res
 
@@ -137,11 +138,11 @@ class ExplorerHandler(object):
         raise exceptions.ExplorerException(_("文件预览异常({})".format(",".join(ip_status))))
 
     @staticmethod
-    def get_all_ip_logs(ip_list, job_instance_id, step_instance_id, bk_biz_id):
+    def get_all_host_logs(ip_list, job_instance_id, step_instance_id, bk_biz_id):
         ip_list_group = array_chunk(ip_list, BATCH_GET_JOB_INSTANCE_IP_LOG_IP_LIST_SIZE)
         ip_logs = []
         for ip_list in ip_list_group:
-            ip_list_log = FileServer.get_ip_list_log(ip_list, job_instance_id, step_instance_id, bk_biz_id)
+            ip_list_log = FileServer.get_host_list_log(ip_list, job_instance_id, step_instance_id, bk_biz_id)
             ip_logs.extend(ip_list_log.get("script_task_logs", []))
         return ip_logs
 
@@ -169,6 +170,7 @@ class ExplorerHandler(object):
                         {
                             "ip": ip_log["ip"],
                             "bk_cloud_id": ip_log["bk_cloud_id"],
+                            "bk_host_id": ip_log["host_id"],
                             "type": "dir" if file_type == "dirname" else "file",
                             "path": file_name,
                             "size": format_size(int(file_size[-1])) if file_type != "dirname" else "0",
@@ -766,7 +768,7 @@ class ExplorerHandler(object):
             for allowed_dir_file in allowed_dir_file_list:
                 file_types = []
                 for file_type in allowed_dir_file["file_type"]:
-                    file_types.append(fr"(\{file_type})" + ("$" if file_type[-1] != "*" else ""))
+                    file_types.append(rf"(\{file_type})" + ("$" if file_type[-1] != "*" else ""))
                 # pattern样例：'^/data/[a-zA-Z0-9._/-]+(.gz|.log|.txt)$'
                 if request_file.startswith(allowed_dir_file["file_path"]):
                     file_name = request_file.replace(allowed_dir_file["file_path"], "")

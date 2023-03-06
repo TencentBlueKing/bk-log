@@ -135,16 +135,22 @@ class QueryClientEs(QueryClientTemplate):  # pylint: disable=invalid-name
         if not self.host or not self.port:
             raise EsClientConnectInfoException()
 
-        cs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         es_address: tuple = (str(self.host), int(self.port))
-        cs.settimeout(2)
         try:
+            # 先尝试ipv4
+            cs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            cs.settimeout(2)
             status: int = cs.connect_ex(es_address)
-            # this status is returnback from tcpserver
-            if status != 0:
-                raise EsClientSocketException(EsClientSocketException.MESSAGE.format(error=""))
+        except socket.gaierror:  # ip协议不匹配时, 会抛出gaierror
+            # ipv4失败，尝试ipv6
+            cs = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+            cs.settimeout(2)
+            status: int = cs.connect_ex(es_address)
         except Exception as e:  # pylint: disable=broad-except
             raise EsClientSocketException(EsClientSocketException.MESSAGE.format(error=e))
+
+        if status != 0:
+            raise EsClientSocketException(EsClientSocketException.MESSAGE.format(error=""))
         cs.close()
 
         self._client: Elasticsearch = get_es_client(
