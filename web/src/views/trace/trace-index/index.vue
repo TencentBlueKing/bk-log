@@ -806,6 +806,7 @@ export default {
         await Promise.all(promisList);
       } catch (e) {
         console.warn(e);
+        this.emptyType = '500';
       } finally {
         this.searchDisabled = false;
         this.basicLoading = false;
