@@ -93,6 +93,10 @@ export default {
     return {
       showAllList: false,
       shouldShowMore: false,
+      mappingKay: { // is is not 值映射
+        is: '=',
+        'is not': '!=',
+      },
     };
   },
   computed: {
@@ -136,7 +140,7 @@ export default {
         if (operator === 'not') operator = 'is not';
         return this.retrieveParams.addition.some((addition) => {
           return addition.field === this.fieldName
-        && addition.operator === operator
+        && addition.operator === (this.mappingKay[operator] ?? operator) // is is not 值映射
         && addition.value.toString() === value.toString();
         });
       }
