@@ -1581,10 +1581,12 @@ class CollectorHandler(object):
                 continue
             instance_list.append(
                 {
-                    "bk_host_id": bk_host_id,
+                    "host_id": bk_host_id,
                     "status": instance_obj["status"],
                     "ip": bk_host_innerip,
-                    "bk_cloud_id": bk_cloud_id,
+                    "ipv6": instance_obj["instance_info"]["host"].get("bk_host_innerip_v6", ""),
+                    "host_name": instance_obj["instance_info"]["host"]["bk_host_name"],
+                    "cloud_id": bk_cloud_id,
                     "log": self.get_instance_log(instance_obj),
                     "instance_id": instance_obj["instance_id"],
                     "instance_name": bk_host_innerip,
