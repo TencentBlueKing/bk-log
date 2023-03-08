@@ -249,24 +249,54 @@ if IS_K8S_DEPLOY_MODE:
                 ),
             },
         },
-        "handlers": {"stdout": {"class": "logging.StreamHandler", "formatter": "json", "stream": sys.stdout,},},
+        "handlers": {
+            "stdout": {
+                "class": "logging.StreamHandler",
+                "formatter": "json",
+                "stream": sys.stdout,
+            },
+        },
         "loggers": {
             "django": {"handlers": ["stdout"], "level": "INFO", "propagate": True},
-            "django.server": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True,},
-            "django.request": {"handlers": ["stdout"], "level": "ERROR", "propagate": True,},
-            "django.db.backends": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True,},
+            "django.server": {
+                "handlers": ["stdout"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
+            "django.request": {
+                "handlers": ["stdout"],
+                "level": "ERROR",
+                "propagate": True,
+            },
+            "django.db.backends": {
+                "handlers": ["stdout"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
             # the root logger ,用于整个project的logger
             "root": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
             # 组件调用日志
-            "component": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True,},
+            "component": {
+                "handlers": ["stdout"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
             "celery": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
             # other loggers...
             # blueapps
-            "blueapps": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True,},
+            "blueapps": {
+                "handlers": ["stdout"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
             # 普通app日志
             "app": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
             "bk_dataview": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
-            "iam": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True,},
+            "iam": {
+                "handlers": ["stdout"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
             "bk_monitor": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
         },
     }
@@ -594,7 +624,12 @@ MENUS = [
                         "scenes": "scenario_log",
                         "icon": "info-fill--2",
                     },
-                    {"id": "clean_templates", "name": _("清洗模板"), "feature": "on", "icon": "moban",},
+                    {
+                        "id": "clean_templates",
+                        "name": _("清洗模板"),
+                        "feature": "on",
+                        "icon": "moban",
+                    },
                 ],
             },
             {
@@ -604,9 +639,24 @@ MENUS = [
                 "icon": "",
                 "keyword": "归档",
                 "children": [
-                    {"id": "archive_repository", "name": _("归档仓库"), "feature": "on", "icon": "new-_empty-fill",},
-                    {"id": "archive_list", "name": _("归档列表"), "feature": "on", "icon": "audit-fill",},
-                    {"id": "archive_restore", "name": _("归档回溯"), "feature": "on", "icon": "withdraw-fill",},
+                    {
+                        "id": "archive_repository",
+                        "name": _("归档仓库"),
+                        "feature": "on",
+                        "icon": "new-_empty-fill",
+                    },
+                    {
+                        "id": "archive_list",
+                        "name": _("归档列表"),
+                        "feature": "on",
+                        "icon": "audit-fill",
+                    },
+                    {
+                        "id": "archive_restore",
+                        "name": _("归档回溯"),
+                        "feature": "on",
+                        "icon": "withdraw-fill",
+                    },
                 ],
             },
             {
@@ -974,7 +1024,12 @@ if BKAPP_IS_BKLOG_API and REDIS_MODE == "sentinel" and USE_REDIS:
         "OPTIONS": {
             "CLIENT_CLASS": "apps.utils.sentinel.SentinelClient",
             "PASSWORD": REDIS_PASSWD,
-            "SENTINELS": [(REDIS_SENTINEL_HOST, REDIS_SENTINEL_PORT,)],
+            "SENTINELS": [
+                (
+                    REDIS_SENTINEL_HOST,
+                    REDIS_SENTINEL_PORT,
+                )
+            ],
             "SENTINEL_KWARGS": {"password": REDIS_SENTINEL_PASSWORD},
         },
         "KEY_PREFIX": APP_CODE,
@@ -990,6 +1045,11 @@ PROMETHEUS_METRICS_TOKEN = os.environ.get("PROMETHEUS_METRICS_TOKEN", "")
 # ==============================================================================
 # Listening Domain, 格式 http(s)://domain_name
 SERVICE_LISTENING_DOMAIN = os.environ.get("SERVICE_LISTENING_DOMAIN", "")
+# ==============================================================================
+
+# ==============================================================================
+# 主机标识优先级, 填入CC的标准字段, 默认 bk_host_innerip,bk_host_name,bk_host_innerip_v6
+HOST_IDENTIFIER_PRIORITY = os.environ.get("HOST_IDENTIFIER_PRIORITY", "bk_host_innerip,bk_host_name,bk_host_innerip_v6")
 # ==============================================================================
 
 """
