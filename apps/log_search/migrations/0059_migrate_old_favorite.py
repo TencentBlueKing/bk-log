@@ -4,11 +4,12 @@ from django.db import migrations
 from django.utils.crypto import get_random_string
 
 from apps.log_search.constants import FavoriteVisibleType
-from apps.log_search.models import Favorite, FavoriteGroup
 
 
 def forwards_func(apps, schema_editor):
     old_favorite_model = apps.get_model("log_search", "FavoriteSearch")
+    new_favorite_model = apps.get_model("log_search", "Favorite")
+    favorite_group_model = apps.get_model("log_search", "FavoriteGroup")
     search_history_model = apps.get_model("log_search", "UserIndexSetSearchHistory")
     old_favorite_qs = old_favorite_model.objects.filter(is_deleted=False)
     old_favorite_cnt = old_favorite_qs.count()
@@ -24,15 +25,17 @@ def forwards_func(apps, schema_editor):
             index_set_id = search_history.index_set_id
             params = search_history.params
 
-            if Favorite.objects.filter(name=name, space_uid=space_uid).exists():
+            if new_favorite_model.objects.filter(name=name, space_uid=space_uid).exists():
                 random_suffix = get_random_string(length=10)
-                if len(name) + len(str(index_set_id)) + len(random_suffix) > Favorite.name.field.max_length:
-                    name = name[: Favorite.name.field.max_length - len(str(index_set_id)) - len(random_suffix)]
+                if len(name) + len(str(index_set_id)) + len(random_suffix) > new_favorite_model.name.field.max_length:
+                    name = name[
+                        : new_favorite_model.name.field.max_length - len(str(index_set_id)) - len(random_suffix)
+                    ]
                 name = f"{index_set_id}_{name}_{random_suffix}"
             # 检索字段置为空
             params["search_fields"] = []
-            group_id = FavoriteGroup.get_or_create_ungrouped_group(space_uid=space_uid).id
-            favorite_obj = Favorite.objects.create(
+            group_id = favorite_group_model.get_or_create_ungrouped_group(space_uid=space_uid).id
+            favorite_obj = new_favorite_model.objects.create(
                 space_uid=space_uid,
                 index_set_id=index_set_id,
                 name=name,

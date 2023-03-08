@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 from django.db import migrations
 
-from apps.log_search.models import Favorite, UserIndexSetSearchHistory
-
 
 def forwards_func(apps, schema_editor):
-    history_objs = UserIndexSetSearchHistory.objects.filter(params__contains="operator").all()
+    favorite_model = apps.get_model("log_search", "Favorite")
+    user_index_set_search_history_model = apps.get_model("log_search", "UserIndexSetSearchHistory")
+
+    history_objs = user_index_set_search_history_model.objects.filter(params__contains="operator").all()
     for history_obj in history_objs:
         params = history_obj.params
         addition = params.get("addition", [])
@@ -21,7 +22,7 @@ def forwards_func(apps, schema_editor):
         history_obj.params = params
         history_obj.save()
 
-    favorite_objs = Favorite.objects.filter(params__contains="operator").all()
+    favorite_objs = favorite_model.objects.filter(params__contains="operator").all()
     for favorite_obj in favorite_objs:
         params = favorite_obj.params
         addition = params.get("addition", [])
