@@ -3,13 +3,25 @@
 from django.db import migrations
 from django.utils.crypto import get_random_string
 
-from apps.log_search.constants import FavoriteVisibleType
+from apps.log_search.constants import FavoriteVisibleType, FavoriteGroupType
+
+
+def get_or_create_ungrouped_group(apps, space_uid):
+    """
+    由于动态获取模型的方式，无法调用实例方法, 所以手动实现一次
+    """
+    favorite_group_model = apps.get_model("log_search", "FavoriteGroup")
+    obj, __ = favorite_group_model.objects.get_or_create(
+        group_type=FavoriteGroupType.UNGROUPED.value,
+        space_uid=space_uid,
+        defaults={"name": FavoriteGroupType.get_choice_label(str(FavoriteGroupType.UNGROUPED.value))},
+    )
+    return obj
 
 
 def forwards_func(apps, schema_editor):
     old_favorite_model = apps.get_model("log_search", "FavoriteSearch")
     new_favorite_model = apps.get_model("log_search", "Favorite")
-    favorite_group_model = apps.get_model("log_search", "FavoriteGroup")
     search_history_model = apps.get_model("log_search", "UserIndexSetSearchHistory")
     old_favorite_qs = old_favorite_model.objects.filter(is_deleted=False)
     old_favorite_cnt = old_favorite_qs.count()
@@ -34,7 +46,7 @@ def forwards_func(apps, schema_editor):
                 name = f"{index_set_id}_{name}_{random_suffix}"
             # 检索字段置为空
             params["search_fields"] = []
-            group_id = favorite_group_model.get_or_create_ungrouped_group(space_uid=space_uid).id
+            group_id = get_or_create_ungrouped_group(apps=apps, space_uid=space_uid).id
             favorite_obj = new_favorite_model.objects.create(
                 space_uid=space_uid,
                 index_set_id=index_set_id,
