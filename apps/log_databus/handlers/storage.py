@@ -22,14 +22,13 @@ the project delivered to anyone in the future.
 import functools
 import operator
 import re
-import socket
+
 from collections import defaultdict
 from typing import List, Union
 
 import arrow
 from django.conf import settings
 from django.db.models import Q, Sum
-from django.utils.translation import ugettext as _
 from elasticsearch import Elasticsearch
 
 from apps.api import BkDataResourceCenterApi, BkLogApi, TransferApi
@@ -49,7 +48,6 @@ from apps.log_databus.constants import (
 )
 from apps.log_databus.exceptions import (
     BKBaseStorageSyncFailed,
-    StorageConnectInfoException,
     StorageHaveResource,
     StorageNotExistException,
     StorageNotPermissionException,
@@ -57,7 +55,7 @@ from apps.log_databus.exceptions import (
 )
 from apps.log_databus.models import StorageCapacity, StorageUsed
 from apps.log_databus.utils.es_config import get_es_config
-from apps.log_esquery.utils.es_client import get_es_client
+from apps.log_esquery.utils.es_client import get_es_client, es_socket_ping
 from apps.log_esquery.utils.es_route import EsRoute
 from apps.log_search.models import BizProperty, Scenario
 from apps.utils.cache import cache_five_minute
@@ -905,22 +903,9 @@ class StorageHandler(object):
     def _send_detective(
         self, domain_name: str, port: int, username="", password="", version_info=False, schema=DEFAULT_ES_SCHEMA
     ) -> Union[bool, tuple]:
-        # 对host和port的连通性进行验证
-        cs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        es_address = (str(domain_name), int(port))
-        cs.settimeout(2)
-        try:
-            status = cs.connect_ex(es_address)
-            # this status is returnback from tcpserver
-            if status != 0:
-                raise StorageConnectInfoException(
-                    StorageConnectInfoException.MESSAGE.format(info=_("IP or PORT can not be reached"))
-                )
-        except Exception as e:  # pylint: disable=broad-except
-            raise StorageConnectInfoException(
-                StorageConnectInfoException.MESSAGE.format(info=_("IP or PORT can not be reached, %s" % e))
-            )
-        cs.close()
+        # socket ping
+        es_socket_ping(host=domain_name, port=port)
+        # 利用es_client对用户名和密码的连通性进行验证
         http_auth = (username, password) if username and password else None
         es_client = Elasticsearch(
             [domain_name], http_auth=http_auth, scheme=schema, port=port, sniffer_timeout=600, verify_certs=False

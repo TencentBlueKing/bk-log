@@ -56,7 +56,7 @@ def is_file_path_legal(file_path):
 
 class BkIpSerializer(serializers.Serializer):
     bk_host_id = serializers.IntegerField(label=_("主机ID"), required=False)
-    ip = serializers.IPAddressField(label=_("业务机器ip"), required=False)
+    ip = serializers.IPAddressField(label=_("业务机器ip"), required=False, allow_null=True, allow_blank=True)
     bk_cloud_id = serializers.IntegerField(label=_("业务机器云区域id"), required=False)
 
     def validate(self, attrs):

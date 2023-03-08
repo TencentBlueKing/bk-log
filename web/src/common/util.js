@@ -703,6 +703,10 @@ export const deepClone = (obj, hash = new WeakMap()) => {
   return Object.assign(result, ...Object.keys(obj).map(key => ({ [key]: deepClone(obj[key], hash) })));
 };
 
+/**
+ * @desc: 清空bk-table表头的过滤条件
+ * @param {HTMLElement} refInstance ref实例
+ */
 export const clearTableFilter =  (refInstance) => {
   if (refInstance.$refs.tableHeader.filterPanels) {
     const filterPanels = refInstance.$refs.tableHeader.filterPanels;
@@ -710,4 +714,38 @@ export const clearTableFilter =  (refInstance) => {
       filterPanels[key].handleReset();
     };
   }
+};
+
+/**
+ * @desc: 适合未作处理的bk-table表头添加title
+ */
+export const renderHeader = (h, { column }) => {
+  return h('span', { attrs: { title: column.label } }, column.label);
+};
+
+/**
+ * @desc: 对象深度对比
+ * @param {Object} object1 对比对象A
+ * @param {Object} object2 对比对象B
+ * @param {Array<string>} ignoreArr 不对比的键名
+ * @returns {Boolean} 两个对象是否相同
+ */
+export const deepEqual = (object1, object2, ignoreArr = []) => {
+  const keys1Arr = Object.keys(object1);
+  const keys2Arr = Object.keys(object2);
+  if (keys1Arr.length !== keys2Arr.length) return false;
+
+  for (const key1 of keys1Arr) {
+    const val1 = object1[key1];
+    let val2;
+    if (keys2Arr.includes(key1)) {
+      val2 = object2[key1];
+      if (ignoreArr.includes(key1)) continue;
+    } else {
+      return false;
+    }
+    const areObjects = isObject(val1) && isObject(val2);
+    if ((areObjects && !deepEqual(val1, val2, ignoreArr)) || (!areObjects && val1 !== val2)) return false;
+  }
+  return true;
 };

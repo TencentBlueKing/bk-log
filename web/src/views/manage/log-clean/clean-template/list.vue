@@ -44,10 +44,11 @@
     <section class="clean-template-list">
       <bk-table
         class="clean-table"
-        :data="templateList"
-        :size="size"
         data-test-id="cleanTemplateBox_table_cleanTemplateTable"
         v-bkloading="{ isLoading: isTableLoading }"
+        :data="templateList"
+        :size="size"
+        :render-header="$renderHeader"
         :pagination="pagination"
         :limit-list="pagination.limitList"
         ref="cleanTable"
@@ -61,6 +62,7 @@
         </bk-table-column>
         <bk-table-column
           :label="$t('格式化方法')"
+          :render-header="$renderHeader"
           prop="clean_type"
           class-name="filter-column"
           column-key="clean_type"
@@ -70,7 +72,7 @@
             {{ getFormatName(props.row) }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('操作')" width="200">
+        <bk-table-column :label="$t('操作')" :render-header="$renderHeader" width="200">
           <div class="collect-table-operate" slot-scope="props">
             <!-- 编辑 -->
             <bk-button

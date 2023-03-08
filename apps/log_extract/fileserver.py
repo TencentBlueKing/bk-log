@@ -97,11 +97,22 @@ class FileServer(object):
         return query_result.get("tag", "")
 
     @staticmethod
-    def get_ip_list_log(ip_list, job_instance_id, step_instance_id, bk_biz_id):
+    def get_host_list_log(host_list, job_instance_id, step_instance_id, bk_biz_id):
+        # 有bk_host_id优先取bk_host_id
+        host_id_list = []
+        ip_list = []
+        for ip in host_list:
+            if ip.get("bk_host_id"):
+                host_id_list.append(ip["bk_host_id"])
+                continue
+            ip.pop("bk_host_id", None)
+            ip_list.append(ip)
+
         return JobApi.batch_get_job_instance_ip_log(
             params={
                 "bk_biz_id": bk_biz_id,
                 "ip_list": ip_list,
+                "host_id_list": host_id_list,
                 "job_instance_id": job_instance_id,
                 "step_instance_id": step_instance_id,
             },

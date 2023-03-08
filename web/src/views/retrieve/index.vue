@@ -275,7 +275,7 @@
                     </bk-button>
                   </div>
                   <span v-bk-tooltips="{ content: $t('清空'), delay: 200 }">
-                    <div class="clear-params-btn" @click="() => clearCondition()">
+                    <div class="clear-params-btn" @click="() => clearCondition('*')">
                       <bk-button data-test-id="dataQuery_button_phrasesClear"></bk-button>
                       <span class="log-icon icon-brush"></span>
                     </div>
@@ -410,7 +410,7 @@ import SettingModal from './setting-modal/index.vue';
 import CollectIndex from './collect/collect-index';
 import AddCollectDialog from './collect/add-collect-dialog';
 import UiQuery from './condition-comp/ui-query';
-import { formatDate, readBlobRespToJson, parseBigNumberList, random } from '@/common/util';
+import { formatDate, readBlobRespToJson, parseBigNumberList, random, deepEqual } from '@/common/util';
 import { handleTransformToTimestamp } from '../../components/time-range/utils';
 import indexSetSearchMixin from '@/mixins/indexSet-search-mixin';
 import axios from 'axios';
@@ -638,11 +638,11 @@ export default {
       const { params: retrieveParams } = this.getRetrieveFavoriteData();
       const { params } = this.activeFavorite;
       const favoriteParams = {
-        host_scopes: params?.host_scopes,
+        ip_chooser: params?.ip_chooser,
         addition: params?.addition,
         keyword: params?.keyword,
       };
-      return JSON.stringify(retrieveParams) !== JSON.stringify(favoriteParams);
+      return !deepEqual(favoriteParams, retrieveParams, ['meta']);
     },
   },
   provide() {
@@ -665,7 +665,7 @@ export default {
       this.$store.commit('updateIndexId', val);
       this.retrieveSearchNumber = 0; // 切换索引集 检索次数设置为0;
       val && this.requestSearchHistory(val);
-      this.clearCondition(false);
+      this.clearCondition('*', false);
     },
     spaceUid: {
       async handler() {
@@ -1075,9 +1075,9 @@ export default {
      * @param {String} clearStr 检索keywords
      * @param {Boolean} isRetrieveLog 是否检索表格
      */
-    clearCondition(isRetrieveLog = true) {
+    clearCondition(clearStr = '*', isRetrieveLog = true) {
       Object.assign(this.retrieveParams, {
-        keyword: '',
+        keyword: this.isSqlSearchType ? clearStr : this.retrieveParams.keyword, // 若是表单模式的清空则不删除keyword
         // host_scopes: {
         //   modules: [],
         //   ips: '',
@@ -1830,7 +1830,7 @@ export default {
     getRetrieveFavoriteData() {
       return {
         params: {
-          host_scopes: this.retrieveParams.host_scopes,
+          ip_chooser: this.retrieveParams.ip_chooser,
           addition: this.retrieveParams.addition,
           keyword: this.retrieveParams.keyword,
         },
@@ -1912,7 +1912,7 @@ export default {
         this.activeFavorite = {};
         this.isSqlSearchType = true;
         this.isFavoriteSearch = false;
-        this.clearCondition();
+        this.clearCondition('*');
         return;
       }
       const data = deepClone(value);

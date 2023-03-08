@@ -75,7 +75,7 @@ export default {
       default() {
         return {
           num: 0,
-          type: '主机',
+          type: this.$t('主机'),
         };
       },
     },
