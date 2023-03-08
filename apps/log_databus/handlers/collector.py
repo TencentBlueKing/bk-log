@@ -1974,9 +1974,11 @@ class CollectorHandler(object):
             status_obj = {
                 "status": status,
                 "status_name": status_name,
-                "bk_host_id": instance_obj["instance_info"]["host"]["bk_host_id"],
+                "host_id": instance_obj["instance_info"]["host"]["bk_host_id"],
                 "ip": instance_obj["instance_info"]["host"]["bk_host_innerip"],
-                "bk_cloud_id": bk_cloud_id,
+                "ipv6": instance_obj["instance_info"]["host"].get("bk_host_innerip_v6", ""),
+                "cloud_id": bk_cloud_id,
+                "host_name": instance_obj["instance_info"]["host"]["bk_host_name"],
                 "instance_id": instance_obj["instance_id"],
                 "instance_name": instance_obj["instance_info"]["host"]["bk_host_innerip"],
                 "plugin_name": host_statuses.get("name"),
