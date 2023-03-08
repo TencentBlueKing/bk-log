@@ -1406,8 +1406,9 @@ class CollectorHandler(object):
                 # delete 标签如果订阅任务状态action不为UNINSTALL
                 if label_name == "delete" and instance_obj["steps"].get(LogPluginInfo.NAME) != "UNINSTALL":
                     continue
-                if (instance_obj["ip"], instance_obj["bk_cloud_id"]) in host_result or instance_obj[
-                    "bk_host_id"
+                # 因为instance_obj兼容新版IP选择器的字段名, 所以这里的bk_cloud_id->cloud_id, bk_host_id->host_id
+                if (instance_obj["ip"], instance_obj["cloud_id"]) in host_result or instance_obj[
+                    "host_id"
                 ] in host_result:
                     content_obj["child"].append(instance_obj)
             content_data.append(content_obj)
@@ -1928,8 +1929,9 @@ class CollectorHandler(object):
             }
 
             for instance_obj in instance_status:
-                if (instance_obj["ip"], instance_obj["bk_cloud_id"]) in host_result or instance_obj[
-                    "bk_host_id"
+                # 因为instance_obj兼容新版IP选择器的字段名, 所以这里的bk_cloud_id->cloud_id, bk_host_id->host_id
+                if (instance_obj["ip"], instance_obj["cloud_id"]) in host_result or instance_obj[
+                    "host_id"
                 ] in host_result:
                     content_obj["child"].append(instance_obj)
             content_data.append(content_obj)
