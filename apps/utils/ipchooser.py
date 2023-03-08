@@ -171,7 +171,7 @@ class IPChooser:
                     }
                 )
         # 如果有host_id的情况, 添加条件
-        if not host_id_rules["value"]:
+        if host_id_rules["value"]:
             params["host_property_filter"]["rules"].append(host_id_rules)
         # 如果rules为空, 移除host_property_filter
         if not params["host_property_filter"]["rules"]:

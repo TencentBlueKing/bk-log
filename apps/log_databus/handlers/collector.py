@@ -1118,10 +1118,10 @@ class CollectorHandler(object):
             if data_items:
                 etl_message.update(
                     {
-                        "data": data_items[0]["data"],
-                        "log": data_items[0]["data"],
-                        "iterationindex": data_items[0]["iterationindex"],
-                        "batch": [_item["data"] for _item in data_items],
+                        "data": data_items[0].get("data", ""),
+                        "log": data_items[0].get("data", ""),
+                        "iterationindex": data_items[0].get("iterationindex", ""),
+                        "batch": [_item.get("data", "") for _item in data_items],
                     }
                 )
             else:

@@ -49,6 +49,16 @@ def get_es_client(
     else:
         es_client = Elasticsearch
 
+    # 由于IPV6地址需要加[], 所以需要对hosts进行处理
+    new_hosts = []
+    for host in hosts:
+        if not host.startswith("["):
+            host = "[" + host
+        if not host.endswith("]"):
+            host += "]"
+        new_hosts.append(host)
+    hosts = new_hosts
+
     http_auth = (username, password) if password else None
     return es_client(
         hosts, http_auth=http_auth, port=port, sniffer_timeout=sniffer_timeout, verify_certs=verify_certs, **kwargs
