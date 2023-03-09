@@ -459,6 +459,12 @@ class StorageHandler(object):
             cluster_info["is_platform"] = self.is_platform_cluster(
                 cluster_info["cluster_config"]["custom_option"]["visible_config"]["visible_type"]
             )
+            admin = cluster_info.get("cluster_config", {}).get("custom_option", {}).get("admin", [])
+            # 移除监控默认写入的管理员system
+            if "system" in admin:
+                admin.remove("system")
+                cluster_info["cluster_config"]["custom_option"]["admin"] = admin
+
         return cluster_groups
 
     def _get_cluster_nodes(self, cluster_info: List[dict]):

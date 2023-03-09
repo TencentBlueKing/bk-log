@@ -162,10 +162,6 @@ export default {
         operator: '',
         value: [], // String or Array
       },
-      mappingKay: {
-        '=': 'is',
-        '!=': 'is not',
-      },
       valueList: [{ id: '', name: `-${this.$t('空')}-` }], // 字段可选值列表
       filterPlaceholder: '',
       isHaveCompared: false, // 是否有大小对比的值
@@ -215,7 +211,7 @@ export default {
       const fieldsItem = this.filterFields.find(item => item.id === this.coreData.field);
       return this.filterAllOperators[fieldsItem?.operatorKey]?.map(item => ({
         ...item,
-        operator: this.mappingKay[item.operator] ?? item.operator,
+        operator: item.operator,
       })) || [];
     },
     getOperatorLength() { // 是否是对比的操作 如果是 则值限制只能输入1个
@@ -245,7 +241,7 @@ export default {
   methods: {
     handlePopoverShow() {
       const operatorsFirstItem = Object.values(this.filterAllOperators)[0]?.[0];
-      this.handleOperatorChange(operatorsFirstItem?.operator || 'is');
+      this.handleOperatorChange(operatorsFirstItem?.operator || '=');
       this.setDefaultEditValue();
       this.showFilterPopover = true;
     },
@@ -307,7 +303,7 @@ export default {
     },
     // 条件符号改变
     handleOperatorChange(operator) {
-      this.coreData.operator = this.mappingKay[operator] ?? operator;
+      this.coreData.operator = operator;
       if (['exists', 'does not exists'].includes(operator)) {
         this.coreData.value = [];
         this.valueList = [{ id: '', name: `-${this.$t('空')}-` }];

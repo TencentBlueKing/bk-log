@@ -1406,8 +1406,9 @@ class CollectorHandler(object):
                 # delete 标签如果订阅任务状态action不为UNINSTALL
                 if label_name == "delete" and instance_obj["steps"].get(LogPluginInfo.NAME) != "UNINSTALL":
                     continue
-                if (instance_obj["ip"], instance_obj["bk_cloud_id"]) in host_result or instance_obj[
-                    "bk_host_id"
+                # 因为instance_obj兼容新版IP选择器的字段名, 所以这里的bk_cloud_id->cloud_id, bk_host_id->host_id
+                if (instance_obj["ip"], instance_obj["cloud_id"]) in host_result or instance_obj[
+                    "host_id"
                 ] in host_result:
                     content_obj["child"].append(instance_obj)
             content_data.append(content_obj)
@@ -1580,10 +1581,12 @@ class CollectorHandler(object):
                 continue
             instance_list.append(
                 {
-                    "bk_host_id": bk_host_id,
+                    "host_id": bk_host_id,
                     "status": instance_obj["status"],
                     "ip": bk_host_innerip,
-                    "bk_cloud_id": bk_cloud_id,
+                    "ipv6": instance_obj["instance_info"]["host"].get("bk_host_innerip_v6", ""),
+                    "host_name": instance_obj["instance_info"]["host"]["bk_host_name"],
+                    "cloud_id": bk_cloud_id,
                     "log": self.get_instance_log(instance_obj),
                     "instance_id": instance_obj["instance_id"],
                     "instance_name": bk_host_innerip,
@@ -1928,8 +1931,9 @@ class CollectorHandler(object):
             }
 
             for instance_obj in instance_status:
-                if (instance_obj["ip"], instance_obj["bk_cloud_id"]) in host_result or instance_obj[
-                    "bk_host_id"
+                # 因为instance_obj兼容新版IP选择器的字段名, 所以这里的bk_cloud_id->cloud_id, bk_host_id->host_id
+                if (instance_obj["ip"], instance_obj["cloud_id"]) in host_result or instance_obj[
+                    "host_id"
                 ] in host_result:
                     content_obj["child"].append(instance_obj)
             content_data.append(content_obj)
@@ -1974,9 +1978,11 @@ class CollectorHandler(object):
             status_obj = {
                 "status": status,
                 "status_name": status_name,
-                "bk_host_id": instance_obj["instance_info"]["host"]["bk_host_id"],
+                "host_id": instance_obj["instance_info"]["host"]["bk_host_id"],
                 "ip": instance_obj["instance_info"]["host"]["bk_host_innerip"],
-                "bk_cloud_id": bk_cloud_id,
+                "ipv6": instance_obj["instance_info"]["host"].get("bk_host_innerip_v6", ""),
+                "cloud_id": bk_cloud_id,
+                "host_name": instance_obj["instance_info"]["host"]["bk_host_name"],
                 "instance_id": instance_obj["instance_id"],
                 "instance_name": instance_obj["instance_info"]["host"]["bk_host_innerip"],
                 "plugin_name": host_statuses.get("name"),

@@ -587,6 +587,10 @@ export default {
         },
       },
       retrieveSearchNumber: 0, // 切换采集项或初始进入页面时 检索次数初始化为0 检索一次次数+1;
+      mappingKay: { // is is not 值映射
+        is: '=',
+        'is not': '!=',
+      },
     };
   },
   computed: {
@@ -1014,9 +1018,10 @@ export default {
     },
     // 添加过滤条件
     addFilterCondition(field, operator, value, index) {
+      const mapOperator = this.mappingKay[operator] ?? operator; // is is not 值映射
       const isExist = this.retrieveParams.addition.some((addition) => {
         return addition.field === field
-        && addition.operator === operator
+        && addition.operator === mapOperator
         && addition.value.toString() === value.toString();
       });
       // 已存在相同条件
@@ -1024,7 +1029,7 @@ export default {
 
       const startIndex = index > -1 ? index : this.retrieveParams.addition.length;
       const deleteCount = index > -1 ? 1 : 0;
-      this.retrieveParams.addition.splice(startIndex, deleteCount, { field, operator, value });
+      this.retrieveParams.addition.splice(startIndex, deleteCount, { field, operator: mapOperator, value });
       if (this.isAutoQuery) {
         this.retrieveLog();
       }

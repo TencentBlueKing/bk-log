@@ -271,27 +271,31 @@ STATUS_DATA_RETURN = [
         "status": "FAILED",
         "status_name": "失败",
         "ip": "127.0.0.1",
-        "bk_cloud_id": 0,
+        "cloud_id": 0,
         "instance_id": "host|instance|host|127.0.0.1-0-0",
         "instance_name": "127.0.0.1",
         "plugin_name": "unifytlogc",
         "plugin_version": "3.0.10",
         "bk_supplier_id": "0",
         "create_time": "2019-09-19T20:32:19.957883",
-        "bk_host_id": 1,
+        "host_id": 1,
+        "ipv6": "",
+        "host_name": "rbtnode1",
     },
     {
         "status": "SUCCESS",
         "status_name": "正常",
         "ip": "127.0.0.1",
-        "bk_cloud_id": 0,
+        "cloud_id": 0,
+        "ipv6": "",
+        "host_name": "rbtnode1",
         "instance_id": "host|instance|host|127.0.0.1-0-0",
         "instance_name": "127.0.0.1",
         "plugin_name": "unifytlogc",
         "plugin_version": "3.0.10",
         "bk_supplier_id": "0",
         "create_time": "2019-09-19T20:32:19.957883",
-        "bk_host_id": 1,
+        "host_id": 1,
     },
 ]
 TOPO_TREE = [
@@ -972,7 +976,8 @@ class TestCollector(TestCase):
         )
 
     @patch(
-        "apps.api.TransferApi.get_data_id", get_data_id,
+        "apps.api.TransferApi.get_data_id",
+        get_data_id,
     )
     @patch(
         "apps.api.TransferApi.get_result_table",
@@ -1015,7 +1020,8 @@ class TestCollector(TestCase):
         self._test_destroy(result["collector_config_id"])
 
     @patch(
-        "apps.api.TransferApi.get_data_id", get_data_id,
+        "apps.api.TransferApi.get_data_id",
+        get_data_id,
     )
     @patch(
         "apps.api.TransferApi.get_result_table",
@@ -1292,7 +1298,8 @@ class TestCollector(TestCase):
 
     @patch("apps.api.TransferApi.create_data_id", lambda _: {"bk_data_id": BK_DATA_ID})
     @patch(
-        "apps.api.TransferApi.get_data_id", get_data_id,
+        "apps.api.TransferApi.get_data_id",
+        get_data_id,
     )
     @patch(
         "apps.api.TransferApi.get_result_table",

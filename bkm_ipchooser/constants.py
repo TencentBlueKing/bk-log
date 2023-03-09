@@ -80,6 +80,15 @@ class CommonEnum(EnhanceEnum):
         "bk_os_type",
         "bk_os_name",
     ]
+    IPCHOOSER_FIELD_MAP = {
+        "bk_host_id": "host_id",
+        "bk_host_innerip": "ip",
+        "bk_host_innerip_v6": "ipv6",
+        "bk_cloud_id": "cloud_id",
+        "bk_host_name": "host_name",
+        "bk_agent_id": "agent_id",
+        "bk_cloud_vendor": "cloud_vendor",
+    }
     DEFAULT_HOST_FIELDS = [
         "bk_host_id",
         "bk_cloud_id",
@@ -132,6 +141,7 @@ class CommonEnum(EnhanceEnum):
             cls.DEFAULT_MODULE_FIELDS: _("模块列表默认返回字段"),
             cls.SIMPLE_HOST_FIELDS: _("主机列表简单返回字段"),
             cls.FETCH_HOST_COUNT_FIELDS: _("查询只为了统计主机数量限定返回bk_host_id减少请求时间"),
+            cls.IPCHOOSER_FIELD_MAP: _("IP选择器字段映射"),
         }
 
 
