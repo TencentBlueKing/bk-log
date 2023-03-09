@@ -54,7 +54,7 @@ def before_send_cmsi_voice_msg(params):
 
 
 class _CmsiApi:
-    MODULE = _(u"CMSI")
+    MODULE = _("CMSI")
 
     def __init__(self):
         self.send_mail = DataAPI(

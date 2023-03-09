@@ -82,7 +82,7 @@ class ESMetric(object):
             except (EsConnectFailException, gaierror) as e:
                 logger.error(f"failed to get es client, err: {e}")
                 result.message = str(e)
-                result.suggestion = f"确认ES集群[{cluster_name}]是否可用"
+                result.suggestion = _("确认ES集群[{cluster_name}]是否可用").format(cluster_name=cluster_name)
 
             spend_time = time.time() - start_time
             result.metric_value = "{}ms".format(int(spend_time * 1000))

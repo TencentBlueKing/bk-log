@@ -561,7 +561,7 @@ class StorageHandler(object):
             "geog_area_code": "inland",
             "category": "es",
             "provider": "user",
-            "purpose": "BKLog集群同步",
+            "purpose": _("BKLog集群同步"),
             "share": False,
             "admin": admin,
             "tag": params.get("bkbase_tags", []) or DEFAULT_ES_TAGS,

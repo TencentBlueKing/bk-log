@@ -248,24 +248,54 @@ if IS_K8S_DEPLOY_MODE:
                 ),
             },
         },
-        "handlers": {"stdout": {"class": "logging.StreamHandler", "formatter": "json", "stream": sys.stdout,},},
+        "handlers": {
+            "stdout": {
+                "class": "logging.StreamHandler",
+                "formatter": "json",
+                "stream": sys.stdout,
+            },
+        },
         "loggers": {
             "django": {"handlers": ["stdout"], "level": "INFO", "propagate": True},
-            "django.server": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True,},
-            "django.request": {"handlers": ["stdout"], "level": "ERROR", "propagate": True,},
-            "django.db.backends": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True,},
+            "django.server": {
+                "handlers": ["stdout"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
+            "django.request": {
+                "handlers": ["stdout"],
+                "level": "ERROR",
+                "propagate": True,
+            },
+            "django.db.backends": {
+                "handlers": ["stdout"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
             # the root logger ,用于整个project的logger
             "root": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
             # 组件调用日志
-            "component": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True,},
+            "component": {
+                "handlers": ["stdout"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
             "celery": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
             # other loggers...
             # blueapps
-            "blueapps": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True,},
+            "blueapps": {
+                "handlers": ["stdout"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
             # 普通app日志
             "app": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
             "bk_dataview": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
-            "iam": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True,},
+            "iam": {
+                "handlers": ["stdout"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
             "bk_monitor": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
         },
     }
@@ -421,7 +451,7 @@ USE_L10N = True
 LANGUAGE_CODE = "zh-cn"
 LOCALEURL_USE_ACCEPT_LANGUAGE = True
 
-LANGUAGES = (("en", "English"), ("zh-cn", "简体中文"))
+LANGUAGES = (("en", "English"), ("zh-cn", _("简体中文")))
 LANGUAGE_SESSION_KEY = "blueking_language"
 LANGUAGE_COOKIE_NAME = "blueking_language"
 
@@ -529,7 +559,7 @@ MENUS = [
                 "name": _("仪表盘"),
                 "feature": "on",
                 "icon": "",
-                "keyword": _("仪表"),
+                "keyword": _("仪表盘"),
                 "children": [
                     {"id": "default_dashboard", "name": _("默认仪表盘"), "feature": "on", "icon": "block-shape"},
                     {"id": "create_dashboard", "name": _("新建仪表盘"), "feature": "on", "icon": "plus-circle-shape"},
@@ -590,7 +620,12 @@ MENUS = [
                         "scenes": "scenario_log",
                         "icon": "info-fill--2",
                     },
-                    {"id": "clean_templates", "name": _("清洗模板"), "feature": "on", "icon": "moban",},
+                    {
+                        "id": "clean_templates",
+                        "name": _("清洗模板"),
+                        "feature": "on",
+                        "icon": "moban",
+                    },
                 ],
             },
             {
@@ -598,11 +633,26 @@ MENUS = [
                 "name": _("日志归档"),
                 "feature": "on",
                 "icon": "",
-                "keyword": "归档",
+                "keyword": _("归档"),
                 "children": [
-                    {"id": "archive_repository", "name": _("归档仓库"), "feature": "on", "icon": "new-_empty-fill",},
-                    {"id": "archive_list", "name": _("归档列表"), "feature": "on", "icon": "audit-fill",},
-                    {"id": "archive_restore", "name": _("归档回溯"), "feature": "on", "icon": "withdraw-fill",},
+                    {
+                        "id": "archive_repository",
+                        "name": _("归档仓库"),
+                        "feature": "on",
+                        "icon": "new-_empty-fill",
+                    },
+                    {
+                        "id": "archive_list",
+                        "name": _("归档列表"),
+                        "feature": "on",
+                        "icon": "audit-fill",
+                    },
+                    {
+                        "id": "archive_restore",
+                        "name": _("归档回溯"),
+                        "feature": "on",
+                        "icon": "withdraw-fill",
+                    },
                 ],
             },
             {
@@ -645,7 +695,13 @@ MENUS = [
                         "scenes": "scenario_bkdata",
                         "icon": "cc-cabinet",
                     },
-                    {"id": "bk_data_track", "name": _("第三方ES"), "feature": "off", "scenes": "scenario_es", "icon": ""},
+                    {
+                        "id": "third_party_es_trace",
+                        "name": _("第三方ES"),
+                        "feature": "off",
+                        "scenes": "scenario_es",
+                        "icon": "",
+                    },
                     {"id": "sdk_track", "name": _("SDK接入"), "feature": "off", "icon": ""},
                 ],
             },
@@ -963,7 +1019,12 @@ if BKAPP_IS_BKLOG_API and REDIS_MODE == "sentinel" and USE_REDIS:
         "OPTIONS": {
             "CLIENT_CLASS": "apps.utils.sentinel.SentinelClient",
             "PASSWORD": REDIS_PASSWD,
-            "SENTINELS": [(REDIS_SENTINEL_HOST, REDIS_SENTINEL_PORT,)],
+            "SENTINELS": [
+                (
+                    REDIS_SENTINEL_HOST,
+                    REDIS_SENTINEL_PORT,
+                )
+            ],
             "SENTINEL_KWARGS": {"password": REDIS_SENTINEL_PASSWORD},
         },
         "KEY_PREFIX": APP_CODE,

@@ -21,6 +21,7 @@ the project delivered to anyone in the future.
 """
 
 from django.conf import settings
+from django.utils.translation import ugettext_lazy as _
 
 from apps.feature_toggle.plugins.base import FeatureToggleBase, get_feature_toggle
 from apps.utils.function import ignored
@@ -160,7 +161,9 @@ class FeatureToggleObject(object):
         """
         feature_toggle_cls = get_feature_toggle(name)
         if not issubclass(feature_toggle_cls, FeatureToggleBase):
-            raise BaseException(f"{feature_toggle_cls} 没有继承自FutureToggleBase")
+            raise BaseException(
+                _("{feature_toggle_cls} 没有继承自FutureToggleBase").format(feature_toggle_cls=feature_toggle_cls)
+            )
         return feature_toggle_cls().set_status(param=param)
 
     @classmethod

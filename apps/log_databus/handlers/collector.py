@@ -1363,7 +1363,7 @@ class CollectorHandler(object):
                 {
                     "is_label": False,
                     "label_name": "",
-                    "bk_obj_name": "主机",
+                    "bk_obj_name": _("主机"),
                     "node_path": "主机",
                     "bk_obj_id": "host",
                     "bk_inst_id": "",
@@ -1863,7 +1863,7 @@ class CollectorHandler(object):
                     {
                         "is_label": False,
                         "label_name": "",
-                        "bk_obj_name": "主机",
+                        "bk_obj_name": _("主机"),
                         "node_path": "主机",
                         "bk_obj_id": "host",
                         "bk_inst_id": "",
@@ -1873,7 +1873,7 @@ class CollectorHandler(object):
                 ]
             }
         param = {"subscription_id_list": [self.data.subscription_id]}
-        status_result, *_ = NodeApi.get_subscription_instance_status(param)
+        status_result, *__ = NodeApi.get_subscription_instance_status(param)
         instance_status = self.format_subscription_instance_status(status_result)
 
         # 如果采集目标是HOST-INSTANCE
@@ -1882,7 +1882,7 @@ class CollectorHandler(object):
                 {
                     "is_label": False,
                     "label_name": "",
-                    "bk_obj_name": "主机",
+                    "bk_obj_name": _("主机"),
                     "node_path": "主机",
                     "bk_obj_id": "host",
                     "bk_inst_id": "",
@@ -2194,7 +2194,7 @@ class CollectorHandler(object):
             "data_link_id": int(data_link_id) if data_link_id else 0,
             "bk_app_code": bk_app_code,
             "bkdata_biz_id": bkdata_biz_id,
-            "is_display": is_display
+            "is_display": is_display,
         }
         bkdata_biz_id = bkdata_biz_id or bk_biz_id
         # 判断是否已存在同英文名collector
@@ -2307,7 +2307,7 @@ class CollectorHandler(object):
             "collector_config_name": collector_config_name,
             "category_id": category_id,
             "description": description or collector_config_name,
-            "is_display": is_display
+            "is_display": is_display,
         }
 
         bk_data_name = build_bk_data_name(
@@ -3700,7 +3700,8 @@ class CollectorHandler(object):
                         {
                             "start_line_number": 0,
                             "end_line_number": 0,
-                            "message": _("配置校验失败: namespaceSelector 共享集群下 any 不允许为 true，" "且 matchNames 不允许为空，请检查"),
+                            "message": _("配置校验失败: namespaceSelector 共享集群下 any 不允许为 true，"
+                                         "且 matchNames 不允许为空，请检查"),
                         }
                     ],
                 }
