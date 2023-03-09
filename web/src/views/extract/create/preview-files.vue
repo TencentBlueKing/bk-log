@@ -31,10 +31,10 @@
         multiple
         show-select-all>
         <bk-option
-          v-for="option in ipList"
+          v-for="option in ipSelectNewNameList"
           :key="option.bk_cloud_id + ':' + option.ip"
           :id="option.bk_cloud_id + ':' + option.ip"
-          :name="option.bk_cloud_id + ':' + option.ip"
+          :name="option.name"
         ></bk-option>
       </bk-select>
       <span>{{ $t('文件日期') }}：</span>
@@ -129,6 +129,10 @@ export default {
       type: String,
       required: true,
     },
+    ipSelectNewNameList: {
+      type: Array,
+      required: true,
+    },
   },
   data() {
     // 默认范围一周
@@ -153,7 +157,7 @@ export default {
     },
   },
   watch: {
-    ipList(val) {
+    ipSelectNewNameList(val) {
       this.previewIp.splice(0);
       if (val.length) {
         this.previewIp.push(`${val[0].bk_cloud_id}:${val[0].ip}`);

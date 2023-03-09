@@ -46,6 +46,7 @@
           mode="dialog"
           extract-scene
           allow-host-list-miss-host-id
+          keep-host-field-output
           :height="670"
           :show-dialog.sync="showSelectDialog"
           :value="selectorNodes"
@@ -81,6 +82,7 @@
         ref="preview"
         v-model="downloadFiles"
         :ip-list="ipList"
+        :ip-select-new-name-list="ipSelectNewNameList"
         :file-or-path="fileOrPath"
         @update:fileOrPath="handleFileOrPathUpdate" />
     </div>
@@ -138,6 +140,7 @@ import LogIpSelector, { toSelectorNode, toTransformNode } from '@/components/log
 import FilesInput from '@/views/extract/create/files-input';
 import TextFilter from '@/views/extract/create/test-filter';
 import PreviewFiles from '@/views/extract/create/preview-files';
+import { mapGetters } from 'vuex';
 
 export default {
   name: 'ExtractCreate',
@@ -160,9 +163,13 @@ export default {
       link_id: null,
       // 编辑态ip选择器初始值
       ipSelectorOriginalValue: null,
+      ipSelectNewNameList: [], // 生成新的展示所用的预览地址列表
     };
   },
   computed: {
+    ...mapGetters({
+      globalsData: 'globals/globalsData',
+    }),
     canSubmit() {
       // eslint-disable-next-line eqeqeq
       return (!this.ipList.length || !this.downloadFiles.length) && this.link_id != null;
@@ -230,6 +237,7 @@ export default {
     },
     async handleConfirm(value) {
       const { host_list: hostList } = value;
+      this.initSelectNewNameList(hostList);
       const ipList = toTransformNode(hostList, 'INSTANCE', true);
       // 选择服务器后，获取可预览的路径
       const strategies = await this.$http.request('extract/getAvailableExplorerPath', {
@@ -241,6 +249,15 @@ export default {
       const availablePaths = strategies.data.map(item => item.file_path);
       this.ipList = ipList;
       this.availablePaths = availablePaths;
+    },
+    initSelectNewNameList(hostList) {
+      const priorityList = this.globalsData?.host_identifier_priority;
+      this.ipSelectNewNameList = hostList.map(item => ({
+        bk_host_id: item.host_id,
+        ip: item.ip,
+        bk_cloud_id: item.cloud_area.id,
+        name: item[priorityList.find(pItem => Boolean(item[pItem]))] ?? '',
+      }));
     },
     // handleConfirm(ipList, availablePaths) {
     //   this.ipList = ipList;
