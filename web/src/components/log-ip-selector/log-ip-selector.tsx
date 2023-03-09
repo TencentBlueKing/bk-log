@@ -267,7 +267,8 @@ export type IpSelectorConfig = {
   // 主机列表显示列（默认值：['ip', 'ipv6', 'alive', 'osName']），按配置顺序显示列
   // 内置所有列的 key ['ip', 'ipv6', 'cloudArea', 'alive', 'hostName',
   //  'osName', 'coludVerdor', 'osType', 'hostId', 'agentId']
-  hostTableRenderColumnList?: string[]
+  hostTableRenderColumnList?: string[],
+  hostViewFieldRender?: Function,
 };
 export type IpSelectorHostTableCustomColumn = {
   key: string;
@@ -303,6 +304,7 @@ export interface IMonitorIpSelectorProps {
   height?: number;
   extractScene: boolean;
   allowHostListMissHostId: boolean;
+  keepHostFieldOutput?: boolean;
 }
 export interface IMonitorIpSelectorEvents {
   onChange: (v: Record<string, INode[]>) => void
@@ -349,6 +351,10 @@ export default class MonitorIpSelector extends tsc<IMonitorIpSelectorProps> {
   @Prop({ type: Boolean, default: false }) extractScene: boolean;
   // 允许 hostList 中缺少 hostId，通过 ip + cloudArea.id 回填选中主机
   @Prop({ type: Boolean, default: false }) allowHostListMissHostId: boolean;
+  // 是否全部返回主机字段
+  @Prop({ type: Boolean, default: false }) keepHostFieldOutput: boolean;
+  // 渲染预览结果的拓展字段
+  @Prop({ type: Function }) hostViewFieldRender: Function;
 
   ipSelectorServices: IpSelectorService = {};
   ipSelectorConfig: IpSelectorConfig = {};
@@ -406,8 +412,17 @@ export default class MonitorIpSelector extends tsc<IMonitorIpSelectorProps> {
       // 内置所有列的 key ['ip', 'ipv6', 'cloudArea', 'alive', 'hostName',
       //  'osName', 'coludVerdor', 'osType', 'hostId', 'agentId']
       hostTableRenderColumnList: this.hostTableRenderColumnList ?? [],
+      hostViewFieldRender: this.hostViewFieldRender ?? ((host: IHost) => {
+        if (host.ip) return undefined;
+        return host[this.priorityList.find(pItem => Boolean(host[pItem]))];
+      }),
     };
   }
+
+  get priorityList() {
+    return this.$store.getters['globals/globalsData']?.host_identifier_priority ?? ['ip', 'ipv6', 'host_name'];
+  }
+
   // 拉取topology
   async fetchTopologyHostCount(node?: INode): Promise<ITreeItem[]> {
     const serviceModule = this.extractScene ? 'extract' : 'ipChooser';
@@ -622,6 +637,7 @@ export default class MonitorIpSelector extends tsc<IMonitorIpSelectorProps> {
       disableDialogSubmitMethod={this.disableDialogSubmitMethod}
       disableHostMethod={this.disableHostMethod}
       allowHostListMissHostId={this.allowHostListMissHostId}
+      keepHostFieldOutput={this.keepHostFieldOutput}
       height={this.height ?? '100%'}
       service={this.ipSelectorServices}
       config={this.ipSelectorConfig}
