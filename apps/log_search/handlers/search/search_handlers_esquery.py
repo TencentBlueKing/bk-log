@@ -1467,6 +1467,8 @@ class SearchHandler(object):
         for _add in addition:
             field: str = _add.get("key") if _add.get("key") else _add.get("field")
             _operator: str = _add.get("method") if _add.get("method") else _add.get("operator")
+            if _operator in REAL_OPERATORS_MAP.keys():
+                _operator = REAL_OPERATORS_MAP[_operator]
             if field == self.ip_field:
                 value = _add.get("value")
                 if value and _operator in ["is", "is one of", "eq"]:

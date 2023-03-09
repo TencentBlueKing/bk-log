@@ -426,8 +426,8 @@ API 频率限制 5w/s
 
 安装依赖
 
-    $ pip install "opentelemetry-api>=1.7.1,<1.13.0" "opentelemetry-sdk>=1.7.1,<1.13.0"
-    $ pip install "opentelemetry-exporter-otlp>=1.7.1,<1.13.0"
+    $ pip install "opentelemetry-api>=1.7.1,<1.13.0"
+    $ pip install "opentelemetry-sdk>=1.7.1,<1.13.0" "opentelemetry-exporter-otlp>=1.7.1,<1.13.0"
 
     # 依赖版本
     # Package                                Version
@@ -1336,6 +1336,9 @@ REAL_OPERATORS_MAP = {
     OperatorEnum.GT["operator"]: "gt",
     OperatorEnum.LTE["operator"]: "lte",
     OperatorEnum.GTE["operator"]: "gte",
+    # 兼容监控调用API模块时的操作符
+    "eq": "is one of",
+    "neq": "is not one of",
 }
 
 DEFAULT_INDEX_OBJECT_FIELDS_PRIORITY = ["__ext.io_kubernetes_pod", "serverIp", "ip"]
