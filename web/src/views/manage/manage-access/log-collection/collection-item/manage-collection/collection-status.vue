@@ -84,7 +84,11 @@
               :data="clickSec.data[i]"
               size="small"
               v-bkloading="{ isLoading: reloadTable }">
-              <bk-table-column :label="$t('目标')" prop="ip"></bk-table-column>
+              <bk-table-column :label="$t('目标')">
+                <template slot-scope="props">
+                  <span>{{getShowIp(props.row)}}</span>
+                </template>
+              </bk-table-column>
               <bk-table-column :label="$t('状态')">
                 <template slot-scope="props">
                   <span @click="reset(props.row)">
@@ -252,7 +256,7 @@ export default {
       dataPen: {},
       dataAll: {},
       // 是否支持一键检测
-      enableCheckCollector: window.ENABLE_CHECK_COLLECTOR,
+      enableCheckCollector: JSON.parse(window.ENABLE_CHECK_COLLECTOR),
       // 一键检测弹窗配置
       reportDetailShow: false,
       // 一键检测采集项标识
@@ -265,6 +269,9 @@ export default {
     },
     isContainer() {
       return this.collectorData.environment === 'container';
+    },
+    hostIdentifierPriority() {
+      return this.$store.getters['globals/globalsData']?.host_identifier_priority ?? ['ip', 'ipv6', 'host_name'];
     },
   },
   created() {
@@ -523,6 +530,9 @@ export default {
           this.checkRecordId = res.data.check_record_id;
         }
       });
+    },
+    getShowIp(row) {
+      return row[this.hostIdentifierPriority.find(pItem => Boolean(row[pItem]))] ?? row.ip;
     },
   },
 };

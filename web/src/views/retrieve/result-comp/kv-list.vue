@@ -282,10 +282,6 @@ export default {
      */
     getRelationMonitorField(field) {
       const key = field.toLowerCase();
-      if (this.isHaveBkHostIDAndHaveValue) {
-        if (['serverip', 'ip'].includes(key)) return;
-        if (key === 'bk_host_id') return this.$t('主机');
-      }
       switch (key) {
         // trace检索
         case 'trace_id':
@@ -294,7 +290,14 @@ export default {
         // 主机监控
         case 'serverip':
         case 'ip':
-          return this.$t('主机');
+        case 'bk_host_id': {
+          if (this.isHaveBkHostIDAndHaveValue && ['serverip', 'ip'].includes(key)) return; // bk_host_id有值, 不展示ip和serverIp的主机;
+          const lowerKeyData = Object.entries(this.data).reduce((pre, [curKey, curVal]) => {
+            pre[curKey.toLowerCase()] = curVal;
+            return pre;
+          }, {});
+          return !!lowerKeyData[key] ? this.$t('主机') : null; // 判断ip和serverIp是否有值 无值则不显示主机
+        }
         // 容器
         case 'container_id':
         case '__ext.container_id':
