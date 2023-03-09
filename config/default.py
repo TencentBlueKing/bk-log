@@ -1052,6 +1052,12 @@ SERVICE_LISTENING_DOMAIN = os.environ.get("SERVICE_LISTENING_DOMAIN", "")
 HOST_IDENTIFIER_PRIORITY = os.environ.get("HOST_IDENTIFIER_PRIORITY", "bk_host_innerip,bk_host_name,bk_host_innerip_v6")
 # ==============================================================================
 
+# ==============================================================================
+# 一键检测工具开关, 默认为关
+CHECK_COLLECTOR_SWITCH: bool = os.getenv("CHECK_COLLECTOR_SWITCH", "off") == "on"
+# ==============================================================================
+
+
 """
 以下为框架代码 请勿修改
 """
