@@ -19,8 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-from elasticsearch5 import Elasticsearch
-
+from apps.log_esquery.utils.es_client import get_es_client
 from apps.log_measure.exceptions import EsConnectFailException
 from apps.log_measure.constants import COLUMN_DISPLAY_LIST
 
@@ -32,11 +31,11 @@ class ElasticHandle(object):
         self.es_username = es_username
         self.es_password = es_password
         self.timeout = timeout
-        http_auth = (self.es_username, self.es_password) if self.es_username and self.es_password else None
-        self.es_client = Elasticsearch(
-            [self.es_host],
-            http_auth=http_auth,
-            scheme="http",
+        self.es_client = get_es_client(
+            version="",
+            hosts=[self.es_host],
+            username=self.es_username,
+            password=self.es_password,
             port=self.es_port,
             sniffer_timeout=600,
             verify_certs=False,

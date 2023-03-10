@@ -29,7 +29,6 @@ from typing import List, Union
 import arrow
 from django.conf import settings
 from django.db.models import Q, Sum
-from elasticsearch import Elasticsearch
 
 from apps.api import BkDataResourceCenterApi, BkLogApi, TransferApi
 from apps.constants import UserOperationActionEnum, UserOperationTypeEnum
@@ -832,11 +831,9 @@ class StorageHandler(object):
                 username = cluster_obj["auth_info"].get("username")
                 password = cluster_obj["auth_info"].get("password")
 
-        http_auth = (username, password) if username and password else None
-        es_client = Elasticsearch(
-            [domain_name], http_auth=http_auth, scheme=schema, port=port, sniffer_timeout=600, verify_certs=False
+        es_client = get_es_client(
+            version="", hosts=[domain_name], username=username, password=password, schema=schema, port=port
         )
-
         nodes = es_client.cat.nodeattrs(format="json", h="name,host,attr,value,id,ip")
 
         # 对节点属性进行过滤，有些是内置的，需要忽略
@@ -905,10 +902,9 @@ class StorageHandler(object):
     ) -> Union[bool, tuple]:
         # socket ping
         es_socket_ping(host=domain_name, port=port)
-        # 利用es_client对用户名和密码的连通性进行验证
-        http_auth = (username, password) if username and password else None
-        es_client = Elasticsearch(
-            [domain_name], http_auth=http_auth, scheme=schema, port=port, sniffer_timeout=600, verify_certs=False
+        # 利用es_client对用户名和密码的连通性进行验证, version默认走es7
+        es_client = get_es_client(
+            version="", hosts=[domain_name], username=username, password=password, port=port, schema=schema
         )
         if not es_client.ping():
             connect_result = False
