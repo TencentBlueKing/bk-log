@@ -25,9 +25,10 @@ from unittest.mock import MagicMock
 from django.test import TestCase
 from django.utils import timezone
 
-from apps.log_extract.constants import DownloadStatus, ExtractLinkType, TransitServer
+from apps.log_extract.constants import DownloadStatus, ExtractLinkType
 from apps.log_extract.models import Tasks
 from apps.log_extract.utils.packing import get_packed_dir_name
+from apps.log_extract.utils.transit_server import TransitServer
 from apps.log_extract.components.collections.distribution_component import FileDistributionComponent
 from pipeline.component_framework.test import (
     ComponentTestMixin,

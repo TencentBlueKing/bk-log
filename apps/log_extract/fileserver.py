@@ -134,7 +134,7 @@ class FileServer(object):
 
     @classmethod
     def file_distribution(
-        cls, file_source_list, file_target_path, target_ip_list, bk_biz_id, operator, account, task_name
+        cls, file_source_list, file_target_path, target_server, bk_biz_id, operator, account, task_name
     ):
         # file_source_list:文件源信息
         # file_target_path:目标路径
@@ -156,9 +156,14 @@ class FileServer(object):
             "account": account,
             "account_alias": account,
             "file_target_path": file_target_path,
-            "target_server": {"ip_list": target_ip_list},  # TODO 中转机不支持DHCP，还是提供IP+云区域
             "task_name": task_name,
         }
+        if settings.ENABLE_DHCP:
+            kwargs["target_server"]["host_id_list"] = [item.bk_host_id for item in target_server]
+        else:
+            kwargs["target_server"]["ip_list"] = [
+                {"ip": item.ip, "bk_cloud_id": item.bk_cloud_id} for item in target_server
+            ]
 
         task_result = JobApi.fast_transfer_file(kwargs, raw=True, request_cookies=False)
         if not task_result["result"]:

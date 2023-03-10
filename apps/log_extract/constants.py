@@ -19,7 +19,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-from dataclasses import dataclass
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
@@ -210,10 +209,3 @@ PIPELINE_TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 # jobapi权限code
 JOB_API_PERMISSION_CODE = 9900403
-
-
-@dataclass
-class TransitServer(object):
-    ip: str
-    target_dir: str
-    bk_cloud_id: int
