@@ -217,9 +217,10 @@ export default {
   min-width: 900px;
 
   .overflow-tips {
-    @include overflow-tips;
     display: inline-block;
     transform: translateY(2px);
+
+    @include overflow-tips;
   }
 
   .cluster-title {
@@ -335,18 +336,19 @@ export default {
   }
 }
 
-::v-deep .bk-form-radio {
+:deep(.bk-form-radio) {
   white-space: nowrap;
   display: flex;
   align-items: center;
-  & > input[type = "radio"] {
+
+  & > input[type = 'radio'] {
     /* stylelint-disable-next-line declaration-no-important */
     display: block !important;
     min-width: 16px;
   }
 }
 
-::v-deep .bk-radio-text {
+:deep(.bk-radio-text) {
   font-size: 12px;
   display: inline;
   width: 100%;

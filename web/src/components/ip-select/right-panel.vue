@@ -189,7 +189,7 @@ export default {
     }
 
     &-content {
-      ::v-deep .bk-table {
+      :deep(.bk-table) {
         border: 0;
 
         .bk-table-header {

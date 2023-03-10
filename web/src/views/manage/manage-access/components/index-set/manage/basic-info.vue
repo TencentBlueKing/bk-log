@@ -321,7 +321,7 @@ export default {
   }
 
   .king-table {
-    ::v-deep .cell {
+    :deep(.cell) {
       padding-top: 8px;
       padding-bottom: 8px;
     }

@@ -346,7 +346,7 @@ export default {
       height: 60px;
     }
 
-    ::v-deep .echart-legend {
+    :deep(.echart-legend) {
       display: flex;
       justify-content: center;
     }

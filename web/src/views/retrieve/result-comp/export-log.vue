@@ -333,7 +333,7 @@ export default {
     }
   }
 
-  ::v-deep .bk-dialog-header-inner {
+  :deep(.bk-dialog-header-inner) {
     /* stylelint-disable-next-line declaration-no-important */
     color: #000 !important;
   }

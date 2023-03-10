@@ -357,7 +357,7 @@ export default {
   .slot-container {
     padding-right: 40px;
 
-    ::v-deep .bk-form {
+    :deep(.bk-form) {
       .bk-label {
         text-align: left;
       }

@@ -125,7 +125,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-  .validate-tag-input ::v-deep .is-error .bk-tag-input {
+  .validate-tag-input :deep(.is-error .bk-tag-input) {
     border-color: #ff5656;
   }
 </style>

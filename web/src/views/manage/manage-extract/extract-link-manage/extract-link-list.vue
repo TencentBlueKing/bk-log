@@ -207,7 +207,7 @@ export default {
     padding: 0 24px 20px;
 
     /*表格内容样式*/
-    ::v-deep .king-table {
+    :deep(.king-table) {
       .task-operation-container {
         display: flex;
         align-items: center;

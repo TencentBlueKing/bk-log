@@ -690,7 +690,7 @@ export default {
         }
       }
 
-      ::v-deep .cell {
+      :deep(.cell) {
         padding: 4px 15px;
       }
 

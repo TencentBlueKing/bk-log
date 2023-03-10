@@ -259,7 +259,7 @@ export default {
       .selected-ip-list {
         width: 492px;
 
-        ::v-deep .king-table {
+        :deep(.king-table) {
           border-radius: 0;
         }
       }

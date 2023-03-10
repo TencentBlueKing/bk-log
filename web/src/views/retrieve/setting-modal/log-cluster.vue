@@ -620,7 +620,7 @@ export default {
         cursor: pointer;
         border: 1px solid #c4c6cc;
 
-        ::v-deep .bk-select-name {
+        :deep(.bk-select-name) {
           /* stylelint-disable-next-line declaration-no-important */
           padding: 0 !important;
         }
@@ -634,15 +634,15 @@ export default {
     .filter-rule-item {
       margin-bottom: 6px;
 
-      ::v-deep .bk-select-angle {
+      :deep(.bk-select-angle) {
         display: none;
       }
 
-      ::v-deep .bk-select {
+      :deep(.bk-select) {
         border-radius: 0;
       }
 
-      ::v-deep .bk-form-control {
+      :deep(.bk-form-control) {
         width: 140px;
         border-radius: 0;
       }
@@ -673,7 +673,7 @@ export default {
     }
 
     .rule-error {
-      ::v-deep .bk-tag-input {
+      :deep(.bk-tag-input) {
         border-color: #ff5656;
       }
 
@@ -685,12 +685,12 @@ export default {
   }
 
   .submit-dialog {
-    ::v-deep .bk-dialog-tool {
+    :deep(.bk-dialog-tool) {
       display: none;
     }
 
     .submit-dialog-container {
-      ::v-deep .bk-button {
+      :deep(.bk-button) {
         margin-left: 100px;
       }
 
@@ -704,7 +704,7 @@ export default {
         margin-bottom: 22px;
       }
 
-      ::v-deep .submit-dialog-btn {
+      :deep(.submit-dialog-btn) {
         margin-left: 224px;
       }
     }
