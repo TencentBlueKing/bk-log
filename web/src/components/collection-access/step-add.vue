@@ -841,6 +841,10 @@ export default {
     selectorNodes() {
       return this.getSelectorNodes();
     },
+    updateCollectorConfigID() { // 若是新增容器日志 返回上一步 则使用curCollect缓存的collector_config_id更新;
+      const { collectorId } = this.$route.params;
+      return !!collectorId ? Number(collectorId) : Number(this.curCollect.collector_config_id);
+    },
   },
   watch: {
     currentEnvironment(nVal, oVal) {
@@ -1107,7 +1111,7 @@ export default {
       const urlParams = {};
       let requestUrl;
       if (this.isUpdate) {
-        urlParams.collector_config_id = Number(this.$route.params.collectorId);
+        urlParams.collector_config_id = this.updateCollectorConfigID;
         requestUrl = 'collect/updateCollection';
       } else {
         requestUrl = 'collect/addCollection';
@@ -1132,7 +1136,7 @@ export default {
       const urlParams = {};
       let requestUrl;
       if (this.isUpdate) {
-        urlParams.collector_config_id = Number(this.$route.params.collectorId);
+        urlParams.collector_config_id = this.updateCollectorConfigID;
         requestUrl = 'container/update';
       } else {
         requestUrl = 'container/create';
@@ -1225,7 +1229,7 @@ export default {
         params: physicsParams,
       });
       if (this.isUpdate) { // 物理环境编辑
-        physicsFromData.collector_config_id = Number(this.$route.params.collectorId);
+        physicsFromData.collector_config_id = this.updateCollectorConfigID;
         delete physicsFromData.category_id;
         delete physicsFromData.collector_scenario_id;
         return Object.assign(physicsFromData, {
