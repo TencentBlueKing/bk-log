@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
 from django.db import migrations
 
-from apps.log_search.models import UserIndexSetConfig, IndexSetFieldsConfig, UserIndexSetFieldsConfig
-
 
 def forwards_func(apps, schema_editor):
+    user_index_set_config_model = apps.get_model("log_search", "UserIndexSetConfig")
+    index_set_fields_config_model = apps.get_model("log_search", "IndexSetFieldsConfig")
+    user_index_set_fields_config_model = apps.get_model("log_search", "UserIndexSetFieldsConfig")
+
     total = 0
     success = 0
     failed = 0
 
-    old_config_objs = list(UserIndexSetConfig.objects.filter(is_deleted=False).all())
+    old_config_objs = list(user_index_set_config_model.objects.filter(is_deleted=False).all())
     for old_config_obj in old_config_objs:
         scope = old_config_obj.scope
         # 由于目前trace弃用该配置, 所以只同步scope为default的配置
@@ -23,14 +25,14 @@ def forwards_func(apps, schema_editor):
         config_name = f"{username}的配置"
         try:
             # 先创建配置
-            new_config_obj = IndexSetFieldsConfig.objects.create(
+            new_config_obj = index_set_fields_config_model.objects.create(
                 name=config_name,
                 index_set_id=index_set_id,
                 display_fields=display_fields,
                 sort_list=sort_list,
             )
             # 再将用户该索引集的配置关联到新创建的配置
-            user_config_obj = UserIndexSetFieldsConfig.objects.create(
+            user_config_obj = user_index_set_fields_config_model.objects.create(
                 index_set_id=index_set_id,
                 username=username,
                 config_id=new_config_obj.id,
