@@ -32,7 +32,6 @@ from apps.log_extract import constants
 from apps.log_extract.constants import (
     PACK_TASK_SCRIPT_NOT_HAVE_ENOUGH_CAP_ERROR_CODE,
     ScheduleStatus,
-    TransitServer,
     BKREPO_CHILD_PACKING_PATH,
     DownloadStatus,
     ExtractLinkType,
@@ -47,6 +46,7 @@ from apps.log_extract.utils.packing import (
     get_packed_file_name,
     get_filter_content,
 )
+from apps.log_extract.utils.transit_server import TransitServer
 from apps.utils.db import array_chunk
 from apps.utils.remote_storage import BKREPOStorage
 from apps.utils.log import logger
@@ -296,7 +296,7 @@ class LogExtractUtils(object):
         task_result = FileServer.file_distribution(
             file_source_list=self.distribution_source_file_list,
             file_target_path=file_target_path,
-            target_ip_list=[{"ip": transit_server.ip, "bk_cloud_id": transit_server.bk_cloud_id}],
+            target_server=[transit_server],
             bk_biz_id=bk_biz_id,
             operator=operator,
             account=self.account,
