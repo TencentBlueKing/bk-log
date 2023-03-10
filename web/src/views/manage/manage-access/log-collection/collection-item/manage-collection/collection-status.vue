@@ -271,7 +271,7 @@ export default {
       return this.collectorData.environment === 'container';
     },
     hostIdentifierPriority() {
-      return this.$store.getters['globals/globalsData']?.host_identifier_priority ?? ['ip', 'ipv6', 'host_name'];
+      return this.$store.getters['globals/globalsData']?.host_identifier_priority ?? ['ip', 'host_name', 'ipv6'];
     },
   },
   created() {
