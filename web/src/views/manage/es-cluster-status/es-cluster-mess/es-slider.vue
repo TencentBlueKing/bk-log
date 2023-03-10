@@ -1347,7 +1347,7 @@ export default {
       width: 100%;
     }
 
-    ::v-deep .is-error .user-selector-container {
+    :deep(.is-error .user-selector-container) {
       border-color: #ff5656;
     }
   }
@@ -1415,7 +1415,7 @@ export default {
 
     @include flex-justify(space-between);
 
-    ::v-deep .bk-form-input {
+    :deep(.bk-form-input) {
       height: 34px;
     }
   }

@@ -514,7 +514,7 @@ export default {
       }
     }
 
-    ::v-deep .bk-big-tree-node {
+    :deep(.bk-big-tree-node) {
       &:hover {
         background: #f0f1f5;
       }

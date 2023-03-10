@@ -277,7 +277,7 @@ export default {
       }
     }
 
-    ::v-deep .bk-table-body-wrapper {
+    :deep(.bk-table-body-wrapper) {
       min-height: calc(100vh - 541px);
 
       .bk-table-empty-block {

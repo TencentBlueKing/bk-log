@@ -578,7 +578,7 @@ export default {
           }
 
           .input-error {
-            ::v-deep .bk-form-input {
+            :deep(.bk-form-input) {
               border: 1px solid #d7473f;
             }
           }
@@ -611,11 +611,11 @@ export default {
           }
         }
 
-        ::v-deep .bk-tab-label {
+        :deep(.bk-tab-label) {
           width: 100%;
         }
 
-        ::v-deep .bk-tab-label-item {
+        :deep(.bk-tab-label-item) {
           text-align: left;
 
           /* stylelint-disable-next-line declaration-no-important */
@@ -628,7 +628,7 @@ export default {
           }
         }
 
-        ::v-deep .bk-tab-header {
+        :deep(.bk-tab-header) {
           padding: 0 0 10px;
           min-width: 160px;
           width: 100%;
@@ -640,14 +640,14 @@ export default {
           }
         }
 
-        ::v-deep .active {
+        :deep(.active) {
           color: #3a84ff;
 
           /* stylelint-disable-next-line declaration-no-important */
           background: #e1ecff !important;
         }
 
-        ::v-deep .bk-tab-section {
+        :deep(.bk-tab-section) {
           display: none;
         }
       }

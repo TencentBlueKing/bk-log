@@ -156,7 +156,7 @@ export default {
       margin-bottom: 30px;
     }
 
-    ::v-deep .king-table {
+    :deep(.king-table) {
       margin-bottom: 12px;
 
       .bk-table-body-wrapper {
