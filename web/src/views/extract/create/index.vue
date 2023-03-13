@@ -253,7 +253,7 @@ export default {
       this.availablePaths = availablePaths;
     },
     initSelectNewNameList(hostList) {
-      const priorityList = this.globalsData?.host_identifier_priority ?? ['ip', 'host_name', 'ipv6'];;
+      const priorityList = this.globalsData?.host_identifier_priority ?? ['ip', 'host_name', 'ipv6'];
       this.ipSelectNewNameList = hostList.map(item => ({
         bk_host_id: item.host_id,
         ip: item.ip,
