@@ -47,6 +47,7 @@
           extract-scene
           allow-host-list-miss-host-id
           keep-host-field-output
+          ref="ipSelectRef"
           :height="670"
           :show-dialog.sync="showSelectDialog"
           :value="selectorNodes"
@@ -200,6 +201,7 @@ export default {
         this.handleCloneAvailablePaths(cloneData);
         this.$nextTick(() => {
           this.$refs.preview.handleClone(cloneData);
+          this.$refs.ipSelectRef.change();
         });
         this.ipSelectorOriginalValue = { host_list: toSelectorNode(this.ipList, 'INSTANCE') };
       }
@@ -251,7 +253,7 @@ export default {
       this.availablePaths = availablePaths;
     },
     initSelectNewNameList(hostList) {
-      const priorityList = this.globalsData?.host_identifier_priority;
+      const priorityList = this.globalsData?.host_identifier_priority ?? ['ip', 'host_name', 'ipv6'];;
       this.ipSelectNewNameList = hostList.map(item => ({
         bk_host_id: item.host_id,
         ip: item.ip,
