@@ -269,7 +269,7 @@ export default {
         // 容器
         case 'container_id':
         case '__ext.container_id':
-          path = `/?bizId=${this.bkBizId}#/k8s`;
+          path = `/?bizId=${this.bkBizId}#/k8s?dashboardId=pod`;
           break;
         default:
           break;
