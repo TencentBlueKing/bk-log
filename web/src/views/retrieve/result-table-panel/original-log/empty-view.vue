@@ -269,7 +269,7 @@ export default {
     cursor: pointer;
   }
 
-  ::v-deep .exception-image {
+  :deep(.exception-image) {
     height: 180px;
   }
 }

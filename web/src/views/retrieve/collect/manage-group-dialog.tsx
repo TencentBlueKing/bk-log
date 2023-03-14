@@ -840,6 +840,7 @@ export default class GroupDialog extends tsc<IProps> {
 
           <TableColumn
             label={this.$t('收藏名')}
+            render-header={this.$renderHeader}
             key={'column_name'}
             width="160"
             prop={'name'}
@@ -851,6 +852,7 @@ export default class GroupDialog extends tsc<IProps> {
           {this.checkFields('group_name') ? (
             <TableColumn
               label={this.$t('所属组')}
+              render-header={this.$renderHeader}
               width="112"
               key={'column_group_name'}
               prop={'group_name'}
@@ -866,6 +868,7 @@ export default class GroupDialog extends tsc<IProps> {
           {this.checkFields('visible_type') ? (
             <TableColumn
               label={this.$t('可见范围')}
+              render-header={this.$renderHeader}
               width="112"
               key={'column_visible_type'}
               prop={'visible_type'}
@@ -890,6 +893,7 @@ export default class GroupDialog extends tsc<IProps> {
           {this.checkFields('updated_by') ? (
             <TableColumn
               label={this.$t('变更人')}
+              render-header={this.$renderHeader}
               prop={'updated_by'}
               key={'column_update_by'}
               scopedSlots={{
@@ -906,6 +910,7 @@ export default class GroupDialog extends tsc<IProps> {
           {this.checkFields('updated_at') ? (
             <TableColumn
               label={this.$t('变更时间')}
+              render-header={this.$renderHeader}
               prop={'updated_at'}
               key={'column_update_time'}
               scopedSlots={{

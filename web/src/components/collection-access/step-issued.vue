@@ -870,7 +870,7 @@ export default {
     }
   }
 
-  ::v-deep .bk-sideslider-wrapper {
+  :deep(.bk-sideslider-wrapper) {
     padding-bottom: 0;
 
     .bk-sideslider-content {

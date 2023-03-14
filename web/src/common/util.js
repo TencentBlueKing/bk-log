@@ -717,10 +717,10 @@ export const clearTableFilter =  (refInstance) => {
 };
 
 /**
- * @desc: 适合未作处理的bk-table表头添加title
+ * @desc: 适合未作处理的bk-table表头添加tips
  */
 export const renderHeader = (h, { column }) => {
-  return h('span', { attrs: { title: column.label } }, column.label);
+  return h('p', { directives: [{ name: 'bk-overflow-tips' }], class: 'title-overflow' }, [column.label]);
 };
 
 /**

@@ -953,7 +953,7 @@ export default {
       return h('div', {
         class: 'render-header',
       }, [
-        h('span', { attrs: { title: this.$t('重命名') } }, this.$t('重命名')),
+        h('span', { directives: [{ name: 'bk-overflow-tips' }], class: 'title-overflow' }, [this.$t('重命名')]),
         h('span', this.$t('(选填)')),
         h('span', {
           class: 'icon log-icon icon-info-fill',
@@ -970,7 +970,7 @@ export default {
       return h('div', {
         class: 'render-header',
       }, [
-        h('span', { attrs: { title: this.$t('字段说明') } }, this.$t('字段说明')),
+        h('span', { directives: [{ name: 'bk-overflow-tips' }], class: 'title-overflow' }, [this.$t('字段说明')]),
         h('span', this.$t('(选填)')),
       ]);
     },
@@ -984,9 +984,9 @@ export default {
         ],
       }, [
         h('span', {
-          class: 'render-Participle',
-          attrs: { title: this.$t('分词') },
-        }, this.$t('分词')),
+          class: 'render-Participle title-overflow',
+          directives: [{ name: 'bk-overflow-tips' }],
+        }, [this.$t('分词')]),
       ]);
     },
     isDisableOperate(row) {

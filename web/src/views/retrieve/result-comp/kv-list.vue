@@ -341,7 +341,7 @@ export default {
         text-overflow: ellipsis;
         white-space: nowrap;
 
-        ::v-deep .icon-ext {
+        :deep(.icon-ext) {
           width: 13px;
           display: inline-block;
           font-size: 12px;

@@ -247,7 +247,7 @@ export default {
       width: 220px;
     }
 
-    ::v-deep .bk-date-picker-editor {
+    :deep(.bk-date-picker-editor) {
       background: #fff;
       line-height: 30px;
 
@@ -256,7 +256,7 @@ export default {
       }
     }
 
-    ::v-deep .icon-date-picker {
+    :deep(.icon-date-picker) {
       position: absolute;
       left: 7px;
       top: 7px;
