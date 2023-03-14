@@ -403,7 +403,7 @@ export default {
   border-color: #ff5656;
 }
 
-::v-deep .input-error .bk-form-input {
+:deep(.input-error .bk-form-input) {
   border-color: #ff5656;
 }
 

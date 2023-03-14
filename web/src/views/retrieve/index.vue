@@ -2238,7 +2238,7 @@ export default {
             padding: 20px 0 24px;
             background-color: #fff;
             // z-index: 1;
-            ::v-deep .query-btn {
+            :deep(.query-btn) {
               width: 32px;
               height: 32px;
               background: #fff;

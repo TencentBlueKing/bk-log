@@ -219,7 +219,7 @@ export default {
     font-size: 20px;
   }
 
-  ::v-deep .bk-icon {
+  :deep(.bk-icon) {
     margin-right: 0px;
   }
 

@@ -583,6 +583,12 @@ export default {
     }
   }
 
+  .title-overflow {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .beta-class {
     color: #ffa228;
     margin-left: 2px;

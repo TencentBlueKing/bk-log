@@ -559,7 +559,7 @@ export default {
     }
 
     .king-input-retrieve {
-      ::v-deep .bk-form-textarea {
+      :deep(.bk-form-textarea) {
         resize: vertical;
       }
     }

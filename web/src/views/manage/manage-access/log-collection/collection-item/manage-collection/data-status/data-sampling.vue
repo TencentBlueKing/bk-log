@@ -236,7 +236,7 @@ export default {
   }
 
   .locker-style {
-    ::v-deep section {
+    :deep(section) {
       /* stylelint-disable-next-line declaration-no-important */
       background-color: #313238 !important;
 

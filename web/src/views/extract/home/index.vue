@@ -372,7 +372,7 @@ export default {
       .king-input-search {
         width: 486px;
 
-        ::v-deep .icon-search {
+        :deep(.icon-search) {
           &:hover {
             color: #3b84ff;
             cursor: pointer;
@@ -382,7 +382,7 @@ export default {
     }
 
     /*表格内容样式*/
-    ::v-deep .king-table {
+    :deep(.king-table) {
       background-color: #fff;
 
       /*分页下拉*/
@@ -440,7 +440,7 @@ export default {
     padding-bottom: 20px;
     overflow: auto;
 
-    ::v-deep .list-box-container {
+    :deep(.list-box-container) {
       padding: 14px 20px 10px;
       font-size: 15px;
       line-height: 40px;

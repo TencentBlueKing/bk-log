@@ -107,7 +107,7 @@ export default {
       padding: 10px 30px;
       background-color: #fafbfd;
 
-      ::v-deep .vjs-tree {
+      :deep(.vjs-tree) {
         /* stylelint-disable-next-line declaration-no-important */
         font-size: 12px !important;
 
