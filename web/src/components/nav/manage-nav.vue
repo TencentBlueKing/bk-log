@@ -29,6 +29,7 @@
       <span class="bk-icon icon-arrows-left"></span>
     </div>
     <div class="main-title">{{ $route.meta.needBack ? getTitleName() : activeManageNav.name }}</div>
+    <div v-if="isShowDetailName" class="collect-link">{{ getBaseName() }}</div>
     <ul
       class="sub-nav-list"
       v-if="activeManageNav.children && !$route.meta.needBack"
@@ -59,8 +60,23 @@ export default {
       default: null,
     },
   },
+  data() {
+    return {
+      baseRouteNameList: [ // 展示详情名称的路由列表
+        'log-index-set-manage',
+        'manage-collection',
+        'bkdata-index-set-manage',
+        'custom-report-detail',
+        'es-index-set-manage',
+        'bkdata-track-manage',
+      ],
+    };
+  },
   computed: {
     ...mapState(['activeManageNav', 'activeManageSubNav']),
+    isShowDetailName() { // 是否需要展示详情名称
+      return this.baseRouteNameList.includes(this.$route.name);
+    },
   },
   methods: {
     handleClickSubNav(id) {
@@ -94,19 +110,19 @@ export default {
         collectStorage: collectionName,
         collectStart: collectionName,
         collectStop: collectionName,
-        'manage-collection': collectionName,
+        'manage-collection': this.$t('采集详情'),
         'log-index-set-create': this.$t('新建索引集'),
         'log-index-set-edit': this.$t('编辑索引集'),
-        'log-index-set-manage': this.$store.state.collect.curIndexSet?.index_set_name,
+        'log-index-set-manage': this.$t('采集详情'),
         'bkdata-index-set-create': this.$t('新建索引集'),
         'bkdata-index-set-edit': this.$t('编辑索引集'),
-        'bkdata-index-set-manage': this.$store.state.collect.curIndexSet?.index_set_name,
+        'bkdata-index-set-manage': this.$t('采集详情'),
         'es-index-set-create': this.$t('新建索引集'),
         'es-index-set-edit': this.$t('编辑索引集'),
-        'es-index-set-manage': this.$store.state.collect.curIndexSet?.index_set_name,
+        'es-index-set-manage': this.$t('采集详情'),
         'bkdata-track-create': this.$t('新建索引集'),
         'bkdata-track-edit': this.$t('编辑索引集'),
-        'bkdata-track-manage': this.$store.state.collect.curIndexSet?.index_set_name,
+        'bkdata-track-manage': this.$t('采集详情'),
         'extract-link-create': this.$t('新建提取链路'),
         'extract-link-edit': this.$t('编辑提取链路'),
         'clean-create': this.$t('新增清洗'),
@@ -117,9 +133,21 @@ export default {
         'extract-clone': this.$t('克隆日志提取任务'),
         'custom-report-create': this.$t('新建自定义上报'),
         'custom-report-edit': this.$t('编辑自定义上报'),
-        'custom-report-detail': collectionName,
+        'custom-report-detail': this.$t('采集详情'),
       };
       return map[this.$route.name];
+    },
+    getBaseName() {
+      const collectionName = this.$store.state.collect.curCollect?.collector_config_name;
+      const map = {
+        'manage-collection': collectionName,
+        'log-index-set-manage': this.$store.state.collect.curIndexSet?.index_set_name,
+        'bkdata-index-set-manage': this.$store.state.collect.curIndexSet?.index_set_name,
+        'bkdata-track-manage': this.$store.state.collect.curIndexSet?.index_set_name,
+        'es-index-set-manage': this.$store.state.collect.curIndexSet?.index_set_name,
+        'custom-report-detail': collectionName,
+      };
+      return `${this.$t('采集')}: ${map[this.$route.name] ?? ''}`;
     },
   },
 };
@@ -178,6 +206,15 @@ export default {
           transition: color, border-color .3s;
         }
       }
+    }
+
+    .collect-link {
+      margin-left: 12px;
+      font-size: 12px;
+      border-radius: 2px;
+      padding: 0 4px;
+      color: #63656e;
+      background: #f0f1f5;
     }
   }
 </style>

@@ -24,12 +24,17 @@
   <div class="access-manage-container" v-bkloading="{ isLoading: basicLoading }">
     <auth-container-page v-if="authPageInfo" :info="authPageInfo"></auth-container-page>
     <template v-if="!authPageInfo && !basicLoading && curIndexSet">
-      <bk-tab :active.sync="activePanel" type="border-card">
-        <bk-tab-panel
-          v-for="panel in panels"
-          v-bind="panel"
-          :key="panel.name"></bk-tab-panel>
-      </bk-tab>
+      <basic-tab :active.sync="activePanel" type="border-card">
+        <bk-tab-panel v-for="panel in panels" v-bind="panel" :key="panel.name"></bk-tab-panel>
+        <div class="go-search" slot="setting">
+          <div class="search-text">
+            <span class="bk-icon icon-info"></span>
+            <i18n path="可对当前采集内容进行检索，{0}">
+              <span class="search-button" @click="handleGoSearch">{{$t('去检索')}}</span>
+            </i18n>
+          </div>
+        </div>
+      </basic-tab>
       <keep-alive>
         <component
           class="tab-content"
@@ -48,6 +53,7 @@ import AuthContainerPage from '@/components/common/auth-container-page';
 import BasicInfo from './basic-info';
 import FieldInfo from './field-info';
 import UsageDetails from '@/views/manage/manage-access/components/usage-details';
+import BasicTab from '@/components/basic-tab';
 import * as authorityMap from '../../../../../../common/authority-map';
 
 export default {
@@ -57,6 +63,7 @@ export default {
     BasicInfo,
     FieldInfo,
     UsageDetails,
+    BasicTab,
   },
   data() {
     const scenarioId = this.$route.name.split('-')[0];
@@ -136,6 +143,20 @@ export default {
         });
         this.$store.commit('collect/updateScenarioMap', map);
       }
+    },
+    handleGoSearch() {
+      const params = {
+        indexId: this.curIndexSet.index_set_id
+          ? this.curIndexSet.index_set_id
+          : this.curIndexSet.bkdata_index_set_ids[0],
+      };
+      this.$router.push({
+        name: 'retrieve',
+        params,
+        query: {
+          spaceUid: this.$store.state.spaceUid,
+        },
+      });
     },
   },
 };

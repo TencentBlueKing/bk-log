@@ -812,5 +812,9 @@
   "选择日期时间范围": "Select date time range",
   "健康": "Wholesome",
   "部分故障": "Partial failure",
-  "严重故障": "Critical failure"
+  "严重故障": "Critical failure",
+  "可对当前采集内容进行检索，{0}": "The current collected content can be retrieved, {0}",
+  "去检索": "search",
+  "采集详情": "Collection details",
+  "采集": "Collection"
 }
