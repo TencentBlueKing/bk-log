@@ -1456,7 +1456,7 @@ class SearchHandler(object):
             new_addition.append({"field": "bk_host_id", "operator": "is one of", "value": ip_chooser_host_id_list})
         new_addition.append({"field": self.ip_field, "operator": "is one of", "value": list(set(search_ip_list))})
         # 当IP选择器传了模块,模版,动态拓扑但是实际没有主机时, 此时应不返回任何数据, 塞入特殊数据bk_host_id=0来实现
-        if ip_chooser and not ip_chooser_host_id_list and not ip_chooser_host_id_list:
+        if ip_chooser and not ip_chooser_host_id_list and not ip_chooser_ip_list:
             new_addition.append({"field": "bk_host_id", "operator": "is one of", "value": [0]})
         attrs["addition"] = new_addition
         return attrs
