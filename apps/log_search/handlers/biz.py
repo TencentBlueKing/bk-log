@@ -20,6 +20,7 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import copy
+import typing
 from collections import defaultdict, namedtuple
 from inspect import signature
 from typing import List
@@ -50,6 +51,7 @@ from apps.utils.cache import cache_five_minute, cache_one_hour, cache_half_hour
 from apps.log_search.models import BizProperty, Space
 from apps.utils.db import array_hash, array_chunk
 from apps.utils.function import ignored
+from apps.utils.ipchooser import IPChooser
 from apps.utils.thread import MultiExecuteFunc
 
 
@@ -87,6 +89,9 @@ class BizHandler(APIModel):
                 item[field] = biz.get(field, None)
             business.append(item)
         return business
+
+    def get_display_name(self, host_list: typing.List[str]):
+        return IPChooser(bk_biz_id=self.bk_biz_id).get_host_display_name(host_list)
 
     @classmethod
     def list_clouds(cls):
@@ -940,7 +945,10 @@ class BizHandler(APIModel):
             }
             if bk_obj_id in (CCInstanceType.BUSINESS.value):
                 tmp_host["parent_inst_id"] = [self.bk_biz_id]
-            if bk_obj_id in (CCInstanceType.MODULE.value, TemplateType.SERIVCE_TEMPLATE.value,):
+            if bk_obj_id in (
+                CCInstanceType.MODULE.value,
+                TemplateType.SERIVCE_TEMPLATE.value,
+            ):
                 tmp_host["parent_inst_id"] = [
                     module["bk_module_id"] for topo in host["topo"] for module in topo["module"]
                 ]

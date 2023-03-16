@@ -517,3 +517,22 @@ class TemplateSerializer(serializers.Serializer):
 
 class DynamicGroupSerializer(serializers.Serializer):
     dynamic_group_id_list = serializers.ListField(label=_("动态分组ID列表"), child=serializers.CharField(label=_("动态分组ID")))
+
+
+class HostInfoSerializer(serializers.Serializer):
+    cloud_id = serializers.IntegerField(help_text=_("云区域 ID"), required=False)
+    ip = serializers.IPAddressField(help_text=_("IPv4 协议下的主机IP"), required=False, protocol="ipv4")
+    host_id = serializers.IntegerField(help_text=_("主机 ID，优先取 `host_id`，否则取 `ip` + `cloud_id`"), required=False)
+
+    def validate(self, attrs):
+        if not ("host_id" in attrs or ("ip" in attrs and "cloud_id" in attrs)):
+            raise serializers.ValidationError(_("参数校验失败: 请传入 host_id 或者 cloud_id + ip"))
+        return attrs
+
+
+class GetDisplayNameSerializer(serializers.Serializer):
+    """
+    获取展示字段名称序列化
+    """
+
+    host_list = serializers.ListField(child=HostInfoSerializer(), default=[])

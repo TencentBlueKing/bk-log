@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from apps.api import CCApi, GseApi
+
+from django.conf import settings
+
 from bkm_ipchooser.api import AbstractBkApi
 from bkm_ipchooser.constants import CommonEnum, ObjectType
 from bkm_ipchooser.tools.batch_request import request_multi_thread
@@ -232,4 +235,64 @@ class IPChooser:
         host_list = BkApi.bulk_execute_dynamic_group(
             {"bk_biz_id": self.bk_biz_id, "id": dynamic_group_id, "fields": self.fields, "no_request": True}
         )
+        return host_list
+
+    def get_host_display_name(self, host_list: list):
+        # 添加主机的display_name
+        host_identifier_priority = settings.HOST_IDENTIFIER_PRIORITY.split(",") or [
+            "bk_host_innerip",
+            "bk_host_name",
+            "bk_host_innerip_v6",
+        ]
+
+        def _get_display_name(_host):
+            """获取主机的display_name, 根据优先级顺序依次取"""
+            for _identifier in host_identifier_priority:
+                if _host.get(_identifier):
+                    return _host[_identifier]
+            return _host["bk_host_innerip"]
+
+        fields = list(set(host_identifier_priority + ["bk_host_id", "bk_cloud_id"]))
+        params = {
+            "bk_biz_id": self.bk_biz_id,
+            "host_property_filter": {
+                "condition": "OR",
+                "rules": [],
+            },
+            "fields": fields,
+            "no_request": True,
+        }
+        # 同时兼容有host_id和cloud_id+ip两种情况
+        host_id_rules = {"field": "bk_host_id", "operator": "in", "value": []}
+        for host in host_list:
+            if host.get("host_id"):
+                host_id_rules["value"].append(host["host_id"])
+            else:
+                params["host_property_filter"]["rules"].append(
+                    {
+                        "condition": "AND",
+                        "rules": [
+                            {
+                                "field": "bk_cloud_id",
+                                "operator": "equal",
+                                "value": host["cloud_id"],
+                            },
+                            {
+                                "field": "bk_host_innerip",
+                                "operator": "equal",
+                                "value": host["ip"],
+                            },
+                        ],
+                    }
+                )
+        # 如果有host_id的情况, 添加条件
+        if host_id_rules["value"]:
+            params["host_property_filter"]["rules"].append(host_id_rules)
+        # 如果rules为空, 移除host_property_filter
+        if not params["host_property_filter"]["rules"]:
+            params.pop("host_property_filter")
+        host_list = BkApi.bulk_list_biz_hosts(params)
+        for host in host_list:
+            host["display_name"] = _get_display_name(host)
+
         return host_list
