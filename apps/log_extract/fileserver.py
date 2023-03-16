@@ -157,6 +157,7 @@ class FileServer(object):
             "account_alias": account,
             "file_target_path": file_target_path,
             "task_name": task_name,
+            "target_server": {},
         }
         if settings.ENABLE_DHCP:
             kwargs["target_server"]["host_id_list"] = [item.bk_host_id for item in target_server]
