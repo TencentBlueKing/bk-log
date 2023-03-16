@@ -14,6 +14,8 @@ def forwards_func(apps, schema_editor):
         target_nodes = host_scopes.get("target_nodes", [])
 
         if target_nodes:
+            if not host_scopes.get("target_node_type"):
+                continue
             if host_scopes["target_node_type"] == TargetNodeTypeEnum.INSTANCE.value:
                 ip_chooser["host_list"] = [
                     {"ip": target_node["ip"], "cloud_area": {"id": target_node["bk_cloud_id"]}}
