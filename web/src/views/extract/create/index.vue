@@ -200,7 +200,7 @@ export default {
         this.handleCloneAvailablePaths(cloneData);
         this.$nextTick(() => {
           this.$refs.preview.handleClone(cloneData);
-          this.initCloneDisplayName(); // 克隆时 请求displayName列表来展示过滤字段
+          this.initCloneDisplayName(); // 克隆时 请求displayName列表来展示预览字段
         });
         this.ipSelectorOriginalValue = { host_list: toSelectorNode(this.ipList, 'INSTANCE') };
       }

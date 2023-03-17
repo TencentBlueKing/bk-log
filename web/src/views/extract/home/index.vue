@@ -371,14 +371,14 @@ export default {
     },
     getIPDisplayNameList(ipList) { // 获取displayName字符串列表
       if (ipList && ipList.length) {
-        const list = ipList.map((item) => {
-          const findDisplayName = this.displayNameList.find((dItem) => {
-            return item.bk_host_id === dItem.host_id
-          || `${item.ip}_${item.bk_cloud_id}` === `${dItem.bk_host_innerip}_${dItem.bk_cloud_id}`;
+        return ipList.map((item) => {
+          return this.displayNameList.find((dItem) => {
+            const hostMatch = item.bk_host_id === dItem.host_id;
+            const ipMatch = `${item.ip}_${item.bk_cloud_id}` === `${dItem.bk_host_innerip}_${dItem.bk_cloud_id}`;
+            if (item?.bk_host_id) return (hostMatch || ipMatch);
+            return ipMatch;
           })?.display_name || '';
-          return findDisplayName;
         });
-        return list;
       }
       return [];
     },
