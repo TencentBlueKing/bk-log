@@ -212,8 +212,8 @@ export default {
           };
         }
         return {
-          ip: item?.ip ?? '',
-          cloud_id: item?.bk_cloud_id ?? '',
+          ip: item.ip ?? '',
+          cloud_id: item.bk_cloud_id ?? '',
         };
       });
       this.$http.request('extract/getIpListDisplayName', {
@@ -284,7 +284,7 @@ export default {
      */
     initSelectNewNameList(hostList, isClone = false) {
       if (!isClone) { // 新增 使用ip选择器里的值展示
-        const priorityList = this.globalsData?.host_identifier_priority ?? ['ip', 'host_name', 'ipv6'];
+        const priorityList = this.globalsData.host_identifier_priority ?? ['ip', 'host_name', 'ipv6'];
         this.ipSelectNewNameList = hostList.map(item => ({
           bk_host_id: item.host_id,
           ip: item.ip,

@@ -228,8 +228,8 @@ export default {
               };
             }
             return {
-              ip: item?.ip ?? '',
-              cloud_id: item?.bk_cloud_id ?? '',
+              ip: item.ip ?? '',
+              cloud_id: item.bk_cloud_id ?? '',
             };
           }));
           return pre;
