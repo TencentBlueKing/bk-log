@@ -351,7 +351,7 @@ export default {
           }
 
           .is-input-error.bk-form-control {
-            ::v-deep .bk-form-input {
+            :deep(.bk-form-input) {
               /* stylelint-disable-next-line declaration-no-important */
               border-color: #ff5656 !important;
             }

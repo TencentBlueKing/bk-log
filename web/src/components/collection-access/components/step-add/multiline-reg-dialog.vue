@@ -173,11 +173,11 @@ export default {
       }
     }
 
-    ::v-deep .bk-label-text {
+    :deep(.bk-label-text) {
       color: #313238;
     }
 
-    ::v-deep .bk-form-textarea {
+    :deep(.bk-form-textarea) {
       @include scroller($backgroundColor: #C4C6CC, $width:4px);
     }
   }

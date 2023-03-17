@@ -89,9 +89,15 @@
             </template>
             <!-- </bk-table-column> -->
             <!-- 字段名 -->
-            <bk-table-column :label="$t('字段名')" :resizable="false" min-width="100">
+            <bk-table-column
+              :label="$t('字段名')"
+              :render-header="$renderHeader"
+              :resizable="false"
+              min-width="100">
               <template slot-scope="props">
-                <span v-if="isPreviewMode">{{ props.row.field_name }}</span>
+                <div v-if="isPreviewMode" class="overflow-tips" v-bk-overflow-tips>
+                  <span>{{ props.row.field_name }}</span>
+                </div>
                 <bk-form-item v-else :class="{ 'is-required is-error': props.row.fieldErr }">
                   <bk-input
                     :disabled="props.row.is_delete || extractMethod !== 'bk_log_delimiter' || isSetDisabled"
@@ -114,7 +120,9 @@
               v-if="isPreviewMode || extractMethod === 'bk_log_json'"
               min-width="100">
               <template slot-scope="props">
-                <span v-if="isPreviewMode">{{ props.row.alias_name }}</span>
+                <div v-if="isPreviewMode" class="overflow-tips" v-bk-overflow-tips>
+                  <span>{{ props.row.alias_name }}</span>
+                </div>
                 <bk-form-item
                   v-else
                   :class="{ 'is-required is-error': props.row.aliasErr }">
@@ -135,7 +143,9 @@
             <!-- 字段说明 -->
             <bk-table-column :render-header="renderHeaderDescription" :resizable="false" min-width="100">
               <template slot-scope="props">
-                <span v-if="isPreviewMode">{{ props.row.description }}</span>
+                <div v-if="isPreviewMode" class="overflow-tips" v-bk-overflow-tips>
+                  <span>{{ props.row.description }}</span>
+                </div>
                 <bk-input
                   v-else
                   :disabled="props.row.is_delete || isSetDisabled"
@@ -143,9 +153,15 @@
               </template>
             </bk-table-column>
             <!-- 类型 -->
-            <bk-table-column :label="$t('类型')" :resizable="false" min-width="100">
+            <bk-table-column
+              :label="$t('类型')"
+              :render-header="$renderHeader"
+              :resizable="false"
+              min-width="100">
               <template slot-scope="props">
-                <span v-if="isPreviewMode">{{ props.row.field_type }}</span>
+                <div v-if="isPreviewMode" class="overflow-tips" v-bk-overflow-tips>
+                  <span>{{ props.row.field_type }}</span>
+                </div>
                 <!-- <bk-form-item v-else
                   :required="true"
                   :rules="props.row.is_delete ? notCheck : rules.field_type"
@@ -223,7 +239,12 @@
               </template>
             </bk-table-column>
             <!-- 时间 -->
-            <bk-table-column :label="$t('时间')" align="center" :resizable="false" width="60">
+            <bk-table-column
+              :label="$t('时间')"
+              :render-header="$renderHeader"
+              align="center"
+              :resizable="false"
+              width="60">
               <template slot-scope="props">
                 <template v-if="isPreviewMode">
                   <div class="field-date field-date-disable">
@@ -281,6 +302,7 @@
             <!-- 操作 -->
             <bk-table-column
               :label="$t('操作')"
+              :render-header="$renderHeader"
               :resizable="false"
               align="center"
               width="60"
@@ -931,7 +953,7 @@ export default {
       return h('div', {
         class: 'render-header',
       }, [
-        h('span', this.$t('重命名')),
+        h('span', { directives: [{ name: 'bk-overflow-tips' }], class: 'title-overflow' }, [this.$t('重命名')]),
         h('span', this.$t('(选填)')),
         h('span', {
           class: 'icon log-icon icon-info-fill',
@@ -948,7 +970,7 @@ export default {
       return h('div', {
         class: 'render-header',
       }, [
-        h('span', this.$t('字段说明')),
+        h('span', { directives: [{ name: 'bk-overflow-tips' }], class: 'title-overflow' }, [this.$t('字段说明')]),
         h('span', this.$t('(选填)')),
       ]);
     },
@@ -962,8 +984,9 @@ export default {
         ],
       }, [
         h('span', {
-          class: 'render-Participle',
-        }, this.$t('分词')),
+          class: 'render-Participle title-overflow',
+          directives: [{ name: 'bk-overflow-tips' }],
+        }, [this.$t('分词')]),
       ]);
     },
     isDisableOperate(row) {
@@ -976,6 +999,7 @@ export default {
 
 <style lang="scss">
   @import '@/scss/mixins/clearfix';
+  @import '@/scss/mixins/overflow-tips.scss';
 
   .field-table-container {
     position: relative;

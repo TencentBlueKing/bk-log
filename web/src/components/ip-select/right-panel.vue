@@ -75,7 +75,7 @@ export default {
       default() {
         return {
           num: 0,
-          type: '主机',
+          type: this.$t('主机'),
         };
       },
     },
@@ -189,7 +189,7 @@ export default {
     }
 
     &-content {
-      ::v-deep .bk-table {
+      :deep(.bk-table) {
         border: 0;
 
         .bk-table-header {

@@ -352,13 +352,13 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-  ::v-deep .bk-dialog-body {
+  :deep(.bk-dialog-body) {
     background-color: #f5f6fa;
     overflow: hidden;
     padding: 0;
   }
 
-  ::v-deep .bk-dialog-tool {
+  :deep(.bk-dialog-tool) {
     display: none;
   }
 
@@ -426,7 +426,7 @@ export default {
 
       .setting-right {
         margin-left: 20px;
-        max-width: 1000px;
+        max-width: 1020px;
 
         .more-details {
           height: 48px;

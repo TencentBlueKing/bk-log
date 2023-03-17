@@ -39,7 +39,9 @@
           <bk-table-column :label="$t('集群名')" min-width="240">
             <template slot-scope="{ row }">
               <bk-radio :checked="clusterSelect === row.storage_cluster_id">
-                <span @click.stop>{{ row.storage_cluster_name }}</span>
+                <div class="overflow-tips" v-bk-overflow-tips>
+                  <span @click.stop>{{ row.storage_cluster_name }}</span>
+                </div>
               </bk-radio>
             </template>
           </bk-table-column>
@@ -208,10 +210,18 @@ export default {
 </script>
 <style lang="scss" scoped>
 @import '@/scss/mixins/flex.scss';
+@import '@/scss/mixins/overflow-tips.scss';
 
 .cluster-container {
   line-height: 14px;
   min-width: 900px;
+
+  .overflow-tips {
+    display: inline-block;
+    transform: translateY(2px);
+
+    @include overflow-tips;
+  }
 
   .cluster-title {
     width: 100%;
@@ -250,12 +260,6 @@ export default {
     .cluster-table {
       width: 58%;
       min-width: 420px;
-
-      ::v-deep .bk-form-radio {
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-      }
     }
 
     .cluster-illustrate {
@@ -295,10 +299,6 @@ export default {
       }
     }
 
-    .bk-radio-text {
-      font-size: 12px;
-    }
-
     .noData-container {
       width: 100%;
       border: 1px solid #dcdee5;
@@ -334,5 +334,23 @@ export default {
       }
     }
   }
+}
+
+:deep(.bk-form-radio) {
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+
+  & > input[type = 'radio'] {
+    /* stylelint-disable-next-line declaration-no-important */
+    display: block !important;
+    min-width: 16px;
+  }
+}
+
+:deep(.bk-radio-text) {
+  font-size: 12px;
+  display: inline;
+  width: 100%;
 }
 </style>

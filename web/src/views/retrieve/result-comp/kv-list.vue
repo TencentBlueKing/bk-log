@@ -126,6 +126,10 @@ export default {
         text_is: this.$t('文本类型不支持 {n} 操作', { n: 'is' }),
         text_not: this.$t('文本类型不支持 {n} 操作', { n: 'is not' }),
       },
+      mappingKay: { // is is not 值映射
+        is: '=',
+        'is not': '!=',
+      },
     };
   },
   computed: {
@@ -298,7 +302,7 @@ export default {
         const curValue = this.tableRowDeepView(this.data, field, this.getFieldType(field), false);
         return this.retrieveParams.addition.some((addition) => {
           return addition.field === field
-        && addition.operator === id
+        && addition.operator === (this.mappingKay[id] ?? id) // is is not 值映射 判断是否
         && addition.value.toString() === curValue.toString();
         });
       }
@@ -323,7 +327,7 @@ export default {
         text-overflow: ellipsis;
         white-space: nowrap;
 
-        ::v-deep .icon-ext {
+        :deep(.icon-ext) {
           width: 13px;
           display: inline-block;
           font-size: 12px;

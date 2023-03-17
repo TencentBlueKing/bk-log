@@ -42,16 +42,19 @@
     <bk-table-column
       type="index"
       :label="$t('序号')"
+      :render-header="$renderHeader"
       width="60">
     </bk-table-column>
     <bk-table-column
       :label="$t('数量')"
+      :render-header="$renderHeader"
       sortable
       width="91"
       prop="count">
     </bk-table-column>
     <bk-table-column
       :label="$t('占比')"
+      :render-header="$renderHeader"
       sortable
       :sort-by="'count'"
       width="91"
@@ -62,6 +65,7 @@
     </bk-table-column>
     <bk-table-column
       :label="$t('取样内容')"
+      :render-header="$renderHeader"
       prop="content"
       class-name="symbol-column">
       <!-- eslint-disable-next-line -->
@@ -273,7 +277,7 @@ export default {
       }
     }
 
-    ::v-deep .bk-table-body-wrapper {
+    :deep(.bk-table-body-wrapper) {
       min-height: calc(100vh - 541px);
 
       .bk-table-empty-block {

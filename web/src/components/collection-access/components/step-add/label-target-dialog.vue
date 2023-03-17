@@ -55,7 +55,7 @@
           @select-change="handleSelectTreeItem">
           <div slot-scope="{ data }">
             <div class="item-slot">
-              <span class="item-name" :title="data.name">{{data.name}}</span>
+              <span class="item-name" v-bk-overflow-tips>{{data.name}}</span>
               <span v-if="data.children" class="item-number">{{data.children.length}}</span>
             </div>
           </div>
@@ -114,8 +114,8 @@
               <span class="hit-number" @click="handleClearHit">{{$t('清空')}}</span>
             </div>
             <div class="hit-container">
-              <div class="hit-item" v-for="item of hitResultList" :key="item.id">
-                <span :title="item.name">{{item.name}}</span>
+              <div class="hit-item" v-bk-overflow-tips v-for="item of hitResultList" :key="item.id">
+                <span>{{item.name}}</span>
               </div>
             </div>
             <div class="right-drag bk-log-drag-simple" @mousedown="(e) => handleMouseDown(e, 'right')"></div>
@@ -514,7 +514,7 @@ export default {
       }
     }
 
-    ::v-deep .bk-big-tree-node {
+    :deep(.bk-big-tree-node) {
       &:hover {
         background: #f0f1f5;
       }

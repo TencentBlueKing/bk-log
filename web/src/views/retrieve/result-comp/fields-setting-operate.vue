@@ -139,7 +139,7 @@ export default {
   .config-input {
     width: 100px;
 
-    ::v-deep .bk-form-input {
+    :deep(.bk-form-input) {
       transform: translateY(-2px);
     }
   }
@@ -172,7 +172,7 @@ export default {
   }
 
   .input-error {
-    ::v-deep .bk-form-input {
+    :deep(.bk-form-input) {
       border: 1px solid #d7473f;
     }
   }

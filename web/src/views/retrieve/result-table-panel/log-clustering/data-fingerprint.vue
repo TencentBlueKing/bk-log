@@ -55,7 +55,7 @@
         </template>
       </bk-table-column>
 
-      <bk-table-column :label="$t('数据指纹')" width="150">
+      <bk-table-column :label="$t('数据指纹')" :render-header="$renderHeader" width="150">
         <template slot-scope="{ row }">
           <div class="fl-ac signature-box">
             <span>{{row.signature}}</span>
@@ -66,6 +66,7 @@
 
       <bk-table-column
         :label="$t('数量')"
+        :render-header="$renderHeader"
         sortable
         width="91"
         prop="number">
@@ -79,6 +80,7 @@
 
       <bk-table-column
         :label="$t('占比')"
+        :render-header="$renderHeader"
         sortable
         width="96"
         prop="percentage">
@@ -98,6 +100,7 @@
           align="center"
           header-align="center"
           :label="$t('同比数量')"
+          :render-header="$renderHeader"
           :sort-by="'year_on_year_count'">
           <template slot-scope="{ row }">
             <span>{{row.year_on_year_count}}</span>
@@ -110,6 +113,7 @@
           align="center"
           header-align="center"
           :label="$t('同比变化')"
+          :render-header="$renderHeader"
           :sort-by="'year_on_year_percentage'">
           <template slot-scope="{ row }">
             <div class="fl-ac compared-change">
@@ -155,6 +159,7 @@
           v-for="(item,index) of requestData.group_by"
           :key="index"
           :label="item"
+          :render-header="$renderHeader"
           width="130"
           class-name="symbol-column">
           <template slot-scope="{ row }">
@@ -165,6 +170,7 @@
 
       <bk-table-column
         :label="$t('告警')"
+        :render-header="$renderHeader"
         width="103"
         class-name="symbol-column">
         <template slot-scope="{ row }">
@@ -188,6 +194,7 @@
 
       <bk-table-column
         :label="$t('标签')"
+        :render-header="$renderHeader"
         width="160"
         align="center"
         header-align="center">
@@ -636,7 +643,7 @@ export default {
   }
 
   .finger-cluster-table {
-    ::v-deep .bk-table-body-wrapper {
+    :deep(.bk-table-body-wrapper) {
       margin-top: 32px;
       min-height: calc(100vh - 570px);
 

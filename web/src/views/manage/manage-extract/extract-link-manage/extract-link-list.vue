@@ -43,17 +43,17 @@
       :data="extractLinkList"
       row-key="strategy_id"
       data-test-id="extractLinkListBox_table_LinkListTableBox">
-      <bk-table-column :label="$t('链路名称')">
+      <bk-table-column :label="$t('链路名称')" :render-header="$renderHeader">
         <div class="table-ceil-container" slot-scope="{ row }">
           <span v-bk-overflow-tips>{{ row.name }}</span>
         </div>
       </bk-table-column>
-      <bk-table-column :label="$t('链路类型')" prop="created_at">
+      <bk-table-column :label="$t('链路类型')" :render-header="$renderHeader" prop="created_at">
         <div slot-scope="{ row }">
           <template>{{linkNameMap[row.link_type]}}</template>
         </div>
       </bk-table-column>
-      <bk-table-column :label="$t('操作')" width="200">
+      <bk-table-column :label="$t('操作')" :render-header="$renderHeader" width="200">
         <div slot-scope="{ row }" class="task-operation-container">
           <span class="task-operation" @click="handleEditStrategy(row)">{{ $t('编辑') }}</span>
           <span class="task-operation" @click="handleDeleteStrategy(row)">{{ $t('删除') }}</span>
@@ -207,7 +207,7 @@ export default {
     padding: 0 24px 20px;
 
     /*表格内容样式*/
-    ::v-deep .king-table {
+    :deep(.king-table) {
       .task-operation-container {
         display: flex;
         align-items: center;

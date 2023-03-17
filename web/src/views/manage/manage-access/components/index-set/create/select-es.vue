@@ -72,7 +72,7 @@
               min-width="490">
             </bk-table-column>
             <div slot="empty">
-              <empty-status empty-type="empty" />
+              <empty-status :empty-type="emptyType" @operation="handleOperation" />
             </div>
           </bk-table>
         </bk-form-item>
@@ -111,7 +111,7 @@
           </bk-select>
         </bk-form-item>
         <div slot="empty">
-          <empty-status empty-type="empty" />
+          <empty-status :empty-type="emptyType" @operation="handleOperation" />
         </div>
       </bk-form>
       <div slot="footer" class="button-footer">
@@ -155,6 +155,7 @@ export default {
       searchLoading: false,
       confirmLoading: false,
       indexErrorText: '',
+      emptyType: 'empty',
       matchedTableIds: [], // 匹配到的索引 id，result table id list
       timeFields: [], // 字段类型为 date 或 long 的字段
       formData: {
@@ -217,6 +218,20 @@ export default {
         },
       });
     },
+    handleOperation(type) {
+      if (type === 'clear-filter') {
+        this.formData.resultTableId = '*';
+        this.emptyType = 'empty';
+        this.handleSearch();
+        return;
+      }
+
+      if (type === 'refresh') {
+        this.emptyType = 'empty';
+        this.handleSearch();
+        return;
+      }
+    },
     // 如果result_table_id为空，在光标后自动追加*
     handleFocus(value, event) {
       if (!this.formData.resultTableId) {
@@ -231,6 +246,7 @@ export default {
       if (!this.formData.resultTableId || this.formData.resultTableId === '*') {
         return;
       }
+      this.emptyType = 'search-empty';
       this.indexErrorText = '';
       this.formData.time_field = '';
       this.formData.time_field_type = '';
@@ -257,6 +273,7 @@ export default {
       } catch (e) {
         console.warn(e);
         this.indexErrorText += e.message;
+        this.emptyType = '500';
         return [];
       }
     },
@@ -284,6 +301,7 @@ export default {
       } catch (e) {
         console.warn(e);
         this.indexErrorText += e.message;
+        this.emptyType = '500';
         return [];
       }
     },
@@ -339,7 +357,7 @@ export default {
   .slot-container {
     padding-right: 40px;
 
-    ::v-deep .bk-form {
+    :deep(.bk-form) {
       .bk-label {
         text-align: left;
       }

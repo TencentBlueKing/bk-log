@@ -254,7 +254,7 @@ export default {
               },
             ],
           }),
-          h('span', fieldName),
+          h('span', { directives: [{ name: 'bk-overflow-tips' }], class: 'title-overflow' }, [fieldName]),
         ]);
       }
     },

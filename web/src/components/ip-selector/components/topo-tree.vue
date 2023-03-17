@@ -132,7 +132,7 @@ export default class StaticTopo extends Vue {
 </script>
 
 <style lang="scss" scoped>
-  ::v-deep .bk-big-tree-node {
+  :deep(.bk-big-tree-node) {
     &.is-checked {
       background: #f5f6fa;
     }

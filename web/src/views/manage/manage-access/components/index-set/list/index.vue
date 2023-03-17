@@ -75,18 +75,19 @@
       </bk-table-column>
       <bk-table-column
         :label="$t('采集项')"
+        :render-header="$renderHeader"
         prop="index_set_id"
         min-width="200">
         <template slot-scope="props">
           <span>{{ props.row.indexes.map(item => item.result_table_id).join('; ') }}</span>
         </template>
       </bk-table-column>
-      <bk-table-column :label="$t('集群名')">
+      <bk-table-column :label="$t('集群名')" :render-header="$renderHeader">
         <template slot-scope="props">
           <div>{{ props.row.storage_cluster_name || '--' }}</div>
         </template>
       </bk-table-column>
-      <bk-table-column :label="$t('状态')" prop="apply_status_name">
+      <bk-table-column :label="$t('状态')" :render-header="$renderHeader" prop="apply_status_name">
         <template slot-scope="{ row }">
           <div
             :class="['status-text', row.apply_status === 'normal' && 'success-status']">
@@ -94,13 +95,13 @@
           </div>
         </template>
       </bk-table-column>
-      <bk-table-column :label="$t('创建时间')">
+      <bk-table-column :label="$t('创建时间')" :render-header="$renderHeader">
         <template slot-scope="props">
           <div>{{ props.row.created_at.slice(0, 19) || '--' }}</div>
         </template>
       </bk-table-column>
-      <bk-table-column :label="$t('创建人')" prop="created_by"></bk-table-column>
-      <bk-table-column :label="$t('操作')" width="150">
+      <bk-table-column :label="$t('创建人')" :render-header="$renderHeader" prop="created_by"></bk-table-column>
+      <bk-table-column :label="$t('操作')" :render-header="$renderHeader" width="150">
         <template slot-scope="props">
           <bk-button
             theme="primary" text style="margin-right: 4px;"

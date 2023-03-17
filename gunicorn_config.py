@@ -46,6 +46,7 @@ errorlog = "-"
 loglevel = "info"
 access_log_format = '[%(h)s] %(u)s %(t)s "%(r)s" %(s)s %(D)s %(b)s "%(f)s" "%(a)s"'
 timeout = 65
+max_requests = 1000
 
 module_name = "bklog"
 submodule_name = "api"
