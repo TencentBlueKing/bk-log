@@ -95,6 +95,11 @@ const queryHostIdInfos = {
   method: 'post',
 };
 
+const getIpListDisplayName = {
+  url: '/bizs/:bk_biz_id/get_display_name/',
+  method: 'post',
+};
+
 export {
   getTaskList,
   getTaskDetail,
@@ -109,4 +114,5 @@ export {
   trees,
   queryHosts,
   queryHostIdInfos,
+  getIpListDisplayName,
 };

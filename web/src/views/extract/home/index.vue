@@ -53,7 +53,7 @@
       @page-limit-change="handlePageLimitChange">
       <bk-table-column :label="$t('下载目标')" :render-header="$renderHeader" min-width="140">
         <div class="table-ceil-container" slot-scope="{ row }">
-          <span v-bk-overflow-tips>{{ ipList(row.ip_list) }}</span>
+          <span v-bk-overflow-tips>{{ getShowIpList(row.ip_list) }}</span>
         </div>
       </bk-table-column>
       <bk-table-column :label="$t('文件')" :render-header="$renderHeader" min-width="240">
@@ -132,7 +132,7 @@
         <task-status-detail :status-data="sideSlider.data.task_step_status" />
         <download-url :task-id="sideSlider.data.task_id" />
         <list-box icon="bk-icon icon-sitemap" :title="$t('文件路径')" :list="sideSlider.data.preview_directory" />
-        <list-box icon="bk-icon icon-data" :title="$t('下载目标')" :list="sideSlider.data.ip_list" />
+        <list-box icon="bk-icon icon-data" :title="$t('下载目标')" :list="getIPDisplayNameList(sideSlider.data.ip_list)" />
         <list-box icon="bk-icon icon-file" :title="$t('文件列表')" :list="sideSlider.data.file_path" />
         <list-box icon="bk-icon icon-clock" :title="$t('过期时间')" :list="sideSlider.data.expiration_date" />
         <text-filter-detail v-if="sideSlider.data.filter_type" :data="sideSlider.data" />
@@ -182,6 +182,7 @@ export default {
       // 不需要轮询的状态
       doneStatus: ['redownloadable', 'expired', 'failed'],
       emptyType: 'empty',
+      displayNameList: [],
     };
   },
   computed: {
@@ -218,6 +219,23 @@ export default {
         }
         const res = await this.$http.request('extract/getTaskList', payload);
         this.pagination.count = res.data.total;
+        // 获取请求displayName的 ipList参数列表
+        const allIpList = res.data.list.reduce((pre, cur) => {
+          pre.push(...cur.ip_list.map((item) => {
+            if (item?.bk_host_id) {
+              return {
+                host_id: item.bk_host_id,
+              };
+            }
+            return {
+              ip: item.ip ?? '',
+              cloud_id: item.bk_cloud_id ?? '',
+            };
+          }));
+          return pre;
+        }, []);
+        // 获取displayName
+        await this.queryDisplayName(allIpList);
         this.taskList = res.data.list;
         this.timeout = res.data.timeout || 10;
         this.pollingTaskStatus();
@@ -226,6 +244,21 @@ export default {
         this.emptyType = '500';
       } finally {
         this.isLoading = false;
+      }
+    },
+    async queryDisplayName(hostList) {
+      try {
+        const res = await this.$http.request('extract/getIpListDisplayName', {
+          data: {
+            host_list: hostList,
+          },
+          params: {
+            bk_biz_id: this.$store.state.bkBizId,
+          },
+        });
+        this.displayNameList = res.data;
+      } catch (error) {
+        this.displayNameList = [];
       }
     },
     pollingTaskStatus() {
@@ -330,11 +363,24 @@ export default {
         this.isLoading = false;
       }
     },
-    ipList(ipList) {
+    getShowIpList(ipList) {
       if (ipList[0].ip === undefined) {
         return ipList.join('; ');
       }
-      return ipList.map(item => `${item.bk_cloud_id}:${item.ip}`).join('; ');
+      return this.getIPDisplayNameList(ipList).join('; ');
+    },
+    getIPDisplayNameList(ipList) { // 获取displayName字符串列表
+      if (ipList && ipList.length) {
+        return ipList.map((item) => {
+          return this.displayNameList.find((dItem) => {
+            const hostMatch = item.bk_host_id === dItem.host_id;
+            const ipMatch = `${item.ip}_${item.bk_cloud_id}` === `${dItem.bk_host_innerip}_${dItem.bk_cloud_id}`;
+            if (item?.bk_host_id) return (hostMatch || ipMatch);
+            return ipMatch;
+          })?.display_name || '';
+        });
+      }
+      return [];
     },
     handleSearchChange(val) {
       if (val === '' && !this.isLoading) {
