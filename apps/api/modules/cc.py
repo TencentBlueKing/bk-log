@@ -23,24 +23,13 @@ from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
 from apps.api.base import DataAPI
-from apps.api.modules.utils import add_esb_info_before_request
+from apps.api.modules.utils import add_esb_info_before_request, adapt_space_id_before
 from config.domains import CC_APIGATEWAY_ROOT_V2
-
-from bkm_space.define import SpaceTypeEnum
-from bkm_space.utils import bk_biz_id_to_space_uid
 
 
 def get_supplier_account_before(params):
     params = add_esb_info_before_request(params)
-    # 非CC业务时, 查询关联的CC业务, 如果有, 替换为其关联的CC业务
-    if params.get("bk_biz_id", 0) < 0:
-        from apps.log_search.models import SpaceApi
-
-        space_uid = bk_biz_id_to_space_uid(params["bk_biz_id"])
-        related_space = SpaceApi.get_related_space(space_uid=space_uid, related_space_type=SpaceTypeEnum.BKCC.value)
-        if related_space:
-            params["bk_biz_id"] = related_space.bk_biz_id
-
+    params = adapt_space_id_before(params)
     if settings.BK_SUPPLIER_ACCOUNT != "":
         params["bk_supplier_account"] = settings.BK_SUPPLIER_ACCOUNT
     return params
