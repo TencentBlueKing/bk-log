@@ -157,7 +157,7 @@ export default {
     },
   },
   watch: {
-    ipSelectNewNameList(val) {
+    ipList(val) {
       this.previewIp.splice(0);
       if (val.length) {
         this.previewIp.push(`${val[0].bk_cloud_id}:${val[0].ip}`);
@@ -227,7 +227,7 @@ export default {
     },
     // 父组件克隆时调用
     handleClone({
-      preview_ip: ip,
+      ip_list: preIpList,
       preview_directory: path,
       preview_time_range: timeRange,
       preview_start_time: startTime,
@@ -235,7 +235,7 @@ export default {
       preview_is_search_child: isSearchChild,
       file_path: downloadFiles,
     }) {
-      this.previewIp = ip.split(',');
+      this.previewIp = preIpList.map(item => `${item.bk_cloud_id}:${item.ip}`);
       this.timeRange = timeRange;
       this.timeValue = [new Date(startTime), new Date(endTime)];
       this.isSearchChild = isSearchChild;
