@@ -191,16 +191,15 @@ export default {
       if (this.isClone) {
         const cloneData = JSON.parse(sessionStorage.getItem('cloneData'));
         sessionStorage.removeItem('cloneData');
-
         this.ipList = cloneData.ip_list; // 克隆下载目标
         this.fileOrPath = cloneData.preview_directory; // 克隆目录
         this.$refs.textFilter.handleClone(cloneData); // 克隆文本过滤
         this.remark = cloneData.remark; // 克隆备注
         // 获取目录下拉列表和预览地址
+        this.initCloneDisplayName(); // 克隆时 请求displayName列表来展示预览字段
         this.handleCloneAvailablePaths(cloneData);
         this.$nextTick(() => {
           this.$refs.preview.handleClone(cloneData);
-          this.initCloneDisplayName(); // 克隆时 请求displayName列表来展示预览字段
         });
         this.ipSelectorOriginalValue = { host_list: toSelectorNode(this.ipList, 'INSTANCE') };
       }
