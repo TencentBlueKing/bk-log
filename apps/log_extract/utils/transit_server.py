@@ -19,10 +19,27 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import ipaddress
+
 from dataclasses import dataclass
 from django.conf import settings
 
 from apps.api import CCApi
+
+
+def get_ip_field(ip: str) -> str:
+    """
+    获取ip确认是v4还是v6, 选择CC的字段
+    """
+    try:
+        version = ipaddress.ip_address(ip).version
+    except ValueError:
+        version = 4
+
+    return {
+        4: "bk_host_innerip",
+        6: "bk_host_innerip_v6",
+    }.get(version, "bk_host_innerip")
 
 
 def get_bk_host_id_by_ipv6(bk_cloud_id: int, ip: str) -> int:
@@ -36,42 +53,21 @@ def get_bk_host_id_by_ipv6(bk_cloud_id: int, ip: str) -> int:
     if not settings.ENABLE_DHCP:
         return bk_host_id
 
-    # 因为不知道ip是v4还是v6的IP, 所以都查一次
     params = {
         "bk_biz_id": settings.BLUEKING_BK_BIZ_ID,
         "fields": ["bk_host_id"],
         "host_property_filter": {
-            "condition": "OR",
+            "condition": "AND",
             "rules": [
                 {
-                    "condition": "AND",
-                    "rules": [
-                        {
-                            "field": "bk_cloud_id",
-                            "operator": "equal",
-                            "value": bk_cloud_id,
-                        },
-                        {
-                            "field": "bk_host_innerip",
-                            "operator": "equal",
-                            "value": ip,
-                        },
-                    ],
+                    "field": "bk_cloud_id",
+                    "operator": "equal",
+                    "value": bk_cloud_id,
                 },
                 {
-                    "condition": "AND",
-                    "rules": [
-                        {
-                            "field": "bk_cloud_id",
-                            "operator": "equal",
-                            "value": bk_cloud_id,
-                        },
-                        {
-                            "field": "bk_host_innerip_v6",
-                            "operator": "equal",
-                            "value": ip,
-                        },
-                    ],
+                    "field": get_ip_field(ip),
+                    "operator": "equal",
+                    "value": ip,
                 },
             ],
         },
