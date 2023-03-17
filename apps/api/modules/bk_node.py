@@ -27,6 +27,25 @@ from apps.api.base import DataAPI  # noqa
 from config.domains import BK_NODE_APIGATEWAY_ROOT  # noqa
 from apps.api.modules.utils import add_esb_info_before_request  # noqa
 
+from bkm_space.utils import bk_biz_id_to_space_uid  # noqa
+from bkm_space.define import SpaceTypeEnum  # noqa
+
+
+def adapt_space_id_before(params):
+    """
+    适配节点管理的space_id
+    """
+    params = add_esb_info_before_request(params)
+    if params.get("scope", {}).get("bk_biz_id", 0) < 0:
+        from apps.log_search.models import SpaceApi
+
+        space_uid = bk_biz_id_to_space_uid(params["scope"]["bk_biz_id"])
+        related_space = SpaceApi.get_related_space(space_uid=space_uid, related_space_type=SpaceTypeEnum.BKCC.value)
+        if related_space:
+            params["scope"]["bk_biz_id"] = related_space.bk_biz_id
+
+    return params
+
 
 class _BKNodeApi:
     MODULE = "节点管理"
@@ -37,14 +56,14 @@ class _BKNodeApi:
             url=BK_NODE_APIGATEWAY_ROOT + "backend/api/subscription/create/",
             module=self.MODULE,
             description="创建订阅配置",
-            before_request=add_esb_info_before_request,
+            before_request=adapt_space_id_before,
         )
         self.update_subscription_info = DataAPI(
             method="POST",
             url=BK_NODE_APIGATEWAY_ROOT + "backend/api/subscription/update/",
             module=self.MODULE,
             description="更新订阅配置",
-            before_request=add_esb_info_before_request,
+            before_request=adapt_space_id_before,
         )
         self.get_subscription_info = DataAPI(
             method="POST",
