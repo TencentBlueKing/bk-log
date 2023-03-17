@@ -47,7 +47,6 @@
           extract-scene
           allow-host-list-miss-host-id
           keep-host-field-output
-          ref="ipSelectRef"
           :height="670"
           :show-dialog.sync="showSelectDialog"
           :value="selectorNodes"
@@ -201,10 +200,37 @@ export default {
         this.handleCloneAvailablePaths(cloneData);
         this.$nextTick(() => {
           this.$refs.preview.handleClone(cloneData);
-          this.$refs.ipSelectRef.change();
+          this.initCloneDisplayName(); // 克隆时 请求displayName列表来展示过滤字段
         });
         this.ipSelectorOriginalValue = { host_list: toSelectorNode(this.ipList, 'INSTANCE') };
       }
+    },
+    initCloneDisplayName() {
+      const requestIpList = this.ipList.map((item) => {
+        if (item?.bk_host_id) {
+          return {
+            host_id: item.bk_host_id,
+          };
+        }
+        return {
+          ip: item?.ip ?? '',
+          cloud_id: item?.bk_cloud_id ?? '',
+        };
+      });
+      this.$http.request('extract/getIpListDisplayName', {
+        data: {
+          host_list: requestIpList,
+        },
+        params: {
+          bk_biz_id: this.$store.state.bkBizId,
+        },
+      }).then((res) => {
+        this.initSelectNewNameList(res.data, true);
+      })
+        .catch((err) => {
+          console.warn(err);
+          this.ipSelectNewNameList = [];
+        });
     },
     getExtractLinkList() {
       this.$http.request('extract/getExtractLinkList', {
@@ -252,14 +278,28 @@ export default {
       this.ipList = ipList;
       this.availablePaths = availablePaths;
     },
-    initSelectNewNameList(hostList) {
-      const priorityList = this.globalsData?.host_identifier_priority ?? ['ip', 'host_name', 'ipv6'];
-      this.ipSelectNewNameList = hostList.map(item => ({
-        bk_host_id: item.host_id,
-        ip: item.ip,
-        bk_cloud_id: item.cloud_area.id,
-        name: item[priorityList.find(pItem => Boolean(item[pItem]))] ?? '',
-      }));
+    /**
+     * @desc: 初始化预览地址
+     * @param {Array} hostList host列表
+     * @param {Boolean} isClone 是否是克隆回显
+     */
+    initSelectNewNameList(hostList, isClone = false) {
+      if (!isClone) { // 新增 使用ip选择器里的值展示
+        const priorityList = this.globalsData?.host_identifier_priority ?? ['ip', 'host_name', 'ipv6'];
+        this.ipSelectNewNameList = hostList.map(item => ({
+          bk_host_id: item.host_id,
+          ip: item.ip,
+          bk_cloud_id: item.cloud_area.id,
+          name: item[priorityList.find(pItem => Boolean(item[pItem]))] ?? '',
+        }));
+      } else { // 克隆 通过接口请求返回的display_name展示值
+        this.ipSelectNewNameList = hostList.map(item => ({
+          bk_host_id: item.bk_host_id,
+          ip: item.bk_host_innerip,
+          bk_cloud_id: item.bk_cloud_id,
+          name: item.display_name,
+        }));
+      }
     },
     // handleConfirm(ipList, availablePaths) {
     //   this.ipList = ipList;
