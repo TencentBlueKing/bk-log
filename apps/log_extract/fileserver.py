@@ -143,7 +143,7 @@ class FileServer(object):
         for file_source in file_source_list:
             ip_list = file_source["server"].pop("ip_list", [])
             if settings.ENABLE_DHCP:
-                file_source["server"]["host_id_list"] = [{"bk_host_id": item["bk_host_id"]} for item in ip_list]
+                file_source["server"]["host_id_list"] = [item["bk_host_id"] for item in ip_list]
             else:
                 file_source["server"]["ip_list"] = [
                     {"ip": item["ip"], "bk_cloud_id": item["bk_cloud_id"]} for item in ip_list
