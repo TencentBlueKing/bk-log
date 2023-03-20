@@ -235,7 +235,7 @@ export default {
       preview_is_search_child: isSearchChild,
       file_path: downloadFiles,
     }) {
-      this.previewIp = preIpList.map(item => `${item.bk_cloud_id}:${item.ip}`);
+      this.previewIp = [...new Set(...preIpList.map(item => `${item.bk_cloud_id}:${item.ip}`))];
       this.timeRange = timeRange;
       this.timeValue = [new Date(startTime), new Date(endTime)];
       this.isSearchChild = isSearchChild;
