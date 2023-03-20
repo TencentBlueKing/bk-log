@@ -43,13 +43,13 @@
       type="index"
       :label="$t('序号')"
       :render-header="$renderHeader"
-      width="60">
+      :width="getTableWidth.index">
     </bk-table-column>
     <bk-table-column
       :label="$t('数量')"
       :render-header="$renderHeader"
       sortable
-      width="91"
+      :width="getTableWidth.count"
       prop="count">
     </bk-table-column>
     <bk-table-column
@@ -57,7 +57,7 @@
       :render-header="$renderHeader"
       sortable
       :sort-by="'count'"
-      width="91"
+      :width="getTableWidth.source"
       prop="source">
       <template slot-scope="props">
         {{computedRate(props.row.count)}}
@@ -135,7 +135,22 @@ export default {
       cacheExpandStr: [],
       ignoreNumberReg: /(\d{1,})|([1-9]\d+)/g,
       ignoreSymbolReg: /(\d{1,})|([-`.!@#$%^&*(){}<>[\]_+=":;,\\/\d]+)/g,
+      enTableWidth: {
+        index: '80',
+        count: '105',
+        source: '115',
+      },
+      cnTableWidth: {
+        index: '60',
+        count: '91',
+        source: '91',
+      },
     };
+  },
+  computed: {
+    getTableWidth() {
+      return this.$store.getters.isEnLanguage ? this.enTableWidth : this.cnTableWidth;
+    },
   },
   watch: {
     active() {

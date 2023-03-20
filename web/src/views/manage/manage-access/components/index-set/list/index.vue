@@ -30,7 +30,7 @@
     <div class="operate-box">
       <bk-button
         theme="primary"
-        style="width: 120px;"
+        style="min-width: 120px;"
         data-test-id="logIndexSetBox_button_newIndexSet"
         :disabled="!collectProject || isTableLoading || isAllowedCreate === null"
         :loading="isCreateLoading"

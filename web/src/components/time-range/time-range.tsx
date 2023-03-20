@@ -222,7 +222,7 @@ export default class TimeRange extends tsc<IProps, IEvents> {
             class="shortcuts-list">
             {
               this.shortcuts.map(item => (
-                <li class="shortcuts-item" onClick={() => this.handleShortcutChange(item)}>{item.text}</li>
+                <li class="shortcuts-item title-overflow" v-bk-overflow-tips onClick={() => this.handleShortcutChange(item)}>{item.text}</li>
               ))
             }
           </ul>

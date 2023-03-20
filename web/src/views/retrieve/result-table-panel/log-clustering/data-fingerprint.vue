@@ -24,7 +24,15 @@
   <div class="finger-container">
     <div class="top-operate" v-if="allFingerList.length">
       <!-- eslint-disable-next-line vue/no-v-html -->
-      <p v-html="getTipsMessage" class="operate-message"></p>
+      <p class="operate-message">
+        <i18n v-if="selectList.length" path="当前已选择{0}条数据, 共有{1}条数据">
+          <span>{{selectSize}}</span>
+          <span>{{allFingerList.length}}</span>
+        </i18n>
+        <i18n v-else path="共有{0}条数据">
+          <span>{{allFingerList.length}}</span>
+        </i18n>
+      </p>
       <span
         v-if="selectList.length"
         class="operate-click"
@@ -67,8 +75,8 @@
       <bk-table-column
         :label="$t('数量')"
         :render-header="$renderHeader"
+        :width="getTableWidth.number"
         sortable
-        width="91"
         prop="number">
         <template slot-scope="{ row }">
           <span
@@ -81,8 +89,8 @@
       <bk-table-column
         :label="$t('占比')"
         :render-header="$renderHeader"
+        :width="getTableWidth.percentage"
         sortable
-        width="96"
         prop="percentage">
         <template slot-scope="{ row }">
           <span
@@ -96,9 +104,9 @@
       <template v-if="requestData.year_on_year_hour >= 1 ">
         <bk-table-column
           sortable
-          width="101"
           align="center"
           header-align="center"
+          :width="getTableWidth.year_on_year_count"
           :label="$t('同比数量')"
           :render-header="$renderHeader"
           :sort-by="'year_on_year_count'">
@@ -109,9 +117,9 @@
 
         <bk-table-column
           sortable
-          width="101"
           align="center"
           header-align="center"
+          :width="getTableWidth.year_on_year_percentage"
           :label="$t('同比变化')"
           :render-header="$renderHeader"
           :sort-by="'year_on_year_percentage'">
@@ -297,23 +305,24 @@ export default {
       selectList: [], // 当前选中的数组
       isRequestAlarm: false, // 是否正在请求告警接口
       checkValue: 0, // 0为不选 1为半选 2为全选
+      enTableWidth: {
+        number: '110',
+        percentage: '116',
+        year_on_year_count: '171',
+        year_on_year_percentage: '171',
+      },
+      cnTableWidth: {
+        number: '91',
+        percentage: '96',
+        year_on_year_count: '101',
+        year_on_year_percentage: '101',
+      },
     };
   },
   inject: ['addFilterCondition'],
   computed: {
     scrollContent() {
       return document.querySelector('.result-scroll-container');
-    },
-    getTipsMessage() {
-      // 当有选中的元素时显示选中数量及是否批量告警
-      return this.selectList.length
-        ? `<i18n path="当前已选择{0}条数据, 共有{1}条数据">
-          <span>${this.selectSize}</span>
-          <span>${this.allFingerList.length}</span>
-        </i18n>`
-        : `<i18n path="共有{0}条数据">
-          <span>${this.allFingerList.length}</span>
-        </i18n>`;
     },
     bkBizId() {
       return this.$store.state.bkBizId;
@@ -323,6 +332,9 @@ export default {
     },
     getLeaveText() {
       return !this.clusterSwitch ? this.$t('当前日志聚类未启用，请前往设置') : this.$t('当前数据指纹未启用，请前往设置');
+    },
+    getTableWidth() {
+      return this.$store.getters.isEnLanguage ? this.enTableWidth : this.cnTableWidth;
     },
   },
   watch: {
@@ -658,7 +670,7 @@ export default {
       display: none;
     }
 
-    ::v-deep.bk-table-row-last {
+    :deep(.bk-table-row-last) {
       td {
         border: none;
       }
@@ -748,7 +760,7 @@ export default {
 }
 
 .table-no-data {
-  ::v-deep.bk-table-header-wrapper {
+  :deep(.bk-table-header-wrapper) {
     tr {
       > th {
         /* stylelint-disable-next-line declaration-no-important */

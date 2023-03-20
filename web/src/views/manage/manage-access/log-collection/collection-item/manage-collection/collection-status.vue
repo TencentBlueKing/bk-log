@@ -108,7 +108,7 @@
               </bk-table-column>
               <bk-table-column :label="$t('更新时间')" prop="create_time"></bk-table-column>
               <bk-table-column :label="$t('插件版本')" prop="plugin_version"></bk-table-column>
-              <bk-table-column :label="$t('详情')">
+              <bk-table-column :label="$t('详情')" width="280">
                 <template slot-scope="props">
                   <div class="text-style">
                     <span @click.stop="viewDetail(props.row)">{{ $t('部署详情') }}</span>

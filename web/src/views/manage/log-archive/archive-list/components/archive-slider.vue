@@ -36,7 +36,7 @@
           v-if="!sliderLoading"
           data-test-id="addNewArchive_div_formContainer"
           :model="formData"
-          :label-width="160"
+          :label-width="350"
           :rules="basicRules"
           form-type="vertical"
           ref="validateForm"

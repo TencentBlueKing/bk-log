@@ -171,6 +171,8 @@ export default {
     if (isFormatDate === 'false') {
       this.$store.commit('updateIsFormatDate', false);
     }
+    const isEnLanguage = (jsCookie.get('blueking_language') || 'zh-cn') === 'en';
+    this.$store.commit('updateIsEnLanguage', isEnLanguage);
 
     // 弹窗登录
     window.bus.$on('show-login-modal', (loginData) => {
@@ -620,5 +622,11 @@ export default {
     color: #ffa228;
     margin-left: 2px;
     padding-top: 3px;
+  }
+
+  .bk-dialog-type-header .header {
+    white-space: normal;
+    text-overflow: inherit;
+    overflow: hidden;
   }
 </style>

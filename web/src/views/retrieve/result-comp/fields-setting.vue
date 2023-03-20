@@ -113,7 +113,7 @@
               <span class="clear-all text-action" @click="deleteAllField">{{ $t('取消') }}</span>
             </div>
             <div class="sort-list-header">
-              <span style="width: calc(100% - 146px);padding-left: 32px;">{{ $t('字段名') }}</span>
+              <span :style="`width: calc(100% - ${fieldWidth}px); padding-left: 32px;`">{{ $t('字段名') }}</span>
               <span style="width: 42px;">{{ $t('状态') }}</span>
               <span style="width: 50px;">{{ $t('选择方式') }}</span>
             </div>
@@ -121,7 +121,9 @@
               <transition-group>
                 <li class="select-item" v-for="(item, index) in shadowSort" :key="item[0]">
                   <span class="icon log-icon icon-drag-dots"></span>
-                  <span class="field-name" v-bk-overflow-tips>{{ getFiledDisplay(item[0]) }}</span>
+                  <span class="field-name"
+                        :style="`width: calc(100% - ${fieldWidth}px);`"
+                        v-bk-overflow-tips>{{ getFiledDisplay(item[0]) }}</span>
                   <span class="status">{{ filterStatus(item[1]) }}</span>
                   <span class="option text-action" @click="setOrder(item)">{{ filterOption(item[1]) }}</span>
                   <span class="delete text-action" @click="deleteField(item[0], index)">{{ $t('删除') }}</span>
@@ -214,6 +216,9 @@ export default {
     },
     currentClickConfigData() { // 当前选中的配置
       return this.configTabPanels.find(item => item.id === this.currentClickConfigID) || this.configTabPanels[0];
+    },
+    fieldWidth() {
+      return this.$store.state.isEnLanguage ? '170' : '146';
     },
   },
   watch: {
@@ -787,7 +792,6 @@ export default {
 
       .sort-fields-list {
         flex-shrink: 0;
-        width: 360px;
 
         .sort-list-header {
           display: flex;

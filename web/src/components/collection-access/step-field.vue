@@ -1752,7 +1752,6 @@ export default {
     }
 
     .step-head {
-      width: 242px;
       display: flex;
       align-items: center;
 
