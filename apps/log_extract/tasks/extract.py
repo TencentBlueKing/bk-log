@@ -357,7 +357,13 @@ class LogExtractUtils(object):
         task_result = FileServer.execute_script(
             content=script["content"],
             script_params=script["script_params"],
-            ip=[{"ip": transit_server.ip, "bk_cloud_id": transit_server.bk_cloud_id}],
+            ip=[
+                {
+                    "ip": transit_server.ip,
+                    "bk_cloud_id": transit_server.bk_cloud_id,
+                    "bk_host_id": transit_server.bk_cloud_id,
+                }
+            ],
             bk_biz_id=bk_biz_id,
             operator=operator,
             account=account,

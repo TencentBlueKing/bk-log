@@ -68,7 +68,13 @@ class CosUploadService(BaseService):
         task_result = FileServer.execute_script(
             content=script["content"],
             script_params=script["script_params"],
-            ip=[{"ip": transit_server.ip, "bk_cloud_id": transit_server.bk_cloud_id}],
+            ip=[
+                {
+                    "ip": transit_server.ip,
+                    "bk_cloud_id": transit_server.bk_cloud_id,
+                    "bk_host_id": transit_server.bk_host_id,
+                }
+            ],
             bk_biz_id=bk_biz_id,
             operator=operator,
             account=account,
@@ -85,7 +91,9 @@ class CosUploadService(BaseService):
         bk_biz_id = extract_link.op_bk_biz_id
         operator = extract_link.operator
         query_result = self._poll_status(
-            task_instance_id=data.get_one_of_outputs("task_instance_id"), operator=operator, bk_biz_id=bk_biz_id,
+            task_instance_id=data.get_one_of_outputs("task_instance_id"),
+            operator=operator,
+            bk_biz_id=bk_biz_id,
         )
         # 判断脚本是否执行结束
         if not FileServer.is_finished_for_single_ip(query_result):
