@@ -32,8 +32,8 @@
         show-select-all>
         <bk-option
           v-for="option in ipSelectNewNameList"
-          :key="option.bk_cloud_id + ':' + option.ip"
-          :id="option.bk_cloud_id + ':' + option.ip"
+          :key="option.selectID"
+          :id="option.selectID"
           :name="option.name"
         ></bk-option>
       </bk-select>
@@ -160,7 +160,7 @@ export default {
     ipList(val) {
       this.previewIp.splice(0);
       if (val.length) {
-        this.previewIp.push(`${val[0].bk_cloud_id}:${val[0].ip}`);
+        this.previewIp.push(this.getIpListID(val[0]));
       }
       this.explorerList.splice(0); // 选择服务器后清空表格
       this.historyStack.splice(0); // 选择服务器后清空历史堆栈
@@ -184,9 +184,7 @@ export default {
       this.$emit('update:fileOrPath', path);
       const ipList = [];
       for (let i = 0; i < this.previewIp.length; i++) {
-        const cloudId = this.previewIp[i].split(':')[0];
-        const ip = this.previewIp[i].split(':')[1];
-        const target = this.ipList.find(item => item.ip === ip && item.bk_cloud_id === Number(cloudId));
+        const target = this.ipList.find(item => this.getIpListID(item) === this.previewIp);
         ipList.push(target);
       }
 
@@ -225,9 +223,13 @@ export default {
           this.isLoading = false;
         });
     },
+    // 拼接预览地址唯一key
+    getIpListID(option) {
+      return `${option.bk_host_id ?? ''}_${option.ip ?? ''}_${option.bk_cloud_id ?? ''}`;
+    },
     // 父组件克隆时调用
     handleClone({
-      ip_list: preIpList,
+      ip_list: ipList,
       preview_directory: path,
       preview_time_range: timeRange,
       preview_start_time: startTime,
@@ -235,18 +237,9 @@ export default {
       preview_is_search_child: isSearchChild,
       file_path: downloadFiles,
     }) {
-      this.previewIp = preIpList.map(item => `${item.bk_cloud_id}:${item.ip}`);
       this.timeRange = timeRange;
       this.timeValue = [new Date(startTime), new Date(endTime)];
       this.isSearchChild = isSearchChild;
-
-      const ipList = [];
-      for (let i = 0; i < this.previewIp.length; i++) {
-        const cloudId = this.previewIp[i].split(':')[0];
-        const ip = this.previewIp[i].split(':')[1];
-        const target = this.ipList.find(item => item.ip === ip && item.bk_cloud_id === Number(cloudId));
-        ipList.push(target);
-      }
 
       this.isLoading = true;
       this.emptyType = 'search-empty';
