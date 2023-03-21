@@ -252,7 +252,7 @@ def filter_abnormal_ip_hosts(response_result):
 
 def adapt_non_bkcc(params):
     # 非CC业务时, 查询关联的CC业务, 如果有, 替换为其关联的CC业务
-    if params.get("bk_biz_id", 0) < 0:
+    if int(params.get("bk_biz_id", 0)) < 0:
         from apps.log_search.models import SpaceApi
 
         space_uid = bk_biz_id_to_space_uid(params["bk_biz_id"])
@@ -267,7 +267,7 @@ def adapt_non_bkcc_for_bknode(params):
     """
     适配节点管理的space_id
     """
-    if params.get("scope", {}).get("bk_biz_id", 0) < 0:
+    if int(params.get("scope", {}).get("bk_biz_id", 0)) < 0:
         from apps.log_search.models import SpaceApi
 
         space_uid = bk_biz_id_to_space_uid(params["scope"]["bk_biz_id"])
