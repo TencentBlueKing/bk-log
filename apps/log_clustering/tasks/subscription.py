@@ -208,6 +208,8 @@ def clean_pattern(
         if not _data["pattern"]:
             continue
 
+        _data["signature_url"] = generate_log_search_url(config, time_config, signature=_data["signature"])
+
         # 按同比进行过滤
         if (
             config.year_on_year_change == YearOnYearChangeEnum.RISE.value
@@ -264,16 +266,19 @@ def clean_pattern(
     return result
 
 
-def generate_log_search_url(config: ClusteringSubscription, time_config: dict) -> str:
+def generate_log_search_url(config: ClusteringSubscription, time_config: dict, signature: str = "") -> str:
 
     params = {
         "spaceUid": config.space_uid,
         "keyword": config.query_string or "*",
-        "addition": config.addition if config.addition else [],
+        "addition": config.addition.copy() if config.addition else [],
         "host_scopes": config.host_scopes if config.host_scopes else {},
         "start_time": time_config["start_time"],
         "end_time": time_config["end_time"],
     }
+
+    if signature:
+        params["addition"].append({"field": f"__dist_{config.pattern_level}", "operator": "=", "value": signature})
 
     url = f"{settings.BK_BKLOG_HOST}#/retrieve/{config.index_set_id}?{urlencode(params)}"
     return url
@@ -287,9 +292,16 @@ def render_template(template: str, params: dict) -> str:
     return content
 
 
+def render_title(title: str, params: dict) -> str:
+    template = Environment().from_string(title)
+    content = template.render(**params)
+    return content
+
+
 def send_wechat(params: dict, receivers: list, log_prefix: str):
     robot_api = WeChatRobot()
     tpl_name = "clustering_wechat_en.md" if params["language"] == "en" else "clustering_wechat.md"
+    params["title"] = render_title(params["title"], params)
     content = render_template(tpl_name, params)
     send_params = {
         "chatid": "|".join([receiver["id"] for receiver in receivers]),
@@ -302,6 +314,7 @@ def send_wechat(params: dict, receivers: list, log_prefix: str):
 
 def send_mail(params: dict, receivers: list, log_prefix: str):
     tpl_name = "clustering_mail_en.html" if params["language"] == "en" else "clustering_mail.html"
+    params["title"] = render_title(params["title"], params)
     content = render_template(tpl_name, params)
     send_params = {
         "receivers": ",".join([r["id"] for r in receivers]),
