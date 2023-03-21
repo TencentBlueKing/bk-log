@@ -289,6 +289,7 @@ export default {
           bk_host_id: item.host_id,
           ip: item.ip,
           bk_cloud_id: item.cloud_area.id,
+          selectID: `${item.host_id ?? ''}_${item.ip ?? ''}_${item.cloud_area.id ?? ''}`, // select唯一key
           name: item[priorityList.find(pItem => Boolean(item[pItem]))] ?? '',
         }));
       } else { // 克隆 通过接口请求返回的display_name展示值
@@ -296,6 +297,7 @@ export default {
           bk_host_id: item.bk_host_id,
           ip: item.bk_host_innerip,
           bk_cloud_id: item.bk_cloud_id,
+          selectID: `${item.bk_host_id ?? ''}_${item.bk_host_innerip ?? ''}_${item.bk_cloud_id ?? ''}`, // select唯一key
           name: item.display_name,
         }));
       }
