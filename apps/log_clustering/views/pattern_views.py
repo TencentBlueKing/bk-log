@@ -26,7 +26,7 @@ from apps.generic import APIViewSet
 from apps.iam import ActionEnum, ResourceEnum
 from apps.iam.handlers.drf import InstanceActionPermission
 from apps.log_clustering.handlers.pattern import PatternHandler
-from apps.log_clustering.serializers import PatternSearchSerlaizer, GetLabelsSerializer
+from apps.log_clustering.serializers import PatternSearchSerlaizer, SetLabelSerializer
 from apps.utils.drf import detail_route
 
 
@@ -116,31 +116,17 @@ class PatternViewSet(APIViewSet):
         query_data = self.params_valid(PatternSearchSerlaizer)
         return Response(PatternHandler(index_set_id, query_data).pattern_search())
 
-    @detail_route(methods=["POST"], url_path="labels")
-    def get_labels(self, request, index_set_id):
+    @detail_route(methods=["POST"], url_path="label")
+    def set_label(self, request, index_set_id):
         """
-        @api {post} /pattern/$index_set_id/labels/ 日志聚类-获取标签列表
-        @apiName get_labels
+        @api {post} /pattern/$index_set_id/label/ 日志聚类-设置标签
+        @apiName set_label
         @apiGroup log_clustering
-        @apiParam {List[Int]} strategy_ids 策略id列表
-        @apiParam {int} bk_biz_id 业务id
-        @apiSuccess {Int} strategy_id 策略id
-        @apiSuccess {List[Str]} labels 标签列表
-        @apiSuccessExample {json} 成功返回:
-        {
-            "message": "",
-            "code": 0,
-            "data": [
-                {
-                    "strategy_id": 1,
-                    "labels": [
-                        "xxx",
-                        "yyy"
-                    ]
-                }
-            ],
-            "result": true
-        }
+        @apiParam {String} signature 数据指纹
+        @apiParam {String} label 标签内容
+        @apiSuccessExample {json} 成功返回: null
         """
-        params = self.params_valid(GetLabelsSerializer)
-        return Response(PatternHandler.get_labels(strategy_ids=params["strategy_ids"], bk_biz_id=params["bk_biz_id"]))
+        params = self.params_valid(SetLabelSerializer)
+        return Response(
+            PatternHandler(index_set_id, {}).set_label(signature=params["signature"], label=params["label"])
+        )
