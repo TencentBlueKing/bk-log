@@ -38,26 +38,26 @@
             >{{ val.content }}({{ val.dataList.totalLenght }})</span>
           </div>
           <div>
-            <span>{{$t('configDetails.text')}}</span>
-            <!-- <span class="bk-icon icon-question-circle" v-bk-tooltips="$t('configDetails.text')"></span> -->
+            <span>{{$t('每15分钟按照CMDB最新拓扑自动部署或取消采集')}}</span>
+            <!-- <span class="bk-icon icon-question-circle" v-bk-tooltips="$t('每15分钟按照CMDB最新拓扑自动部署或取消采集')"></span> -->
             <bk-button
               theme="default"
               icon="right-turn-line"
               :size="size"
               class="mr10"
-              :title="$t('configDetails.retry')"
+              :title="$t('重试')"
               :disabled="!collectProject"
               @click="retryClick(dataFal, dataFir.contents.length)"
-            >{{ $t('configDetails.batchRetry') }}
+            >{{ $t('失败批量重试') }}
             </bk-button>
           <!-- <bk-button
             :theme="'primary'"
-            :title="$t('configDetails.dataSampling')"
+            :title="$t('数据采样')"
             class="mr10"
             :size="size"
             :disabled="!collectProject"
             @click="jsonFormatClick">
-            {{$t('configDetails.dataSampling')}}
+            {{$t('数据采样')}}
           </bk-button> -->
           </div>
         </div>
@@ -73,19 +73,19 @@
                 :style="{ 'color': collapseColor }" ref="icon"></i>
               <span>{{ value.node_path }}</span>
               <span>{{ dataSec[i] ? dataSec[i].length : '' }}</span>
-              <span>{{ $t('configDetails.successful') }},</span>
+              <span>{{ $t('个成功') }},</span>
               <span>{{ dataFal[i] ? dataFal[i].length : '' }}</span>
-              <span>{{ $t('configDetails.failure') }}</span>
+              <span>{{ $t('个失败') }}</span>
             </div>
           </div>
           <div class="table-calc">
             <bk-table
-              :empty-text="$t('btn.vacancy')"
+              :empty-text="$t('暂无内容')"
               :data="clickSec.data[i]"
               size="small"
               v-bkloading="{ isLoading: reloadTable }">
-              <bk-table-column :label="$t('configDetails.goal')" prop="ip"></bk-table-column>
-              <bk-table-column :label="$t('alarmStrategy.active_name')">
+              <bk-table-column :label="$t('目标')" prop="ip"></bk-table-column>
+              <bk-table-column :label="$t('状态')">
                 <template slot-scope="props">
                   <span @click="reset(props.row)">
                     <i
@@ -95,25 +95,25 @@
                     <span
                       v-if="props.row.status === 'SUCCESS'"
                       class="SUCCESS">
-                      {{$t('configDetails.success')}}
+                      {{$t('成功')}}
                     </span>
                     <span
                       v-else-if="props.row.status === 'FAILED'"
                       class="FAILED">
-                      {{$t('configDetails.failed')}}
+                      {{$t('失败')}}
                     </span>
-                    <span v-else class="PENDING">{{$t('configDetails.Pending')}}</span>
+                    <span v-else class="PENDING">{{$t('执行中')}}</span>
                   </span>
                 </template>
               </bk-table-column>
-              <bk-table-column :label="$t('configDetails.updated_at')" prop="create_time"></bk-table-column>
-              <bk-table-column :label="$t('configDetails.plug_in')" prop="plugin_version"></bk-table-column>
-              <bk-table-column :label="$t('monitors.detail')">
+              <bk-table-column :label="$t('更新时间')" prop="create_time"></bk-table-column>
+              <bk-table-column :label="$t('插件版本')" prop="plugin_version"></bk-table-column>
+              <bk-table-column :label="$t('详情')">
                 <template slot-scope="props">
                   <div class="text-style">
                     <span @click.stop="viewDetail(props.row)">{{ $t('部署详情') }}</span>
                     <span
-                      v-if="enableCheckCollector"
+                      v-if="enableCheckCollector && collectorData.environment === 'linux'"
                       @click.stop="viewReport(props.row)">
                       {{ $t('一键检测') }}
                     </span>
@@ -127,10 +127,15 @@
                     text
                     @click="retryClick(props.row, 'odd')"
                     v-if="props.row.status === 'FAILED'">
-                    {{$t('configDetails.retry')}}
+                    {{$t('重试')}}
                   </bk-button>
                 </template>
               </bk-table-column>
+              <div slot="empty">
+                <empty-status empty-type="empty" :show-text="false">
+                  <span>{{$t('暂无内容')}}</span>
+                </empty-status>
+              </div>
             </bk-table>
           </div>
         </div>
@@ -165,11 +170,13 @@
 import { projectManages } from '@/common/util';
 import containerStatus from './components/container-status.vue';
 import CollectionReportView from '../../../components/collection-report-view';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   components: {
     containerStatus,
     CollectionReportView,
+    EmptyStatus,
   },
   props: {
     collectorData: {
@@ -201,7 +208,7 @@ export default {
       ],
       detail: {
         isShow: false,
-        title: this.$t('monitors.detail'),
+        title: this.$t('详情'),
         loading: true,
         content: '',
         log: '',
@@ -209,22 +216,22 @@ export default {
       dataButton: [
         {
           key: 'all',
-          content: this.$t('configDetails.all'),
+          content: this.$t('全部'),
           dataList: {},
         },
         {
           key: 'sec',
-          content: this.$t('configDetails.succeed'),
+          content: this.$t('正常'),
           dataList: {},
         },
         {
           key: 'fal',
-          content: this.$t('configDetails.failed'),
+          content: this.$t('失败'),
           dataList: {},
         },
         {
           key: 'pen',
-          content: this.$t('configDetails.Pending'),
+          content: this.$t('执行中'),
           dataList: {},
         },
       ],
@@ -543,7 +550,7 @@ export default {
         margin-right: 10px;
       }
 
-      ::v-deep .bk-button {
+      :deep(.bk-button) {
         font-size: 12px;
         padding: 0 10px;
 
@@ -688,7 +695,7 @@ export default {
       white-space: pre-wrap;
     }
 
-    ::v-deep .bk-sideslider-wrapper {
+    :deep(.bk-sideslider-wrapper) {
       padding-bottom: 0;
 
       .bk-sideslider-content {

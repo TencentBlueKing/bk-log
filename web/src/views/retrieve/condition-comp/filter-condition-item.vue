@@ -38,9 +38,12 @@
         {{ $t('添加条件') }}
       </span>
       <div class="condition-item-container" v-else>
-        <div class="tag text-tag field-tag" v-bk-overflow-tips>
-          <!-- <span class="bk-icon icon-close-circle-shape" @click="removeFilterCondition(coreData.field)"></span> -->
-          {{ localData.field + (fieldAliasMap[localData.field] ? `(${fieldAliasMap[localData.field]})` : '')}}
+        <div
+          class="tag text-tag field-tag"
+          v-bk-tooltips.top="{
+            content: fieldAliasMap[localData.field] ? `${localData.field}(${fieldAliasMap[localData.field]})` : ''
+          }">
+          {{localData.field}}
         </div>
         <div class="tag symbol-tag">{{ localData.operator }}</div>
         <div class="tag text-tag" v-bk-overflow-tips>{{ formaterValue(localData.value) }}</div>
@@ -48,10 +51,10 @@
         <!-- <div class="tag symbol-tag" v-if="index !== filterCondition.length - 1">and</div> -->
       </div>
       <div class="add-condition-filter-popover" slot="content">
-        <div class="filter-title">{{ $t('retrieve.addFilter') }}</div>
+        <div class="filter-title">{{ $t('添加过滤条件') }}</div>
         <div class="add-filter-content">
           <div class="option-item">
-            <label>{{ $t('indexSetList.field_name') }}</label>
+            <label>{{ $t('字段') }}</label>
             <bk-select
               :value="coreData.field"
               style="width: 240px;"
@@ -65,7 +68,7 @@
             </bk-select>
           </div>
           <div class="option-item" style="margin-right: 0">
-            <label>{{ $t('indexSetList.operation') }}</label>
+            <label>{{ $t('操作') }}</label>
             <bk-select
               :value="coreData.operator"
               :clearable="false"
@@ -82,7 +85,7 @@
             </bk-select>
           </div>
           <div class="option-item" v-if="!isShowValue">
-            <label style="margin-left: 10px;">{{ $t('indexSetList.field_value') }}</label>
+            <label style="margin-left: 10px;">{{ $t('值') }}</label>
             <bk-tag-input
               v-model="coreData.value"
               style="width: 240px;"
@@ -101,8 +104,8 @@
           </div>
         </div>
         <div class="filter-footer">
-          <bk-button theme="primary" @click="handleConfirm">{{ $t('btn.confirm') }}</bk-button>
-          <bk-button @click="handleCancel">{{ $t('btn.cancel') }}</bk-button>
+          <bk-button theme="primary" @click="handleConfirm">{{ $t('确定') }}</bk-button>
+          <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
         </div>
       </div>
     </bk-popover>
@@ -159,10 +162,6 @@ export default {
         operator: '',
         value: [], // String or Array
       },
-      mappingKay: {
-        '=': 'is',
-        '!=': 'is not',
-      },
       valueList: [{ id: '', name: `-${this.$t('空')}-` }], // 字段可选值列表
       filterPlaceholder: '',
       isHaveCompared: false, // 是否有大小对比的值
@@ -212,7 +211,7 @@ export default {
       const fieldsItem = this.filterFields.find(item => item.id === this.coreData.field);
       return this.filterAllOperators[fieldsItem?.operatorKey]?.map(item => ({
         ...item,
-        operator: this.mappingKay[item.operator] ?? item.operator,
+        operator: item.operator,
       })) || [];
     },
     getOperatorLength() { // 是否是对比的操作 如果是 则值限制只能输入1个
@@ -242,7 +241,7 @@ export default {
   methods: {
     handlePopoverShow() {
       const operatorsFirstItem = Object.values(this.filterAllOperators)[0]?.[0];
-      this.handleOperatorChange(operatorsFirstItem?.operator || 'is');
+      this.handleOperatorChange(operatorsFirstItem?.operator || '=');
       this.setDefaultEditValue();
       this.showFilterPopover = true;
     },
@@ -304,7 +303,7 @@ export default {
     },
     // 条件符号改变
     handleOperatorChange(operator) {
-      this.coreData.operator = this.mappingKay[operator] ?? operator;
+      this.coreData.operator = operator;
       if (['exists', 'does not exists'].includes(operator)) {
         this.coreData.value = [];
         this.valueList = [{ id: '', name: `-${this.$t('空')}-` }];
@@ -314,7 +313,7 @@ export default {
       if (this.isHaveCompared) this.coreData.value = [this.coreData.value[0] || ''];
       for (const item of this.filterOperators) {
         if (item.operator === operator) {
-          this.filterPlaceholder = item.placeholder || this.$t('form.pleaseEnter');
+          this.filterPlaceholder = item.placeholder || this.$t('请输入');
           break;
         }
       }

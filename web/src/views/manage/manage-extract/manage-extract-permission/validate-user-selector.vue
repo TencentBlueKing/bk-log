@@ -104,7 +104,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-  .validate-user-selector ::v-deep .is-error .user-selector-container {
+  .validate-user-selector :deep(.is-error .user-selector-container) {
     border-color: #ff5656;
   }
 </style>

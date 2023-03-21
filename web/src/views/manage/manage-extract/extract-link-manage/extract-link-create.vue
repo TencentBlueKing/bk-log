@@ -138,10 +138,10 @@
         <div class="custom-content">
           <ul class="host-list" ref="hostListRef">
             <li class="host-item header">
-              <div class="min-box dir-container">{{ $t('挂载目录') }}</div>
-              <div class="min-box id-container">{{ $t('主机云区域ID') }}</div>
-              <div class="min-box ip-container">{{ $t('主机IP') }}</div>
-              <div class="min-box operation-container">{{ $t('操作') }}</div>
+              <div class="min-box dir-container" :title="$t('挂载目录')">{{ $t('挂载目录') }}</div>
+              <div class="min-box id-container" :title="$t('主机云区域ID')">{{ $t('主机云区域ID') }}</div>
+              <div class="min-box ip-container" :title="$t('主机IP')">{{ $t('主机IP') }}</div>
+              <div class="min-box operation-container" :title="$t('操作')">{{ $t('操作') }}</div>
             </li>
             <li
               class="host-item"
@@ -267,7 +267,7 @@ export default {
   beforeRouteLeave(to, from, next) {
     if (!this.isSubmit && !this.showRouterLeaveTip) {
       this.$bkInfo({
-        title: this.$t('pageLeaveTips'),
+        title: this.$t('是否放弃本次操作？'),
         confirmFn: () => {
           next();
         },
@@ -428,7 +428,7 @@ export default {
       .king-form {
         width: 680px;
 
-        ::v-deep .bk-form-item {
+        :deep(.bk-form-item) {
           padding: 10px 0;
           margin: 0;
         }
@@ -491,7 +491,7 @@ export default {
               .king-input {
                 width: 86%;
 
-                ::v-deep .bk-form-input.error {
+                :deep(.bk-form-input.error) {
                   border-color: #ea3636;
                 }
               }
@@ -516,11 +516,11 @@ export default {
 
   }
 
-  ::v-deep .user-selector {
+  :deep(.user-selector) {
     width: 100%;
   }
 
-  ::v-deep .is-error .user-selector-container {
+  :deep(.is-error .user-selector-container) {
     border-color: #ff5656;
   }
 </style>

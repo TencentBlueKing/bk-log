@@ -23,7 +23,7 @@
   <div>
     <!-- 聚类规则 -->
     <div class="container-item table-container">
-      <p style="height: 32px">{{$t('retrieveSetting.clusterRule')}}</p>
+      <p style="height: 32px">{{$t('聚类规则')}}</p>
       <div class="table-operate">
         <bk-button
           size="small"
@@ -41,7 +41,7 @@
           :class="globalEditable ? 'btn-hover' : ''"
           :disabled="!globalEditable"
           @click="reductionRule">
-          {{$t('retrieveSetting.restoreDefault')}}
+          {{$t('还原默认')}}
         </bk-button>
       </div>
 
@@ -49,11 +49,11 @@
         <div class="table-row flbc">
           <div class="row-left">
             <div class="row-left-index">{{$t('序号')}}</div>
-            <div class="row-left-regular">{{$t('retrieveSetting.regularExpression')}}</div>
+            <div class="row-left-regular">{{$t('正则表达式')}}</div>
           </div>
           <div class="row-right flbc">
-            <div>{{$t('retrieveSetting.placeholder')}}</div>
-            <div>{{$t('retrieveSetting.operate')}}</div>
+            <div>{{$t('占位符')}}</div>
+            <div>{{$t('操作')}}</div>
           </div>
         </div>
 
@@ -98,15 +98,16 @@
           </vue-draggable>
         </div>
         <div v-else class="no-cluster-rule">
-          <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-          <div>{{$t('retrieveSetting.ruleEmpty')}}</div>
+          <empty-status empty-type="empty" :show-text="false">
+            <div>{{$t('暂无聚类规则')}}</div>
+          </empty-status>
         </div>
       </div>
     </div>
     <!-- 原始日志 -->
     <div class="container-item debug-container">
       <div class="fl-jfsb debug-tool" @click="handleClickDebugButton">
-        <p>{{$t('retrieveSetting.debuggingTool')}}</p>
+        <p>{{$t('调试工具')}}</p>
         <span :class="['bk-icon','icon-angle-double-down', isClickAlertIcon ? 'bk-icon-rotate' : '']"></span>
       </div>
 
@@ -114,11 +115,11 @@
         v-show="isClickAlertIcon"
         class="debug-alert"
         type="warning"
-        :title="$t('retrieveSetting.debuggerAlert')"
+        :title="$t('调试需要等待1分钟以上，在此区间不可进行其余操作')"
         closable></bk-alert>
 
       <div class="fl-jfsb" v-show="isClickAlertIcon">
-        <p style="height: 32px">{{$t('configDetails.originalLog')}}</p>
+        <p style="height: 32px">{{$t('原始日志')}}</p>
         <bk-button
           size="small"
           style="min-width: 48px"
@@ -149,7 +150,7 @@
     </div>
     <!-- 效果 -->
     <div class="container-item" v-show="isClickAlertIcon">
-      <p style="height: 32px">{{$t('retrieveSetting.effect')}}</p>
+      <p style="height: 32px">{{$t('效果')}}</p>
       <div class="effect-container" v-bkloading="{ isLoading: debugRequest, size: 'mini' }">{{effectOriginal}}</div>
     </div>
     <!-- 添加规则dialog -->
@@ -158,7 +159,7 @@
       v-model="isShowAddRule"
       ext-cls="add-rule"
       header-position="left"
-      :title="isEditRules ? $t('retrieveSetting.editingRules') : $t('retrieveSetting.addRule')"
+      :title="isEditRules ? $t('编辑规则') : $t('添加规则')"
       :mask-close="false"
       @after-leave="cancelAddRuleContent">
       <bk-form
@@ -167,19 +168,19 @@
         :model="addRulesData">
         <bk-form-item
           required
-          :label="$t('retrieveSetting.regularExpression')"
+          :label="$t('正则表达式')"
           :property="'regular'"
           :rules="rules.regular">
           <bk-input v-model="addRulesData.regular" style="width: 560px"></bk-input>
-          <p>{{$t('retrieveSetting.sample')}}：\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}</p>
+          <p>{{$t('样例')}}：\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}</p>
         </bk-form-item>
         <bk-form-item
           required
-          :label="$t('retrieveSetting.placeholder')"
+          :label="$t('占位符')"
           :property="'placeholder'"
           :rules="rules.placeholder">
           <bk-input v-model="addRulesData.placeholder" style="width: 560px"></bk-input>
-          <p>{{$t('retrieveSetting.sample')}}：IP</p>
+          <p>{{$t('样例')}}：IP</p>
         </bk-form-item>
       </bk-form>
       <template slot="footer">
@@ -202,7 +203,7 @@
               theme="primary"
               :disabled="isDetection"
               @click="handleRuleSubmit">
-              {{isRuleCorrect ? $t('保存') : $t('retrieveSetting.testSyntax')}}</bk-button>
+              {{isRuleCorrect ? $t('保存') : $t('检测语法')}}</bk-button>
             <bk-button @click="isShowAddRule = false">{{$t('取消')}}</bk-button>
           </div>
         </div>
@@ -215,12 +216,14 @@ import VueDraggable from 'vuedraggable';
 import RegisterColumn from '@/views/retrieve/result-comp/register-column';
 import ClusterEventPopover from '@/views/retrieve/result-table-panel/log-clustering/components/cluster-event-popover';
 import { copyMessage, base64Encode, base64Decode } from '@/common/util';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   components: {
     VueDraggable,
     ClusterEventPopover,
     RegisterColumn,
+    EmptyStatus,
   },
   props: {
     globalEditable: {
@@ -317,7 +320,7 @@ export default {
     },
     clusterRemove(index) {
       this.$bkInfo({
-        title: this.$t('retrieveSetting.ruleDeleteTips'),
+        title: this.$t('是否删除该条规则？'),
         confirmFn: () => {
           this.rulesList.splice(index, 1);
           this.showTableLoading();
@@ -348,15 +351,15 @@ export default {
         // 第一次点击检查时显示文案变化
         this.isDetection = true;
         this.isClickSubmit = true;
-        this.detectionStr = this.$t('retrieveSetting.inspection');
+        this.detectionStr = this.$t('检验中');
         setTimeout(() => {
           this.isDetection = false;
           this.$refs.addRulesRef.validate().then(() => {
             this.isRuleCorrect = true;
-            this.detectionStr = this.$t('retrieveSetting.inspectionSuccess');
+            this.detectionStr = this.$t('检验成功');
           }, () => {
             this.isRuleCorrect = false;
-            this.detectionStr = this.$t('retrieveSetting.inspectionFail');
+            this.detectionStr = this.$t('检测失败');
           });
         }, 1000);
       }
@@ -698,19 +701,19 @@ export default {
   .log-style {
     height: 100px;
 
-    ::v-deep .bk-form-textarea:focus {
+    :deep(.bk-form-textarea:focus) {
       /* stylelint-disable-next-line declaration-no-important */
       background-color: #313238 !important;
       border-radius: 2px;
     }
 
-    ::v-deep .bk-form-textarea[disabled] {
+    :deep(.bk-form-textarea[disabled]) {
       /* stylelint-disable-next-line declaration-no-important */
       background-color: #313238 !important;
       border-radius: 2px;
     }
 
-    ::v-deep .bk-textarea-wrapper {
+    :deep(.bk-textarea-wrapper) {
       border: none;
     }
   }
@@ -720,7 +723,7 @@ export default {
       margin-left: 15px;
       width: 560px;
 
-      ::v-deep .bk-label {
+      :deep(.bk-label) {
         text-align: left;
       }
     }

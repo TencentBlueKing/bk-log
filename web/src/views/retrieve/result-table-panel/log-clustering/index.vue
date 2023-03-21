@@ -48,7 +48,7 @@
 
       <bk-alert
         v-if="active === 'dataFingerprint' && signatureSwitch && !exhibitAll"
-        :title="$t('clusterAlert')"
+        :title="$t('日志聚类必需至少有一个text类型的字段，当前无该字段类型，请前往日志清洗进行设置。')"
         closable
         type="info">
       </bk-alert>
@@ -90,12 +90,11 @@
         class="no-text-table"
         :data="[]">
         <div slot="empty">
-          <div class="empty-text">
-            <span class="bk-table-empty-icon bk-icon icon-empty"></span>
+          <empty-status class="empty-text" empty-type="empty" :show-text="false">
             <p v-if="indexSetItem.scenario_id !== 'log' && !isHaveAnalyzed">
-              {{$t('canNotFieldMessage1')}}
-              <span class="empty-leave" @click="handleLeaveCurrent">{{$t('计算平台')}}</span>
-              {{$t('canNotFieldMessage2')}}
+              <i18n path="无分词字段 请前往 {0} 调整清洗">
+                <span class="empty-leave" @click="handleLeaveCurrent">{{$t('计算平台')}}</span>
+              </i18n>
             </p>
             <div v-else>
               <p>{{exhibitText}}</p>
@@ -103,7 +102,7 @@
                 {{exhibitOperate}}
               </span>
             </div>
-          </div>
+          </empty-status>
         </div>
       </bk-table>
 
@@ -124,6 +123,7 @@ import IgnoreTable from './ignore-table';
 import ClusteringLoader from '@/skeleton/clustering-loader';
 import fingerOperate from './components/finger-operate';
 import { mapGetters } from 'vuex';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   components: {
@@ -131,6 +131,7 @@ export default {
     IgnoreTable,
     ClusteringLoader,
     fingerOperate,
+    EmptyStatus,
   },
   props: {
     retrieveParams: {
@@ -225,7 +226,7 @@ export default {
         : this.loadingWidthList.notCompared;
     },
     exhibitText() {
-      return this.configID ? this.$t('goCleanMessage') : this.$t('noConfigIDMessage');
+      return this.configID ? this.$t('当前无可用字段，请前往日志清洗进行设置') : this.$t('当前索引集不支持字段提取设置');
     },
     exhibitOperate() {
       return this.configID ? this.$t('跳转到日志清洗') : '';
@@ -342,7 +343,7 @@ export default {
       Object.assign(this.fingerOperateData, {
         patternSize: patternLevel - 1,
         sliderMaxVal: clusterLevel.length - 1,
-        patternList: clusterLevel,
+        patternList: clusterLevel.sort((a, b) => Number(b) - Number(a)),
         comparedList: yearOnYearList,
       });
       Object.assign(this.requestData, {
@@ -429,7 +430,7 @@ export default {
       }
       this.fingerOperateData.comparedList.push({
         id: Number(matchVal[1]),
-        name: `${matchVal[1]}小时前`,
+        name: this.$t('{n} 小时前', { n: matchVal[1] }),
       });
       this.requestData.year_on_year_hour = Number(matchVal[1]);
     },

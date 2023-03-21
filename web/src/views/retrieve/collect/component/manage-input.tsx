@@ -67,8 +67,8 @@ export default class ManageInput extends tsc<IProps> {
             maxlength={30}
           ></Input>
         ) : (
-          <div class="collect-name">
-            {this.inputStr}
+          <div class="collect-box">
+            <span class="collect-name" v-bk-overflow-tips>{this.inputStr}</span>
             {!this.favoriteData.is_active ? (
               <span v-bk-tooltips={{ content: this.$t('数据源不存在'), placement: 'right' }}>
                 <span class="bk-icon log-icon icon-shixiao"></span>

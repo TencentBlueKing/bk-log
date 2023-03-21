@@ -68,8 +68,8 @@
           <div class="total-fields-list">
             <div class="title">
               <!-- 待选项列表 全部添加 -->
-              <span>{{ $t('retrieve.toSelectedList') + '(' + toSelectLength + ')' }}</span>
-              <span class="text-action add-all" @click="addAllField">{{ $t('retrieve.addAllFields') }}</span>
+              <span>{{ $t('待选项列表') + '(' + toSelectLength + ')' }}</span>
+              <span class="text-action add-all" @click="addAllField">{{ $t('全部添加') }}</span>
             </div>
             <ul class="select-list">
               <li
@@ -90,16 +90,16 @@
           <div class="visible-fields-list" v-show="activeFieldTab === 'visible'">
             <div class="title">
               <!-- 已选项列表 -->
-              <span>{{ $t('retrieve.selectedList') + '(' + shadowVisible.length + ')' }}</span>
-              <span class="icon log-icon icon-info-fill" v-bk-tooltips="$t('retrieve.visibleTips')"></span>
-              <span class="clear-all text-action" @click="deleteAllField">{{ $t('retrieve.clear') }}</span>
+              <span>{{ $t('已选项列表') + '(' + shadowVisible.length + ')' }}</span>
+              <span class="icon log-icon icon-info-fill" v-bk-tooltips="$t('支持拖拽更改顺序，从上向下对应列表列从左到右顺序')"></span>
+              <span class="clear-all text-action" @click="deleteAllField">{{ $t('取消') }}</span>
             </div>
             <vue-draggable class="select-list" v-bind="dragOptions" v-model="shadowVisible">
               <transition-group>
                 <li class="select-item" v-for="(item, index) in shadowVisible" :key="item">
                   <span class="icon log-icon icon-drag-dots"></span>
                   <span class="field-name" v-bk-overflow-tips>{{ getFiledDisplay(item) }}</span>
-                  <span class="delete text-action" @click="deleteField(item, index)">{{ $t('btn.delete') }}</span>
+                  <span class="delete text-action" @click="deleteField(item, index)">{{ $t('删除') }}</span>
                 </li>
               </transition-group>
             </vue-draggable>
@@ -108,14 +108,14 @@
           <div class="sort-fields-list" v-show="activeFieldTab === 'sort'">
             <div class="title">
               <!-- 已选项列表 -->
-              <span>{{ $t('retrieve.selectedList') + '(' + shadowSort.length + ')' }}</span>
-              <span class="icon log-icon icon-info-fill" v-bk-tooltips="$t('retrieve.sortTips')"></span>
-              <span class="clear-all text-action" @click="deleteAllField">{{ $t('retrieve.clear') }}</span>
+              <span>{{ $t('已选项列表') + '(' + shadowSort.length + ')' }}</span>
+              <span class="icon log-icon icon-info-fill" v-bk-tooltips="$t('支持拖拽更改顺序，排在上面的拥有更高的排序权重')"></span>
+              <span class="clear-all text-action" @click="deleteAllField">{{ $t('取消') }}</span>
             </div>
             <div class="sort-list-header">
-              <span style="width: calc(100% - 146px);padding-left: 32px;">{{ $t('retrieve.fieldName') }}</span>
-              <span style="width: 42px;">{{ $t('retrieve.status') }}</span>
-              <span style="width: 50px;">{{ $t('retrieve.option') }}</span>
+              <span style="width: calc(100% - 146px);padding-left: 32px;">{{ $t('字段名') }}</span>
+              <span style="width: 42px;">{{ $t('状态') }}</span>
+              <span style="width: 50px;">{{ $t('选择方式') }}</span>
             </div>
             <vue-draggable class="select-list" v-bind="dragOptions" v-model="shadowSort">
               <transition-group>
@@ -124,7 +124,7 @@
                   <span class="field-name" v-bk-overflow-tips>{{ getFiledDisplay(item[0]) }}</span>
                   <span class="status">{{ filterStatus(item[1]) }}</span>
                   <span class="option text-action" @click="setOrder(item)">{{ filterOption(item[1]) }}</span>
-                  <span class="delete text-action" @click="deleteField(item[0], index)">{{ $t('btn.delete') }}</span>
+                  <span class="delete text-action" @click="deleteField(item[0], index)">{{ $t('删除') }}</span>
                 </li>
               </transition-group>
             </vue-draggable>
@@ -137,7 +137,7 @@
         {{ $t('应用') }}
       </bk-button>
       <bk-button :theme="'default'" type="submit" @click="cancelModifyFields">
-        {{ $t('btn.cancel') }}
+        {{ $t('取消') }}
       </bk-button>
     </div>
     <div class="field-alias-setting">
@@ -184,8 +184,8 @@ export default {
       isConfirmSubmit: false, // 是否点击保存
       isInputError: false, // 新建配置名称是否不合法
       fieldTabPanels: [
-        { name: 'visible', label: this.$t('retrieve.setVisible') },
-        { name: 'sort', label: this.$t('retrieve.setSort') },
+        { name: 'visible', label: this.$t('设置显示字段') },
+        { name: 'sort', label: this.$t('设置排序权重') },
       ],
       configTabPanels: [], // 配置列表
       dragOptions: {
@@ -260,7 +260,7 @@ export default {
     /** 保存或应用 */
     async confirmModifyFields() {
       if (this.shadowVisible.length === 0) {
-        this.messageWarn(this.$t('retrieve.mustSetVisible'));
+        this.messageWarn(this.$t('显示字段不能为空'));
         return;
       }
       try {
@@ -300,17 +300,17 @@ export default {
     },
     filterStatus(val) {
       if (val === 'desc') {
-        return this.$t('retrieve.desc');
+        return this.$t('降序');
       } if (val === 'asc') {
-        return this.$t('retrieve.asc');
+        return this.$t('升序');
       }
       return '';
     },
     filterOption(val) {
       if (val === 'desc') {
-        return this.$t('retrieve.setAsc');
+        return this.$t('设为降序');
       } if (val === 'asc') {
-        return this.$t('retrieve.setDesc');
+        return this.$t('设为升序');
       }
       return '';
     },
@@ -458,7 +458,7 @@ export default {
           data,
         });
         if (this.activeFieldTab === 'sort') {
-          this.$emit('shouldRetrieve', undefined, true, false);
+          this.$emit('shouldRetrieve', undefined, false); // 不请求图表
         }
       } catch (error) {} finally {
         if (!this.isConfirmSubmit) this.initRequestConfigListShow();
@@ -578,7 +578,7 @@ export default {
           }
 
           .input-error {
-            ::v-deep .bk-form-input {
+            :deep(.bk-form-input) {
               border: 1px solid #d7473f;
             }
           }
@@ -611,11 +611,11 @@ export default {
           }
         }
 
-        ::v-deep .bk-tab-label {
+        :deep(.bk-tab-label) {
           width: 100%;
         }
 
-        ::v-deep .bk-tab-label-item {
+        :deep(.bk-tab-label-item) {
           text-align: left;
 
           /* stylelint-disable-next-line declaration-no-important */
@@ -628,7 +628,7 @@ export default {
           }
         }
 
-        ::v-deep .bk-tab-header {
+        :deep(.bk-tab-header) {
           padding: 0 0 10px;
           min-width: 160px;
           width: 100%;
@@ -640,14 +640,14 @@ export default {
           }
         }
 
-        ::v-deep .active {
+        :deep(.active) {
           color: #3a84ff;
 
           /* stylelint-disable-next-line declaration-no-important */
           background: #e1ecff !important;
         }
 
-        ::v-deep .bk-tab-section {
+        :deep(.bk-tab-section) {
           display: none;
         }
       }

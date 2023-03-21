@@ -34,13 +34,15 @@
             <div class="suggest-title">{{$t('您可以按照以下方式进行检索')}}</div>
             <div class="suggest-list">
               <span>
-                1. {{$t('当前是否有数据源，如果没有请')}}
-                <span class="blue-btn" @click="handleBtnClick('goToConfig')">{{$t('前往配置')}}</span>
+                1. <i18n path="当前是否有数据源，如果没有请 {0}">
+                  <span class="blue-btn" @click="handleBtnClick('goToConfig')">{{$t('前往配置')}}</span>
+                </i18n>
               </span>
               <span> 2. {{$t('检查查询条件是否完整，是否有报错')}}</span>
               <span>
-                3. {{$t('当前可能是手动查询，请')}}
-                <span class="blue-btn" @click="handleBtnClick('clickToQuery')">{{$t('点击查询')}}</span>
+                3. <i18n path="当前可能是手动查询，请 {0}">
+                  <span class="blue-btn" @click="handleBtnClick('clickToQuery')">{{$t('点击查询')}}</span>
+                </i18n>
               </span>
             </div>
           </div>
@@ -59,9 +61,9 @@
             <div class="suggest-title">{{$t('您可以按照以下方式优化检索结果')}}</div>
             <div class="suggest-list">
               <span>
-                1. {{$t('检查')}}
-                <span class="blue-btn" @click="handleBtnClick('indexConfig')">{{$t('数据源配置')}}</span>
-                {{$t('情况')}}
+                1. <i18n path="检查 {0} 情况">
+                  <span class="blue-btn" @click="handleBtnClick('indexConfig')">{{$t('数据源配置')}}</span>
+                </i18n>
               </span>
               <span>2. {{$t('检查右上角的索时间范围')}}</span>
               <span>3. {{$t('优化查询语句')}}</span>
@@ -90,8 +92,8 @@ export default {
       type: Number,
       require: true,
     },
-    retrieveConfigId: {
-      type: Number,
+    indexSetItem: {
+      type: Object,
       require: true,
     },
   },
@@ -104,7 +106,7 @@ export default {
         },
         {
           key: this.$t('模糊检索使用通配符'),
-          value: `abc* ${this.$t('或')} ab?c`,
+          value: this.$t('abc* 或 ab?c'),
         },
         {
           key: this.$t('双引号匹配完整字符串'),
@@ -123,6 +125,13 @@ export default {
           value: 'log: (error OR info)',
         },
       ],
+      routeNameList: { // 路由跳转name
+        log: 'manage-collection',
+        custom: 'custom-report-detail',
+        manage: 'bkdata-index-set-manage',
+        indexManage: 'log-index-set-manage',
+      },
+      detailJumpRouteKey: 'log',
     };
   },
   computed: {
@@ -132,6 +141,25 @@ export default {
     }),
     isFirstSearch() {
       return this.retrieveSearchNumber <= 1;
+    },
+  },
+  watch: {
+    indexSetItem: {
+      handler(nVal) {
+        if (JSON.stringify(nVal) === '{}') return;
+        if (nVal.scenario_id === 'log') { // 索引集类型为采集项或自定义上报
+          if (nVal.collector_scenario_id === null) { // 若无日志类型 则类型为索引集
+            this.getDetailJumpRouteKey('setIndex');
+            return;
+          }
+          // 判断是否是自定义上报类型
+          this.getDetailJumpRouteKey(nVal.collector_scenario_id === 'custom' ? 'custom' : 'log');
+          return;
+        }
+        // 当scenario_id不为log（采集项，索引集，自定义上报）时
+        this.getDetailJumpRouteKey(nVal.scenario_id);
+      },
+      immediate: true,
     },
   },
   methods: {
@@ -145,15 +173,28 @@ export default {
           this.handleGotoLink('queryString');
           break;
         case 'indexConfig': { // 索引配置
-          if (!this.retrieveConfigId) {
+          if (JSON.stringify(this.indexSetItem) === '{}') {
             this.$bkMessage({
               theme: 'error',
               message: this.$t('未找到对应的采集项'),
             });
             return;
           }
-          const jumpUrl = `${baseUrl}#/manage/log-collection/collection-item/manage/${this.retrieveConfigId}?spaceUid=${this.spaceUid}`;
-          window.open(jumpUrl, '_blank');
+          const params = {};
+          if (['manage', 'indexManage'].includes(this.detailJumpRouteKey)) {
+            params.indexSetId = this.indexSetItem?.index_set_id;
+          } else {
+            params.collectorId = this.indexSetItem?.collector_config_id;
+          }
+          const { href } = this.$router.resolve({
+            name: this.routeNameList[this.detailJumpRouteKey],
+            params,
+            query: {
+              type: 'baseInfo',
+              spaceUid: this.$store.state.spaceUid,
+            },
+          });
+          window.open(href, '_blank');
         }
           break;
         case 'goToConfig': { // 前往配置
@@ -164,6 +205,15 @@ export default {
         case 'clickToQuery': // 点击查询
           this.$emit('shouldRetrieve');
           break;
+      }
+    },
+    getDetailJumpRouteKey(detailStr) {
+      if (['es', 'bkdata'].includes(detailStr)) {
+        this.detailJumpRouteKey = 'manage';
+      } else if (detailStr === 'setIndex') {
+        this.detailJumpRouteKey = 'indexManage';
+      } else {
+        this.detailJumpRouteKey = detailStr;
       }
     },
   },
@@ -219,7 +269,7 @@ export default {
     cursor: pointer;
   }
 
-  ::v-deep .exception-image {
+  :deep(.exception-image) {
     height: 180px;
   }
 }

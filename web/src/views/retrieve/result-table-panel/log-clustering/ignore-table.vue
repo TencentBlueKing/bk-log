@@ -32,7 +32,8 @@
       <template slot-scope="props">
         <expand-view
           v-bind="$attrs"
-          :data="props.row.sample"
+          :data="props.row.originSample"
+          :list-data="props.row.sample"
           :total-fields="totalFields"
           :visible-fields="visibleFields"
           @menuClick="handleMenuClick" />
@@ -41,16 +42,19 @@
     <bk-table-column
       type="index"
       :label="$t('序号')"
+      :render-header="$renderHeader"
       width="60">
     </bk-table-column>
     <bk-table-column
       :label="$t('数量')"
+      :render-header="$renderHeader"
       sortable
       width="91"
       prop="count">
     </bk-table-column>
     <bk-table-column
       :label="$t('占比')"
+      :render-header="$renderHeader"
       sortable
       :sort-by="'count'"
       width="91"
@@ -61,6 +65,7 @@
     </bk-table-column>
     <bk-table-column
       :label="$t('取样内容')"
+      :render-header="$renderHeader"
       prop="content"
       class-name="symbol-column">
       <!-- eslint-disable-next-line -->
@@ -82,16 +87,21 @@
         </div>
       </template>
     </bk-table-column>
+    <div slot="empty">
+      <empty-status empty-type="empty" />
+    </div>
   </bk-table>
 </template>
 
 <script>
 import ExpandView from '../original-log/expand-view.vue';
 import { copyMessage } from '@/common/util';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   components: {
     ExpandView,
+    EmptyStatus,
   },
   props: {
     active: {
@@ -103,6 +113,10 @@ export default {
       default: '',
     },
     originTableList: {
+      type: Array,
+      required: true,
+    },
+    tableList: {
       type: Array,
       required: true,
     },
@@ -127,7 +141,7 @@ export default {
     active() {
       this.setTableData();
     },
-    originTableList: {
+    tableList: {
       immediate: true,
       handler() {
         this.setTableData();
@@ -138,7 +152,7 @@ export default {
     setTableData() {
       if (!this.clusteringField) return;
 
-      this.tableData = (this.originTableList || []).reduce((pre, next) => {
+      this.tableData = (this.tableList || []).reduce((pre, next, index) => {
         const regExp = this.active === 'ignoreNumbers' ? this.ignoreNumberReg : this.ignoreSymbolReg;
         const sampleField = next[this.clusteringField];
         const valStr = sampleField.toString().replace(regExp, '*')
@@ -149,6 +163,7 @@ export default {
             count: 1,
             content: valStr,
             sample: next,
+            originSample: this.originTableList[index],
           });
         } else {
           ascription.count = ascription.count + 1;
@@ -157,7 +172,7 @@ export default {
       }, []);
     },
     computedRate(count) {
-      return `${((count / this.originTableList.length) * 100).toFixed(2)}%`;
+      return `${((count / this.tableData.length) * 100).toFixed(2)}%`;
     },
     tableRowClick(row) {
       this.$refs.logClusterTable.toggleRowExpansion(row);
@@ -262,7 +277,7 @@ export default {
       }
     }
 
-    ::v-deep .bk-table-body-wrapper {
+    :deep(.bk-table-body-wrapper) {
       min-height: calc(100vh - 541px);
 
       .bk-table-empty-block {

@@ -34,7 +34,7 @@
       @keydown="handleKeydown"
     ></bk-input>
     <div v-if="isKeywordsError" class="refresh-keywords">
-      <span class="error-message">{{$t('检索语句有误')}}</span>
+      <span class="error-message">{{$t('当前查询语句有语法错误')}}</span>
       <span v-if="keywordIsResolved" @click="handleRefreshKeywords">
         <span class="error-message">, {{$t('点击可进行')}}</span>
         <span class="log-icon icon-refresh-icon"></span>
@@ -65,7 +65,9 @@
             {{ item }}
           </div>
           <div v-bk-overflow-tips="{ placement: 'right' }" class="item-description text-overflow-hidden">
-            {{ $t('筛选包含') }}<span class="item-callout">{{ item }}</span>{{ $t('的结果') }}
+            <i18n path="筛选包含{0}的结果">
+              <span class="item-callout">{{ item }}</span>
+            </i18n>
           </div>
         </li>
       </template>
@@ -92,7 +94,9 @@
           </div>
           <div class="item-text">:</div>
           <div v-bk-overflow-tips="{ placement: 'right' }" class="item-description text-overflow-hidden">
-            <span class="item-callout">{{ $t('等于') }}</span>{{ $t('某一值') }}
+            <i18n path="{0}某一值">
+              <span class="item-callout">{{ $t('等于') }}</span>
+            </i18n>
           </div>
         </li>
         <li class="list-item colon-list-item" @click="handleClickColon(': *')">
@@ -101,7 +105,9 @@
           </div>
           <div class="item-text">:*</div>
           <div v-bk-overflow-tips="{ placement: 'right' }" class="item-description text-overflow-hidden">
-            <span class="item-callout">{{ $t('存在') }}</span>{{ $t('任意形式') }}
+            <i18n path="{0}任意形式">
+              <span class="item-callout">{{ $t('存在') }}</span>
+            </i18n>
           </div>
         </li>
       </template>
@@ -113,7 +119,9 @@
           </div>
           <div class="item-text">AND</div>
           <div v-bk-overflow-tips="{ placement: 'right' }" class="item-description text-overflow-hidden">
-            {{ $t('需要') }}<span class="item-callout">{{ $t('两个参数都') }}</span>{{ $t('为真') }}
+            <i18n path="需要{0}为真">
+              <span class="item-callout">{{ $t('两个参数都') }}</span>
+            </i18n>
           </div>
         </li>
         <li class="list-item continue-list-item" @click="handleClickContinue('OR')">
@@ -122,7 +130,9 @@
           </div>
           <div class="item-text">OR</div>
           <div v-bk-overflow-tips="{ placement: 'right' }" class="item-description text-overflow-hidden">
-            {{ $t('需要') }}<span class="item-callout">{{ $t('一个或多个参数') }}</span>{{ $t('为真') }}
+            <i18n path="需要{0}为真">
+              <span class="item-callout">{{ $t('一个或多个参数') }}</span>
+            </i18n>
           </div>
         </li>
       </template>
@@ -549,8 +559,8 @@ export default {
     }
 
     .king-input-retrieve {
-      ::v-deep .bk-form-input {
-        height: 64px;
+      :deep(.bk-form-textarea) {
+        resize: vertical;
       }
     }
 

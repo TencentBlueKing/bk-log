@@ -175,7 +175,7 @@ export default {
       }
     }
 
-    ::v-deep .bk-select-prefix-icon {
+    :deep(.bk-select-prefix-icon) {
       font-size: 12px;
       color: #979ba5;
     }

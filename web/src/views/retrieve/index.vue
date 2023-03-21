@@ -25,7 +25,7 @@
     <!-- 检索页首页 -->
     <div v-if="hasAuth && isRetrieveHome" class="retrieve-home-container">
       <div class="retrieve-home" data-test-id="retrieve_div_frontPageSearchBox">
-        <div class="retrieve-home-title">{{ $t('nav.retrieve') }}</div>
+        <div class="retrieve-home-title">{{ $t('检索') }}</div>
         <div class="retrieve-home-condition">
           <!-- 选择索引集 -->
           <select-indexSet
@@ -137,7 +137,7 @@
                       style="color: #d7473f; display: inline-block; transform: translateY(-2px);"
                       class="bk-icon icon-exclamation-circle-shape">
                     </span>
-                    <span>{{$t('表单Tips')}}</span>
+                    <span>{{$t('收藏的内容已修改，不能切回表单模式')}}</span>
                   </div>
                 </bk-popover>
               </div>
@@ -260,7 +260,7 @@
                       ext-cls="favorite-btn"
                       :disabled="!isFavoriteUpdate || favoriteUpdateLoading || !isCanStorageFavorite"
                       @click="handleUpdateFavorite">
-                      <span v-bk-tooltips="{ content: $t('保存Tips'), disabled: !isFavoriteUpdate }">
+                      <span v-bk-tooltips="{ content: $t('当前收藏有更新，点击保存当前修改'), disabled: !isFavoriteUpdate }">
                         <span class="favorite-btn-text">
                           <span :class="[
                             'icon',
@@ -335,7 +335,6 @@
               :index-set-item="indexSetItem"
               :operator-config="operatorConfig"
               :retrieve-search-number="retrieveSearchNumber"
-              :retrieve-config-id="retrieveConfigId"
               @request-table-data="requestTableData"
               @fieldsUpdated="handleFieldsUpdated"
               @shouldRetrieve="retrieveLog"
@@ -582,7 +581,10 @@ export default {
         },
       },
       retrieveSearchNumber: 0, // 切换采集项或初始进入页面时 检索次数初始化为0 检索一次次数+1;
-      retrieveConfigId: null, // 当前索引集关联的采集项ID
+      mappingKay: { // is is not 值映射
+        is: '=',
+        'is not': '!=',
+      },
     };
   },
   computed: {
@@ -657,7 +659,6 @@ export default {
       this.indexSetItem = option ? option : { index_set_name: '', indexName: '', scenario_name: '', scenario_id: '' };
       // eslint-disable-next-line camelcase
       this.isSearchAllowed = !!option?.permission?.[authorityMap.SEARCH_LOG_AUTH];
-      this.retrieveConfigId = option?.collector_config_id;
       if (this.isSearchAllowed) {
         this.authPageInfo = null;
         this.hasAuth = true;
@@ -667,7 +668,7 @@ export default {
       this.$store.commit('updateIndexId', val);
       this.retrieveSearchNumber = 0; // 切换索引集 检索次数设置为0;
       val && this.requestSearchHistory(val);
-      this.clearCondition();
+      this.clearCondition('*', false);
     },
     spaceUid: {
       async handler() {
@@ -1015,9 +1016,10 @@ export default {
     },
     // 添加过滤条件
     addFilterCondition(field, operator, value, index) {
+      const mapOperator = this.mappingKay[operator] ?? operator; // is is not 值映射
       const isExist = this.retrieveParams.addition.some((addition) => {
         return addition.field === field
-        && addition.operator === operator
+        && addition.operator === mapOperator
         && addition.value.toString() === value.toString();
       });
       // 已存在相同条件
@@ -1025,7 +1027,7 @@ export default {
 
       const startIndex = index > -1 ? index : this.retrieveParams.addition.length;
       const deleteCount = index > -1 ? 1 : 0;
-      this.retrieveParams.addition.splice(startIndex, deleteCount, { field, operator, value });
+      this.retrieveParams.addition.splice(startIndex, deleteCount, { field, operator: mapOperator, value });
       if (this.isAutoQuery) {
         this.retrieveLog();
       }
@@ -1061,8 +1063,12 @@ export default {
         this.retrieveLog();
       }
     },
-    // 清空条件
-    clearCondition(clearStr = '*') {
+    /**
+     * @desc: 清空条件
+     * @param {String} clearStr 检索keywords
+     * @param {Boolean} isRetrieveLog 是否检索表格
+     */
+    clearCondition(clearStr = '*', isRetrieveLog = true) {
       Object.assign(this.retrieveParams, {
         keyword: this.isSqlSearchType ? clearStr : this.retrieveParams.keyword, // 若是表单模式的清空则不删除keyword
         host_scopes: {
@@ -1075,7 +1081,7 @@ export default {
       });
       this.isClearCondition = !this.isClearCondition;
       if (this.isSqlSearchType) this.handleBlurSearchInput('*');
-      this.retrieveLog();
+      if (isRetrieveLog) this.retrieveLog();
     },
     // 搜索记录
     retrieveFavorite({ index_set_id: indexSetID, params }) {
@@ -1091,12 +1097,10 @@ export default {
     /**
      * @desc: 检索日志
      * @param {Any} historyParams 历史数据
-     * @param {Boolean} isMemoryFields 检索时是否需要记住当前展示的字段
      * @param {Boolean} isRequestChartsAndHistory 检索时是否请求历史记录和图表
      */
-    async retrieveLog(historyParams, isMemoryFields = false, isRequestChartsAndHistory = true) {
+    async retrieveLog(historyParams, isRequestChartsAndHistory = true) {
       if (!this.indexId) return;
-      const memoryFields = this.visibleFields.map(item => item.field_name);
       await this.$nextTick();
       this.basicLoading = true;
       this.showHistory = false;
@@ -1279,11 +1283,10 @@ export default {
         // eslint-disable-next-line camelcase
         if (this.isFavoriteSearch && this.activeFavorite?.is_enable_display_fields) {
           const { display_fields: favoriteDisplayFields } = this.activeFavorite;
-          const displayFields = [...new Set([...memoryFields, ...favoriteDisplayFields])];
+          const sessionShownFieldList = this.sessionShowFieldObj()?.[this.indexId] ?? [];
+          const displayFields = [...new Set([...sessionShownFieldList, ...favoriteDisplayFields])];
           this.handleFieldsUpdated(displayFields, undefined, false);
         };
-        // 检索完后 回显当前展示的字段
-        if (isMemoryFields && memoryFields.length) this.handleFieldsUpdated(memoryFields, undefined, false);
         if (this.isFavoriteSearch) {
           setTimeout(() => {
             this.initSearchList();
@@ -1363,14 +1366,10 @@ export default {
         this.asyncExportUsableReason = !asyncExport.is_active ? asyncExport.extra.usable_reason : '';
         this.timeField = timeField;
         this.totalFields = fields;
+        // 请求字段时 判断当前索引集是否有更改过字段 若更改过字段则使用session缓存的字段显示
+        const sessionShownFieldList = this.sessionShowFieldObj()?.[this.indexId];
         // 后台给的 display_fields 可能有无效字段 所以进行过滤，获得排序后的字段
-        this.visibleFields = displayFields.map((displayName) => {
-          for (const field of fields) {
-            if (field.field_name === displayName) {
-              return field;
-            }
-          }
-        }).filter(Boolean);
+        this.initVisibleFields(sessionShownFieldList ?? displayFields);
         this.sortList = sortList;
 
         const fieldAliasMap = {};
@@ -1393,6 +1392,23 @@ export default {
       }
     },
     /**
+     * @desc: 初始化展示字段
+     * @param {Array<str>} displayFieldNames 显示字段
+     */
+    initVisibleFields(displayFieldNames) {
+      this.visibleFields = displayFieldNames.map((displayName) => {
+        for (const field of this.totalFields) {
+          if (field.field_name === displayName) {
+            return field;
+          }
+        }
+      }).filter(Boolean);
+    },
+    sessionShowFieldObj() { // 显示字段缓存
+      const showFieldStr = sessionStorage.getItem('showFieldSession');
+      return !showFieldStr ? {} : JSON.parse(showFieldStr);
+    },
+    /**
      * @desc: 字段设置更新了
      * @param {Array} displayFieldNames 展示字段
      * @param {Boolean} showFieldAlias 是否别名
@@ -1400,13 +1416,11 @@ export default {
      */
     async handleFieldsUpdated(displayFieldNames, showFieldAlias, isRequestFields = true) {
       this.$store.commit('updateClearTableWidth', 1);
-      this.visibleFields = displayFieldNames.map((displayName) => {
-        for (const field of this.totalFields) {
-          if (field.field_name === displayName) {
-            return field;
-          }
-        }
-      });
+      this.initVisibleFields(displayFieldNames);
+      // 缓存展示字段
+      const showFieldObj = this.sessionShowFieldObj();
+      Object.assign(showFieldObj, { [this.indexId]: displayFieldNames });
+      sessionStorage.setItem('showFieldSession', JSON.stringify(showFieldObj));
       if (showFieldAlias !== undefined) {
         this.showFieldAlias = showFieldAlias;
         window.localStorage.setItem('showFieldAlias', showFieldAlias);
@@ -1699,9 +1713,9 @@ export default {
     initToolTipsMessage(config) {
       const { contextAndRealtime, bkmonitor } = config;
       return {
-        monitorWeb: bkmonitor.is_active ? this.$t('retrieve.monitorAlarm') : bkmonitor?.extra.reason,
-        realTimeLog: contextAndRealtime.is_active ? this.$t('retrieve.log') : contextAndRealtime?.extra.reason,
-        contextLog: contextAndRealtime.is_active ? this.$t('retrieve.context') : contextAndRealtime?.extra.reason,
+        monitorWeb: bkmonitor.is_active ? this.$t('监控告警') : bkmonitor?.extra.reason,
+        realTimeLog: contextAndRealtime.is_active ? this.$t('实时日志') : contextAndRealtime?.extra.reason,
+        contextLog: contextAndRealtime.is_active ? this.$t('上下文') : contextAndRealtime?.extra.reason,
       };
     },
     // 点击新增收藏
@@ -1850,7 +1864,6 @@ export default {
       if (this.isSqlSearchType && !this.isCanUseUiType) return;
       this.retrieveLog();
       this.handleBlurSearchInput(this.retrieveParams.keyword);
-      // this.initSearchList();
       // 切换表单模式或者sql模式
       this.isSqlSearchType = !this.isSqlSearchType;
       // 如果是sql模式切到表单模式 则缓存keywords  表单切回sql模式时回填缓存的keywords
@@ -2196,7 +2209,7 @@ export default {
             padding: 20px 0 24px;
             background-color: #fff;
             // z-index: 1;
-            ::v-deep .query-btn {
+            :deep(.query-btn) {
               width: 32px;
               height: 32px;
               background: #fff;
@@ -2366,7 +2379,7 @@ export default {
     }
   }
 
-  .bk-dialog-wrapper .bk-info-box .bk-dialog-type-header .header{
+  .bk-dialog-wrapper .bk-info-box .bk-dialog-type-header .header {
     white-space: normal;
     text-overflow: inherit;
     overflow: hidden;

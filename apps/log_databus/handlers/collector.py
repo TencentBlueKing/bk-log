@@ -102,6 +102,7 @@ from apps.log_databus.exceptions import (
     NamespaceNotValidException,
     NodeNotAllowedException,
     AllNamespaceNotAllowedException,
+    VclusterNodeNotAllowedException,
 )
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.collector_scenario.custom_define import get_custom
@@ -2194,7 +2195,7 @@ class CollectorHandler(object):
             "data_link_id": int(data_link_id) if data_link_id else 0,
             "bk_app_code": bk_app_code,
             "bkdata_biz_id": bkdata_biz_id,
-            "is_display": is_display
+            "is_display": is_display,
         }
         bkdata_biz_id = bkdata_biz_id or bk_biz_id
         # 判断是否已存在同英文名collector
@@ -2307,7 +2308,7 @@ class CollectorHandler(object):
             "collector_config_name": collector_config_name,
             "category_id": category_id,
             "description": description or collector_config_name,
-            "is_display": is_display
+            "is_display": is_display,
         }
 
         bk_data_name = build_bk_data_name(
@@ -2425,33 +2426,39 @@ class CollectorHandler(object):
 
         return None
 
-    def check_shared_cluster_namespace(self, bk_biz_id, collector_type, bcs_cluster_id, namespace_list):
+    def check_cluster_config(self, bk_biz_id, collector_type, bcs_cluster_id, namespace_list):
         """
         检测共享集群相关配置是否合法
         1. 集群在项目下可见
         2. 不允许配置Node节点日志采集
         3. 不允许设置为all，也不允许为空(namespace设置)
         4. 不允许设置不可见的namespace
+
+        检测虚拟集群相关配置是否合法
+        1. 集群在项目下可见
+        2. 不允许配置Node节点日志采集
         """
         cluster_info = self.get_cluster_info(bk_biz_id, bcs_cluster_id)
 
-        if not cluster_info["is_shared"]:
-            return
+        if cluster_info["is_virtual"]:
+            if collector_type == ContainerCollectorType.NODE:
+                raise VclusterNodeNotAllowedException()
 
-        if collector_type == ContainerCollectorType.NODE:
-            raise NodeNotAllowedException()
+        if cluster_info["is_shared"]:
+            if collector_type == ContainerCollectorType.NODE:
+                raise NodeNotAllowedException()
 
-        if not namespace_list:
-            raise AllNamespaceNotAllowedException()
+            if not namespace_list:
+                raise AllNamespaceNotAllowedException()
 
-        allowed_namespaces = {ns["id"] for ns in self.list_namespace(bk_biz_id, bcs_cluster_id)}
+            allowed_namespaces = {ns["id"] for ns in self.list_namespace(bk_biz_id, bcs_cluster_id)}
 
-        invalid_namespaces = set(namespace_list) - allowed_namespaces
+            invalid_namespaces = set(namespace_list) - allowed_namespaces
 
-        if invalid_namespaces:
-            raise NamespaceNotValidException(
-                NamespaceNotValidException.MESSAGE.format(namespaces=", ".join(invalid_namespaces))
-            )
+            if invalid_namespaces:
+                raise NamespaceNotValidException(
+                    NamespaceNotValidException.MESSAGE.format(namespaces=", ".join(invalid_namespaces))
+                )
 
     def create_container_config(self, data):
         # 使用采集插件补全参数
@@ -2542,7 +2549,7 @@ class CollectorHandler(object):
             else:
                 # 效验共享集群命名空间是否在允许的范围
                 for config in data["configs"]:
-                    self.check_shared_cluster_namespace(
+                    self.check_cluster_config(
                         bk_biz_id=data["bk_biz_id"],
                         collector_type=config["collector_type"],
                         bcs_cluster_id=data["bcs_cluster_id"],
@@ -2648,7 +2655,7 @@ class CollectorHandler(object):
 
         # 效验共享集群命名空间是否在允许的范围
         for config in data["configs"]:
-            self.check_shared_cluster_namespace(
+            self.check_cluster_config(
                 bk_biz_id=bk_biz_id,
                 collector_type=config["collector_type"],
                 bcs_cluster_id=data["bcs_cluster_id"],
@@ -3401,10 +3408,10 @@ class CollectorHandler(object):
         if not bk_biz_id:
             return []
         bcs_clusters = BcsHandler().list_bcs_cluster(bk_biz_id=bk_biz_id)
-        return [
-            {"name": cluster["cluster_name"], "id": cluster["cluster_id"], "is_shared": cluster["is_shared"]}
-            for cluster in bcs_clusters
-        ]
+        for cluster in bcs_clusters:
+            cluster["name"] = cluster["cluster_name"]
+            cluster["id"] = cluster["cluster_id"]
+        return bcs_clusters
 
     def list_workload_type(self):
         toggle = FeatureToggleObject.toggle(BCS_DEPLOYMENT_TYPE)
@@ -3471,7 +3478,7 @@ class CollectorHandler(object):
         collector_type = (
             ContainerCollectorType.NODE if topo_type == TopoType.NODE.value else ContainerCollectorType.CONTAINER
         )
-        self.check_shared_cluster_namespace(bk_biz_id, collector_type, bcs_cluster_id, namespace_list)
+        self.check_cluster_config(bk_biz_id, collector_type, bcs_cluster_id, namespace_list)
 
         api_instance = Bcs(cluster_id=bcs_cluster_id).api_instance_core_v1
         result = {"id": bcs_cluster_id, "name": bcs_cluster_id, "type": "cluster"}
@@ -3686,7 +3693,7 @@ class CollectorHandler(object):
 
             # 校验配置
             try:
-                self.check_shared_cluster_namespace(
+                self.check_cluster_config(
                     bk_biz_id=bk_biz_id,
                     collector_type=log_config_type,
                     bcs_cluster_id=bcs_cluster_id,

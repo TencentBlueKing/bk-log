@@ -275,7 +275,7 @@ export default {
         margin: 0 16px;
       }
 
-      ::v-deep .bk-tooltip {
+      :deep(.bk-tooltip) {
         flex-shrink: 0;
       }
 

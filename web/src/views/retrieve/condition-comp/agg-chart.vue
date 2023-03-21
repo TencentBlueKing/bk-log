@@ -23,9 +23,10 @@
 <template>
   <div class="field-data">
     <div class="title">
-      {{
-        statisticalFieldData.__validCount + '/' + statisticalFieldData.__totalCount + $t('条记录中数量排名前 5 的数据值')
-      }}
+      <i18n path="{0}/{1}条记录中数量排名前 5 的数据值">
+        <span>{{statisticalFieldData.__validCount}}</span>
+        <span>{{statisticalFieldData.__totalCount}}</span>
+      </i18n>
     </div>
     <ul class="chart-list">
       <template v-for="(item, index) in topFiveList">
@@ -56,7 +57,7 @@
       <li class="more-item" v-if="!showAllList && shouldShowMore">
         <span @click="() => {
           showAllList = !showAllList
-        }">{{$t('dataManage.more')}}</span>
+        }">{{$t('更多')}}</span>
       </li>
     </ul>
   </div>
@@ -92,6 +93,10 @@ export default {
     return {
       showAllList: false,
       shouldShowMore: false,
+      mappingKay: { // is is not 值映射
+        is: '=',
+        'is not': '!=',
+      },
     };
   },
   computed: {
@@ -125,7 +130,7 @@ export default {
       this.addFilterCondition(this.fieldName, operator, value);
     },
     getIconPopover(operator, value) {
-      if (this.fieldType === '__virtual__') return this.$t('unKnowIconTips');
+      if (this.fieldType === '__virtual__') return this.$t('该字段为平台补充 不可检索');
       if (this.filterIsExist(operator, value)) return this.$t('已添加过滤条件');
       return operator;
     },
@@ -135,7 +140,7 @@ export default {
         if (operator === 'not') operator = 'is not';
         return this.retrieveParams.addition.some((addition) => {
           return addition.field === this.fieldName
-        && addition.operator === operator
+        && addition.operator === (this.mappingKay[operator] ?? operator) // is is not 值映射
         && addition.value.toString() === value.toString();
         });
       }

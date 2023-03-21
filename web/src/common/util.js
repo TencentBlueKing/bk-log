@@ -679,7 +679,6 @@ export class Storage {
   }
 }
 
-
 /**
  * 深拷贝
  * @param {Object} obj
@@ -701,4 +700,24 @@ export const deepClone = (obj, hash = new WeakMap()) => {
     Array.from(obj, ([key, val]) => result.set(key, deepClone(val, hash)));
   }
   return Object.assign(result, ...Object.keys(obj).map(key => ({ [key]: deepClone(obj[key], hash) })));
+};
+
+/**
+ * @desc: 清空bk-table表头的过滤条件
+ * @param {HTMLElement} refInstance ref实例
+ */
+export const clearTableFilter =  (refInstance) => {
+  if (refInstance.$refs.tableHeader.filterPanels) {
+    const filterPanels = refInstance.$refs.tableHeader.filterPanels;
+    for (const key in filterPanels) {
+      filterPanels[key].handleReset();
+    };
+  }
+};
+
+/**
+ * @desc: 适合未作处理的bk-table表头添加tips
+ */
+export const renderHeader = (h, { column }) => {
+  return h('p', { directives: [{ name: 'bk-overflow-tips' }], class: 'title-overflow' }, [column.label]);
 };

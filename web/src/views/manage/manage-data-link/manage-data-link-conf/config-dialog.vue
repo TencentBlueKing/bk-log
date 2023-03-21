@@ -275,7 +275,7 @@ export default {
   @import '@/scss/space-tag-option';
 
   .link-config-form {
-    ::v-deep .bk-form-content {
+    :deep(.bk-form-content) {
       position: relative;
 
       .form-error-tip {

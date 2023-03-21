@@ -35,7 +35,7 @@
         }"
       ></span>
       <!-- 字段名 -->
-      <span class="field-name">
+      <span class="overflow-tips field-name" v-bk-overflow-tips>
         {{ showFieldAlias ? fieldAliasMap[fieldItem.field_name] : fieldItem.field_name }}
       </span>
       <!-- 聚合字段数量 -->
@@ -137,6 +137,8 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+  @import '@/scss/mixins/overflow-tips.scss';
+
   .filed-item {
     margin-bottom: 6px;
 
