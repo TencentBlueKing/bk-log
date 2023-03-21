@@ -32,6 +32,34 @@ from bkm_space.define import SpaceTypeEnum
 from bkm_space.utils import bk_biz_id_to_space_uid
 
 
+def adapt_non_bkcc(params):
+    # 非CC业务时, 查询关联的CC业务, 如果有, 替换为其关联的CC业务
+    if int(params.get("bk_biz_id", 0)) < 0:
+        from apps.log_search.models import SpaceApi
+
+        space_uid = bk_biz_id_to_space_uid(params["bk_biz_id"])
+        related_space = SpaceApi.get_related_space(space_uid=space_uid, related_space_type=SpaceTypeEnum.BKCC.value)
+        if related_space:
+            params["bk_biz_id"] = related_space.bk_biz_id
+
+    return params
+
+
+def adapt_non_bkcc_for_bknode(params):
+    """
+    适配节点管理的space_id
+    """
+    if int(params.get("scope", {}).get("bk_biz_id", 0)) < 0:
+        from apps.log_search.models import SpaceApi
+
+        space_uid = bk_biz_id_to_space_uid(params["scope"]["bk_biz_id"])
+        related_space = SpaceApi.get_related_space(space_uid=space_uid, related_space_type=SpaceTypeEnum.BKCC.value)
+        if related_space:
+            params["scope"]["bk_biz_id"] = related_space.bk_biz_id
+
+    return params
+
+
 def _clean_auth_info_uin(auth_info):
     if "uin" in auth_info:
         # 混合云uin去掉第一位
@@ -145,11 +173,13 @@ else:
                 params = update_bkdata_auth_info(params)
 
         params = add_esb_info_before_request(params)
+        params = adapt_non_bkcc(params)
         params.setdefault("bkdata_authentication_method", "user")
         return params
 
     def add_esb_info_before_request_for_bkdata_user(params):  # pylint: disable=function-name-too-long
         params = add_esb_info_before_request(params)
+        params = adapt_non_bkcc(params)
         params.setdefault("bkdata_authentication_method", "user")
         return params
 
@@ -248,31 +278,3 @@ def filter_abnormal_ip_hosts(response_result):
 
     response_result["data"]["info"] = dst_host_list
     return response_result
-
-
-def adapt_non_bkcc(params):
-    # 非CC业务时, 查询关联的CC业务, 如果有, 替换为其关联的CC业务
-    if int(params.get("bk_biz_id", 0)) < 0:
-        from apps.log_search.models import SpaceApi
-
-        space_uid = bk_biz_id_to_space_uid(params["bk_biz_id"])
-        related_space = SpaceApi.get_related_space(space_uid=space_uid, related_space_type=SpaceTypeEnum.BKCC.value)
-        if related_space:
-            params["bk_biz_id"] = related_space.bk_biz_id
-
-    return params
-
-
-def adapt_non_bkcc_for_bknode(params):
-    """
-    适配节点管理的space_id
-    """
-    if int(params.get("scope", {}).get("bk_biz_id", 0)) < 0:
-        from apps.log_search.models import SpaceApi
-
-        space_uid = bk_biz_id_to_space_uid(params["scope"]["bk_biz_id"])
-        related_space = SpaceApi.get_related_space(space_uid=space_uid, related_space_type=SpaceTypeEnum.BKCC.value)
-        if related_space:
-            params["scope"]["bk_biz_id"] = related_space.bk_biz_id
-
-    return params
