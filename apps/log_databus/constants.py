@@ -21,6 +21,7 @@ the project delivered to anyone in the future.
 """
 import markdown
 from django.conf import settings
+from django.db.models import TextChoices
 from django.utils import translation
 from django.utils.translation import ugettext_lazy as _
 
@@ -540,3 +541,9 @@ META_DATA_CRON_REFRESH_TASK_NAME_LIST = [
     "metadata.task.config_refresh.refresh_consul_storage",
     "metadata.task.config_refresh.refresh_es_storage",
 ]
+
+
+# Archive
+class ArchiveInstanceType(TextChoices):
+    COLLECTOR_CONFIG = "collector_config", _("采集项")
+    COLLECTOR_PLUGIN = "collector_plugin", _("采集插件")

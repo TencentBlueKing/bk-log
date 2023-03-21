@@ -34,20 +34,17 @@ from apps.log_clustering.constants import (
     NEW_CLASS_SENSITIVITY_FIELD,
     DOUBLE_PERCENTAGE,
     NEW_CLASS_FIELD_PREFIX,
-    MAX_STRATEGY_PAGE_SIZE,
-    DEFAULT_PAGE,
     DEFAULT_LABEL,
 )
 from apps.log_clustering.exceptions import ClusteringConfigNotExistException
 from apps.log_clustering.models import AiopsSignatureAndPattern, ClusteringConfig, SignatureStrategySettings
 from apps.log_search.handlers.search.aggs_handlers import AggsHandlers
 from apps.utils.bkdata import BkData
-from apps.utils.db import array_hash, array_chunk
+from apps.utils.db import array_hash
 from apps.utils.function import map_if
 from apps.utils.local import get_local_param
 from apps.utils.thread import MultiExecuteFunc
 from apps.utils.time_handler import generate_time_range_shift, generate_time_range
-from apps.api import MonitorApi
 
 
 class PatternHandler:
@@ -93,9 +90,10 @@ class PatternHandler:
         new_class = result.get("new_class", set())
 
         pattern_map = AiopsSignatureAndPattern.objects.filter(model_id=self._clustering_config.model_id).values(
-            "signature", "pattern"
+            "signature", "pattern", "label"
         )
         signature_map_pattern = array_hash(pattern_map, "signature", "pattern")
+        signature_map_label = array_hash(pattern_map, "signature", "label")
 
         sum_count = sum([pattern.get("doc_count", MIN_COUNT) for pattern in pattern_aggs])
         result = []
@@ -107,13 +105,14 @@ class PatternHandler:
             result.append(
                 {
                     "pattern": signature_map_pattern.get(signature, ""),
+                    "label": signature_map_label.get(signature, ""),
                     "count": count,
                     "signature": signature,
                     "percentage": self.percentage(count, sum_count),
                     "is_new_class": signature in new_class,
                     "year_on_year_count": year_on_year_compare,
                     "year_on_year_percentage": self._year_on_year_calculate_percentage(count, year_on_year_compare),
-                    "group": str(pattern.get("group", "")).split("|"),
+                    "group": str(pattern.get("group", "")).split("|") if pattern.get("group") else [],
                     "monitor": SignatureStrategySettings.get_monitor_config(
                         signature=signature, index_set_id=self._index_set_id, pattern_level=self._pattern_level
                     ),
@@ -228,21 +227,10 @@ class PatternHandler:
         )
         return {new_class["signature"] for new_class in new_classes}
 
-    @classmethod
-    def get_labels(cls, strategy_ids: list, bk_biz_id: int):
-        inst_ids_array = array_chunk(sorted(strategy_ids), MAX_STRATEGY_PAGE_SIZE)
-        result = []
-        for inst_ids in inst_ids_array:
-            strategies = MonitorApi.search_alarm_strategy_v2(
-                params={
-                    "page": DEFAULT_PAGE,
-                    "page_size": MAX_STRATEGY_PAGE_SIZE,
-                    "conditions": [{"key": "strategy_id", "value": inst_ids}],
-                    "bk_biz_id": bk_biz_id,
-                }
-            )
-            result.extend(strategies["strategy_config_list"])
-        return cls._generate_strategy_result(result)
+    def set_label(self, signature: str, label: str):
+        AiopsSignatureAndPattern.objects.filter(model_id=self._clustering_config.model_id, signature=signature).update(
+            label=label
+        )
 
     @classmethod
     def _generate_strategy_result(cls, strategy_result):

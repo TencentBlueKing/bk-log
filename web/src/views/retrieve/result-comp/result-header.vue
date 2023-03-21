@@ -41,7 +41,7 @@
             <span class="bk-icon icon-star"></span>
           </div>
           <div slot="content">
-            {{`${isShowCollect ? $t('点击收起') : $t('点击展开')}${$t('收藏')}`}}
+            {{$t('点击{n}收藏', { n: isShowCollect ? $t('展开') : $t('收起') })}}
           </div>
         </bk-popover>
         <bk-popover
@@ -53,7 +53,7 @@
             <span class="bk-icon log-icon icon-jiansuo"></span>
           </div>
           <div slot="content">
-            {{`${showRetrieveCondition ? $t('点击收起') : $t('点击展开')}${$t('检索')}`}}
+            {{$t('点击{n}检索', { n: showRetrieveCondition ? $t('展开') : $t('收起') })}}
           </div>
         </bk-popover>
       </div>
@@ -214,7 +214,7 @@ export default {
       refreshTimer: null, // 自动刷新定时器
       refreshTimeout: 0, // 0 这里表示关闭自动刷新
       refreshTimeList: [{
-        id: 0, name: this.$t('dataManage.Refresh'),
+        id: 0, name: this.$t('刷新'),
       }, {
         id: 60000, name: '1m',
       }, {

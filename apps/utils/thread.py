@@ -40,6 +40,7 @@ class FuncThread:
         self.result_key = result_key
         self.results = results
         self.use_request = use_request
+        self.requests = None
         with ignored(AttributeError, BaseException):
             self.requests = get_request()
         self.trace_context = get_current()
@@ -55,7 +56,7 @@ class FuncThread:
 
     def run(self):
         self._init_context()
-        if self.use_request:
+        if self.use_request and self.requests:
             activate_request(self.requests)
         if self.params:
             self.results[self.result_key] = self.func(self.params)

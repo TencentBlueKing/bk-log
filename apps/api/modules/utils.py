@@ -102,8 +102,11 @@ else:
         params["appenv"] = settings.RUN_VER
 
         if "no_request" in params and params["no_request"]:
-            params["bk_username"] = "admin"
-            params["operator"] = "admin"
+            if "bk_username" not in params:
+                params["bk_username"] = "admin"
+
+            if "operator" not in params:
+                params["operator"] = params["bk_username"]
         else:
             req = get_request()
             auth_info = build_auth_args(req)

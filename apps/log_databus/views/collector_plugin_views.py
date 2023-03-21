@@ -3,7 +3,9 @@ from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 
 from apps.generic import ModelViewSet
-from apps.log_databus.exceptions import CollectorConfigNotExistException
+from apps.iam import ActionEnum, ResourceEnum
+from apps.iam.handlers.drf import insert_permission_field
+from apps.log_databus.exceptions import CollectorConfigNotExistException, CollectorPluginNotImplemented
 from apps.log_databus.handlers.collector_plugin import CollectorPluginHandler
 from apps.log_databus.handlers.collector_plugin.base import get_collector_plugin_handler
 from apps.log_databus.models import CollectorConfig, CollectorPlugin
@@ -49,6 +51,20 @@ class CollectorPluginViewSet(ModelViewSet):
         if self.action in ["update", "partial_update"]:
             return CollectorPluginUpdateSerializer
         return CollectorPluginSerializer
+
+    @insert_permission_field(
+        id_field=lambda d: d["_collector_config_id"],
+        actions=[ActionEnum.VIEW_COLLECTION, ActionEnum.MANAGE_COLLECTION],
+        resource_meta=ResourceEnum.COLLECTION,
+    )
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        for plugin in response.data:
+            try:
+                plugin["_collector_config_id"] = CollectorPlugin.get_collector_config_id(plugin["collector_plugin_id"])
+            except CollectorPluginNotImplemented:
+                plugin["_collector_config_id"] = -1
+        return response
 
     def create(self, request, *args, **kwargs):
         """

@@ -27,7 +27,7 @@
       <div class="search">
         <div class="search-item">
           <div class="search-trace">
-            <div class="text-item">{{$t('indexSetList.index_set')}}</div>
+            <div class="text-item">{{$t('索引集')}}</div>
             <bk-select
               class="search-area fl"
               style="width: 300px"
@@ -55,7 +55,7 @@
             </bk-select>
           </div>
           <div class="search-trace">
-            <div class="text-item">{{$t('trace.time_quantum')}}</div>
+            <div class="text-item">{{$t('时间段')}}</div>
             <bk-date-picker
               class="search-area fl"
               style="width: 300px"
@@ -100,7 +100,7 @@
             <bk-input
               v-else
               :type="val.show_type" style="width: 170px; margin-top: 8px;"
-              :placeholder="$t('form.pleaseEnter')"
+              :placeholder="$t('请输入')"
               v-model="searchData[val.field_name]"
               @enter="searchHandle">
             </bk-input>
@@ -108,7 +108,7 @@
               class="more-text"
               @click="moreTime = !moreTime"
               v-if="ind === traceData.additions.length - 1">
-              {{$t('dataManage.more')}}
+              {{$t('更多')}}
               <i class="bk-icon icon-down-shape" v-if="!moreTime"></i>
               <i class="bk-icon icon-up-shape" v-else></i>
             </div>
@@ -127,14 +127,14 @@
               <bk-input
                 type="number"
                 style="width: 100px; margin: 10px 0 0 0;"
-                :placeholder="$t('form.pleaseEnter')"
+                :placeholder="$t('请输入')"
                 v-model="searchData.duration_gte"
                 @enter="searchHandle"></bk-input>
-              <div style="line-height: 30px;padding-top: 10px">{{$t('trace.to')}}</div>
+              <div style="line-height: 30px;padding-top: 10px">{{$t('至')}}</div>
               <bk-input
                 type="number"
                 style="width: 100px; margin: 10px 0 0 0;"
-                :placeholder="$t('form.pleaseEnter')"
+                :placeholder="$t('请输入')"
                 v-model="searchData.duration_lte"
                 @enter="searchHandle"></bk-input>
             </div>
@@ -164,14 +164,14 @@
             <bk-input
               v-else
               :type="val.show_type" style="width: 170px; margin-top: 8px;"
-              :placeholder="$t('form.pleaseEnter')"
+              :placeholder="$t('请输入')"
               v-model="searchData[val.field_name]"
               @enter="searchHandle">
             </bk-input>
           </div>
         </div>
         <div class="search-keyword">
-          <div>{{$t('alarmStrategy.additions')}}</div>
+          <div>{{$t('关键词')}}</div>
           <div style="font-size: 0;">
             <input
               type="text"
@@ -185,7 +185,7 @@
               :disabled="searchDisabled || !!authPageInfo"
               v-cursor="{ active: isSearchAllowed === false }"
               @click="searchHandle">
-              {{$t('btn.search')}}
+              {{$t('搜索')}}
             </bk-button>
           </div>
         </div>
@@ -225,7 +225,7 @@
               style="margin-top: 15px;"
               v-if="loaded"
               ref="logDetailTable"
-              :empty-text="$t('retrieve.notData')"
+              :empty-text="$t('未查询到数据')"
               :data="logTableList"
               :size="size"
               @cell-click="handleCellClick">
@@ -273,6 +273,9 @@
                   </bk-table-column>
                 </template>
               </template>
+              <div slot="empty">
+                <empty-status :empty-type="emptyType" @operation="handleOperation" />
+              </div>
             </bk-table>
           </div>
         </template>
@@ -298,6 +301,7 @@ import TimeFormatter from '@/components/common/time-formatter';
 import tableRowDeepViewMixin from '@/mixins/table-row-deep-view-mixin';
 import TraceDetail from '@/components/trace-detail';
 import * as authorityMap from '../../../common/authority-map';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   name: 'TraceIndex',
@@ -308,6 +312,7 @@ export default {
     chartView,
     TimeFormatter,
     TraceDetail,
+    EmptyStatus,
   },
   mixins: [tableRowDeepViewMixin],
   data() {
@@ -328,7 +333,7 @@ export default {
       docCountList: {},
       searchData: {},
       messagetop: {
-        content: this.$t('trace.Method_calc'),
+        content: this.$t('方法名，函数名或者一个大型计算中的某个阶段或子任务'),
         showOnInit: false,
         placements: ['top'],
       },
@@ -340,17 +345,17 @@ export default {
       moreTime: false,
       size: 'small',
       startTime: '',
-      menu: { name: this.$t('trace.trace'), id: 'trace', level: 1 },
+      menu: { name: this.$t('调用链'), id: 'trace', level: 1 },
       indexSetList: [],
       indexId: '',
       openDatePanel: false,
       initDateTimeRange: [],
-      showShortText: this.$t('retrieve.period_15Min'),
+      showShortText: this.$t('近 15 分钟'),
       searchDisabled: false,
       chartCut: 'line',
       shortcuts: [
         {
-          text: this.$t('retrieve.period_5S'),
+          text: this.$t('近 5 秒'),
           value() {
             const end = new Date();
             const start = new Date();
@@ -358,11 +363,11 @@ export default {
             return [start, end];
           },
           onClick: () => {
-            this.showShortText = this.$t('retrieve.period_5S');
+            this.showShortText = this.$t('近 5 秒');
           },
         },
         {
-          text: this.$t('retrieve.period_5Min'),
+          text: this.$t('近 5 分钟'),
           value() {
             const end = new Date();
             const start = new Date();
@@ -370,11 +375,11 @@ export default {
             return [start, end];
           },
           onClick: () => {
-            this.showShortText = this.$t('retrieve.period_5Min');
+            this.showShortText = this.$t('近 5 分钟');
           },
         },
         {
-          text: this.$t('retrieve.period_15Min'),
+          text: this.$t('近 15 分钟'),
           value() {
             const end = new Date();
             const start = new Date();
@@ -382,11 +387,11 @@ export default {
             return [start, end];
           },
           onClick: () => {
-            this.showShortText = this.$t('retrieve.period_15Min');
+            this.showShortText = this.$t('近 15 分钟');
           },
         },
         {
-          text: this.$t('retrieve.period_30Min'),
+          text: this.$t('近 30 分钟'),
           value() {
             const end = new Date();
             const start = new Date();
@@ -394,11 +399,11 @@ export default {
             return [start, end];
           },
           onClick: () => {
-            this.showShortText = this.$t('retrieve.period_30Min');
+            this.showShortText = this.$t('近 30 分钟');
           },
         },
         {
-          text: this.$t('retrieve.period_1H'),
+          text: this.$t('近 1 小时'),
           value() {
             const end = new Date();
             const start = new Date();
@@ -406,11 +411,11 @@ export default {
             return [start, end];
           },
           onClick: () => {
-            this.showShortText = this.$t('retrieve.period_1H');
+            this.showShortText = this.$t('近 1 小时');
           },
         },
         {
-          text: this.$t('retrieve.period_4H'),
+          text: this.$t('近 4 小时'),
           value() {
             const end = new Date();
             const start = new Date();
@@ -418,11 +423,11 @@ export default {
             return [start, end];
           },
           onClick: () => {
-            this.showShortText = this.$t('retrieve.period_4H');
+            this.showShortText = this.$t('近 4 小时');
           },
         },
         {
-          text: this.$t('retrieve.period_12H'),
+          text: this.$t('近 12 小时'),
           value() {
             const end = new Date();
             const start = new Date();
@@ -430,11 +435,11 @@ export default {
             return [start, end];
           },
           onClick: () => {
-            this.showShortText = this.$t('retrieve.period_12H');
+            this.showShortText = this.$t('近 12 小时');
           },
         },
         {
-          text: this.$t('retrieve.period_1D'),
+          text: this.$t('近 1 天'),
           value() {
             const end = new Date();
             const start = new Date();
@@ -442,7 +447,7 @@ export default {
             return [start, end];
           },
           onClick: () => {
-            this.showShortText = this.$t('retrieve.period_1D');
+            this.showShortText = this.$t('近 1 天');
           },
         },
       ],
@@ -480,6 +485,7 @@ export default {
       showTraceDetail: false,
       traceId: '',
       indexSetName: '',
+      emptyType: 'empty',
     };
   },
   computed: {
@@ -515,14 +521,14 @@ export default {
         this.params.time_range = 'customized';
       } else {
         const timerInfo = {};
-        timerInfo[this.$t('retrieve.period_5S')] = '5s';
-        timerInfo[this.$t('retrieve.period_5Min')] = '5m';
-        timerInfo[this.$t('retrieve.period_15Min')] = '15m';
-        timerInfo[this.$t('retrieve.period_30Min')] = '30m';
-        timerInfo[this.$t('retrieve.period_1H')] = '1h';
-        timerInfo[this.$t('retrieve.period_4H')] = '4h';
-        timerInfo[this.$t('retrieve.period_12H')] = '12h';
-        timerInfo[this.$t('retrieve.period_1D')] = '1d';
+        timerInfo[this.$t('近 5 秒')] = '5s';
+        timerInfo[this.$t('近 5 分钟')] = '5m';
+        timerInfo[this.$t('近 15 分钟')] = '15m';
+        timerInfo[this.$t('近 30 分钟')] = '30m';
+        timerInfo[this.$t('近 1 小时')] = '1h';
+        timerInfo[this.$t('近 4 小时')] = '4h';
+        timerInfo[this.$t('近 12 小时')] = '12h';
+        timerInfo[this.$t('近 1 天')] = '1d';
         this.params.time_range = timerInfo[val];
       }
     },
@@ -724,6 +730,7 @@ export default {
         }],
       };
       if (this.isSearchAllowed === null) {
+        this.emptyType = 'empty';
         try {
           this.basicLoading = true;
           this.isTableLoading = true;
@@ -735,6 +742,7 @@ export default {
           }
         } catch (err) {
           console.warn(err);
+          this.emptyType = '500';
           return;
         } finally {
           this.basicLoading = false;
@@ -798,6 +806,7 @@ export default {
         await Promise.all(promisList);
       } catch (e) {
         console.warn(e);
+        this.emptyType = '500';
       } finally {
         this.searchDisabled = false;
         this.basicLoading = false;
@@ -1035,6 +1044,13 @@ export default {
       this.initialCallShow = !this.initialCallShow;
       if (this.initialCallShow && !this.chartData[this.fieldName]) {
         this.requestDateHistogram(true);
+      }
+    },
+    handleOperation(type) {
+      if (type === 'refresh') {
+        this.emptyType = 'empty';
+        this.searchHandle();
+        return;
       }
     },
   },

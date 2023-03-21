@@ -43,22 +43,25 @@
       :data="extractLinkList"
       row-key="strategy_id"
       data-test-id="extractLinkListBox_table_LinkListTableBox">
-      <bk-table-column :label="$t('链路名称')">
+      <bk-table-column :label="$t('链路名称')" :render-header="$renderHeader">
         <div class="table-ceil-container" slot-scope="{ row }">
           <span v-bk-overflow-tips>{{ row.name }}</span>
         </div>
       </bk-table-column>
-      <bk-table-column :label="$t('链路类型')" prop="created_at">
+      <bk-table-column :label="$t('链路类型')" :render-header="$renderHeader" prop="created_at">
         <div slot-scope="{ row }">
           <template>{{linkNameMap[row.link_type]}}</template>
         </div>
       </bk-table-column>
-      <bk-table-column :label="$t('操作')" width="200">
+      <bk-table-column :label="$t('操作')" :render-header="$renderHeader" width="200">
         <div slot-scope="{ row }" class="task-operation-container">
           <span class="task-operation" @click="handleEditStrategy(row)">{{ $t('编辑') }}</span>
           <span class="task-operation" @click="handleDeleteStrategy(row)">{{ $t('删除') }}</span>
         </div>
       </bk-table-column>
+      <div slot="empty">
+        <empty-status :empty-type="emptyType" @operation="handleOperation" />
+      </div>
     </bk-table>
   </div>
 </template>
@@ -66,9 +69,13 @@
 <script>
 import { mapGetters } from 'vuex';
 import * as authorityMap from '../../../../common/authority-map';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   name: 'ExtractLinkList',
+  components: {
+    EmptyStatus,
+  },
   data() {
     return {
       isLoading: true,
@@ -80,6 +87,7 @@ export default {
         qcloud_cos: this.$t('腾讯云链路'),
         bk_repo: this.$t('bk_repo链路'),
       },
+      emptyType: 'empty',
     };
   },
   computed: {
@@ -117,6 +125,7 @@ export default {
         this.extractLinkList = res.data;
       } catch (e) {
         console.warn(e);
+        this.emptyType = '500';
       } finally {
         this.isLoading = false;
       }
@@ -182,6 +191,13 @@ export default {
         },
       });
     },
+    handleOperation(type) {
+      if (type === 'refresh') {
+        this.emptyType = 'empty';
+        this.search();
+        return;
+      }
+    },
   },
 };
 </script>
@@ -191,7 +207,7 @@ export default {
     padding: 0 24px 20px;
 
     /*表格内容样式*/
-    ::v-deep .king-table {
+    :deep(.king-table) {
       .task-operation-container {
         display: flex;
         align-items: center;

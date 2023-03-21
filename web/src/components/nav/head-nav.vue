@@ -93,12 +93,12 @@
             <a
               href="javascript:;"
               @click.stop="dropdownHelpTriggerHandler('docCenter')">
-              {{ $t('nav.docCenter') }}
+              {{ $t('文档中心') }}
             </a>
             <a
               href="javascript:;"
               @click.stop="dropdownHelpTriggerHandler('logVersion')">
-              {{ $t('nav.versionLog') }}
+              {{ $t('版本日志') }}
             </a>
             <a
               href="javascript:;"

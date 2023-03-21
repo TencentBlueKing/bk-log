@@ -36,9 +36,10 @@
         </i>
         <div class="title-desc">
           <slot name="title">
-            {{$t('retrieve.selected')}}
-            <span class="title-desc-num">{{title.num}}</span>
-            {{$t('retrieve.a')}}{{title.type || $t('retrieve.host')}}
+            <i18n path="已选择{0}个{1}">
+              <span class="title-desc-num">{{title.num}}</span>
+              <span>{{title.type || $t('主机')}}</span>
+            </i18n>
           </slot>
         </div>
       </slot>
@@ -74,7 +75,7 @@ export default {
       default() {
         return {
           num: 0,
-          type: '主机',
+          type: this.$t('主机'),
         };
       },
     },
@@ -188,7 +189,7 @@ export default {
     }
 
     &-content {
-      ::v-deep .bk-table {
+      :deep(.bk-table) {
         border: 0;
 
         .bk-table-header {

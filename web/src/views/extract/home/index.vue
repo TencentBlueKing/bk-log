@@ -40,7 +40,8 @@
         :left-icon="'bk-icon icon-search'"
         @clear="handleSearch"
         @left-icon-click="handleSearch"
-        @enter="handleSearch">
+        @enter="handleSearch"
+        @change="handleSearchChange">
       </bk-input>
     </div>
     <bk-table
@@ -50,32 +51,34 @@
       data-test-id="fromBox_table_tableBox"
       @page-change="handlePageChange"
       @page-limit-change="handlePageLimitChange">
-      <bk-table-column :label="$t('下载目标')" min-width="140">
+      <bk-table-column :label="$t('下载目标')" :render-header="$renderHeader" min-width="140">
         <div class="table-ceil-container" slot-scope="{ row }">
           <span v-bk-overflow-tips>{{ ipList(row.ip_list) }}</span>
         </div>
       </bk-table-column>
-      <bk-table-column :label="$t('文件')" min-width="240">
+      <bk-table-column :label="$t('文件')" :render-header="$renderHeader" min-width="240">
         <div class="table-ceil-container" slot-scope="{ row }">
           <span v-bk-overflow-tips>{{ row.file_path.join('; ') }}</span>
         </div>
       </bk-table-column>
       <bk-table-column
         :label="$t('创建时间')"
+        :render-header="$renderHeader"
         prop="created_at"
         min-width="120">
       </bk-table-column>
-      <bk-table-column :label="$t('备注')" min-width="120">
+      <bk-table-column :label="$t('备注')" :render-header="$renderHeader" min-width="120">
         <div class="table-ceil-container" slot-scope="{ row }">
           <span v-bk-overflow-tips>{{ row.remark || '--' }}</span>
         </div>
       </bk-table-column>
       <bk-table-column
         :label="$t('创建人')"
+        :render-header="$renderHeader"
         prop="created_by"
         min-width="100">
       </bk-table-column>
-      <bk-table-column :label="$t('任务状态')" min-width="100">
+      <bk-table-column :label="$t('任务状态')" :render-header="$renderHeader" min-width="100">
         <div
           slot-scope="{ row }"
           :class="{
@@ -91,7 +94,7 @@
             v-bk-tooltips="row.task_process_info"></span>
         </div>
       </bk-table-column>
-      <bk-table-column :label="$t('操作')" min-width="100">
+      <bk-table-column :label="$t('操作')" :render-header="$renderHeader" min-width="100">
         <div slot-scope="{ row }" class="task-operation-container">
           <span class="task-operation" @click="viewDetail(row)">{{ $t('详情') }}</span>
           <span
@@ -114,6 +117,9 @@
           </span>
         </div>
       </bk-table-column>
+      <div slot="empty">
+        <empty-status :empty-type="emptyType" @operation="handleOperation" />
+      </div>
     </bk-table>
     <!-- 表格侧边栏 -->
     <bk-sideslider :is-show.sync="sideSlider.isShow" :quick-close="true" :title="$t('详情')" :width="660" transfer>
@@ -136,6 +142,7 @@ import ListBox from './list-box';
 import DownloadUrl from './download-url';
 import TaskStatusDetail from './task-status-detail';
 import TextFilterDetail from './text-filter-detail';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   name: 'ExtractHome',
@@ -144,6 +151,7 @@ export default {
     DownloadUrl,
     TaskStatusDetail,
     TextFilterDetail,
+    EmptyStatus,
   },
   data() {
     return {
@@ -169,6 +177,7 @@ export default {
       notLoadingStatus: ['downloadable', 'redownloadable', 'expired', 'failed'],
       // 不需要轮询的状态
       doneStatus: ['redownloadable', 'expired', 'failed'],
+      emptyType: 'empty',
     };
   },
   computed: {
@@ -192,6 +201,7 @@ export default {
       try {
         clearTimeout(this.timeoutID);
         this.isLoading = true;
+        this.emptyType = this.searchKeyword ? 'search-empty' : 'empty';
         const payload = {
           query: {
             bk_biz_id: this.$store.state.bkBizId,
@@ -209,6 +219,7 @@ export default {
         this.pollingTaskStatus();
       } catch (e) {
         console.warn(e);
+        this.emptyType = '500';
       } finally {
         this.isLoading = false;
       }
@@ -321,7 +332,26 @@ export default {
       }
       return ipList.map(item => `${item.bk_cloud_id}:${item.ip}`).join('; ');
     },
+    handleSearchChange(val) {
+      if (val === '' && !this.isLoading) {
+        this.initTaskList();
+      }
+    },
+    handleOperation(type) {
+      if (type === 'clear-filter') {
+        this.searchKeyword = '';
+        this.pagination.current = 1;
+        this.initTaskList();
+        return;
+      }
 
+      if (type === 'refresh') {
+        this.emptyType = 'empty';
+        this.pagination.current = 1;
+        this.initTaskList();
+        return;
+      }
+    },
   },
 };
 </script>
@@ -338,7 +368,7 @@ export default {
       .king-input-search {
         width: 486px;
 
-        ::v-deep .icon-search {
+        :deep(.icon-search) {
           &:hover {
             color: #3b84ff;
             cursor: pointer;
@@ -348,7 +378,7 @@ export default {
     }
 
     /*表格内容样式*/
-    ::v-deep .king-table {
+    :deep(.king-table) {
       background-color: #fff;
 
       /*分页下拉*/
@@ -406,7 +436,7 @@ export default {
     padding-bottom: 20px;
     overflow: auto;
 
-    ::v-deep .list-box-container {
+    :deep(.list-box-container) {
       padding: 14px 20px 10px;
       font-size: 15px;
       line-height: 40px;

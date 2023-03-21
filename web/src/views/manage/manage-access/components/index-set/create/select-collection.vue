@@ -59,9 +59,20 @@
           <bk-table
             v-bkloading="{ isLoading: tableLoading }"
             :data="tableData"
-            max-height="259">
-            <bk-table-column :label="$t('字段')" prop="field_name" min-width="240"></bk-table-column>
-            <bk-table-column :label="$t('类型')" prop="field_type" min-width="250"></bk-table-column>
+            max-height="400">
+            <bk-table-column :label="$t('字段')" prop="field_name" min-width="240">
+              <template slot-scope="props">
+                <span v-bk-overflow-tips class="overflow-tips">{{props.row.field_name}}</span>
+              </template>
+            </bk-table-column>
+            <bk-table-column :label="$t('类型')" prop="field_type" min-width="250">
+              <template slot-scope="props">
+                <span v-bk-overflow-tips class="overflow-tips">{{props.row.field_type}}</span>
+              </template>
+            </bk-table-column>
+            <div slot="empty">
+              <empty-status empty-type="empty" />
+            </div>
           </bk-table>
         </bk-form-item>
       </bk-form>
@@ -83,8 +94,12 @@
 <script>
 import { mapState } from 'vuex';
 import * as authorityMap from '../../../../../../common/authority-map';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
+  components: {
+    EmptyStatus,
+  },
   props: {
     parentData: {
       type: Object,
@@ -230,27 +245,33 @@ export default {
 </script>
 
 <style scoped lang="scss">
-  .slot-container {
-    min-height: 363px;
-    padding-right: 40px;
+@import '@/scss/mixins/overflow-tips.scss';
 
-    ::v-deep .bk-form {
-      .bk-label {
-        text-align: left;
-      }
+.slot-container {
+  min-height: 363px;
+  padding-right: 40px;
+
+  :deep(.bk-form) {
+    .bk-label {
+      text-align: left;
     }
+  }
 
-    .button-footer {
-      text-align: right;
-      margin-top: 20px;
+  .button-footer {
+    text-align: right;
+    margin-top: 20px;
 
-      .king-button {
-        width: 86px;
+    .king-button {
+      width: 86px;
 
-        &:first-child {
-          margin-right: 8px;
-        }
+      &:first-child {
+        margin-right: 8px;
       }
     }
   }
+}
+
+.overflow-tips {
+  @include overflow-tips;
+}
 </style>

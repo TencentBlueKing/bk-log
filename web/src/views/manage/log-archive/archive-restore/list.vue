@@ -28,7 +28,7 @@
         theme="primary"
         data-test-id="restoreContainer_button_addNewRestore"
         @click="handleCreate">
-        {{ $t('logArchive.restore') }}
+        {{ $t('回溯') }}
       </bk-button>
       <div class="restore-search fr">
         <bk-input
@@ -36,7 +36,8 @@
           :right-icon="'bk-icon icon-search'"
           v-model="params.keyword"
           data-test-id="restoreContainer_input_searchRestoreItem"
-          @enter="search">
+          @enter="search"
+          @change="handleSearchChange">
         </bk-input>
       </div>
     </section>
@@ -50,34 +51,35 @@
         :limit-list="pagination.limitList"
         @page-change="handlePageChange"
         @page-limit-change="handleLimitChange">
-        <bk-table-column :label="$t('索引集名称')" min-width="200">
+        <bk-table-column :label="$t('索引集名称')" :render-header="$renderHeader" min-width="200">
           <template slot-scope="props">
             {{ props.row.index_set_name }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('logArchive.archiveItem')">
+        <bk-table-column :label="$t('归档项')" :render-header="$renderHeader">
           <template slot-scope="props">
-            {{ props.row.collector_config_name }}
+            {{ props.row.instance_name }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('logArchive.timeRange')" min-width="240">
+        <bk-table-column :label="$t('时间范围')" :render-header="$renderHeader" min-width="240">
           <template slot-scope="props">
             {{ `${props.row.start_time} - ${props.row.end_time}` }}
           </template>
         </bk-table-column>
         <bk-table-column
-          :label="$t('logArchive.occupySize')"
+          :label="$t('资源占用')"
+          :render-header="$renderHeader"
           class-name="filter-column">
           <template slot-scope="props">
             {{ getFileSize(props.row.total_store_size) }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('过期时间')" min-width="120">
+        <bk-table-column :label="$t('过期时间')" :render-header="$renderHeader" min-width="120">
           <template slot-scope="props">
             {{ props.row.expired_time }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('logArchive.restoreStatus')">
+        <bk-table-column :label="$t('回溯状态')" :render-header="$renderHeader">
           <template slot-scope="props">
             <div class="restore-status">
               <span :class="`status-icon is-${props.row.status}`"></span>
@@ -85,12 +87,12 @@
             </div>
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('logArchive.isExpired')">
+        <bk-table-column :label="$t('是否过期')" :render-header="$renderHeader">
           <template slot-scope="props">
-            {{ props.row.is_expired ? $t('common.yes') : $t('common.no') }}
+            {{ props.row.is_expired ? $t('是') : $t('否') }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('dataSource.operation')" width="180">
+        <bk-table-column :label="$t('操作')" :render-header="$renderHeader" width="180">
           <div class="restore-table-operate" slot-scope="props">
             <!-- 检索 -->
             <log-button
@@ -124,10 +126,13 @@
                 active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
               }"
               @click.stop="operateHandler(props.row, 'delete')">
-              {{ $t('btn.delete') }}
+              {{ $t('删除') }}
             </bk-button>
           </div>
         </bk-table-column>
+        <div slot="empty">
+          <empty-status :empty-type="emptyType" @operation="handleOperation" />
+        </div>
       </bk-table>
     </section>
     <!-- 新增/编辑回溯 -->
@@ -145,11 +150,13 @@ import { mapGetters } from 'vuex';
 import RestoreSlider from './restore-slider';
 import { formatFileSize } from '@/common/util';
 import * as authorityMap from '../../../../common/authority-map';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   name: 'ArchiveRestore',
   components: {
     RestoreSlider,
+    EmptyStatus,
   },
   data() {
     return {
@@ -171,6 +178,7 @@ export default {
       params: {
         keyword: '',
       },
+      emptyType: 'empty',
     };
   },
   computed: {
@@ -274,12 +282,15 @@ export default {
     },
     requestData() {
       this.isTableLoading = true;
+      this.emptyType = this.params.keyword ? 'search-empty' : 'empty';
       Promise.all([this.requestRestoreList()]).then(() => {
         if (this.restoreIds.length) {
           this.requestRestoreStatus();
         }
       })
-        .catch(() => {})
+        .catch(() => {
+          this.emptyType = '500';
+        })
         .finally(() => {
           this.isTableLoading = false;
         });
@@ -318,12 +329,12 @@ export default {
             }
             if (completeCount === 0) {
               row.statusHandler = 'unStart';
-              row.status_name = this.$t('logArchive.notStarted');
+              row.status_name = this.$t('未开始');
             }
             if (completeCount > 0 && completeCount < totalCount) {
               const precent = `${Math.round(completeCount / totalCount * 100)}%`;
               row.status = 'restoring';
-              row.status_name = `${this.$t('logArchive.restoring')}(${precent})`;
+              row.status_name = `${this.$t('回溯中')}(${precent})`;
             }
           }
         });
@@ -352,7 +363,7 @@ export default {
             action_ids: [authorityMap.MANAGE_COLLECTION_AUTH],
             resources: [{
               type: 'collection',
-              id: row.collector_config_id,
+              id: row.instance_id,
             }],
           });
         }
@@ -377,7 +388,7 @@ export default {
       if (operateType === 'delete') {
         this.$bkInfo({
           type: 'warning',
-          title: this.$t('logArchive.Confirm_delete_restore'),
+          title: this.$t('确认删除该回溯？'),
           confirmFn: () => {
             this.requestDelete(row);
           },
@@ -416,6 +427,24 @@ export default {
         console.warn(err);
       } finally {
         this.isTableLoading = false;
+      }
+    },
+    handleSearchChange(val) {
+      if (val === '' && !this.isTableLoading) {
+        this.search();
+      }
+    },
+    handleOperation(type) {
+      if (type === 'clear-filter') {
+        this.params.keyword = '';
+        this.search();
+        return;
+      }
+
+      if (type === 'refresh') {
+        this.emptyType = 'empty';
+        this.search();
+        return;
       }
     },
   },

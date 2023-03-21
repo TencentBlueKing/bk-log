@@ -36,7 +36,7 @@
       <span
         v-if="isCluster"
         class="icon bk-icon icon-eye"
-        v-bk-tooltips.top="{ content: $t('patternInteract'), delay: 300 }"
+        v-bk-tooltips.top="{ content: $t('查询命中pattern的日志'), delay: 300 }"
         @click="handleClick('show original')">
       </span>
       <!-- <span

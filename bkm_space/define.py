@@ -32,6 +32,7 @@ class Space:
     space_uid: str
     type_name: Union[None, str]
     bk_biz_id: int
+    extend: dict
 
     @classmethod
     def from_dict(cls, data):

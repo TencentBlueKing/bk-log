@@ -55,7 +55,7 @@
         </template>
       </bk-table-column>
 
-      <bk-table-column :label="$t('数据指纹')" width="150">
+      <bk-table-column :label="$t('数据指纹')" :render-header="$renderHeader" width="150">
         <template slot-scope="{ row }">
           <div class="fl-ac signature-box">
             <span>{{row.signature}}</span>
@@ -66,6 +66,7 @@
 
       <bk-table-column
         :label="$t('数量')"
+        :render-header="$renderHeader"
         sortable
         width="91"
         prop="number">
@@ -79,6 +80,7 @@
 
       <bk-table-column
         :label="$t('占比')"
+        :render-header="$renderHeader"
         sortable
         width="96"
         prop="percentage">
@@ -98,6 +100,7 @@
           align="center"
           header-align="center"
           :label="$t('同比数量')"
+          :render-header="$renderHeader"
           :sort-by="'year_on_year_count'">
           <template slot-scope="{ row }">
             <span>{{row.year_on_year_count}}</span>
@@ -110,6 +113,7 @@
           align="center"
           header-align="center"
           :label="$t('同比变化')"
+          :render-header="$renderHeader"
           :sort-by="'year_on_year_percentage'">
           <template slot-scope="{ row }">
             <div class="fl-ac compared-change">
@@ -155,6 +159,7 @@
           v-for="(item,index) of requestData.group_by"
           :key="index"
           :label="item"
+          :render-header="$renderHeader"
           width="130"
           class-name="symbol-column">
           <template slot-scope="{ row }">
@@ -165,6 +170,7 @@
 
       <bk-table-column
         :label="$t('告警')"
+        :render-header="$renderHeader"
         width="103"
         class-name="symbol-column">
         <template slot-scope="{ row }">
@@ -188,6 +194,7 @@
 
       <bk-table-column
         :label="$t('标签')"
+        :render-header="$renderHeader"
         width="160"
         align="center"
         header-align="center">
@@ -218,20 +225,20 @@
 
       <template slot="append" v-if="isShowBottomTips">
         <div class="bottom-tips">
-          {{$t('allLoadTips')}} <span @click="handleReturnTop">{{$t('返回顶部')}}</span>
+          <i18n path="已加载完全部数据，如需查看更多查询条件可以{0}">
+            <span @click="handleReturnTop">{{$t('返回顶部')}}</span>
+          </i18n>
         </div>
       </template>
 
       <div slot="empty">
-        <div class="empty-text" v-if="!clusterSwitch || !configData.extra.signature_switch">
-          <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-          <p>{{getLeaveText}}</p>
-          <span class="empty-leave" @click="handleLeaveCurrent">{{$t('去设置')}}</span>
-        </div>
-        <div class="empty-text" v-if="fingerList.length === 0 && configData.extra.signature_switch">
-          <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-          <p>{{$t('暂无数据')}}</p>
-        </div>
+        <empty-status empty-type="empty" :show-text="false">
+          <div class="empty-text" v-if="!clusterSwitch || !configData.extra.signature_switch">
+            <p>{{getLeaveText}}</p>
+            <span class="empty-leave" @click="handleLeaveCurrent">{{$t('去设置')}}</span>
+          </div>
+          <p v-if="fingerList.length === 0 && configData.extra.signature_switch">{{$t('暂无数据')}}</p>
+        </empty-status>
       </div>
     </bk-table>
   </div>
@@ -243,12 +250,14 @@ import ClusteringLoader from '@/skeleton/clustering-loader';
 import fingerSelectColumn from './components/finger-select-column';
 import { copyMessage } from '@/common/util';
 import TextHighlight from 'vue-text-highlight';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   components: {
     ClusterEventPopover,
     ClusteringLoader,
     TextHighlight,
+    EmptyStatus,
   },
   props: {
     fingerList: {
@@ -298,15 +307,13 @@ export default {
     getTipsMessage() {
       // 当有选中的元素时显示选中数量及是否批量告警
       return this.selectList.length
-        ? `${this.$t('fingerChoose')}
-        <span>${this.selectSize}</span>
-        ${this.$t('fingerSizeData')} ,
-        ${this.$t('fingerTotalData')}
-        <span>${this.allFingerList.length}</span>
-        ${this.$t('fingerSizeData')}`
-        : `${this.$t('fingerTotalData')}
-        <span>${this.allFingerList.length}</span>
-        ${this.$t('fingerSizeData')}`;
+        ? `<i18n path="当前已选择{0}条数据, 共有{1}条数据">
+          <span>${this.selectSize}</span>
+          <span>${this.allFingerList.length}</span>
+        </i18n>`
+        : `<i18n path="共有{0}条数据">
+          <span>${this.allFingerList.length}</span>
+        </i18n>`;
     },
     bkBizId() {
       return this.$store.state.bkBizId;
@@ -315,7 +322,7 @@ export default {
       return this.fingerList.length >= 50 && this.fingerList.length === this.allFingerList.length;
     },
     getLeaveText() {
-      return !this.clusterSwitch ? this.$t('goSettingMessage') : this.$t('goFingerMessage');
+      return !this.clusterSwitch ? this.$t('当前日志聚类未启用，请前往设置') : this.$t('当前数据指纹未启用，请前往设置');
     },
   },
   watch: {
@@ -636,7 +643,7 @@ export default {
   }
 
   .finger-cluster-table {
-    ::v-deep .bk-table-body-wrapper {
+    :deep(.bk-table-body-wrapper) {
       margin-top: 32px;
       min-height: calc(100vh - 570px);
 

@@ -1171,18 +1171,15 @@ class SearchHandler(object):
 
         return highlight
 
-    def _add_cmdb_fields(self, log):
+    def _add_cmdb_fields(self, cc_hosts_dict: dict, log: dict):
         if not self.search_dict.get("bk_biz_id"):
             return log
-        bk_biz_id = self.search_dict.get("bk_biz_id")
         server_ip = log.get("serverIp", log.get("ip"))
         bk_cloud_id = log.get("cloudId", log.get("cloudid"))
         if not server_ip:
             return log
 
-        from apps.utils.core.cache.cmdb_host import CmdbHostCache
-
-        host = CmdbHostCache.get(bk_biz_id, server_ip)
+        host = cc_hosts_dict.get(server_ip)
         host_info = None
         if not bk_cloud_id and host:
             host_info = next(iter(host.values()))
@@ -1195,6 +1192,26 @@ class SearchHandler(object):
         log["__module__"] = " | ".join([module["bk_inst_name"] for module in host_info.get("module", [])])
         log["__set__"] = " | ".join([set["bk_inst_name"] for set in host_info.get("set", [])])
         return log
+
+    def _extract_cc_hosts_dict(self, result_dict: dict) -> Dict[str, Any]:
+        """提取日志中的所有主机信息, 去重后查询缓存cmdb主机信息, 避免每一条日志都查询缓存"""
+        cc_hosts_dict = dict()
+        from apps.utils.core.cache.cmdb_host import CmdbHostCache
+
+        bk_biz_id = self.search_dict.get("bk_biz_id")
+        if not bk_biz_id:
+            return cc_hosts_dict
+        for hit in result_dict["hits"]["hits"]:
+            log = hit["_source"]
+            server_ip = log.get("serverIp", log.get("ip"))
+            if not server_ip:
+                continue
+            # 用代码减少缓存查询次数, 避免缓存落空
+            if server_ip not in cc_hosts_dict.keys():
+                host = CmdbHostCache.get(bk_biz_id, server_ip)
+                cc_hosts_dict[server_ip] = host
+
+        return cc_hosts_dict
 
     def _deal_query_result(self, result_dict: dict) -> dict:
         if self.export_fields:
@@ -1215,11 +1232,12 @@ class SearchHandler(object):
                 {"total": 0, "took": 0, "list": log_list, "aggs": agg_result, "origin_log_list": origin_log_list}
             )
             return result
+        cc_hosts_dict = self._extract_cc_hosts_dict(result_dict)
         # hit data
         for hit in result_dict["hits"]["hits"]:
             log = hit["_source"]
             origin_log = copy.deepcopy(log)
-            log = self._add_cmdb_fields(log)
+            log = self._add_cmdb_fields(cc_hosts_dict, log)
             if self.export_fields:
                 origin_log = {key: origin_log[key] for key in self.export_fields}
             origin_log_list.append(origin_log)
@@ -1465,6 +1483,8 @@ class SearchHandler(object):
         for _add in addition:
             field: str = _add.get("key") if _add.get("key") else _add.get("field")
             _operator: str = _add.get("method") if _add.get("method") else _add.get("operator")
+            if _operator in REAL_OPERATORS_MAP.keys():
+                _operator = REAL_OPERATORS_MAP[_operator]
             if field == self.ip_field:
                 value = _add.get("value")
                 if value and _operator in ["is", "is one of", "eq"]:
