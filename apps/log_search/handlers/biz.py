@@ -53,8 +53,7 @@ from apps.utils.db import array_hash, array_chunk
 from apps.utils.function import ignored
 from apps.utils.ipchooser import IPChooser
 from apps.utils.thread import MultiExecuteFunc
-from bkm_space.define import SpaceTypeEnum
-from bkm_space.utils import bk_biz_id_to_space_uid
+from apps.api.modules.utils import get_non_bkcc_space_related_bkcc_biz_id
 
 
 class BizHandler(APIModel):
@@ -64,12 +63,9 @@ class BizHandler(APIModel):
         super().__init__()
 
         if bk_biz_id and int(bk_biz_id) < 0:
-            from apps.log_search.models import SpaceApi
-
-            space_uid = bk_biz_id_to_space_uid(bk_biz_id)
-            related_space = SpaceApi.get_related_space(space_uid=space_uid, related_space_type=SpaceTypeEnum.BKCC.value)
-            if related_space:
-                bk_biz_id = related_space.bk_biz_id
+            related_bk_biz_id = get_non_bkcc_space_related_bkcc_biz_id(bk_biz_id)
+            if related_bk_biz_id and int(related_bk_biz_id) > 0:
+                bk_biz_id = related_bk_biz_id
             else:
                 # 也不存在关联CC业务时, 直接raise
                 raise ValueError(_("当前空间类型不支持查询业务资源"))
