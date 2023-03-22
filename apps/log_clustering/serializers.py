@@ -98,7 +98,7 @@ class ClusteringPreviewSerializer(serializers.Serializer):
 
 class SetLabelSerializer(serializers.Serializer):
     signature = serializers.CharField()
-    label = serializers.CharField()
+    label = serializers.CharField(allow_blank=True)
 
 
 class UpdateStrategyAction(serializers.Serializer):
