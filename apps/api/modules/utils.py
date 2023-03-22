@@ -32,15 +32,29 @@ from bkm_space.define import SpaceTypeEnum
 from bkm_space.utils import bk_biz_id_to_space_uid
 
 
+def get_non_bkcc_space_related_bkcc_biz_id(bk_biz_id):
+    """
+    获取非CC业务关联的CC业务ID
+    """
+    from apps.log_search.models import SpaceApi
+
+    space_uid = bk_biz_id_to_space_uid(bk_biz_id)
+    related_space = SpaceApi.get_related_space(space_uid=space_uid, related_space_type=SpaceTypeEnum.BKCC.value)
+    if related_space:
+        return related_space.bk_biz_id
+    return bk_biz_id
+
+
 def adapt_non_bkcc(params):
     # 非CC业务时, 查询关联的CC业务, 如果有, 替换为其关联的CC业务
-    if int(params.get("bk_biz_id", 0)) < 0:
-        from apps.log_search.models import SpaceApi
-
-        space_uid = bk_biz_id_to_space_uid(params["bk_biz_id"])
-        related_space = SpaceApi.get_related_space(space_uid=space_uid, related_space_type=SpaceTypeEnum.BKCC.value)
-        if related_space:
-            params["bk_biz_id"] = related_space.bk_biz_id
+    bk_biz_id = params.get("bk_biz_id", 0)
+    if not bk_biz_id:
+        return params
+    if int(bk_biz_id) < 0:
+        related_bk_biz_id = get_non_bkcc_space_related_bkcc_biz_id(bk_biz_id)
+        if related_bk_biz_id == bk_biz_id:
+            return params
+        params["bk_biz_id"] = related_bk_biz_id
 
     return params
 
@@ -49,13 +63,14 @@ def adapt_non_bkcc_for_bknode(params):
     """
     适配节点管理的space_id
     """
-    if int(params.get("scope", {}).get("bk_biz_id", 0)) < 0:
-        from apps.log_search.models import SpaceApi
-
-        space_uid = bk_biz_id_to_space_uid(params["scope"]["bk_biz_id"])
-        related_space = SpaceApi.get_related_space(space_uid=space_uid, related_space_type=SpaceTypeEnum.BKCC.value)
-        if related_space:
-            params["scope"]["bk_biz_id"] = related_space.bk_biz_id
+    bk_biz_id = params.get("scope", {}).get("bk_biz_id", 0)
+    if not bk_biz_id:
+        return params
+    if int(bk_biz_id) < 0:
+        related_bk_biz_id = get_non_bkcc_space_related_bkcc_biz_id(bk_biz_id)
+        if related_bk_biz_id == bk_biz_id:
+            return params
+        params["scope"]["bk_biz_id"] = related_bk_biz_id
 
     return params
 
