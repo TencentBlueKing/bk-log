@@ -435,9 +435,11 @@ class ExtractLinkAndHostsSerializer(serializers.Serializer):
     link_type = serializers.CharField(label=_("链路类型"), required=True, max_length=20)
     operator = serializers.CharField(label=_("执行人"), required=True, max_length=255)
     op_bk_biz_id = serializers.IntegerField(label=_("执行bk_biz_id"), required=True)
-    qcloud_secret_id = serializers.CharField(label=_("腾讯云SecretId"), required=False)
-    qcloud_secret_key = serializers.CharField(label=_("腾讯云SecretKey"), required=False)
-    qcloud_cos_bucket = serializers.CharField(label=_("腾讯云Cos桶名称"), required=False)
-    qcloud_cos_region = serializers.CharField(label=_("腾讯云Cos区域"), required=False)
+    qcloud_secret_id = serializers.CharField(label=_("腾讯云SecretId"), required=False, allow_null=True, allow_blank=True)
+    qcloud_secret_key = serializers.CharField(
+        label=_("腾讯云SecretKey"), required=False, allow_null=True, allow_blank=True
+    )
+    qcloud_cos_bucket = serializers.CharField(label=_("腾讯云Cos桶名称"), required=False, allow_null=True, allow_blank=True)
+    qcloud_cos_region = serializers.CharField(label=_("腾讯云Cos区域"), required=False, allow_null=True, allow_blank=True)
     is_enable = serializers.BooleanField(label=_("是否启用"), required=True)
     hosts = serializers.ListField(label=_("中转机列表"), child=LinkHostsSerializer(), required=True)

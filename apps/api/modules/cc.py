@@ -23,13 +23,16 @@ from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
 from apps.api.base import DataAPI
-from apps.api.modules.utils import add_esb_info_before_request, adapt_space_id_before
+from apps.api.modules.utils import (
+    add_esb_info_before_request,
+    adapt_non_bkcc,
+)
 from config.domains import CC_APIGATEWAY_ROOT_V2
 
 
 def get_supplier_account_before(params):
     params = add_esb_info_before_request(params)
-    params = adapt_space_id_before(params)
+    params = adapt_non_bkcc(params)
     if settings.BK_SUPPLIER_ACCOUNT != "":
         params["bk_supplier_account"] = settings.BK_SUPPLIER_ACCOUNT
     return params
