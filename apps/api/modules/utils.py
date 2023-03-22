@@ -51,10 +51,7 @@ def adapt_non_bkcc(params):
     if not bk_biz_id:
         return params
     if int(bk_biz_id) < 0:
-        related_bk_biz_id = get_non_bkcc_space_related_bkcc_biz_id(bk_biz_id)
-        if related_bk_biz_id == bk_biz_id:
-            return params
-        params["bk_biz_id"] = related_bk_biz_id
+        params["bk_biz_id"] = get_non_bkcc_space_related_bkcc_biz_id(bk_biz_id)
 
     return params
 
@@ -67,10 +64,7 @@ def adapt_non_bkcc_for_bknode(params):
     if not bk_biz_id:
         return params
     if int(bk_biz_id) < 0:
-        related_bk_biz_id = get_non_bkcc_space_related_bkcc_biz_id(bk_biz_id)
-        if related_bk_biz_id == bk_biz_id:
-            return params
-        params["scope"]["bk_biz_id"] = related_bk_biz_id
+        params["scope"]["bk_biz_id"] = get_non_bkcc_space_related_bkcc_biz_id(bk_biz_id)
 
     return params
 
