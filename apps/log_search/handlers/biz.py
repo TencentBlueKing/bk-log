@@ -62,7 +62,7 @@ class BizHandler(APIModel):
 
         if bk_biz_id and int(bk_biz_id) < 0:
             related_bk_biz_id = get_non_bkcc_space_related_bkcc_biz_id(bk_biz_id)
-            if related_bk_biz_id:
+            if related_bk_biz_id and int(related_bk_biz_id) > 0:
                 bk_biz_id = related_bk_biz_id
             else:
                 # 也不存在关联CC业务时, 直接raise
