@@ -41,6 +41,7 @@ from apps.log_clustering.constants import (
     SubscriptionTypeEnum,
     YearOnYearChangeEnum,
     YearOnYearEnum,
+    AGGS_FIELD_PREFIX,
 )
 from apps.log_clustering.exceptions import ClusteringConfigNotExistException
 from apps.log_clustering.handlers.pattern import PatternHandler
@@ -158,7 +159,9 @@ def query_logs(
     log_prefix: str,
 ) -> dict:
     addition = config.addition if config.addition else []
-    addition.append({"field": f"__dist_{config.pattern_level}", "operator": "is", "value": pattern["signature"]})
+    addition.append(
+        {"field": f"{AGGS_FIELD_PREFIX}_{config.pattern_level}", "operator": "is", "value": pattern["signature"]}
+    )
     params = {
         "start_time": time_config["start_time"],
         "end_time": time_config["end_time"],
@@ -278,7 +281,9 @@ def generate_log_search_url(config: ClusteringSubscription, time_config: dict, s
     }
 
     if signature:
-        params["addition"].append({"field": f"__dist_{config.pattern_level}", "operator": "=", "value": signature})
+        params["addition"].append(
+            {"field": f"{AGGS_FIELD_PREFIX}_{config.pattern_level}", "operator": "=", "value": signature}
+        )
 
     url = f"{settings.BK_BKLOG_HOST}#/retrieve/{config.index_set_id}?{urlencode(params)}"
     return url
