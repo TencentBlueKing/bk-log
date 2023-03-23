@@ -144,6 +144,8 @@ class GlobalConfig(models.Model):
         for i in host_identifier_priority:
             if i in CommonEnum.DEFAULT_HOST_FIELDS.value and i in CommonEnum.IPCHOOSER_FIELD_MAP.value:
                 configs[GlobalTypeEnum.HOST_IDENTIFIER_PRIORITY.value].append(CommonEnum.IPCHOOSER_FIELD_MAP.value[i])
+        # 是否容器化部署
+        configs[GlobalTypeEnum.IS_K8S_DEPLOY.value] = settings.IS_K8S_DEPLOY_MODE
         return configs
 
     class Meta:

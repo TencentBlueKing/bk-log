@@ -330,7 +330,7 @@ class LogExtractUtils(object):
             return ScheduleStatus.EXECUTING
 
         # 判断文件分发是否成功
-        ip_status = FileServer.get_ip_status(query_result)
+        ip_status = FileServer.get_job_instance_status(query_result)
         if ip_status != constants.JOB_SUCCESS_STATUS:
             raise Exception(_("文件分发异常({})".format(ip_status)))
 
@@ -361,7 +361,7 @@ class LogExtractUtils(object):
                 {
                     "ip": transit_server.ip,
                     "bk_cloud_id": transit_server.bk_cloud_id,
-                    "bk_host_id": transit_server.bk_cloud_id,
+                    "bk_host_id": transit_server.bk_host_id,
                 }
             ],
             bk_biz_id=bk_biz_id,
