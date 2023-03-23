@@ -519,50 +519,6 @@ export default {
         this.isPageOver = false;
       }, 300);
     },
-    // /**
-    //  * @desc: 获取标签列表
-    //  * @param { Array } fingerList
-    //  * @returns { Array } 请求成功时添加labels后的数组
-    //  */
-    // async getFingerLabelsList(fingerList = []) {
-    //   const setList = new Set();
-    //   fingerList.forEach((el) => {
-    //     if (el.monitor?.strategy_id) {
-    //       setList.add(el.monitor.strategy_id);
-    //     }
-    //   });
-    //   // 获取过滤后的策略ID
-    //   const strategyIDs = [...setList];
-    //   // 有策略ID时请求标签接口 无策略ID时则直接返回
-    //   if (strategyIDs.length) {
-    //     try {
-    //       const res = await this.$http.request('/logClustering/getFingerLabels', {
-    //         params: {
-    //           index_set_id: this.$route.params.indexId,
-    //         },
-    //         data: {
-    //           strategy_ids: strategyIDs,
-    //           bk_biz_id: this.bkBizId,
-    //         },
-    //       });
-    //       // 生成标签对象 key为策略ID 值为标签数组
-    //       const strategyObj = res.data.reduce((pre, cur) => {
-    //         pre[cur.strategy_id] = cur.labels;
-    //         return pre;
-    //       }, {});
-    //       // 数据指纹列表添加labels属性
-    //       const labelsList = fingerList.map((el) => {
-    //         el.labels = strategyObj[el.monitor.strategy_id];
-    //         return el;
-    //       });
-    //       return labelsList;
-    //     } catch (error) {
-    //       return fingerList;
-    //     }
-    //   } else {
-    //     return fingerList;
-    //   }
-    // },
     /**
      * @desc: 初始化分组select数组
      */

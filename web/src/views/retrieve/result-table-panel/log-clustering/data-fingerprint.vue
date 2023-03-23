@@ -204,9 +204,9 @@
           <div class="lable-edit-box" v-if="editLabelIndex === $index">
             <bk-form
               ref="labelRef"
+              style="width: 100%"
               :rules="rules"
-              :label-width="0"
-              :model="labelData">
+              :label-width="0">
               <bk-form-item property="labelRuels">
                 <bk-input
                   clearable
