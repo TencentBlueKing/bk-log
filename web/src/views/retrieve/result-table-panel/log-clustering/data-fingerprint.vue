@@ -23,8 +23,15 @@
 <template>
   <div class="finger-container">
     <div class="top-operate" v-if="allFingerList.length">
-      <!-- eslint-disable-next-line vue/no-v-html -->
-      <p v-html="getTipsMessage" class="operate-message"></p>
+      <p class="operate-message">
+        <i18n v-if="selectList.length" path="当前已选择{0}条数据, 共有{1}条数据">
+          <span>{{selectSize}}</span>
+          <span>{{allFingerList.length}}</span>
+        </i18n>
+        <i18n v-else path="共有{0}条数据">
+          <span>{{allFingerList.length}}</span>
+        </i18n>
+      </p>
       <span
         v-if="selectList.length"
         class="operate-click"
@@ -336,17 +343,6 @@ export default {
   computed: {
     scrollContent() {
       return document.querySelector('.result-scroll-container');
-    },
-    getTipsMessage() {
-      // 当有选中的元素时显示选中数量及是否批量告警
-      return this.selectList.length
-        ? `<i18n path="当前已选择{0}条数据, 共有{1}条数据">
-          <span>${this.selectSize}</span>
-          <span>${this.allFingerList.length}</span>
-        </i18n>`
-        : `<i18n path="共有{0}条数据">
-          <span>${this.allFingerList.length}</span>
-        </i18n>`;
     },
     bkBizId() {
       return this.$store.state.bkBizId;
