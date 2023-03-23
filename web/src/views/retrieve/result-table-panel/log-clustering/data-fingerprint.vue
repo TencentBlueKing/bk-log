@@ -851,7 +851,7 @@ export default {
 }
 
 .table-no-data {
-  :v-deep(.bk-table-header-wrapper) {
+  :deep(.bk-table-header-wrapper) {
     tr {
       > th {
         /* stylelint-disable-next-line declaration-no-important */
