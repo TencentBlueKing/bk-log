@@ -335,10 +335,14 @@
               :index-set-item="indexSetItem"
               :operator-config="operatorConfig"
               :retrieve-search-number="retrieveSearchNumber"
+              :active-table-tab="activeTableTab"
+              :cluster-route-params="clusterRouteParams"
+              :is-init-page="isInitPage"
               @request-table-data="requestTableData"
               @fieldsUpdated="handleFieldsUpdated"
               @shouldRetrieve="retrieveLog"
               @addFilterCondition="addFilterCondition"
+              @backFillClusterRouteParams="backFillClusterRouteParams"
               @showSettingLog="handleSettingMenuClick('clustering')" />
           </template>
         </div>
@@ -585,6 +589,8 @@ export default {
         is: '=',
         'is not': '!=',
       },
+      activeTableTab: 'origin', // 当前活跃的table-tab 参数: origin clustering
+      clusterRouteParams: {}, // 路由回填的数据指纹参数
     };
   },
   computed: {
@@ -1154,6 +1160,7 @@ export default {
       // 通过 url 查询参数设置检索参数
       let queryParams = {};
       let queryParamsStr = {};
+      const clusteringParams = {};
       const urlRetrieveParams = this.$route.query.retrieveParams;
       if (urlRetrieveParams) {
         try {
@@ -1174,6 +1181,8 @@ export default {
           'end_time',
           'time_range',
           'pickerTimeRange',
+          'activeTableTab', // 表格活跃的lab
+          'clusterRouteParams', // 日志聚类参数
         ];
         for (const field of shouldCoverParamFields) {
           if (this.isInitPage) {
@@ -1182,12 +1191,15 @@ export default {
               if (field === 'pickerTimeRange') {
                 queryParams.pickerTimeRange = decodeURIComponent(param).split(',');
                 queryParamsStr.pickerTimeRange = param;
+              } else if (['activeTableTab', 'clusterRouteParams'].includes(field)) {
+                queryParamsStr[field] = param;
+                clusteringParams[field] = (field === 'activeTableTab' ? param : JSON.parse(param));
               } else {
                 queryParams[field] = ['keyword', 'start_time', 'end_time', 'time_range'].includes(field)
                   ? decodeURIComponent(param)
                   : decodeURIComponent(param) ? JSON.parse(decodeURIComponent(param)) : param;
                 queryParamsStr[field] = param;
-              }
+              };
             }
             if (queryParams.start_time && queryParams.end_time) {
               this.datePickerValue = [queryParams.start_time, queryParams.end_time];
@@ -1218,6 +1230,11 @@ export default {
                 if (this[field].length) {
                   queryParamsStr[field] = encodeURIComponent(this[field]);
                 }
+                break;
+              case 'activeTableTab':
+              case 'clusterRouteParams':
+                queryParamsStr[field] = (field === 'activeTableTab' ? this[field] : JSON.stringify(this[field]));
+                break;
               default:
                 break;
             }
@@ -1257,7 +1274,11 @@ export default {
             this.pickerTimeRange = queryParams.pickerTimeRange;
             this.datePickerValue = queryParams.pickerTimeRange;
             this.formatTimeRange();
-          }
+          };
+          // 回填数据指纹的数据
+          Object.entries(clusteringParams).forEach(([key, val]) => {
+            this[key] = val;
+          });
           this.isInitPage = false;
         }
 
@@ -1930,6 +1951,26 @@ export default {
         this.favSearchList = this.activeFavorite.params?.search_fields || [];
         this.handleBlurSearchInput(this.activeFavorite.params?.keyword || '*');
       }
+    },
+    // 表格tab切换或聚类参数回填
+    backFillClusterRouteParams(activeTableTab = 'origin', clusterParams) {
+      this.activeTableTab = activeTableTab;
+      const { query, params } = this.$route;
+      const newQuery = { ...query };
+      newQuery.activeTableTab = activeTableTab;
+      // 切换为日志聚类且数据指纹有操作时 url添加日志聚类的操作参数
+      if (clusterParams && activeTableTab === 'clustering') {
+        this.clusterRouteParams = clusterParams;
+        newQuery.clusterRouteParams = JSON.stringify(clusterParams);
+      } else { // 切换为原始日志时 清空日志聚类的数据指纹操作参数
+        this.clusterRouteParams = {};
+        delete newQuery.clusterRouteParams;
+      }
+      this.$router.push({
+        name: 'retrieve',
+        params,
+        query: newQuery,
+      });
     },
   },
 };
