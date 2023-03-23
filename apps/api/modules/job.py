@@ -22,11 +22,18 @@ the project delivered to anyone in the future.
 from django.utils.translation import ugettext_lazy as _
 
 from apps.api.base import DataAPI
-from apps.api.modules.utils import add_esb_info_before_request
+from apps.api.modules.utils import add_esb_info_before_request, adapt_non_bkcc
 from config.domains import JOB_APIGATEWAY_ROOT_V2, JOB_APIGATEWAY_ROOT_V3
 
 
 def get_job_request_before(params):
+    params = adapt_non_bkcc(params)
+    return params
+
+
+def get_job_request_before_with_esb(params):
+    params = add_esb_info_before_request(params)
+    params = adapt_non_bkcc(params)
     return params
 
 
@@ -46,7 +53,7 @@ class _JobApi:
             url=JOB_APIGATEWAY_ROOT_V3 + "fast_execute_script/",
             description=_("快速执行脚本V3"),
             module=self.MODULE,
-            before_request=add_esb_info_before_request,
+            before_request=get_job_request_before_with_esb,
         )
         self.fast_push_file = DataAPI(
             method="POST",
@@ -67,7 +74,7 @@ class _JobApi:
             url=JOB_APIGATEWAY_ROOT_V3 + "get_job_instance_log/",
             description=_("根据作业id获取执行日志V3"),
             module=self.MODULE,
-            before_request=add_esb_info_before_request,
+            before_request=get_job_request_before_with_esb,
         )
         self.get_public_script_list = DataAPI(
             method="GET",
@@ -81,14 +88,14 @@ class _JobApi:
             url=JOB_APIGATEWAY_ROOT_V3 + "get_job_instance_status/",
             description=_("根据作业实例ID查询作业执行状态V3"),
             module=self.MODULE,
-            before_request=add_esb_info_before_request,
+            before_request=get_job_request_before_with_esb,
         )
         self.batch_get_job_instance_ip_log_v3 = DataAPI(
             method="POST",
             url=JOB_APIGATEWAY_ROOT_V3 + "batch_get_job_instance_ip_log/",
             description=_("根据ip列表批量查询作业执行日志"),
             module=self.MODULE,
-            before_request=add_esb_info_before_request,
+            before_request=get_job_request_before_with_esb,
         )
 
 

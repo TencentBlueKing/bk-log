@@ -35,6 +35,7 @@ from apps.log_clustering.constants import (
     DOUBLE_PERCENTAGE,
     NEW_CLASS_FIELD_PREFIX,
     DEFAULT_LABEL,
+    PatternEnum,
 )
 from apps.log_clustering.exceptions import ClusteringConfigNotExistException
 from apps.log_clustering.models import AiopsSignatureAndPattern, ClusteringConfig, SignatureStrategySettings
@@ -50,10 +51,10 @@ from apps.utils.time_handler import generate_time_range_shift, generate_time_ran
 class PatternHandler:
     def __init__(self, index_set_id, query):
         self._index_set_id = index_set_id
-        self._pattern_level = query["pattern_level"]
-        self._show_new_pattern = query["show_new_pattern"]
-        self._year_on_year_hour = query["year_on_year_hour"]
-        self._group_by = query["group_by"]
+        self._pattern_level = query.get("pattern_level", PatternEnum.LEVEL_05.value)
+        self._show_new_pattern = query.get("show_new_pattern", False)
+        self._year_on_year_hour = query.get("year_on_year_hour", 0)
+        self._group_by = query.get("group_by", [])
         self._clustering_config = ClusteringConfig.objects.filter(
             index_set_id=index_set_id, signature_enable=True
         ).first()
