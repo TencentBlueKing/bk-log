@@ -19,6 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import json
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
@@ -285,6 +286,9 @@ def generate_log_search_url(config: ClusteringSubscription, time_config: dict, s
             {"field": f"{AGGS_FIELD_PREFIX}_{config.pattern_level}", "operator": "=", "value": signature}
         )
 
+    params["addition"] = json.dumps(params["addition"])
+    params["host_scopes"] = json.dumps(params["host_scopes"])
+
     url = f"{settings.BK_BKLOG_HOST}#/retrieve/{config.index_set_id}?{urlencode(params)}"
     return url
 
@@ -377,13 +381,17 @@ def send(
 
     logger.info(f"{log_prefix} Before sending notification params: {params}")
 
-    if config.subscription_type == SubscriptionTypeEnum.WECHAT.value:
-        if all_patterns["new_patterns"]["data"]:
-            send_wechat(params, config.receivers, log_prefix)
+    try:
+        if config.subscription_type == SubscriptionTypeEnum.WECHAT.value:
+            if all_patterns["new_patterns"]["data"]:
+                send_wechat(params, config.receivers, log_prefix)
 
-    elif config.subscription_type == SubscriptionTypeEnum.EMAIL.value:
-        if all_patterns["patterns"]["data"] or all_patterns["new_patterns"]["data"]:
-            send_mail(params, config.receivers, log_prefix)
+        elif config.subscription_type == SubscriptionTypeEnum.EMAIL.value:
+            if all_patterns["patterns"]["data"] or all_patterns["new_patterns"]["data"]:
+                send_mail(params, config.receivers, log_prefix)
+
+    except Exception as e:
+        logger.exception(f"{log_prefix} send report error: {e}")
 
 
 @periodic_task(run_every=crontab(minute="*/1"))
