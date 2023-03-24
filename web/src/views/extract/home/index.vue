@@ -132,7 +132,7 @@
         <task-status-detail :status-data="sideSlider.data.task_step_status" />
         <download-url :task-id="sideSlider.data.task_id" />
         <list-box icon="bk-icon icon-sitemap" :title="$t('文件路径')" :list="sideSlider.data.preview_directory" />
-        <list-box icon="bk-icon icon-data" :title="$t('下载目标')" :list="getIPDisplayNameList(sideSlider.data.ip_list)" />
+        <list-box icon="bk-icon icon-data" :title="$t('下载目标')" :list="getIPDisplayNameList(sideSlider.IpList)" />
         <list-box icon="bk-icon icon-file" :title="$t('文件列表')" :list="sideSlider.data.file_path" />
         <list-box icon="bk-icon icon-clock" :title="$t('过期时间')" :list="sideSlider.data.expiration_date" />
         <text-filter-detail v-if="sideSlider.data.filter_type" :data="sideSlider.data" />
@@ -176,6 +176,7 @@ export default {
         isLoading: false,
         isShow: false,
         data: {},
+        IpList: {}, // 使用row的IPlist 不使用详情的展示
       },
       // 不需要转圈的状态
       notLoadingStatus: ['downloadable', 'redownloadable', 'expired', 'failed'],
@@ -303,6 +304,7 @@ export default {
         this.sideSlider.isShow = true;
         this.sideSlider.isLoading = true;
         this.sideSlider.data = {};
+        this.sideSlider.IpList = row.ip_list;
         const res = await this.$http.request('extract/getTaskDetail', {
           params: {
             id: row.task_id,
