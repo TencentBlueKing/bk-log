@@ -63,6 +63,7 @@ class _JobApi:
             before_request=get_job_request_before_with_esb,
         )
         self.fast_transfer_file = DataAPI(
+            method="POST",
             url=JOB_APIGATEWAY_ROOT_V3 + "fast_transfer_file/",
             description=_("快速分发文件"),
             module=self.MODULE,
