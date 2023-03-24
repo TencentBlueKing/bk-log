@@ -89,10 +89,6 @@ class FileServer(object):
         return query_result["job_instance"]["status"]
 
     @staticmethod
-    def get_ip_status(query_result):
-        return query_result["status"]
-
-    @staticmethod
     def get_job_tag(query_result):
         return query_result.get("tag", "")
 
