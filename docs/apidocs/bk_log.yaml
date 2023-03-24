@@ -805,7 +805,7 @@
   dest_http_method: GET
   is_hidden: True
 
-- path: /v1/bk_log/meta/spaces/mine/
+- path: /v2/bk_log/meta/spaces/mine/
   name: meta_spaces_mine
   label: 日志平台-获取用户空间列表
   label_en: bk_log get spaces mine
