@@ -28,6 +28,46 @@ from apps.log_esquery.permission import EsquerySearchPermissions
 from apps.utils import build_auth_args
 from apps.utils.local import get_request
 
+from bkm_space.define import SpaceTypeEnum
+from bkm_space.utils import bk_biz_id_to_space_uid
+
+
+def get_non_bkcc_space_related_bkcc_biz_id(bk_biz_id):
+    """
+    获取非CC业务关联的CC业务ID
+    """
+    from apps.log_search.models import SpaceApi
+
+    space_uid = bk_biz_id_to_space_uid(bk_biz_id)
+    related_space = SpaceApi.get_related_space(space_uid=space_uid, related_space_type=SpaceTypeEnum.BKCC.value)
+    if related_space:
+        return related_space.bk_biz_id
+    return bk_biz_id
+
+
+def adapt_non_bkcc(params):
+    # 非CC业务时, 查询关联的CC业务, 如果有, 替换为其关联的CC业务
+    bk_biz_id = params.get("bk_biz_id", 0)
+    if not bk_biz_id:
+        return params
+    if int(bk_biz_id) < 0:
+        params["bk_biz_id"] = get_non_bkcc_space_related_bkcc_biz_id(bk_biz_id)
+
+    return params
+
+
+def adapt_non_bkcc_for_bknode(params):
+    """
+    适配节点管理的space_id
+    """
+    bk_biz_id = params.get("scope", {}).get("bk_biz_id", 0)
+    if not bk_biz_id:
+        return params
+    if int(bk_biz_id) < 0:
+        params["scope"]["bk_biz_id"] = get_non_bkcc_space_related_bkcc_biz_id(bk_biz_id)
+
+    return params
+
 
 def _clean_auth_info_uin(auth_info):
     if "uin" in auth_info:
@@ -142,11 +182,13 @@ else:
                 params = update_bkdata_auth_info(params)
 
         params = add_esb_info_before_request(params)
+        params = adapt_non_bkcc(params)
         params.setdefault("bkdata_authentication_method", "user")
         return params
 
     def add_esb_info_before_request_for_bkdata_user(params):  # pylint: disable=function-name-too-long
         params = add_esb_info_before_request(params)
+        params = adapt_non_bkcc(params)
         params.setdefault("bkdata_authentication_method", "user")
         return params
 
