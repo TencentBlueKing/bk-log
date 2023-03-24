@@ -104,6 +104,11 @@ class TasksHandler(object):
         preview_end_time,
         link_id,
     ):
+        # K8S部署情况下禁止使用内网链路, 所以已有的内网链路不能创建任务
+        extract_link: ExtractLink = ExtractLink.objects.filter(link_id=link_id).first()
+        if extract_link and extract_link.link_type == ExtractLinkType.COMMON.value and settings.IS_K8S_DEPLOY_MODE:
+            raise exceptions.TaskCannotCreateByCommonLink
+
         # step 2：用户任务鉴权
         list_strategies_dict = ExplorerHandler().get_strategies(bk_biz_id, ip_list)
         allowed_dir_file_list = list_strategies_dict.get("allowed_dir_file_list")
@@ -198,7 +203,8 @@ class TasksHandler(object):
         # 只有创建者或运维人员才可获取详情
         if not self.is_operator_or_creator(instance.bk_biz_id, request_user, instance.created_by):
             raise exceptions.TasksRetrieveFailed
-
+        # 主机显示优化
+        task["ip_list"] = self.get_ip_and_bk_cloud_id([task])[0]["ip_list"]
         pipeline_id = instance.pipeline_id
         pipeline_components_id = instance.pipeline_components_id
         task["download_status_display"] = constants.DownloadStatus.get_dict_choices().get(task["download_status"])
@@ -248,10 +254,6 @@ class TasksHandler(object):
                 component_status["state"]
             )
         task["task_step_status"] = component_status_list
-
-        # 主机显示优化
-        # task["ip_list"] = [":".join(ip.split(":")[:2]) for ip in task["ip_list"]]
-        task["ip_list"] = self.get_ip_and_bk_cloud_id([task])[0]["ip_list"]
 
         return Response(task)
 
