@@ -184,7 +184,7 @@ export default {
       this.$emit('update:fileOrPath', path);
       const ipList = [];
       for (let i = 0; i < this.previewIp.length; i++) {
-        const target = this.ipList.find(item => this.getIpListID(item) === this.previewIp);
+        const target = this.ipList.find(item => this.getIpListID(item) === this.previewIp[i]);
         ipList.push(target);
       }
 
@@ -240,6 +240,7 @@ export default {
       this.timeRange = timeRange;
       this.timeValue = [new Date(startTime), new Date(endTime)];
       this.isSearchChild = isSearchChild;
+      this.previewIp = ipList.map(item => this.getIpListID(item));
 
       this.isLoading = true;
       this.emptyType = 'search-empty';
