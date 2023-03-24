@@ -104,6 +104,11 @@ class TasksHandler(object):
         preview_end_time,
         link_id,
     ):
+        # K8S部署情况下禁止使用内网链路, 所以已有的内网链路不能创建任务
+        extract_link: ExtractLink = ExtractLink.objects.filter(link_id=link_id).first()
+        if extract_link and extract_link.link_type == ExtractLinkType.COMMON.value and settings.IS_K8S_DEPLOY_MODE:
+            raise exceptions.TaskCannotCreateByCommonLink
+
         # step 2：用户任务鉴权
         list_strategies_dict = ExplorerHandler().get_strategies(bk_biz_id, ip_list)
         allowed_dir_file_list = list_strategies_dict.get("allowed_dir_file_list")
