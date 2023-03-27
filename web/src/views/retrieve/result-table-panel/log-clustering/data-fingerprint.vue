@@ -734,7 +734,6 @@ export default {
       margin-top: 1px;
 
       span {
-        width: 95px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;

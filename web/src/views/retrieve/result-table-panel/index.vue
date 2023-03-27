@@ -40,6 +40,8 @@
           v-bind="$attrs"
           v-on="$listeners"
           ref="logClusteringRef"
+          :is-change-table-nav.sync="isChangeTableNav"
+          :active-table-tab="active"
           :config-data="configData"
           @showOriginLog="showOriginLog" />
       </keep-alive>
@@ -71,6 +73,7 @@ export default {
   data() {
     return {
       active: 'origin',
+      isChangeTableNav: false,
     };
   },
   computed: {
@@ -109,6 +112,7 @@ export default {
         requestData: clusterRef?.requestData,
       }  : null;
       this.$emit('backFillClusterRouteParams', name, clusterParams);
+      if (name === 'origin') this.isChangeTableNav = true;
     },
   },
 };
