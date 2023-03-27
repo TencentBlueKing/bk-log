@@ -2269,7 +2269,6 @@ export default {
             }
 
             .query-search {
-              width: 80px;
               font-size: 12px
             }
 
@@ -2418,11 +2417,5 @@ export default {
     .tippy-tooltip {
       padding: 0;
     }
-  }
-
-  .bk-dialog-wrapper .bk-info-box .bk-dialog-type-header .header {
-    white-space: normal;
-    text-overflow: inherit;
-    overflow: hidden;
   }
 </style>

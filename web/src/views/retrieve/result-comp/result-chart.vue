@@ -60,7 +60,10 @@
       </svg>
       <span class="text">{{ $t('暂无数据') }}</span>
     </div>
-    <div class="converge-cycle" v-if="!isEmptyChart && !isFold">
+    <div
+      class="converge-cycle"
+      v-if="!isEmptyChart && !isFold"
+      :style="convergeStyle">
       <span>{{ $t('汇聚周期') }}</span>
       <bk-select
         style="width: 80px"
@@ -159,6 +162,9 @@ export default {
     chartKey() {
       this.getInterval();
       return this.$store.state.retrieve.chartKey;
+    },
+    convergeStyle() {
+      return `left: ${this.$store.state.isEnLanguage ? '110' : '80'}px`;
     },
     // chartInterval() {
     //   return this.retrieveParams.interval;
