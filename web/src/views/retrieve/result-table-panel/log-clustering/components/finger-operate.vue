@@ -231,10 +231,10 @@ export default {
     initCache() {
       // 赋值缓存
       this.patternSize = this.fingerOperateData.patternSize;
-      this.group = this.requestData.group_by;
       this.yearOnYearHour = this.requestData.year_on_year_hour;
       this.isNear24 = this.requestData.show_new_pattern;
       this.alarmSwitch = this.fingerOperateData.alarmObj?.is_active;
+      if (this.requestData.group_by?.length) this.group = this.requestData.group_by;
     },
     /**
      * @desc: 查询新类告警

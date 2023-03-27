@@ -51,6 +51,7 @@ from apps.log_search.models import BizProperty, Space
 from apps.utils.db import array_hash, array_chunk
 from apps.utils.function import ignored
 from apps.utils.thread import MultiExecuteFunc
+from apps.api.modules.utils import get_non_bkcc_space_related_bkcc_biz_id
 
 
 class BizHandler(APIModel):
@@ -60,8 +61,12 @@ class BizHandler(APIModel):
         super().__init__()
 
         if bk_biz_id and int(bk_biz_id) < 0:
-            # 业务ID为负数的情况，直接转为0
-            raise ValueError(_("当前空间类型不支持查询业务资源"))
+            related_bk_biz_id = get_non_bkcc_space_related_bkcc_biz_id(bk_biz_id)
+            if related_bk_biz_id and int(related_bk_biz_id) > 0:
+                bk_biz_id = related_bk_biz_id
+            else:
+                # 也不存在关联CC业务时, 直接raise
+                raise ValueError(_("当前空间类型不支持查询业务资源"))
 
         self.bk_biz_id = bk_biz_id
 
@@ -935,7 +940,10 @@ class BizHandler(APIModel):
             tmp_host = {"bk_host_innerip": host["host"]["bk_host_innerip"], "bk_cloud_id": host["host"]["bk_cloud_id"]}
             if bk_obj_id in (CCInstanceType.BUSINESS.value):
                 tmp_host["parent_inst_id"] = [self.bk_biz_id]
-            if bk_obj_id in (CCInstanceType.MODULE.value, TemplateType.SERIVCE_TEMPLATE.value,):
+            if bk_obj_id in (
+                CCInstanceType.MODULE.value,
+                TemplateType.SERIVCE_TEMPLATE.value,
+            ):
                 tmp_host["parent_inst_id"] = [
                     module["bk_module_id"] for topo in host["topo"] for module in topo["module"]
                 ]
