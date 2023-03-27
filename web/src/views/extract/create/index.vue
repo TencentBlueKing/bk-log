@@ -314,7 +314,7 @@ export default {
           bk_biz_id: this.$store.state.bkBizId,
           ip_list: this.ipList, // 下载目标
           preview_directory: this.fileOrPath, // 目录
-          preview_ip: this.$refs.preview.previewIp.join(','), // 预览地址
+          preview_ip_list: this.$refs.preview.getFindIpList(), // 预览地址
           preview_time_range: this.$refs.preview.timeRange, // 文件日期
           preview_start_time: this.$refs.preview.timeStringValue[0], // 文件日期
           preview_end_time: this.$refs.preview.timeStringValue[1], // 文件日期

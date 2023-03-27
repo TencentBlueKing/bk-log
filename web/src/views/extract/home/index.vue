@@ -53,7 +53,7 @@
       @page-limit-change="handlePageLimitChange">
       <bk-table-column :label="$t('下载目标')" :render-header="$renderHeader" min-width="140">
         <div class="table-ceil-container" slot-scope="{ row }">
-          <span v-bk-overflow-tips>{{ getShowIpList(row.ip_list) }}</span>
+          <span v-bk-overflow-tips>{{ getShowIpList(row) }}</span>
         </div>
       </bk-table-column>
       <bk-table-column :label="$t('文件')" :render-header="$renderHeader" min-width="240">
@@ -101,12 +101,18 @@
       <bk-table-column :label="$t('操作')" :render-header="$renderHeader" min-width="100">
         <div slot-scope="{ row }" class="task-operation-container">
           <span class="task-operation" @click="viewDetail(row)">{{ $t('详情') }}</span>
-          <span
-            class="task-operation"
-            v-if="row.preview_ip && row.preview_ip.indexOf(':') !== -1"
+          <bk-button
+            text
+            style="margin-right: 12px;"
+            :disabled="!row.enable_clone"
+            v-bk-tooltips.top="{
+              content: row.message,
+              disabled: row.enable_clone,
+              delay: 500,
+            }"
             @click="cloneTask(row)">
             {{ $t('克隆') }}
-          </span>
+          </bk-button>
           <span
             class="task-operation"
             v-if="row.download_status === 'downloadable'"
@@ -132,7 +138,7 @@
         <task-status-detail :status-data="sideSlider.data.task_step_status" />
         <download-url :task-id="sideSlider.data.task_id" />
         <list-box icon="bk-icon icon-sitemap" :title="$t('文件路径')" :list="sideSlider.data.preview_directory" />
-        <list-box icon="bk-icon icon-data" :title="$t('下载目标')" :list="getIPDisplayNameList(sideSlider.IpList)" />
+        <list-box icon="bk-icon icon-data" :title="$t('下载目标')" :list="getDownloadTheTargetList(sideSlider.data)" />
         <list-box icon="bk-icon icon-file" :title="$t('文件列表')" :list="sideSlider.data.file_path" />
         <list-box icon="bk-icon icon-clock" :title="$t('过期时间')" :list="sideSlider.data.expiration_date" />
         <text-filter-detail v-if="sideSlider.data.filter_type" :data="sideSlider.data" />
@@ -176,7 +182,6 @@ export default {
         isLoading: false,
         isShow: false,
         data: {},
-        IpList: {}, // 使用row的IPlist 不使用详情的展示
       },
       // 不需要转圈的状态
       notLoadingStatus: ['downloadable', 'redownloadable', 'expired', 'failed'],
@@ -304,7 +309,6 @@ export default {
         this.sideSlider.isShow = true;
         this.sideSlider.isLoading = true;
         this.sideSlider.data = {};
-        this.sideSlider.IpList = row.ip_list;
         const res = await this.$http.request('extract/getTaskDetail', {
           params: {
             id: row.task_id,
@@ -365,17 +369,25 @@ export default {
         this.isLoading = false;
       }
     },
-    getShowIpList(ipList) {
-      if (ipList[0].ip === undefined) {
-        return ipList.join('; ');
-      }
-      return this.getIPDisplayNameList(ipList).join('; ');
+    // 列表的下载目标显示
+    getShowIpList(row) {
+      if (row.enable_clone) {
+        return this.getIPDisplayNameList(row.ip_list).join('; ');
+      };
+      return row.ipList.map(item => `${item.bk_cloud_id}:${item.ip}`).join('; ');
+    },
+    // 下载目标列表显示
+    getDownloadTheTargetList(targetItem) {
+      if (targetItem.enable_clone) {
+        return this.getIPDisplayNameList(targetItem.ip_list);
+      };
+      return targetItem.ip_list;
     },
     getIPDisplayNameList(ipList) { // 获取displayName字符串列表
       if (ipList && ipList.length) {
         return ipList.map((item) => {
           return this.displayNameList.find((dItem) => {
-            const hostMatch = item.bk_host_id === dItem.host_id;
+            const hostMatch = item.bk_host_id === dItem.bk_host_id;
             const ipMatch = `${item.ip}_${item.bk_cloud_id}` === `${dItem.bk_host_innerip}_${dItem.bk_cloud_id}`;
             if (item?.bk_host_id) return (hostMatch || ipMatch);
             return ipMatch;
