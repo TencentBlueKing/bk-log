@@ -227,6 +227,7 @@ export default {
         this.pagination.count = res.data.total;
         // 获取请求displayName的 ipList参数列表
         const allIpList = res.data.list.reduce((pre, cur) => {
+          if (!cur.enable_clone) return pre;
           pre.push(...cur.ip_list.map((item) => {
             if (item?.bk_host_id) {
               return {
@@ -374,7 +375,7 @@ export default {
       if (row.enable_clone) {
         return this.getIPDisplayNameList(row.ip_list).join('; ');
       };
-      return row.ipList.map(item => `${item.bk_cloud_id}:${item.ip}`).join('; ');
+      return row.ip_list.join('; ');
     },
     // 下载目标列表显示
     getDownloadTheTargetList(targetItem) {
