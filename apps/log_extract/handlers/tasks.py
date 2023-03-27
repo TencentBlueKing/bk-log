@@ -19,7 +19,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-
 from datetime import timedelta
 from typing import List
 import ipaddress
@@ -368,6 +367,7 @@ class TasksHandler(object):
             new_ip = TasksHandler.format_ip(ip)
             if not new_ip:
                 task["enable_clone"] = False
+                task["message"] = _("缺少bk_cloud_id")
                 break
             ip_list.append(new_ip)
             task["ip_list"] = ip_list
@@ -380,9 +380,12 @@ class TasksHandler(object):
                 new_preview_ip = TasksHandler.format_ip(preview_ip)
                 if not new_preview_ip:
                     task["enable_clone"] = False
+                    task["message"] = _("缺少bk_cloud_id")
                     continue
                 preview_ip_list.append(new_preview_ip)
             task["preview_ip_list"] = preview_ip_list
+        else:
+            task["preview_ip_list"] = eval(task["preview_ip_list"])
         return task
 
     @classmethod

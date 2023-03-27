@@ -336,6 +336,7 @@ class ListStrategiesSerializer(serializers.Serializer):
 
 class TasksSerializer(serializers.ModelSerializer):
     ip_list = ListField(_("业务机器ip"))
+    preview_ip_list = ListField(_("预览地址ip列表"))
     file_path = ListField(_("文件列表"))
 
     class Meta:
