@@ -116,7 +116,7 @@ class CreateTaskSerializer(serializers.Serializer):
     filter_content = serializers.JSONField(label=_("过滤参数"))
     remark = serializers.CharField(label=_("备注"), allow_blank=True, max_length=255, default="")
     preview_directory = serializers.CharField(label=_("预览目录"), max_length=255)
-    preview_ip = serializers.CharField(label=_("预览地址ip"))
+    preview_ip_list = serializers.ListField(label=_("预览机器IP"), child=BkIpSerializer())
     preview_time_range = serializers.CharField(label=_("预览日期"), max_length=10)
     preview_start_time = serializers.CharField(label=_("预览开始时间"), max_length=20, default="", required=False)
     preview_end_time = serializers.CharField(label=_("预览结束时间"), max_length=20, default="", required=False)
@@ -365,6 +365,7 @@ class TaskListSerializer(GeneralSerializer):
             "task_process_info",
             "preview_directory",
             "preview_ip",
+            "preview_ip_list",
             "preview_time_range",
             "preview_is_search_child",
             "preview_start_time",
