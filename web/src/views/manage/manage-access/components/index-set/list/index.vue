@@ -30,7 +30,7 @@
     <div class="operate-box">
       <bk-button
         theme="primary"
-        style="width: 120px;"
+        style="min-width: 120px;"
         data-test-id="logIndexSetBox_button_newIndexSet"
         :disabled="!collectProject || isTableLoading || isAllowedCreate === null"
         :loading="isCreateLoading"
@@ -341,6 +341,7 @@ export default {
           },
           query: {
             spaceUid: this.$store.state.spaceUid,
+            editName: row.index_set_name,
           },
         });
       } else if (type === 'delete') { // 删除索引集

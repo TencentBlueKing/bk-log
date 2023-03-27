@@ -239,21 +239,26 @@
         </div>
       </div>
       <container-base v-else :collector-data="collectorData" :is-loading.sync="basicLoading"></container-base>
-      <p class="button-place">
-        <bk-button
-          :theme="'primary'"
-          v-cursor="{ active: !editAuth }"
-          @click="handleClickEdit"
-          class="mr10">
-          {{ $t('编辑') }}
-        </bk-button>
-      </p>
     </div>
-    <div class="create-name-and-time">
-      <div v-for="item in createAndTimeData" :key="item.key">
-        <span>{{ item.label }}</span>
-        <span>{{ item.value }}</span>
-      </div>
+    <div>
+      <bk-button
+        :theme="'default'"
+        ext-cls=""
+        style="min-width: 88px; color: #3a84ff;"
+        v-cursor="{ active: !editAuth }"
+        @click="handleClickEdit"
+        class="mr10">
+        {{ $t('编辑') }}
+      </bk-button>
+      <bk-popover placement="bottom-end">
+        <bk-button class="log-icon icon-lishijilu"></bk-button>
+        <div slot="content" class="create-name-and-time">
+          <div v-for="item in createAndTimeData" :key="item.key">
+            <span>{{ item.label }}</span>
+            <span>{{ item.value }}</span>
+          </div>
+        </div>
+      </bk-popover>
     </div>
   </div>
 </template>
@@ -506,10 +511,6 @@ export default {
     }
   }
 
-  .button-place {
-    margin-left: 118px;
-    padding-bottom: 100px;
-  }
 
   .create-name-and-time {
     border-top: 1px solid #dcdee5;

@@ -41,7 +41,7 @@
       </bk-input>
       <bk-select
         v-model="filterContent.keyword_type"
-        style="width: 60px;margin-right: 10px;background-color: #fff;"
+        style="width: 70px; margin-right: 10px;background-color: #fff;"
         data-test-id="addNewExtraction_select_filterCondition"
         :clearable="false">
         <bk-option
@@ -54,8 +54,8 @@
       {{ $t('关键字匹配模式') }}
     </div>
     <!-- 关键字范围 -->
-    <div class="filter-content" v-show="filterType === 'match_range'">
-      <i18n path="从匹配{0}开始到匹配{1}之间的所有行">
+    <div v-show="filterType === 'match_range'">
+      <i18n class="filter-content" path="从匹配{0}开始到匹配{1}之间的所有行">
         <bk-input
           style="width: 180px;margin: 0 6px;"
           :maxlength="64"
@@ -80,8 +80,8 @@
       </bk-input>
     </div>
     <!-- 按行过滤 -->
-    <div class="filter-content" v-show="filterType === 'line_range'">
-      <i18n path="从第{0}行到第{1}行">
+    <div v-show="filterType === 'line_range'">
+      <i18n class="filter-content" path="从第{0}行到第{1}行">
         <bk-input
           style="width: 120px;margin: 0 6px;"
           type="number"

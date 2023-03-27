@@ -20,80 +20,29 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
  */
 
-/**
- * 通知列表
- */
-const getConfig = {
-  url: '/clustering_config/:index_set_id/config/',
-  method: 'get',
-};
-
-const getDefaultConfig = {
-  url: '/clustering_config/default_config/',
-  method: 'get',
-};
-
-const changeConfig = {
-  url: '/clustering_config/:index_set_id/create_or_update/',
-  method: 'post',
-};
-
-const preview = {
-  url: '/clustering_config/preview/',
-  method: 'post',
-};
-
-const clusterSearch = {
-  url: '/pattern/:index_set_id/search/',
-  method: 'post',
-};
-
-const closeClean = {
-  url: '/databus/collectors/:collector_config_id/close_clean/',
-  method: 'post',
-};
-
-const updateStrategies = {
-  url: '/clustering_monitor/:index_set_id/update_strategies/',
-  method: 'post',
-};
-
-const getFingerLabels = {
-  url: '/pattern/:index_set_id/labels/',
-  method: 'post',
-};
-
-const getNewClsStrategy = {
-  url: '/clustering_monitor/:index_set_id/get_new_cls_strategy/',
-  method: 'get',
-};
-
-const updateNewClsStrategy = {
-  url: '/clustering_monitor/:index_set_id/update_new_cls_strategy/',
-  method: 'post',
-};
-
-const checkRegexp = {
-  url: '/clustering_config/check_regexp/',
-  method: 'post',
-};
-// 标签编辑
-const editLabel = {
-  url: '/pattern/:index_set_id/label/ ',
-  method: 'post',
-};
-
-export {
-  getConfig,
-  getDefaultConfig,
-  changeConfig,
-  preview,
-  clusterSearch,
-  closeClean,
-  updateStrategies,
-  getFingerLabels,
-  getNewClsStrategy,
-  updateNewClsStrategy,
-  checkRegexp,
-  editLabel,
-};
+import { Component as tsc } from 'vue-tsx-support';
+import Component from 'vue-class-component';
+import './log-basic-tab.scss';
+@Component
+export default class LogTab extends tsc<{}> {
+  render() {
+    return (
+      <bk-tab
+        class="custom-tab"
+        type="unborder-card"
+        tab-position="top"
+        props={this.$attrs}
+        on={this.$listeners}
+      >
+        {this.$slots.default}
+        {this.$slots.setting && (
+          <template slot="setting">{this.$slots.setting}</template>
+        )}
+        {this.$slots.add && <template slot="add">{this.$slots.add}</template>}
+        {this.$slots.extension && (
+          <template slot="extension">{this.$slots.extension}</template>
+        )}
+      </bk-tab>
+    );
+  }
+}
