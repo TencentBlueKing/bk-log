@@ -19,9 +19,9 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-
 from datetime import timedelta
 from typing import List
+import ipaddress
 
 from django.utils import timezone
 from rest_framework.response import Response
@@ -97,7 +97,7 @@ class TasksHandler(object):
         remark,
         filter_content,
         preview_directory,
-        preview_ip,
+        preview_ip_list,
         preview_time_range,
         preview_is_search_child,
         preview_start_time,
@@ -132,6 +132,13 @@ class TasksHandler(object):
                 ip_key = f"{ip_key}:{ip['bk_host_id']}"
             formatted_ip_list.append(ip_key)
 
+        formatted_preview_ip_list = []
+        for ip in preview_ip_list:
+            ip_key = f"{ip['bk_cloud_id']}:{ip['ip']}"
+            if ip.get("bk_host_id"):
+                ip_key = f"{ip_key}:{ip['bk_host_id']}"
+            formatted_preview_ip_list.append(ip_key)
+
         params = {
             "bk_biz_id": bk_biz_id,
             "ip_list": formatted_ip_list,
@@ -142,7 +149,8 @@ class TasksHandler(object):
             "expiration_date": timezone.now() + timedelta(days=settings.EXTRACT_EXPIRED_DAYS),
             "remark": remark,
             "preview_directory": preview_directory,
-            "preview_ip": preview_ip,
+            "preview_ip": ",".join(formatted_preview_ip_list),
+            "preview_ip_list": preview_ip_list,
             "preview_time_range": preview_time_range,
             "preview_is_search_child": preview_is_search_child,
             "preview_start_time": preview_start_time,
@@ -157,6 +165,7 @@ class TasksHandler(object):
             "remark",
             "preview_directory",
             "preview_ip",
+            "preview_ip_list",
             "preview_time_range",
             "preview_is_search_child",
             "preview_start_time",
@@ -204,7 +213,7 @@ class TasksHandler(object):
         if not self.is_operator_or_creator(instance.bk_biz_id, request_user, instance.created_by):
             raise exceptions.TasksRetrieveFailed
         # 主机显示优化
-        task["ip_list"] = self.get_ip_and_bk_cloud_id([task])[0]["ip_list"]
+        task["ip_list"] = self.format_task_ip_details(task)["ip_list"]
         pipeline_id = instance.pipeline_id
         pipeline_components_id = instance.pipeline_components_id
         task["download_status_display"] = constants.DownloadStatus.get_dict_choices().get(task["download_status"])
@@ -318,25 +327,66 @@ class TasksHandler(object):
 
     @staticmethod
     def get_ip_and_bk_cloud_id(task_list):
+        new_task_list = []
         for task in task_list:
-            ip_list = []
-            for ip in task["ip_list"]:
-                if ":" not in ip:
-                    ip_list.append({"bk_host_id": ip})
-                else:
-                    items = ip.split(":")
-                    if len(items) == 2:
-                        ip_list.append({"ip": items[TASK_IP_INDEX], "bk_cloud_id": int(items[TASK_BK_CLOUD_ID_INDEX])})
-                    elif len(items) == 3:
-                        ip_list.append(
-                            {
-                                "ip": items[TASK_IP_INDEX],
-                                "bk_cloud_id": int(items[TASK_BK_CLOUD_ID_INDEX]),
-                                "bk_host_id": int(items[TASK_HOST_ID_INDEX]),
-                            }
-                        )
+            new_task_list.append(TasksHandler.format_task_ip_details(task))
+        return new_task_list
+
+    @staticmethod
+    def format_ip(ip):
+        if ":" not in ip:
+            try:
+                version = ipaddress.ip_address(ip).version
+                if version == 4:
+                    return None
+            except Exception:
+                if isinstance(ip, str) and ip.isnumeric():
+                    return {"bk_host_id": int(ip)}
+                if isinstance(ip, int):
+                    return {"bk_host_id": ip}
+                return None
+        else:
+            items = ip.split(":")
+            if len(items) == 2:
+                return {"ip": items[TASK_IP_INDEX], "bk_cloud_id": int(items[TASK_BK_CLOUD_ID_INDEX])}
+            elif len(items) == 3:
+                return {
+                    "ip": items[TASK_IP_INDEX],
+                    "bk_cloud_id": int(items[TASK_BK_CLOUD_ID_INDEX]),
+                    "bk_host_id": int(items[TASK_HOST_ID_INDEX]),
+                }
+
+    @staticmethod
+    def format_task_ip_details(task):
+        """
+        格式化任务里的ip_list和preview_ip
+        """
+        task["enable_clone"] = True
+        ip_list = []
+        for ip in task["ip_list"]:
+            new_ip = TasksHandler.format_ip(ip)
+            if not new_ip:
+                task["enable_clone"] = False
+                task["message"] = _("缺少bk_cloud_id")
+                break
+            ip_list.append(new_ip)
             task["ip_list"] = ip_list
-        return task_list
+
+        preview_ip_list = []
+        # 兼容历史数据
+        # JsonField空值为'{}'
+        if task["preview_ip"] and task["preview_ip_list"] == "{}":
+            for preview_ip in task["preview_ip"].split(","):
+                new_preview_ip = TasksHandler.format_ip(preview_ip)
+                if not new_preview_ip:
+                    task["enable_clone"] = False
+                    task["message"] = _("缺少bk_cloud_id")
+                    continue
+                preview_ip_list.append(new_preview_ip)
+            task["preview_ip_list"] = preview_ip_list
+        else:
+            task["preview_ip_list"] = eval(task["preview_ip_list"])
+        return task
 
     @classmethod
     def run_pipeline(
