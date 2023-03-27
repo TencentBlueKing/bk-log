@@ -29,7 +29,10 @@
       <span class="bk-icon icon-arrows-left"></span>
     </div>
     <div class="main-title">{{ $route.meta.needBack ? getTitleName() : activeManageNav.name }}</div>
-    <div v-if="isShowDetailName" class="collect-link">{{ getBaseName() }}</div>
+    <div v-if="isShowDetailName" class="collect-link">
+      <span class="bk-icon log-icon icon-position"></span>
+      {{ getBaseName() }}
+    </div>
     <ul
       class="sub-nav-list"
       v-if="activeManageNav.children && !$route.meta.needBack"
@@ -69,6 +72,19 @@ export default {
         'custom-report-detail',
         'es-index-set-manage',
         'bkdata-track-manage',
+        'custom-report-edit',
+        'es-index-set-edit',
+        'bkdata-index-set-edit',
+        'collectEdit',
+        'collectField',
+        'collectStorage',
+        'collectStart',
+        'collectStop',
+        'log-index-set-edit',
+        'bkdata-track-edit',
+        'extract-link-edit',
+        'clean-edit',
+        'clean-template-edit',
       ],
     };
   },
@@ -102,14 +118,13 @@ export default {
     },
     // 根据路由名获取菜单名称
     getTitleName() {
-      const collectionName = this.$store.state.collect.curCollect?.collector_config_name;
       const map = {
         collectAdd: this.$t('新建采集项'),
-        collectEdit: collectionName,
-        collectField: collectionName,
-        collectStorage: collectionName,
-        collectStart: collectionName,
-        collectStop: collectionName,
+        collectEdit: this.$t('编辑采集项'),
+        collectField: this.$t('编辑采集项'),
+        collectStorage: this.$t('编辑采集项'),
+        collectStart: this.$t('编辑采集项'),
+        collectStop: this.$t('编辑采集项'),
         'manage-collection': this.$t('采集详情'),
         'log-index-set-create': this.$t('新建索引集'),
         'log-index-set-edit': this.$t('编辑索引集'),
@@ -138,16 +153,31 @@ export default {
       return map[this.$route.name];
     },
     getBaseName() {
-      const collectionName = this.$store.state.collect.curCollect?.collector_config_name;
+      const collectionName = this.$store.state.collect.curCollect?.collector_config_name ?? '';
+      const routerEditName = this.$route.query.editName ?? '';
+      const storeIndexSetName = this.$store.state.collect.curIndexSet?.index_set_name ?? '';
       const map = {
+        'log-index-set-manage': storeIndexSetName,
+        'bkdata-index-set-manage': storeIndexSetName,
+        'bkdata-track-manage': storeIndexSetName,
+        'es-index-set-manage': storeIndexSetName,
+        'custom-report-edit': routerEditName,
+        'es-index-set-edit': routerEditName,
+        'bkdata-index-set-edit': routerEditName,
+        'log-index-set-edit': routerEditName,
+        'bkdata-track-edit': routerEditName,
+        'extract-link-edit': routerEditName,
+        'clean-edit': routerEditName,
+        'clean-template-edit': routerEditName,
         'manage-collection': collectionName,
-        'log-index-set-manage': this.$store.state.collect.curIndexSet?.index_set_name,
-        'bkdata-index-set-manage': this.$store.state.collect.curIndexSet?.index_set_name,
-        'bkdata-track-manage': this.$store.state.collect.curIndexSet?.index_set_name,
-        'es-index-set-manage': this.$store.state.collect.curIndexSet?.index_set_name,
         'custom-report-detail': collectionName,
+        collectEdit: collectionName,
+        collectField: collectionName,
+        collectStorage: collectionName,
+        collectStart: collectionName,
+        collectStop: collectionName,
       };
-      return `${this.$t('采集')}: ${map[this.$route.name] ?? ''}`;
+      return map[this.$route.name] ?? '';
     },
   },
 };
@@ -212,9 +242,14 @@ export default {
       margin-left: 12px;
       font-size: 12px;
       border-radius: 2px;
-      padding: 0 4px;
+      padding: 0 9px;
       color: #63656e;
       background: #f0f1f5;
+
+      .icon-position {
+        font-size: 14px;
+        color: #c4c6cc;
+      }
     }
   }
 </style>

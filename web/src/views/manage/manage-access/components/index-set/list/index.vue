@@ -341,6 +341,7 @@ export default {
           },
           query: {
             spaceUid: this.$store.state.spaceUid,
+            editName: row.index_set_name,
           },
         });
       } else if (type === 'delete') { // 删除索引集

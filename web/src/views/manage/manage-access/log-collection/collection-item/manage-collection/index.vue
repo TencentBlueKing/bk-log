@@ -29,8 +29,8 @@
         <div class="go-search" slot="setting">
           <div class="search-text">
             <span class="bk-icon icon-info"></span>
-            <i18n path="可对当前采集内容进行检索，{0}">
-              <span class="search-button" @click="handleGoSearch">{{$t('去检索')}}</span>
+            <i18n path="数据采集好了，去 {0}">
+              <span class="search-button" @click="handleGoSearch">{{$t('查看数据')}}</span>
             </i18n>
           </div>
         </div>

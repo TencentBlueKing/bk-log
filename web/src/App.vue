@@ -493,8 +493,9 @@ export default {
     }
 
     .go-search {
-      position: fixed;
-      right: 28px;
+      // position: fixed;
+      position: absolute;
+      right: 0;
       font-size: 12px;
       z-index: 999;
 
