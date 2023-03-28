@@ -75,7 +75,12 @@
         </bk-form-item>
       </div>
       <!-- 过滤内容 -->
-      <div :class="['config-item', 'filter-content',showType === 'horizontal' && 'horizontal-item']">
+      <div :class="[
+        'config-item',
+        'filter-content',
+        showType === 'horizontal' && 'horizontal-item',
+        isEnLanguage && 'en-span'
+      ]">
         <span v-bk-tooltips="$t('为减少传输和存储成本，可以过滤掉部分内容,更复杂的可在“清洗”功能中完成')">
           <span class="filter-title">{{$t('过滤内容')}}</span>
         </span>
@@ -243,7 +248,7 @@
       </bk-form-item>
     </bk-form>
     <!-- win-过滤内容 -->
-    <div :class="['config-item','mt', showType === 'horizontal' && 'win-content']">
+    <div :class="['config-item','mt', showType === 'horizontal' && 'win-content', isEnLanguage && 'en-span']">
       <span v-bk-tooltips="$t('为减少传输和存储成本，可以过滤掉部分内容,更复杂的可在“清洗”功能中完成')">
         <span class="filter-title">{{$t('过滤内容')}}</span>
       </span>
@@ -486,6 +491,9 @@ export default {
       });
       return winParams;
     },
+    isEnLanguage() {
+      return this.$store.state.isEnLanguage;
+    },
   },
   watch: {
     subFormData: {
@@ -650,6 +658,10 @@ export default {
     position: absolute;
     left: -80px;
     top: 23px;
+  }
+
+  &.en-span span{
+    left: -112px;
   }
 
   .filter-select {

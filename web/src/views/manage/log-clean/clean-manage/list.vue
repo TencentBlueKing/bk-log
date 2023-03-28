@@ -336,6 +336,7 @@ export default {
       if (operateType === 'edit') {
         routeName = 'clean-edit';
         query.spaceUid = this.$store.state.spaceUid;
+        query.editName = row.collector_config_name;
         params.collectorId = row.collector_config_id;
       } else if (operateType === 'search') {
         routeName = 'retrieve';

@@ -812,5 +812,9 @@
   "选择日期时间范围": "Select date time range",
   "健康": "Wholesome",
   "部分故障": "Partial failure",
-  "严重故障": "Critical failure"
+  "严重故障": "Critical failure",
+  "采集详情": "Collection details",
+  "采集": "Collection",
+  "数据采集好了，去 {0}": "Data collection, go to {0}",
+  "查看数据": "view data"
 }

@@ -22,7 +22,7 @@
 
 <template>
   <div class="step-storage" v-bkloading="{ isLoading: basicLoading }">
-    <bk-form :label-width="115" :model="formData" ref="validateForm" data-test-id="storage_form_storageBox">
+    <bk-form :label-width="150" :model="formData" ref="validateForm" data-test-id="storage_form_storageBox">
       <div class="add-collection-title">{{ $t('集群选择') }}</div>
       <cluster-table
         :table-list="clusterList"
