@@ -23,8 +23,15 @@
 <template>
   <div class="finger-container">
     <div class="top-operate" v-if="allFingerList.length">
-      <!-- eslint-disable-next-line vue/no-v-html -->
-      <p v-html="getTipsMessage" class="operate-message"></p>
+      <p class="operate-message">
+        <i18n v-if="selectList.length" path="当前已选择{0}条数据, 共有{1}条数据">
+          <span>{{selectSize}}</span>
+          <span>{{allFingerList.length}}</span>
+        </i18n>
+        <i18n v-else path="共有{0}条数据">
+          <span>{{allFingerList.length}}</span>
+        </i18n>
+      </p>
       <span
         v-if="selectList.length"
         class="operate-click"
@@ -41,7 +48,9 @@
       ref="fingerTableRef"
       :data="fingerList"
       :outer-border="false"
-      :reserve-selection="true">
+      :reserve-selection="true"
+      @row-mouse-enter="(index) => hoverLabelIndex = index"
+      @row-mouse-leave="() => hoverLabelIndex = -1">
 
       <bk-table-column
         width="50"
@@ -58,7 +67,7 @@
       <bk-table-column :label="$t('数据指纹')" :render-header="$renderHeader" width="150">
         <template slot-scope="{ row }">
           <div class="fl-ac signature-box">
-            <span>{{row.signature}}</span>
+            <span v-bk-overflow-tips>{{row.signature}}</span>
             <div v-show="row.is_new_class" class="new-finger">New</div>
           </div>
         </template>
@@ -67,8 +76,8 @@
       <bk-table-column
         :label="$t('数量')"
         :render-header="$renderHeader"
+        :width="getTableWidth.number"
         sortable
-        width="91"
         prop="number">
         <template slot-scope="{ row }">
           <span
@@ -81,8 +90,8 @@
       <bk-table-column
         :label="$t('占比')"
         :render-header="$renderHeader"
+        :width="getTableWidth.percentage"
         sortable
-        width="96"
         prop="percentage">
         <template slot-scope="{ row }">
           <span
@@ -96,9 +105,9 @@
       <template v-if="requestData.year_on_year_hour >= 1 ">
         <bk-table-column
           sortable
-          width="101"
           align="center"
           header-align="center"
+          :width="getTableWidth.year_on_year_count"
           :label="$t('同比数量')"
           :render-header="$renderHeader"
           :sort-by="'year_on_year_count'">
@@ -109,9 +118,9 @@
 
         <bk-table-column
           sortable
-          width="101"
           align="center"
           header-align="center"
+          :width="getTableWidth.year_on_year_percentage"
           :label="$t('同比变化')"
           :render-header="$renderHeader"
           :sort-by="'year_on_year_percentage'">
@@ -198,22 +207,38 @@
         width="160"
         align="center"
         header-align="center">
-        <template slot-scope="{ row }">
-          <!-- labels 为空或者数组为空时 不显示 labels长度为1时 不挂载popover -->
-          <span v-if="!row.labels || !row.labels.length">--</span>
-          <bk-tag v-else-if="row.labels.length === 1">{{row.labels[0]}}</bk-tag>
-          <bk-popover
-            v-else
-            theme="light"
-            ref="labelsPopover">
-            <div slot="content">
-              <bk-tag v-for="(item,index) of row.labels" :key="index">{{item}}</bk-tag>
+        <template slot-scope="{ row, $index }">
+          <div class="lable-edit-box" v-if="editLabelIndex === $index">
+            <bk-form
+              ref="labelRef"
+              style="width: 100%"
+              :rules="rules"
+              :label-width="0">
+              <bk-form-item property="labelRuels">
+                <bk-input
+                  clearable
+                  behavior="simplicity"
+                  v-model="verifyData.editLabelStr"
+                  @enter="handleChangeLabel(row)"></bk-input>
+              </bk-form-item>
+            </bk-form>
+            <div class="operate-button">
+              <span class="bk-icon icon-check-line" @click="handleChangeLabel(row)"></span>
+              <span class="bk-icon icon-close-line-2" @click="handleCancelLable"></span>
             </div>
-            <div class="fl-ac omit-box">
-              <bk-tag>{{row.labels[0]}}</bk-tag>
-              <span v-show="row.labels.length >= 2">...</span>
+          </div>
+          <div class="row-label" v-else>
+            <div class="label-container">
+              <span class="label-str title-overflow" v-bk-overflow-tips>
+                {{row.label || '--'}}
+              </span>
+              <span
+                v-show="hoverLabelIndex === $index"
+                class="bk-icon icon-edit-line"
+                @click="handleEditLabel(row.label, $index)">
+              </span>
             </div>
-          </bk-popover>
+          </div>
         </template>
       </bk-table-column>
 
@@ -297,23 +322,44 @@ export default {
       selectList: [], // 当前选中的数组
       isRequestAlarm: false, // 是否正在请求告警接口
       checkValue: 0, // 0为不选 1为半选 2为全选
+      editLabelIndex: -1,
+      // editLabelStr: '',
+      hoverLabelIndex: -1,
+      verifyData: {
+        editLabelStr: '',
+      },
+      rules: {
+        labelRuels: [
+          {
+            validator: this.checkName,
+            message: this.$t('{n}不规范, 包含特殊符号.', { n: this.$t('标签') }),
+            trigger: 'blur',
+          },
+          {
+            max: 50,
+            message: this.$t('不能多于50个字符'),
+            trigger: 'blur',
+          },
+        ],
+      },
+      enTableWidth: {
+        number: '110',
+        percentage: '116',
+        year_on_year_count: '171',
+        year_on_year_percentage: '171',
+      },
+      cnTableWidth: {
+        number: '91',
+        percentage: '96',
+        year_on_year_count: '101',
+        year_on_year_percentage: '101',
+      },
     };
   },
   inject: ['addFilterCondition'],
   computed: {
     scrollContent() {
       return document.querySelector('.result-scroll-container');
-    },
-    getTipsMessage() {
-      // 当有选中的元素时显示选中数量及是否批量告警
-      return this.selectList.length
-        ? `<i18n path="当前已选择{0}条数据, 共有{1}条数据">
-          <span>${this.selectSize}</span>
-          <span>${this.allFingerList.length}</span>
-        </i18n>`
-        : `<i18n path="共有{0}条数据">
-          <span>${this.allFingerList.length}</span>
-        </i18n>`;
     },
     bkBizId() {
       return this.$store.state.bkBizId;
@@ -323,6 +369,9 @@ export default {
     },
     getLeaveText() {
       return !this.clusterSwitch ? this.$t('当前日志聚类未启用，请前往设置') : this.$t('当前数据指纹未启用，请前往设置');
+    },
+    getTableWidth() {
+      return this.$store.getters.isEnLanguage ? this.enTableWidth : this.cnTableWidth;
     },
   },
   watch: {
@@ -549,7 +598,6 @@ export default {
         this.throttle = false;
         // scroll变化时判断是否展示返回顶部的Icon
         this.$emit('handleScrollIsShow');
-        this.$refs.labelsPopover?.instance.hide();
         if (this.fingerList.length >= this.allFingerList.length) return;
         const el = document.querySelector('.result-scroll-container');
         if (el.scrollHeight - el.offsetHeight - el.scrollTop < 5) {
@@ -607,6 +655,44 @@ export default {
     getHeightLightList(str) {
       return str.match(/#.*?#/g) || [];
     },
+    handleEditLabel(labelStr, index) {
+      this.editLabelIndex = index;
+      this.verifyData.editLabelStr = labelStr;
+    },
+    async handleChangeLabel(row) {
+      this.$refs.labelRef.validate().then(() => {
+        this.$http.request('/logClustering/editLabel', {
+          params: {
+            index_set_id: this.$route.params.indexId,
+          },
+          data: {
+            signature: row.signature,
+            label: this.verifyData.editLabelStr.trim(),
+          },
+        }).then((res) => {
+          if (res.result) {
+            row.label = this.verifyData.editLabelStr.trim();
+            this.editLabelIndex = -1;
+            this.$bkMessage({
+              theme: 'success',
+              message: this.$t('修改成功'),
+            });
+          }
+        })
+          .finally(() => {
+            this.verifyData.editLabelStr = '';
+          });
+      });
+    },
+    checkName() {
+      if (this.verifyData.editLabelStr.trim() === '') return true;
+      // eslint-disable-next-line no-useless-escape
+      return /^[\u4e00-\u9fa5_a-zA-Z0-9`~!\s@#$%^&*()_\-+=<>?:"{}|,.\/;'\\[\]·~！@#￥%……&*（）——\-+={}|《》？：“”【】、；‘'，。、]+$/im.test(this.verifyData.editLabelStr.trim());
+    },
+    handleCancelLable() {
+      this.editLabelIndex = -1;
+      this.verifyData.editLabelStr = '';
+    },
   },
 };
 </script>
@@ -658,7 +744,7 @@ export default {
       display: none;
     }
 
-    ::v-deep.bk-table-row-last {
+    :deep(.bk-table-row-last) {
       td {
         border: none;
       }
@@ -668,7 +754,6 @@ export default {
       margin-top: 1px;
 
       span {
-        width: 95px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -716,13 +801,50 @@ export default {
       }
     }
 
-    .omit-box {
+    .row-label {
       display: flex;
-      flex-direction: column;
-      padding: 8px 0;
+      justify-content: center;
 
-      span {
-        margin-right: 4px;
+      .label-container {
+        max-width: 90%;
+        position: relative;
+        display: flex;
+        align-items: center;
+      }
+
+      .icon-edit-line {
+        position: absolute;
+        right: -16px;
+        color: #3a84ff;
+        font-size: 14px;
+        cursor: pointer;
+      }
+    }
+
+    .lable-edit-box {
+      display: flex;
+      align-items: center;
+
+      .operate-button {
+        display: flex;
+        margin-left: 6px;
+        justify-content: space-between;
+        color: #979ba5;
+
+        span {
+          font-size: 16px;
+          display: inline-block;
+          cursor: pointer;
+        }
+
+        > :first-child {
+          color: #33d05c;
+          margin-right: 12px;
+        }
+
+        > :last-child {
+          color: #979ba5;
+        }
       }
     }
 
@@ -748,7 +870,7 @@ export default {
 }
 
 .table-no-data {
-  ::v-deep.bk-table-header-wrapper {
+  :deep(.bk-table-header-wrapper) {
     tr {
       > th {
         /* stylelint-disable-next-line declaration-no-important */

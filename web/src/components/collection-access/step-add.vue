@@ -2085,6 +2085,10 @@ export default {
       top: 6px;
     }
 
+    &.en-span span{
+      left: -112px;
+    }
+
     .filter-select {
       margin-top: 11px;
     }

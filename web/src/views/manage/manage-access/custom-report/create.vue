@@ -306,14 +306,13 @@
 
     <div class="submit-btn">
       <bk-button
-        class="fl"
+        style="margin-right: 20px;"
         theme="primary"
         :loading="submitLoading"
         @click="handleSubmitChange">
         {{$t('提交')}}
       </bk-button>
       <bk-button
-        class="fr"
         theme="default"
         @click="cancel">
         {{$t('取消')}}
@@ -692,10 +691,7 @@ export default {
     }
 
     .submit-btn {
-      width: 140px;
       margin: 20px 20px 100px ;
-
-      @include clearfix;
     }
 
     .intro-container {

@@ -28,8 +28,8 @@
     margin-top: 0 !important;
 
     .bk-form-control {
-      > :last-child {
-        margin-left: 20px;
+      > :first-child {
+        margin-right: 20px;
       }
     }
   }

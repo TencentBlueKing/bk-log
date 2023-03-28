@@ -96,9 +96,9 @@ class ClusteringPreviewSerializer(serializers.Serializer):
     is_case_sensitive = serializers.IntegerField()
 
 
-class GetLabelsSerializer(serializers.Serializer):
-    strategy_ids = serializers.ListField(child=serializers.IntegerField())
-    bk_biz_id = serializers.IntegerField()
+class SetLabelSerializer(serializers.Serializer):
+    signature = serializers.CharField()
+    label = serializers.CharField(allow_blank=True)
 
 
 class UpdateStrategyAction(serializers.Serializer):

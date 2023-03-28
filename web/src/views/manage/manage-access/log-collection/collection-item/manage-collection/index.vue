@@ -24,9 +24,17 @@
   <div class="access-manage-container" v-bkloading="{ isLoading: basicLoading }">
     <auth-container-page v-if="authPageInfo" :info="authPageInfo"></auth-container-page>
     <template v-if="!authPageInfo && !basicLoading && collectorData">
-      <bk-tab :active.sync="activePanel" type="border-card">
+      <basic-tab :active.sync="activePanel" type="border-card">
         <bk-tab-panel v-for="panel in panels" v-bind="panel" :key="panel.name"></bk-tab-panel>
-      </bk-tab>
+        <div class="go-search" slot="setting">
+          <div class="search-text">
+            <span class="bk-icon icon-info"></span>
+            <i18n path="数据采集好了，去 {0}">
+              <span class="search-button" @click="handleGoSearch">{{$t('查看数据')}}</span>
+            </i18n>
+          </div>
+        </div>
+      </basic-tab>
       <keep-alive>
         <component
           class="tab-content"
@@ -46,6 +54,7 @@ import CollectionStatus from './collection-status';
 import DataStorage from './data-storage';
 import DataStatus from './data-status';
 import UsageDetails from '@/views/manage/manage-access/components/usage-details';
+import BasicTab from '@/components/basic-tab';
 import * as authorityMap from '../../../../../../common/authority-map';
 
 export default {
@@ -57,6 +66,7 @@ export default {
     DataStorage,
     DataStatus,
     UsageDetails,
+    BasicTab,
   },
   data() {
     return {
@@ -118,6 +128,20 @@ export default {
       } finally {
         this.basicLoading = false;
       }
+    },
+    handleGoSearch() {
+      const params = {
+        indexId: this.collectorData.index_set_id
+          ? this.collectorData.index_set_id
+          : this.collectorData.bkdata_index_set_ids[0],
+      };
+      this.$router.push({
+        name: 'retrieve',
+        params,
+        query: {
+          spaceUid: this.$store.state.spaceUid,
+        },
+      });
     },
   },
 };

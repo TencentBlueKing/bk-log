@@ -585,7 +585,8 @@ export default {
               // 优先判断host_id 若没找到对应的host_id则对比ip_host_name_ipv6的组成的字符串
               const tableStrKey = `${item.ip}_${item.host_name}_${item.ipv6}`;
               const childStrKey = `${row.ip}_${row.host_name}_${row.ipv6}`;
-              return item.host_id === row.host_id || tableStrKey === childStrKey;
+              if (item?.host_id) return (item.host_id === row.host_id || tableStrKey === childStrKey);
+              return tableStrKey === childStrKey;
             });
             if (tarHost) {
               row.status = tarHost.status === 'PENDING' ? 'running' : tarHost.status.toLowerCase(); // pending-等待状态，与running不做区分

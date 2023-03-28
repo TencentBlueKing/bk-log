@@ -226,7 +226,11 @@
             </bk-table-column>-->
             <!-- 字符串类型下才能设置分词， 分词和维度只能选其中一个，且分词和时间不能同时存在, 选定时间后就同时勾选维度-->
             <!-- 分词 -->
-            <bk-table-column :render-header="renderHeaderParticipleName" align="center" :resizable="false" width="50">
+            <bk-table-column
+              :render-header="renderHeaderParticipleName"
+              align="center"
+              :resizable="false"
+              :width="getParticipleWidth">
               <template slot-scope="props">
                 <bk-checkbox
                   :disabled="isPreviewMode
@@ -569,6 +573,9 @@ export default {
     defaultZone() { // 默认时区
       const item = this.globalsData.time_zone.find(item => item.default);
       return item ? item.id : '';
+    },
+    getParticipleWidth() {
+      return this.$store.getters.isEnLanguage ? '65' : '50';
     },
   },
   watch: {

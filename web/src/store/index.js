@@ -89,6 +89,7 @@ const store = new Vuex.Store({
     // demo 业务链接
     demoUid: '',
     spaceBgColor: '', // 空间颜色
+    isEnLanguage: false,
   },
   // 公共 getters
   getters: {
@@ -110,6 +111,7 @@ const store = new Vuex.Store({
     accessUserManage: state => Boolean(state.topMenu.find(item => item.id === 'manage')?.
       children.some(item => (item.id === 'permissionGroup' && item.project_manage === true))),
     spaceBgColor: state => state.spaceBgColor,
+    isEnLanguage: state => state.isEnLanguage,
   },
   // 公共 mutations
   mutations: {
@@ -217,6 +219,9 @@ const store = new Vuex.Store({
     },
     setSpaceBgColor(state, val) {
       state.spaceBgColor = val;
+    },
+    updateIsEnLanguage(state, val) {
+      state.isEnLanguage = val;
     },
   },
   actions: {

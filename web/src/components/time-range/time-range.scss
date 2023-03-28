@@ -70,6 +70,9 @@
   }
 
   .shortcuts-list {
+    position: relative;
+    z-index: 999;
+
     .shortcuts-item {
       height: 32px;
       line-height: 32px;
