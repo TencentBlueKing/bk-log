@@ -943,8 +943,11 @@ BKM_SPACE_API_CLASS = "apps.log_search.models.SpaceApi"
 BKM_IPCHOOSER_BKAPI_CLASS = "apps.utils.ipchooser.BkApi"
 # 是否开启动态主机配置协议适配
 ENABLE_DHCP = bool(os.getenv("BKAPP_ENABLE_DHCP", False))
-GSE_VERSION = os.getenv("BKAPP_GSE_VERSION", "v1")
-
+# 如果手动设置了GSE版本，则使用手动设置的版本, 否则根据ENABLE_DHCP来判断, True->v2, False->v1
+if os.getenv("BKAPP_GSE_VERSION"):
+    GSE_VERSION = os.getenv("BKAPP_GSE_VERSION", "v1")
+else:
+    GSE_VERSION = "v2" if ENABLE_DHCP else "v1"
 
 # ==============================================================================
 # Templates
