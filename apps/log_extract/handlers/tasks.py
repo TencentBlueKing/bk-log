@@ -379,8 +379,6 @@ class TasksHandler(object):
             for preview_ip in task["preview_ip"].split(","):
                 new_preview_ip = TasksHandler.format_ip(preview_ip)
                 if not new_preview_ip:
-                    task["enable_clone"] = False
-                    task["message"] = _("缺少bk_cloud_id")
                     continue
                 preview_ip_list.append(new_preview_ip)
             task["preview_ip_list"] = preview_ip_list
