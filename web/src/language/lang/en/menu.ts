@@ -1,4 +1,4 @@
-{
+export default {
   "检索": "Explore",
   "调用链": "Trace",
   "监控策略": "Monitoring",

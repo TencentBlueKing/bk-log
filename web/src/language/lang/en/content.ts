@@ -1,4 +1,4 @@
-{
+export default {
   "日志检索": "Log Retrieve",
   "近{n}分钟": "Last {n} minutes",
   "近{n}小时": "Last {n} hour",

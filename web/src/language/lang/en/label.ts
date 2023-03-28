@@ -1,4 +1,4 @@
-{
+export default {
   "名称": "Name",
   "是否批量开启告警": "Whether to enable alarms in batches",
   "索引集": "IndexSet",
