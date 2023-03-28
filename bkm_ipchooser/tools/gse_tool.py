@@ -93,6 +93,6 @@ class GseTool:
     @classmethod
     def get_adapter(cls) -> GseAdapter:
         """获取GSE适配器"""
-        if settings.ENABLE_DHCP:
+        if settings.GSE_VERSION == "v2":
             return GseAdapterV2()
         return GseAdapterV1()
