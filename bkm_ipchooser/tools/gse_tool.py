@@ -34,7 +34,8 @@ class GseAdapterV1(GseAdapter):
         hosts, host_map = [], {}
         for cc_host in cc_hosts:
             ip, bk_cloud_id = cc_host["bk_host_innerip"], cc_host["bk_cloud_id"]
-            hosts.append({"ip": ip, "bk_cloud_id": bk_cloud_id})
+            if ip and bk_cloud_id >= 0:
+                hosts.append({"ip": ip, "bk_cloud_id": bk_cloud_id})
 
             host_map[f"{bk_cloud_id}:{ip}"] = index
             index += 1
@@ -64,7 +65,8 @@ class GseAdapterV2(GseAdapter):
         agent_id_list, host_map = [], {}
         for cc_host in cc_hosts:
             bk_agent_id = cc_host["bk_agent_id"]
-            agent_id_list.append(bk_agent_id)
+            if bk_agent_id:
+                agent_id_list.append(bk_agent_id)
             host_map[bk_agent_id] = index
             index += 1
 
