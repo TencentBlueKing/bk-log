@@ -113,7 +113,7 @@
             class="task-operation"
             v-if="row.download_status === 'redownloadable'"
             @click="reDownloadFile(row)">
-            {{ $t('重新下载') }}
+            {{ $t('重试') }}
           </span>
         </div>
       </bk-table-column>

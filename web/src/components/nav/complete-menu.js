@@ -74,12 +74,12 @@ export const menuArr = [
         level: 2,
         children: [
           {
-            name: i18n.t('新建告警策略'),
+            name: i18n.t('新建'),
             id: 'addstrategy',
             level: 3,
           },
           {
-            name: i18n.t('编辑告警策略'),
+            name: i18n.t('编辑'),
             id: 'editstrategy',
             level: 3,
           },
@@ -104,7 +104,7 @@ export const menuArr = [
             level: 3,
             children: [
               {
-                name: i18n.t('新增采集'),
+                name: i18n.t('新建采集'),
                 id: 'collectAdd',
                 level: 4,
               },
