@@ -43,11 +43,11 @@ class ESMetric(object):
         namespace_data.data.extend(ping_result)
         if not ping_result:
             namespace_data.status = True
-            namespace_data.message = _("no pubilc es config")
+            namespace_data.message = _("没有公共ES集群")
             return namespace_data
         namespace_data.status = [i.status for i in ping_result].count(True) == len(ping_result)
         if not namespace_data.status:
-            namespace_data.message = "see details"
+            namespace_data.message = _("查看详情")
         namespace_data.data.extend(ping_result)
 
         return namespace_data

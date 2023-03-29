@@ -126,7 +126,7 @@ class ThirdParty(object):
             if data:
                 result["message"] = data.get("message", "")
             else:
-                result["message"] = _("ping failed")
+                result["message"] = _("ping失败")
         except Exception as e:  # pylint: disable=broad-except
             logger.error(f"failed to ping iam, err: {e}")
             result["message"] = str(e)

@@ -243,7 +243,7 @@ class TargetNodeTypeEnum(ChoicesEnum):
     DYNAMIC_GROUP = "DYNAMIC_GROUP"
 
     _choices_labels = (
-        (TOPO, _("TOPO")),
+        (TOPO, _("拓扑")),
         (INSTANCE, _("主机实例")),
         (SERVICE_TEMPLATE, _("服务模板")),
         (SET_TEMPLATE, _("集群模板")),

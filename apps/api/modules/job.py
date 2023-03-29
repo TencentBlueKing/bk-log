@@ -31,7 +31,7 @@ def get_job_request_before(params):
 
 
 class _JobApi:
-    MODULE = _("JOB")
+    MODULE = _("JOB作业平台")
 
     def __init__(self):
         self.fast_execute_script = DataAPI(
