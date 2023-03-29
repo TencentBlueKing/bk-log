@@ -40,7 +40,7 @@
       <!-- 存储索索引名 -->
       <div class="form-div mt">
         <bk-form-item
-          :label="$t('存储索引名')"
+          :label="$t('索引名')"
           class="form-inline-div"
           :rules="rules.table_id"
           :property="'table_id'">

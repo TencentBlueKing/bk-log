@@ -553,7 +553,7 @@ export default {
       pickerTimeRange: ['now-15m', 'now'],
       operatorConfig: {}, // 当前table操作的值
       authPageInfo: null,
-      isShowAddNewCollectDialog: false, // 是否展示新增收藏弹窗
+      isShowAddNewCollectDialog: false, // 是否展示新建收藏弹窗
       collectWidth: localStorage.getItem('isAutoShowCollect') === 'true' ? 240 : 0, // 收藏默认栏宽度
       isShowCollect: localStorage.getItem('isAutoShowCollect') === 'true',
       isSqlSearchType: true, // 是否是sql模式
@@ -566,7 +566,7 @@ export default {
       favSearchList: [], // 收藏的表单模式列表
       inputSearchList: [], // 鼠标失焦后的表单模式列表
       filterAllOperators: {},
-      addFavoriteData: {}, // 新增收藏所需的参数
+      addFavoriteData: {}, // 新建收藏所需的参数
       replaceFavoriteData: {}, // 收藏判断不同后的替换参数
       searchMap: { // 检索按钮
         search: { // 查询
@@ -1739,7 +1739,7 @@ export default {
         contextLog: contextAndRealtime.is_active ? this.$t('上下文') : contextAndRealtime?.extra.reason,
       };
     },
-    // 点击新增收藏
+    // 点击新建收藏
     handleClickFavorite() {
       // 如果点击过收藏，进行参数判断
       const displayFields = this.visibleFields.map(item => item.field_name);
@@ -1753,7 +1753,7 @@ export default {
         host_scopes.target_node_type = '';
         host_scopes.target_nodes = [];
       }
-      const favoriteData = { // 新增收藏参数
+      const favoriteData = { // 新建收藏参数
         index_set_id: this.indexId,
         space_uid: this.spaceUid,
         index_set_name: indexItem.index_set_name,
@@ -1922,7 +1922,7 @@ export default {
         value.params.host_scopes.target_node_type = '';
         value.params.host_scopes.target_nodes = [];
       }
-      this.addFavoriteData = {}; // 清空新增收藏的数据
+      this.addFavoriteData = {}; // 清空新建收藏的数据
       this.isFavoriteSearch = true;
       this.activeFavorite = deepClone(value);
       this.activeFavoriteID = value.id;

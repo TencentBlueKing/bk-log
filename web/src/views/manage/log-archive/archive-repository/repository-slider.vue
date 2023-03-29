@@ -76,8 +76,8 @@
               <span>{{ esClusterSource }}</span>
             </p>
           </bk-form-item>
-          <h3 class="form-title">{{ $t('仓库配置') }}</h3>
-          <bk-form-item :label="$t('仓库类型')" ext-cls="repository-item" required>
+          <h3 class="form-title">{{ $t('配置') }}</h3>
+          <bk-form-item :label="$t('类型')" ext-cls="repository-item" required>
             <div
               :class="{ 'repository-card': true, 'is-active': formData.es_config.type === card.id }"
               v-for="card in repository"

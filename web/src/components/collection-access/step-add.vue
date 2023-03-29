@@ -443,7 +443,7 @@
 
       <!-- 上报链路配置 -->
       <template v-if="!isCloseDataLink">
-        <div class="add-collection-title">{{ $t('上报链路配置') }}</div>
+        <div class="add-collection-title">{{ $t('链路配置') }}</div>
         <bk-form-item required property="data_link_id" :label="$t('上报链路')" :rules="rules.linkConfig">
           <bk-select
             data-test-id="acquisitionConfig_div_selectReportLink"
@@ -2008,7 +2008,7 @@ export default {
       top: 6px;
     }
 
-    &.en-span span{
+    &.en-span span {
       left: -112px;
     }
 

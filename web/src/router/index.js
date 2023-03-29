@@ -595,7 +595,7 @@ const routes = [
           },
           {
             path: 'create',
-            name: 'clean-create', // 日志清洗 - 新增清洗
+            name: 'clean-create', // 日志清洗 - 新建清洗
             meta: {
               needBack: true,
               backName: 'log-clean-list',
