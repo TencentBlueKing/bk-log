@@ -1276,7 +1276,7 @@ class OperatorEnum:
 
 OPERATORS = {
     "keyword": [OperatorEnum.EQ, OperatorEnum.NE, OperatorEnum.EXISTS, OperatorEnum.NOT_EXISTS],
-    "text": [OperatorEnum.EXISTS, OperatorEnum.NOT_EXISTS],
+    "text": [OperatorEnum.EQ, OperatorEnum.NE, OperatorEnum.EXISTS, OperatorEnum.NOT_EXISTS],
     "integer": [
         OperatorEnum.EQ,
         OperatorEnum.NE,
