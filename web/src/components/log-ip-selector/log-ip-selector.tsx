@@ -412,10 +412,10 @@ export default class MonitorIpSelector extends tsc<IMonitorIpSelectorProps> {
       // 内置所有列的 key ['ip', 'ipv6', 'cloudArea', 'alive', 'hostName',
       //  'osName', 'coludVerdor', 'osType', 'hostId', 'agentId']
       hostTableRenderColumnList: this.hostTableRenderColumnList ?? [],
-      hostViewFieldRender: this.hostViewFieldRender ?? ((host: IHost) => {
-        if (host.ip) return undefined;
-        return host[this.priorityList.find(pItem => Boolean(host[pItem]))];
-      }),
+      // hostViewFieldRender: this.hostViewFieldRender ?? ((host: IHost) => {
+      //   if (host.ip) return undefined;
+      //   return host[this.priorityList.find(pItem => Boolean(host[pItem]))];
+      // }),
     };
   }
 

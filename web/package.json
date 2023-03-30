@@ -17,7 +17,7 @@
     "@blueking/bkcharts": "^2.0.11-alpha.5",
     "@blueking/bkmonitor-cli": "1.0.0-beta.21",
     "@blueking/paas-login": "0.0.11",
-    "@blueking/ip-selector": "^0.0.1-beta.73",
+    "@blueking/ip-selector": "^0.0.1-beta.85",
     "@blueking/user-selector": "^1.0.9",
     "@opentelemetry/api": "^1.0.2",
     "@opentelemetry/context-zone": "^0.24.0",
