@@ -24,7 +24,7 @@
   <div class="restore-slider-container">
     <bk-sideslider
       transfer
-      :title="isEdit ? $t('编辑回溯') : $t('新增回溯')"
+      :title="isEdit ? $t('编辑回溯') : $t('新建回溯')"
       :is-show="showSlider"
       :width="676"
       :quick-close="true"
@@ -214,7 +214,7 @@ export default {
           }
         }
 
-        if (this.archiveId) { // 从归档列表新增回溯
+        if (this.archiveId) { // 从归档列表新建回溯
           this.formData.archive_config_id = this.archiveId;
         }
       } else {

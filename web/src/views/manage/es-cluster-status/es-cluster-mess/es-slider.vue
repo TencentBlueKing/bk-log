@@ -415,7 +415,7 @@
               </div>
             </bk-form-item>
             <!-- 集群说明 -->
-            <bk-form-item :label="$t('集群说明')" class="illustrate">
+            <bk-form-item :label="$t('说明')" class="illustrate">
               <bk-input
                 type="textarea"
                 :rows="3"

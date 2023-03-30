@@ -58,7 +58,7 @@
           </bk-form-item>
         </div>
         <!-- 日志字符集 -->
-        <bk-form-item class="mt" :label="$t('日志字符集')" required>
+        <bk-form-item class="mt" :label="$t('字符集')" required>
           <bk-select
             data-test-id="sourceLogBox_div_changeLogCharacterTet"
             style="width: 320px;"
@@ -660,7 +660,7 @@ export default {
     top: 23px;
   }
 
-  &.en-span span{
+  &.en-span span {
     left: -112px;
   }
 

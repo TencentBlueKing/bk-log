@@ -394,7 +394,7 @@ export default class GroupDialog extends tsc<IProps> {
       if (res.result) {
         this.$bkMessage({
           theme: 'success',
-          message: this.$t('新增成功'),
+          message: this.$t('新建成功'),
         });
         this.getGroupList(true);
       }

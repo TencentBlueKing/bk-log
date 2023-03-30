@@ -106,7 +106,7 @@
           </div>
           <!-- 日志字符集 -->
           <div>
-            <span>{{ $t('日志字符集') }}</span>
+            <span>{{ $t('字符集') }}</span>
             <span>{{ collectorData.data_encoding || '-' }}</span>
           </div>
           <!-- 采集目标 -->
@@ -121,7 +121,7 @@
           </div>
           <!-- 存储索引名 -->
           <div>
-            <span>{{ $t('存储索引名') }}</span>
+            <span>{{ $t('索引名') }}</span>
             <span v-if="collectorData.table_id">{{ collectorData.table_id_prefix }}{{ collectorData.table_id }}</span>
             <span v-else>-</span>
           </div>
@@ -229,7 +229,7 @@
         </div>
         <!-- 存储索引名 -->
         <div>
-          <span>{{ $t('存储索引名') }}</span>
+          <span>{{ $t('索引名') }}</span>
           <span>{{ collectorData.table_id_prefix + collectorData.table_id || '-' }}</span>
         </div>
         <!-- 过期时间 -->

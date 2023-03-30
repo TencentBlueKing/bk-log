@@ -132,7 +132,7 @@
               </div>
               <!-- 日志字符集 -->
               <div>
-                <span>{{ $t('日志字符集') }}</span>
+                <span>{{ $t('字符集') }}</span>
                 <span>{{ configItem.data_encoding || '-' }}</span>
               </div>
               <!-- 过滤内容 -->

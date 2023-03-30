@@ -61,7 +61,7 @@
         @filter-change="handleFilterChange"
         @page-change="handlePageChange"
         @page-limit-change="handleLimitChange">
-        <bk-table-column :label="$t('采集项名称')" :render-header="$renderHeader">
+        <bk-table-column :label="$t('名称')" :render-header="$renderHeader">
           <template slot-scope="props">
             {{ props.row.collector_config_name }}
           </template>
