@@ -171,7 +171,7 @@
               text
               class="mr10"
               :tips-conf="props.row.is_platform ? $t('公共集群，禁止创建自定义索引集') : $t('平台默认的集群不允许编辑和删除，请联系管理员。')"
-              :button-text="$t('建索引集')"
+              :button-text="$t('新建索引集')"
               :disabled="!props.row.is_editable || props.row.is_platform"
               @on-click="createIndexSet(props.row)">>
             </log-button>

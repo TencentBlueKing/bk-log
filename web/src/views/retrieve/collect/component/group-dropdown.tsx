@@ -311,7 +311,7 @@ export default class CollectGroup extends tsc<IProps> {
         <ul class="dropdown-list" ref="operate">
           <li onClick={() => this.handleClickLi('share')}>{this.$t('分享')}</li>
           <li onClick={() => this.handleClickLi('edit-favorite')}>{this.$t('编辑')}</li>
-          <li onClick={() => this.handleClickLi('create-copy')}>{this.$t('创建副本')}</li>
+          <li onClick={() => this.handleClickLi('create-copy')}>{this.$t('克隆')}</li>
           <li class="move-group" onMouseenter={this.handleClickMoveGroup}>
             {this.$t('移动至分组')}
             <span class="bk-icon icon-angle-right more-icon"></span>

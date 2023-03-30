@@ -561,7 +561,7 @@ export default {
 
 .log-cluster-table-container {
   .cluster-nav {
-    min-width: 760px;
+    min-width: 1150px;
     margin-bottom: 12px;
     color: #63656e;
 
