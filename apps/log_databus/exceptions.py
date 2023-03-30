@@ -214,6 +214,11 @@ class PublicESClusterNotExistException(BaseCollectorConfigException):
     MESSAGE = _("不存在公共ES集群")
 
 
+class ESClusterAlreadyExistException(BaseCollectorConfigException):
+    ERROR_CODE = "213"
+    MESSAGE = _("ES集群已存在")
+
+
 class EtlNotSupportedException(BaseCollectorConfigException):
     ERROR_CODE = "301"
     MESSAGE = _("暫不支持{separator_node_action}类清洗")
