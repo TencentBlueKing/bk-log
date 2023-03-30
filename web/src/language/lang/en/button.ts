@@ -1,5 +1,5 @@
-{
-  "自动查询": "Auto Query",
+export default {
+  "自动查询": "Auto Query1223",
   "查询": "Query",
   "查询中": "Polling",
   "收藏": "Favorites",
