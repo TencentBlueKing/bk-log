@@ -407,9 +407,11 @@ export default {
         });
         this.tableLoading = false;
         const list = tableRes.data;
-        if (!list.length) {
-          return;
-        }
+        if (!list.length) return;
+        // 生成并赋值ipv6精简模式
+        list.forEach((item) => {
+          item.shortIp = this.shortenIPv6Address(item.cluster_config.domain_name);
+        });
         this.tableDataOrigin = list;
         this.tableDataSearched = list;
         this.pagination.count = list.length;
@@ -470,14 +472,16 @@ export default {
       return row[property] === value;
     },
     searchCallback() {
-      if (this.params.keyword) {
+      const keyword = this.params.keyword.trim();
+      if (keyword) {
         this.tableDataSearched = this.tableDataOrigin.filter((item) => {
           if (item.cluster_config.cluster_name) {
             return (item.cluster_config.cluster_name
                       + item.cluster_config.creator
-                      + item.cluster_config.es_host).includes(this.params.keyword);
+                      + item.cluster_config.domain_name // 原始ipv6或ipv4 shotIP为精简后的ipv6地址
+                      + item.shortIp).includes(keyword);
           }
-          return (item.source_name + item.updated_by).includes(this.params.keyword);
+          return (item.source_name + item.updated_by).includes(keyword);
         });
       } else {
         this.tableDataSearched = this.tableDataOrigin;
@@ -486,6 +490,35 @@ export default {
       this.pagination.current = 1;
       this.pagination.count = this.tableDataSearched.length;
       this.computePageData();
+    },
+    // ipv6精简
+    shortenIPv6Address(ipv6) {
+      // 检查是否为IPv4地址，如果是，则返回空字符串 搜索时直接使用原始domain_name
+      if (ipv6.includes('.')) return '';
+
+      // 将IPv6地址按冒号分隔成数组
+      const parts = ipv6.split(':');
+      let zeroes = 0;
+      let output = '';
+
+      // 找到所有连续的0，并计算需要缩短的位数
+      for (const partItem of parts) {
+        if (partItem === '0000') {
+          zeroes += 1;
+        } else {
+          if (zeroes > 0) {
+            output += ':';
+            zeroes = 0;
+          }
+          output += `${partItem}:`;
+        }
+      }
+
+      // 如果末尾有连续的0，需要再加一个冒号
+      if (zeroes > 0) output += ':';
+
+      // 返回缩短后的IPv6地址
+      return output.replace(/(^|:)0(:0)*(:|$)/, '::');
     },
     // 根据分页数据过滤表格
     computePageData() {

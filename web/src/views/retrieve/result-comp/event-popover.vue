@@ -36,13 +36,13 @@
       <span
         v-if="isSearch"
         class="icon bk-icon icon-close-circle"
-        v-bk-tooltips.top="{ content: $t('添加 {n} 过滤项', { n: 'is' }), delay: 300 }"
+        v-bk-tooltips.top="{ content: $t('添加 {n} 过滤项', { n: '=' }), delay: 300 }"
         @click="handleClick('is')">
       </span>
       <span
         v-if="isSearch"
         class="icon bk-icon icon-minus-circle"
-        v-bk-tooltips.top="{ content: $t('添加 {n} 过滤项', { n: 'is not' }), delay: 300 }"
+        v-bk-tooltips.top="{ content: $t('添加 {n} 过滤项', { n: '!=' }), delay: 300 }"
         @click="handleClick('is not')">
       </span>
       <!-- <span class="icon log-icon icon-chart"></span> -->
@@ -150,6 +150,10 @@ export default {
     .icon-copy {
       margin-right: 3px;
       font-size: 24px;
+
+      &:before {
+        content: '\e109';
+      }
     }
 
     &.is-search {

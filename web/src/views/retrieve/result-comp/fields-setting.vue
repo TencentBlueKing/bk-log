@@ -74,11 +74,13 @@
             <ul class="select-list">
               <li
                 class="select-item"
+                style="cursor: pointer;"
                 v-for="item in shadowTotal"
                 :key="item.field_name"
-                v-show="activeFieldTab === 'visible' ? !item.is_display : (!item.isSorted && item.es_doc_values)">
+                v-show="activeFieldTab === 'visible' ? !item.is_display : (!item.isSorted && item.es_doc_values)"
+                @click="addField(item)">
                 <span class="field-name" v-bk-overflow-tips>{{ getFiledDisplay(item.field_name) }}</span>
-                <span class="icon log-icon icon-filled-right-arrow" @click="addField(item)"></span>
+                <span class="icon log-icon icon-filled-right-arrow"></span>
               </li>
             </ul>
           </div>

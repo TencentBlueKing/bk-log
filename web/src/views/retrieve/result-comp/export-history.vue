@@ -67,7 +67,7 @@
         </template>
         <!-- 检测请求参数 -->
         <bk-table-column
-          :label="$t('检测请求参数')"
+          :label="$t('检索请求参数')"
           width="180">
           <template slot-scope="{ row }">
             <bk-popover placement="top" theme="light">

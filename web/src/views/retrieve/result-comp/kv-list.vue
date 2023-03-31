@@ -118,13 +118,13 @@ export default {
         { id: 'copy', icon: 'log-icon icon-copy' },
       ],
       toolMenuTips: {
-        is: this.$t('添加 {n} 过滤项', { n: 'is' }),
-        not: this.$t('添加 {n} 过滤项', { n: 'is not' }),
+        is: this.$t('添加 {n} 过滤项', { n: '=' }),
+        not: this.$t('添加 {n} 过滤项', { n: '!=' }),
         hiddenField: this.$t('隐藏字段'),
         displayField: this.$t('显示字段'),
         copy: this.$t('复制'),
-        text_is: this.$t('文本类型不支持 {n} 操作', { n: 'is' }),
-        text_not: this.$t('文本类型不支持 {n} 操作', { n: 'is not' }),
+        text_is: this.$t('文本类型不支持 {n} 操作', { n: '=' }),
+        text_not: this.$t('文本类型不支持 {n} 操作', { n: '!=' }),
       },
       mappingKay: { // is is not 值映射
         is: '=',

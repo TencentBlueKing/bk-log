@@ -98,13 +98,12 @@
           />
         </div>
       </bk-table-column>
-      <bk-table-column :label="$t('操作')" :render-header="$renderHeader" min-width="100">
+      <bk-table-column :label="$t('操作')" :render-header="$renderHeader" min-width="140">
         <div slot-scope="{ row }" class="task-operation-container">
           <span class="task-operation" @click="viewDetail(row)">{{ $t('详情') }}</span>
-          <bk-button
+          <span
             text
-            style="margin-right: 12px;"
-            :disabled="!row.enable_clone"
+            :class="['task-operation', !row.enable_clone && 'cannot-click']"
             v-bk-tooltips.top="{
               content: row.message,
               disabled: row.enable_clone,
@@ -112,7 +111,7 @@
             }"
             @click="cloneTask(row)">
             {{ $t('克隆') }}
-          </bk-button>
+          </span>
           <span
             class="task-operation"
             v-if="row.download_status === 'downloadable'"
@@ -340,6 +339,7 @@ export default {
     },
     // 克隆
     cloneTask(row) {
+      if (!row.enable_clone) return;
       sessionStorage.setItem('cloneData', JSON.stringify(row));
       this.$router.push({
         name: 'extract-clone',
@@ -460,6 +460,11 @@ export default {
           margin-right: 12px;
           color: #3a84ff;
           cursor: pointer;
+        }
+
+        .cannot-click {
+          color: #989dab;
+          cursor: no-drop;
         }
       }
 

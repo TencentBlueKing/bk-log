@@ -42,12 +42,12 @@
           </div>
           <div class="operation-container">
             <span
-              v-bk-tooltips="getIconPopover('is', item[0])"
+              v-bk-tooltips="getIconPopover('=', item[0])"
               :class="['bk-icon icon-enlarge-line', filterIsExist('is', item[0]) ? 'disable' : '']"
               @click="addCondition('is', item[0])">
             </span>
             <span
-              v-bk-tooltips="getIconPopover('is not', item[0])"
+              v-bk-tooltips="getIconPopover('!=', item[0])"
               :class="['bk-icon icon-narrow-line', filterIsExist('is not', item[0]) ? 'disable' : '']"
               @click="addCondition('is not', item[0])">
             </span>
