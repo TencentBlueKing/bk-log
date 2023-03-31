@@ -38,12 +38,14 @@
       <kv-list
         v-bind="$attrs"
         :data="data"
+        :list-data="listData"
         :field-list="totalFields"
         :total-fields="totalFields"
+        :kv-show-fields-list="kvShowFieldsList"
         @menuClick="(val) => $emit('menuClick', val)" />
     </div>
     <div class="view-content json-view-content" v-show="activeExpandView === 'json'">
-      <VueJsonPretty :deep="5" :data="data" />
+      <VueJsonPretty :deep="5" :data="jsonShowData" />
     </div>
   </div>
 </template>
@@ -64,11 +66,31 @@ export default {
       type: Array,
       required: true,
     },
+    listData: {
+      type: Object,
+      default: () => {},
+    },
+    kvShowFieldsList: {
+      type: Array,
+      require: true,
+    },
   },
   data() {
     return {
       activeExpandView: 'kv',
     };
+  },
+  computed: {
+    kvListData() {
+      return this.totalFields.filter(item => this.kvShowFieldsList.includes(item.field_name));
+    },
+    jsonShowData() {
+      return this.kvListData.reduce((pre, cur) => {
+        const showTableData = cur.field_type === '__virtual__' ? this.listData : this.data;
+        pre[cur.field_name] = showTableData[cur.field_name] ?? '';
+        return pre;
+      }, {});
+    },
   },
 };
 </script>

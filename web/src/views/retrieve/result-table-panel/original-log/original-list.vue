@@ -103,6 +103,7 @@
       <template slot-scope="{ row, column, $index }">
         <operator-tools
           :index="$index"
+          log-type="origin"
           :cur-hover-index="curHoverIndex"
           :operator-config="operatorConfig"
           :handle-click="(event) => handleClickTools(event, row, operatorConfig)" />

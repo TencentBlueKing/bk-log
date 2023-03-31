@@ -339,7 +339,7 @@ export default {
       }
 
       .original-time {
-        padding-top: 16px;
+        padding-top: 14px;
 
         .cell {
           padding-left: 2px;
