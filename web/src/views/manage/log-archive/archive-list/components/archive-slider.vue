@@ -24,7 +24,7 @@
   <div class="archive-slider-container">
     <bk-sideslider
       transfer
-      :title="isEdit ? $t('编辑归档') : $t('新增归档')"
+      :title="isEdit ? $t('编辑归档') : $t('新建归档')"
       :is-show="showSlider"
       :width="676"
       :quick-close="true"

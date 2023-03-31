@@ -182,7 +182,7 @@
         </bk-form-item>
         <!-- 索引集名称 -->
         <bk-form-item
-          :label="$t('存储索引名')"
+          :label="$t('索引名')"
           class="form-inline-div"
           :rules="storageRules.table_id"
           :property="'table_id'">
