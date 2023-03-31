@@ -43,7 +43,7 @@
         <bk-button
           theme="primary" @click="routeChange('search')"
           data-test-id="finishBox_button_goToSearch"
-        >{{ $t('前往检索') }}</bk-button>
+        >{{ $t('探索') }}</bk-button>
       </div>
     </div>
   </div>

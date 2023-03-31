@@ -69,7 +69,7 @@
           </bk-table-column>
         </bk-table>
         <div class="cluster-illustrate" v-show="!!activeItem">
-          <p class="illustrate-title">{{$t('集群说明')}}</p>
+          <p class="illustrate-title">{{$t('说明')}}</p>
           <div :class="`illustrate-container ${getIsEnLanguage && 'en-div'}`">
             <div v-for="[key, value] of Object.entries(illustrateLabelData)" :key="key">
               <span class="illustrate-label">{{key}}：</span>
@@ -289,12 +289,12 @@ export default {
         padding: 12px 0;
         border-bottom: 1px solid #eee;
 
+        @include flex-justify(space-between);
+
         &.en-div div {
           display: flex;
           flex-direction: column;
         }
-
-        @include flex-justify(space-between);
       }
 
       .illustrate-label {
