@@ -22,7 +22,7 @@
 
 <template>
   <div
-    :class="{ 'handle-content': true, 'fix-content': showAllHandle }"
+    :class="{ 'handle-content': true, 'fix-content': showAllHandle, 'origin-content': logType === 'origin' }"
     v-if="curHoverIndex === index"
     @mouseenter="mouseenterHandle"
     @mouseleave="mouseleaveHandle">
@@ -87,6 +87,10 @@ export default {
       type: Object,
       required: true,
     },
+    logType: {
+      type: String,
+      default: 'table',
+    },
     handleClick: Function,
   },
   data() {
@@ -135,6 +139,10 @@ export default {
     top: 0;
     overflow: hidden;
     justify-content: flex-end;
+  }
+
+  .origin-content {
+    top: 2px;
   }
 
   .fix-content {

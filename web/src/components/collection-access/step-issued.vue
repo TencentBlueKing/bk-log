@@ -893,6 +893,9 @@ export default {
       min-height: calc(100vh - 60px);
       white-space: pre-wrap;
       font-size: 12px;
+      a {
+        color: #3a84ff;
+      }
     }
   }
 </style>

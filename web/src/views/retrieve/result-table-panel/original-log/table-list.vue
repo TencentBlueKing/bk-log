@@ -63,7 +63,9 @@
         <!-- eslint-disable-next-line -->
         <template slot-scope="{ row, column, $index }">
           <keep-alive>
-            <div :class="['str-content', { 'is-limit': !cacheExpandStr.includes($index) }]">
+            <div
+              :class="['str-content', { 'is-limit': !cacheExpandStr.includes($index) }]"
+              :title="isWrap ? '' : tableRowDeepView(row, field.field_name, field.field_type)">
               <table-column
                 :is-wrap="isWrap"
                 :content="tableRowDeepView(row, field.field_name, field.field_type)"
