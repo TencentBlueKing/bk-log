@@ -366,6 +366,9 @@ class ExplorerHandler(object):
 
     @staticmethod
     def add_dot(file_type):
+        if file_type == "*":
+            # 如果只带一个星号，代表匹配全部，包括无后缀
+            return "[^/]*"
         file_type = file_type.replace("*", "[^/]*")
         return f".{file_type}"
 
@@ -751,7 +754,10 @@ class ExplorerHandler(object):
             if request_dir.startswith(allowed_dir_file["file_path"]):
                 search_params["file_path"] = request_dir
                 for file_type in allowed_dir_file["file_type"]:
-                    search_params["file_type"].add("".join(["\\", file_type]))
+                    if file_type.startswith("."):
+                        # 如果是以 . 开头，则增加对其的转义
+                        file_type = f"\\{file_type}"
+                    search_params["file_type"].add(file_type)
 
         if not search_params["file_type"]:
             search_params.clear()
