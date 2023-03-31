@@ -133,16 +133,11 @@ export default {
     position: absolute;
     right: 0;
     width: 84px;
-    height: 100%;
-    padding: 12px 10px;
+    padding: 14px 10px;
     align-items: flex-start;
     top: 0;
     overflow: hidden;
     justify-content: flex-end;
-  }
-
-  .origin-content {
-    top: 2px;
   }
 
   .fix-content {
