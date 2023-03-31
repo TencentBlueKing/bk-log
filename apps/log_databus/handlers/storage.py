@@ -20,6 +20,7 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import functools
+import ipaddress
 import operator
 import re
 
@@ -51,6 +52,7 @@ from apps.log_databus.exceptions import (
     StorageNotExistException,
     StorageNotPermissionException,
     StorageUnKnowEsVersionException,
+    ESClusterAlreadyExistException,
 )
 from apps.log_databus.models import StorageCapacity, StorageUsed
 from apps.log_databus.utils.es_config import get_es_config
@@ -600,6 +602,9 @@ class StorageHandler(object):
         :param params:
         :return:
         """
+        params["domain_name"] = self.format_ipv6_es_domain_name(params["domain_name"])
+        if self.check_es_exist(params):
+            raise ESClusterAlreadyExistException()
 
         if params.get("cluster_namespace"):
             params["custom_option"]["cluster_namespace"] = params["cluster_namespace"]
@@ -1071,3 +1076,38 @@ class StorageHandler(object):
             )
             result.append(repository)
         return result
+
+    def format_ipv6_es_domain_name(self, domain_name: str):
+        """
+        当es域名为ipv6地址时, 将ipv6地址转换为long形式
+        :param domain_name: es地址, 可能是 ipv4, ipv6, 域名
+        :return:
+        """
+
+        try:
+            ipaddr = ipaddress.IPv6Address(domain_name)
+            domain_name = ipaddr.exploded
+        except ipaddress.AddressValueError:
+            return domain_name
+
+        return domain_name
+
+    def check_es_exist(self, params):
+        """
+        检查es集群是否存在
+        params: 创建集群的参数
+        """
+
+        domain_name = self.format_ipv6_es_domain_name(params["domain_name"])
+        port = params["port"]
+
+        exist_clusters = TransferApi.get_cluster_info({"cluster_type": STORAGE_CLUSTER_TYPE, "no_request": True})
+        if not exist_clusters:
+            return False
+        for exist_cluster in exist_clusters:
+            exist_cluster_name = self.format_ipv6_es_domain_name(exist_cluster["cluster_config"]["domain_name"])
+            exist_cluster_port = exist_cluster["cluster_config"]["port"]
+            if domain_name == exist_cluster_name and port == exist_cluster_port:
+                return True
+
+        return False

@@ -1258,6 +1258,8 @@ class SearchHandler(object):
                     else:
                         new_origin_log[_export_field] = log.get(_export_field, "")
                 origin_log = new_origin_log
+            else:
+                origin_log = log
             origin_log_list.append(origin_log)
             _index = hit["_index"]
             log.update({"index": _index})
