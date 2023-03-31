@@ -190,13 +190,16 @@
             <span v-if="isShowRetry(row)" style="margin-right: 10px;">
               <bk-button
                 text
-                v-if="row.retry_able"
+                v-if="row.retry_able && row.export_status !== 'success'"
                 @click="retryExport(row)">
                 {{$t('重试')}}
               </bk-button>
               <span
                 v-else
-                v-bk-tooltips="$t('数据源过期')"
+                v-bk-tooltips="{
+                  content: $t('数据源过期'),
+                  disabled: row.export_status === 'success'
+                }"
                 class="top-start">
                 <bk-button text disabled>
                   {{$t('重试')}}

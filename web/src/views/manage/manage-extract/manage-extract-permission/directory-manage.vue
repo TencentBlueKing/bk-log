@@ -92,7 +92,7 @@
         <div class="title">
           {{$t('文件后缀')}}
           <span class="required">*</span>
-          <span class="log-icon icon-info-fill" v-bk-tooltips="$t('文件后缀提示')"></span>
+          <span class="log-icon icon-info-fill" v-bk-tooltips="$t('请输入不带点号(.)的后缀名，匹配任意文件可填写星号(*)')"></span>
         </div>
         <div class="content">
           <div
