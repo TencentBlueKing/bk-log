@@ -1079,14 +1079,14 @@ class StorageHandler(object):
 
     def format_ipv6_es_domain_name(self, domain_name: str):
         """
-        当es域名为ipv6地址时, 将ipv6地址转换为简写形式
+        当es域名为ipv6地址时, 将ipv6地址转换为long形式
         :param domain_name: es地址, 可能是 ipv4, ipv6, 域名
         :return:
         """
 
         try:
             ipaddr = ipaddress.IPv6Address(domain_name)
-            domain_name = str(ipaddr)
+            domain_name = ipaddr.exploded
         except ipaddress.AddressValueError:
             return domain_name
 
