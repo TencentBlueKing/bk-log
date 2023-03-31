@@ -1777,7 +1777,7 @@ export default {
       //   host_scopes.target_nodes = [];
       // }
       const ipChooser = deepClone(this.retrieveParams.ip_chooser);
-      const favoriteData = { // 新增收藏参数
+      const favoriteData = { // 新建收藏参数
         index_set_id: this.indexId,
         space_uid: this.spaceUid,
         index_set_name: indexItem.index_set_name,
@@ -1951,7 +1951,7 @@ export default {
       //   value.params.host_scopes.target_node_type = '';
       //   value.params.host_scopes.target_nodes = [];
       // }
-      this.addFavoriteData = {}; // 清空新增收藏的数据
+      this.addFavoriteData = {}; // 清空新建收藏的数据
       this.isFavoriteSearch = true;
       this.activeFavorite = deepClone(data);
       this.activeFavoriteID = data.id;
