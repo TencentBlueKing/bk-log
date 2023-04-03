@@ -774,7 +774,11 @@ class ExplorerHandler(object):
             for allowed_dir_file in allowed_dir_file_list:
                 file_types = []
                 for file_type in allowed_dir_file["file_type"]:
-                    file_types.append(rf"(\{file_type})" + ("$" if file_type[-1] != "*" else ""))
+                    if file_type.startswith("."):
+                        # 如果是以 . 开头，则增加对其的转义
+                        file_types.append(rf"(\{file_type})" + ("$" if file_type[-1] != "*" else ""))
+                    else:
+                        file_types.append(file_type + ("$" if file_type[-1] != "*" else ""))
                 # pattern样例：'^/data/[a-zA-Z0-9._/-]+(.gz|.log|.txt)$'
                 if request_file.startswith(allowed_dir_file["file_path"]):
                     file_name = request_file.replace(allowed_dir_file["file_path"], "")
