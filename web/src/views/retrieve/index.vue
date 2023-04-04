@@ -461,7 +461,7 @@ export default {
       activeTab: 'search', // 检索左侧条件 tab - 数据查询：search；收藏记录：record。
       footerHtml: '', // 页脚内容
       isChangingWidth: false, // 拖拽
-      leftPanelWidth: 450, // 左栏默认宽度
+      leftPanelWidth: 400, // 左栏默认宽度
       leftPanelMinWidth: 350, // 左栏最小宽度
       leftPanelMaxWidth: 750, // 左栏最大宽度
       indexId: '', // 当前选择的索引ID

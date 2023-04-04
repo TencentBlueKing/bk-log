@@ -236,6 +236,7 @@
             </bk-checkbox>
             <bk-tag-input
               v-model="otherSpeciesList"
+              free-paste
               :class="otherRules ? 'tagRulesColor' : ''"
               :allow-auto-match="true"
               :has-delete-icon="true"
@@ -257,7 +258,7 @@
           class="select-div"
           v-model="item.type"
           :clearable="false"
-          @selected="tagBlurRules(item,index)">
+          @selected="tagBlurRules(item, index)">
           <bk-option
             v-for="option in selectEventList"
             :key="option.id"
@@ -269,12 +270,13 @@
         <bk-tag-input
           class="tag-input"
           v-model="item.list"
+          free-paste
           :class="item.isCorrect ? '' : 'tagRulesColor'"
           :allow-auto-match="true"
           :has-delete-icon="true"
           :allow-create="true"
-          @blur="tagBlurRules(item,index)"
-          @remove="tagBlurRules(item,index)">
+          @blur="tagBlurRules(item, index)"
+          @remove="tagBlurRules(item, index)">
         </bk-tag-input>
         <div class="ml9">
           <i :class="

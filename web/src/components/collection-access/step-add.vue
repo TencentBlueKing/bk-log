@@ -1932,6 +1932,8 @@ export default {
   }
 
   .species-item {
+    margin-bottom: -30px;
+
     .bk-form-checkbox {
       height: 30px;
       width: 320px;
@@ -1940,10 +1942,8 @@ export default {
     }
 
     .bk-tag-selector {
-      position: absolute;
-      top: 89px;
-      left: 65px;
       width: 320px;
+      transform: translate3d(66px, -30px, 0);
     }
   }
 
