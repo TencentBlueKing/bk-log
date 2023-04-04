@@ -82,6 +82,7 @@ from apps.log_search.constants import (
 from apps.log_search.permission import Permission
 from apps.utils.drf import detail_route, list_route
 from apps.utils.function import ignored
+from bkm_space.utils import space_uid_to_bk_biz_id
 
 
 class CollectorViewSet(ModelViewSet):
@@ -312,6 +313,9 @@ class CollectorViewSet(ModelViewSet):
 
         if not request.GET.get("page") or not request.GET.get("pagesize"):
             raise ValidationError(_("分页参数不能为空"))
+        if request.GET.get("space_uid", ""):
+            request.GET["bk_biz_id"] = space_uid_to_bk_biz_id(request.GET["space_uid"])
+
         response = super().list(request, *args, **kwargs)
         response.data["list"] = CollectorHandler.add_cluster_info(response.data["list"])
 
