@@ -711,6 +711,10 @@ export default {
       .bk-sideslider-content {
         background-color: #313238;
         color: #c4c6cc;
+
+        a {
+          color: #3a84ff;
+        }
       }
     }
   }

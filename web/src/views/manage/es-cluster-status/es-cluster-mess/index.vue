@@ -240,7 +240,7 @@ import { mapGetters } from 'vuex';
 import EsSlider from './es-slider';
 import IntroPanel from './components/intro-panel.vue';
 import dragMixin from '@/mixins/drag-mixin';
-import { formatFileSize, clearTableFilter } from '../../../../common/util';
+import { formatFileSize, clearTableFilter, isIPv6 } from '../../../../common/util';
 import * as authorityMap from '../../../../common/authority-map';
 import EmptyStatus from '@/components/empty-status';
 
@@ -408,10 +408,6 @@ export default {
         this.tableLoading = false;
         const list = tableRes.data;
         if (!list.length) return;
-        // 生成并赋值ipv6精简模式
-        list.forEach((item) => {
-          item.shortIp = this.shortenIPv6Address(item.cluster_config.domain_name);
-        });
         this.tableDataOrigin = list;
         this.tableDataSearched = list;
         this.pagination.count = list.length;
@@ -475,11 +471,14 @@ export default {
       const keyword = this.params.keyword.trim();
       if (keyword) {
         this.tableDataSearched = this.tableDataOrigin.filter((item) => {
+          // 若是ipv6 则拿补全后的keyword与补全后的原地址对比
+          if (isIPv6(keyword)) {
+            return this.completeIPv6Address(item.cluster_config.domain_name) === this.completeIPv6Address(keyword);
+          };
           if (item.cluster_config.cluster_name) {
             return (item.cluster_config.cluster_name
                       + item.cluster_config.creator
-                      + item.cluster_config.domain_name // 原始ipv6或ipv4 shotIP为精简后的ipv6地址
-                      + item.shortIp).includes(keyword);
+                      + item.cluster_config.domain_name).includes(keyword);
           }
           return (item.source_name + item.updated_by).includes(keyword);
         });
@@ -491,34 +490,21 @@ export default {
       this.pagination.count = this.tableDataSearched.length;
       this.computePageData();
     },
-    // ipv6精简
-    shortenIPv6Address(ipv6) {
-      // 检查是否为IPv4地址，如果是，则返回空字符串 搜索时直接使用原始domain_name
-      if (ipv6.includes('.')) return '';
+    // ipv6补全
+    completeIPv6Address(address) {
+      const sections = address.split(':');
+      const missingSections = 8 - sections.length;
 
-      // 将IPv6地址按冒号分隔成数组
-      const parts = ipv6.split(':');
-      let zeroes = 0;
-      let output = '';
-
-      // 找到所有连续的0，并计算需要缩短的位数
-      for (const partItem of parts) {
-        if (partItem === '0000') {
-          zeroes += 1;
-        } else {
-          if (zeroes > 0) {
-            output += ':';
-            zeroes = 0;
-          }
-          output += `${partItem}:`;
-        }
+      for (let i = 0; i < missingSections; i++) {
+        sections.splice(sections.indexOf(''), 1, '0000');
       }
 
-      // 如果末尾有连续的0，需要再加一个冒号
-      if (zeroes > 0) output += ':';
-
-      // 返回缩短后的IPv6地址
-      return output.replace(/(^|:)0(:0)*(:|$)/, '::');
+      return sections.map((section) => {
+        if (section.length < 4) {
+          section = '0'.repeat(4 - section.length) + section;
+        }
+        return section;
+      }).join(':');
     },
     // 根据分页数据过滤表格
     computePageData() {
