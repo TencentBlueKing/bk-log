@@ -51,6 +51,8 @@ from apps.log_search.constants import (
     EtlConfigEnum,
     FieldBuiltInEnum,
 )
+from bkm_space.serializers import SpaceUIDField
+from bkm_space.utils import space_uid_to_bk_biz_id
 
 
 class PermissionGroupSerializer(serializers.Serializer):
@@ -264,12 +266,23 @@ class CustomCollectorBaseSerializer(serializers.Serializer):
 
 
 class CustomCreateSerializer(CustomCollectorBaseSerializer):
-    bk_biz_id = serializers.IntegerField(label=_("业务ID"))
+    bk_biz_id = serializers.IntegerField(label=_("业务ID"), required=False)
+    space_uid = SpaceUIDField(label=_("空间唯一标识"), required=False)
+
     collector_config_name_en = serializers.RegexField(
         label=_("采集英文名称"), min_length=5, max_length=50, regex=COLLECTOR_CONFIG_NAME_EN_REGEX
     )
     data_link_id = serializers.CharField(label=_("数据链路id"), required=False, allow_blank=True, allow_null=True)
     custom_type = serializers.ChoiceField(label=_("日志类型"), choices=CustomTypeEnum.get_choices())
+
+    def validate(self, attrs: dict) -> dict:
+        attrs = super().validate(attrs)
+        if attrs.get("space_uid", ""):
+            attrs["bk_biz_id"] = space_uid_to_bk_biz_id(attrs["space_uid"])
+        elif not attrs.get("bk_biz_id", ""):
+            raise ValueError("bk_biz_id or space_uid not found")
+
+        return attrs
 
 
 class CustomUpdateSerializer(CustomCollectorBaseSerializer):
