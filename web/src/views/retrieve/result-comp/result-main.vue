@@ -234,13 +234,30 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-  @import '../../../scss/mixins/scroller.scss';
+  // @import '../../../scss/mixins/scroller.scss';
 
   .result-scroll-container {
     height: 100%;
     overflow: auto;
 
-    @include scroller;
+    &::-webkit-scrollbar {
+      width: 10px;
+      height: 4px;
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      border-radius: 5px;
+      border-style: dashed;
+      border-left-width: 3px;
+      border-color: transparent;
+      background-color: #ddd;
+      background-clip: padding-box;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+      background: #ddd;
+    }
   }
 
   .result-text {
