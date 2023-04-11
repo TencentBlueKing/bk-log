@@ -35,7 +35,7 @@ class RabbitMQMetric(object):
         namespace_data = NamespaceData(namespace="rabbitmq", status=False, data=[])
         if not settings.BROKER_URL.startswith("amqp://"):
             namespace_data.status = True
-            namespace_data.message = _("broker is not set to rabbitmq, skip this check")
+            namespace_data.message = _("没有使用rabbitmq作为broker, 跳过该检查")
             return namespace_data
 
         ping_result = RabbitMQMetric().ping()

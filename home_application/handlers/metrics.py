@@ -113,7 +113,7 @@ class HealthzMetricCollector(object):
                     self.register_metrics[namespace] = HEALTHZ_REGISTERED_METRICS[namespace]
                 else:
                     self.data["data"][namespace] = NamespaceData(
-                        namespace=namespace, message=_(f"unsupported namespace[{namespace}]")
+                        namespace=namespace, message=_(f"不支持的命名空间[{namespace}]")
                     )
             return
         for namespace in HEALTHZ_REGISTERED_METRICS:
