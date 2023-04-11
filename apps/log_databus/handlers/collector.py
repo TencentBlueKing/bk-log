@@ -2201,6 +2201,9 @@ class CollectorHandler(object):
         custom_type=None,
         category_id=None,
         description=None,
+        etl_config=None,
+        etl_params=None,
+        fields=None,
         storage_cluster_id=None,
         retention=7,
         allocation_min_days=0,
@@ -2291,7 +2294,7 @@ class CollectorHandler(object):
             from apps.log_databus.handlers.etl import EtlHandler
 
             etl_handler = EtlHandler.get_instance(self.data.collector_config_id)
-            etl_params = {
+            params = {
                 "table_id": collector_config_name_en,
                 "storage_cluster_id": storage_cluster_id,
                 "retention": retention,
@@ -2302,7 +2305,14 @@ class CollectorHandler(object):
                 "etl_config": custom_config.etl_config,
                 "fields": custom_config.fields,
             }
-            self.data.index_set_id = etl_handler.update_or_create(**etl_params)["index_set_id"]
+            if etl_params and fields:
+                # 如果传递了清洗参数，则优先使用
+                params.update({
+                    "etl_params": etl_params,
+                    "etl_config": etl_config,
+                    "fields": fields,
+                })
+            self.data.index_set_id = etl_handler.update_or_create(**params)["index_set_id"]
             self.data.save(update_fields=["index_set_id"])
 
         custom_config.after_hook(self.data)
@@ -2322,6 +2332,9 @@ class CollectorHandler(object):
         collector_config_name=None,
         category_id=None,
         description=None,
+        etl_config=None,
+        etl_params=None,
+        fields=None,
         storage_cluster_id=None,
         retention=7,
         allocation_min_days=0,
@@ -2363,12 +2376,11 @@ class CollectorHandler(object):
             LogIndexSet.objects.filter(index_set_id=self.data.index_set_id).update(index_set_name=index_set_name)
 
         custom_config = get_custom(self.data.custom_type)
-        etl_params = custom_config.etl_params
-        etl_config = custom_config.etl_config
-        fields = custom_config.fields
-
-        # 可能创建报错导致没有清洗配置 导致更新失败
-        if self.data.etl_config and custom_config.etl_config != self.data.etl_config:
+        if etl_params and fields:
+            # 1. 传递了清洗参数，则优先级最高
+            etl_params, etl_config, fields = etl_params, etl_config, fields
+        elif self.data.etl_config:
+            # 2. 如果本身配置过清洗，则直接使用
             collector_detail = self.retrieve()
             # need drop built in field
             collector_detail["fields"] = map_if(
@@ -2377,6 +2389,11 @@ class CollectorHandler(object):
             etl_params = collector_detail["etl_params"]
             etl_config = collector_detail["etl_config"]
             fields = collector_detail["fields"]
+        else:
+            # 3. 默认清洗规则，根据自定义类型来
+            etl_params = custom_config.etl_params
+            etl_config = custom_config.etl_config
+            fields = custom_config.fields
 
         # 仅在传入集群ID时更新
         if storage_cluster_id:

@@ -1196,6 +1196,13 @@ class ContainerCollectorYamlSerializer(serializers.Serializer):
 class CustomCollectorBaseSerializer(serializers.Serializer):
     collector_config_name = serializers.CharField(label=_("采集名称"), max_length=50)
     category_id = serializers.CharField(label=_("分类ID"))
+
+    # 清洗配置
+    etl_config = serializers.CharField(label=_("清洗类型"), required=False, default=EtlConfig.BK_LOG_TEXT)
+    etl_params = CollectorEtlParamsSerializer(required=False)
+    fields = serializers.ListField(child=CollectorEtlFieldsSerializer(), label=_("字段配置"), required=False)
+
+    # 存储配置
     storage_cluster_id = serializers.IntegerField(label=_("集群ID"), required=False)
     retention = serializers.IntegerField(label=_("有效时间"), required=False)
     allocation_min_days = serializers.IntegerField(label=_("冷热数据生效时间"), required=False)
@@ -1205,6 +1212,8 @@ class CustomCollectorBaseSerializer(serializers.Serializer):
     es_shards = serializers.IntegerField(
         label=_("ES分片数量"), required=False, default=settings.ES_SHARDS, min_value=1, max_value=64
     )
+
+    # 其他配置
     description = serializers.CharField(
         label=_("备注说明"), max_length=64, required=False, allow_null=True, allow_blank=True
     )
