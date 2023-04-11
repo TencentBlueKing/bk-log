@@ -80,16 +80,16 @@ class EtlStorage(object):
         :param etl_params: 字段提取参数
         :return: 字段列表 list
         """
-        raise NotImplementedError("功能暂未实现")
+        raise NotImplementedError(_("功能暂未实现"))
 
     def get_bkdata_etl_config(self, fields, etl_params, built_in_config):
-        raise NotImplementedError("功能暂未实现")
+        raise NotImplementedError(_("功能暂未实现"))
 
     def get_result_table_config(self, fields, etl_params, built_in_config, es_version="5.X"):
         """
         配置清洗入库策略，需兼容新增、编辑
         """
-        raise NotImplementedError("功能暂未实现")
+        raise NotImplementedError(_("功能暂未实现"))
 
     def get_result_table_fields(self, fields, etl_params, built_in_config, es_version="5.X"):
         """

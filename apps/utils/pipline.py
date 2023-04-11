@@ -45,7 +45,7 @@ class BaseService(Service):
 
     def __init__(self):
         if not self.name:
-            raise Exception("service name 不能为None")
+            raise Exception(_("service name 不能为None"))
         super().__init__(name=self.name)
 
     def execute(self, data, parent_data, is_raise_exception=False):

@@ -38,7 +38,7 @@ def get_job_request_before_with_esb(params):
 
 
 class _JobApi:
-    MODULE = _("JOB")
+    MODULE = _("JOB作业平台")
 
     def __init__(self):
         self.get_public_script_list = DataAPI(

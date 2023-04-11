@@ -21,6 +21,7 @@ the project delivered to anyone in the future.
 """
 import copy
 import json
+from django.utils.translation import ugettext_lazy as _
 
 import settings
 from apps.api import BkDataDatabusApi, BkDataMetaApi, BkDataAccessApi, BkDataResourceCenterApi, BkDataAuthApi
@@ -69,7 +70,7 @@ class DataAccessHandler(BaseAiopsHandler):
                 "data_source": "kafka",
                 "data_encoding": "UTF-8",
                 "sensitivity": "private",
-                "description": f"接入配置 ({collector_config.description})",
+                "description": _("接入配置 ({description})").format(description=collector_config.description),
                 "tags": [],
                 "data_source_tags": ["src_kafka"],
             },

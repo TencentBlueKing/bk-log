@@ -455,7 +455,7 @@ USE_L10N = True
 LANGUAGE_CODE = "zh-cn"
 LOCALEURL_USE_ACCEPT_LANGUAGE = True
 
-LANGUAGES = (("en", "English"), ("zh-cn", "简体中文"))
+LANGUAGES = (("en", "English"), ("zh-cn", _("简体中文")))
 LANGUAGE_SESSION_KEY = "blueking_language"
 LANGUAGE_COOKIE_NAME = "blueking_language"
 
@@ -563,7 +563,7 @@ MENUS = [
                 "name": _("仪表盘"),
                 "feature": "on",
                 "icon": "",
-                "keyword": _("仪表"),
+                "keyword": _("仪表盘"),
                 "children": [
                     {"id": "default_dashboard", "name": _("默认仪表盘"), "feature": "on", "icon": "block-shape"},
                     {"id": "create_dashboard", "name": _("新建仪表盘"), "feature": "on", "icon": "plus-circle-shape"},
@@ -637,7 +637,7 @@ MENUS = [
                 "name": _("日志归档"),
                 "feature": "on",
                 "icon": "",
-                "keyword": "归档",
+                "keyword": _("归档"),
                 "children": [
                     {
                         "id": "archive_repository",
@@ -699,7 +699,13 @@ MENUS = [
                         "scenes": "scenario_bkdata",
                         "icon": "cc-cabinet",
                     },
-                    {"id": "bk_data_track", "name": _("第三方ES"), "feature": "off", "scenes": "scenario_es", "icon": ""},
+                    {
+                        "id": "third_party_es_trace",
+                        "name": _("第三方ES"),
+                        "feature": "off",
+                        "scenes": "scenario_es",
+                        "icon": "",
+                    },
                     {"id": "sdk_track", "name": _("SDK接入"), "feature": "off", "icon": ""},
                 ],
             },

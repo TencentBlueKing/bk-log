@@ -40,8 +40,8 @@ class CosUploadService(BaseService):
 
     def outputs(self):
         return [
-            Service.OutputItem(name=_("job instance id"), key="task_instance_id", type="int"),
-            Service.OutputItem(name=_("pack file name"), key="pack_file_name", type="str"),
+            Service.OutputItem(name=_("任务实例ID"), key="task_instance_id", type="int"),
+            Service.OutputItem(name=_("打包文件名称"), key="pack_file_name", type="str"),
         ]
 
     def _poll_status(self, task_instance_id, operator, bk_biz_id):

@@ -21,6 +21,7 @@ the project delivered to anyone in the future.
 """
 from django.core.management.base import BaseCommand
 from home_application.handlers.healthz import HealthzHandler
+from django.utils.translation import ugettext_lazy as _
 
 
 class Command(BaseCommand):
@@ -39,7 +40,7 @@ class Command(BaseCommand):
             exclude_namespaces = exclude_namespaces.split(",")
         else:
             exclude_namespaces = []
-        print("\n开始healthz检查, 预计等待1分钟\n")
+        print(_("\n开始healthz检查, 预计等待1分钟\n"))
         print(
             HealthzHandler().get_data(
                 format_type="console", include_namespaces=include_namespaces, exclude_namespaces=exclude_namespaces
