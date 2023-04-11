@@ -65,15 +65,15 @@ export default {
         scaleExtent: [0.2, 2],
         controlPanel: true,
         tools: [{
-          text: this.$t('trace.zoomIn'),
+          text: this.$t('放大'),
           icon: 'bk-icon icon-plus-circle',
           type: 'zoomIn',
         }, {
-          text: this.$t('trace.zoomOut'),
+          text: this.$t('缩小'),
           icon: 'bk-icon icon-minus-circle',
           type: 'zoomOut',
         }, {
-          text: this.$t('trace.restore'),
+          text: this.$t('还原'),
           icon: 'bk-icon icon-full-screen',
           type: 'resetPosition',
         }],

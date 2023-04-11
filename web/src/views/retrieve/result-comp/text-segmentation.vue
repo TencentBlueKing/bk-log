@@ -54,12 +54,12 @@
       <div ref="moreTools" class="event-icons">
         <span
           class="icon bk-icon icon-close-circle"
-          v-bk-tooltips.top="{ content: `${$t('添加')} is ${$t('过滤项')}`, delay: 300 }"
+          v-bk-tooltips.top="{ content: $t('添加 {n} 过滤项', { n: 'is' }), delay: 300 }"
           @click="handleMenuClick('is')">
         </span>
         <span
           class="icon bk-icon icon-minus-circle"
-          v-bk-tooltips.top="{ content: `${$t('添加')} is not ${$t('过滤项')}`, delay: 300 }"
+          v-bk-tooltips.top="{ content: $t('添加 {n} 过滤项', { n: 'is not' }), delay: 300 }"
           @click="handleMenuClick('not')">
         </span>
         <span
@@ -182,7 +182,10 @@ export default {
     checkMark(splitItem) {
       if (!this.markList.length) return false;
       // 以句号开头或句号结尾的分词符匹配成功也高亮展示
-      return this.markList.some(item => item === splitItem || new RegExp(`^\\.${item}|${item}\\.$`).test(splitItem));
+      return this.markList.some(item => item === splitItem
+       || splitItem.startsWith(`.${item}`)
+       || splitItem.endsWith(`${item}.`),
+      );
     },
     handleMenuClick(event) {
       this.menuClick(event, this.curValue);

@@ -110,63 +110,63 @@ export const handleTransformToTimestamp = (value: TimeRangeType): TimestampsType
 /** 时间区间快捷选项 */
 export const shortcuts = [
   {
-    text: i18n.t('retrieve.近{n}分钟', { n: 5 }),
+    text: i18n.t('近{n}分钟', { n: 5 }),
     value: ['now-5m', 'now']
   },
   {
-    text: i18n.t('retrieve.近{n}分钟', { n: 15 }),
+    text: i18n.t('近{n}分钟', { n: 15 }),
     value: ['now-15m', 'now']
   },
   {
-    text: i18n.t('retrieve.近{n}分钟', { n: 30 }),
+    text: i18n.t('近{n}分钟', { n: 30 }),
     value: ['now-30m', 'now']
   },
   {
-    text: i18n.t('retrieve.近{n}小时', { n: 1 }),
+    text: i18n.t('近{n}小时', { n: 1 }),
     value: ['now-1h', 'now']
   },
   {
-    text: i18n.t('retrieve.近{n}小时', { n: 3 }),
+    text: i18n.t('近{n}小时', { n: 3 }),
     value: ['now-3h', 'now']
   },
   {
-    text: i18n.t('retrieve.近{n}小时', { n: 6 }),
+    text: i18n.t('近{n}小时', { n: 6 }),
     value: ['now-6h', 'now']
   },
   {
-    text: i18n.t('retrieve.近{n}小时', { n: 12 }),
+    text: i18n.t('近{n}小时', { n: 12 }),
     value: ['now-12h', 'now']
   },
   {
-    text: i18n.t('retrieve.近{n}小时', { n: 24 }),
+    text: i18n.t('近{n}小时', { n: 24 }),
     value: ['now-24h', 'now']
   },
   {
-    text: i18n.t('retrieve.近{n}天', { n: 2 }),
+    text: i18n.t('近{n}天', { n: 2 }),
     value: ['now-2d', 'now']
   },
   {
-    text: i18n.t('retrieve.近{n}天', { n: 7 }),
+    text: i18n.t('近{n}天', { n: 7 }),
     value: ['now-7d', 'now']
   },
   {
-    text: i18n.t('retrieve.近{n}天', { n: 30 }),
+    text: i18n.t('近{n}天', { n: 30 }),
     value: ['now-30d', 'now']
   },
   {
-    text: i18n.t('retrieve.今天'),
+    text: i18n.t('今天'),
     value: ['now/d', 'now/d']
   },
   {
-    text: i18n.t('retrieve.昨天'),
+    text: i18n.t('昨天'),
     value: ['now-1d/d', 'now-1d/d']
   },
   {
-    text: i18n.t('retrieve.前天'),
+    text: i18n.t('前天'),
     value: ['now-2d/d', 'now-2d/d']
   },
   {
-    text: i18n.t('retrieve.本周'),
+    text: i18n.t('本周'),
     value: ['now/w', 'now/w']
   }
 ];

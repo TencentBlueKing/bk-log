@@ -36,12 +36,13 @@
           :right-icon="'bk-icon icon-search'"
           data-test-id="cleaningListBox_input_searchCleaningList"
           v-model="params.keyword"
-          @enter="search">
+          @enter="search"
+          @change="handleSearchChange">
         </bk-input>
         <div
           class="operation-icon"
           @click="handleSync"
-          v-bk-tooltips="$t('logClean.syncTip')">
+          v-bk-tooltips="$t('同步计算平台的结果')">
           <span v-if="!syncLoading" class="log-icon icon-tongbu"></span>
           <span v-else class="loading"></span>
         </div>
@@ -56,21 +57,23 @@
         v-bkloading="{ isLoading: isTableLoading }"
         :pagination="pagination"
         :limit-list="pagination.limitList"
+        ref="cleanTable"
         @filter-change="handleFilterChange"
         @page-change="handlePageChange"
         @page-limit-change="handleLimitChange">
-        <bk-table-column :label="$t('migrate.collectionItemName')">
+        <bk-table-column :label="$t('采集项名称')" :render-header="$renderHeader">
           <template slot-scope="props">
             {{ props.row.collector_config_name }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('logClean.storageIndex')">
+        <bk-table-column :label="$t('存储索引')" :render-header="$renderHeader">
           <template slot-scope="props">
             {{ props.row.result_table_id }}
           </template>
         </bk-table-column>
         <bk-table-column
-          :label="$t('logClean.etlConfig')"
+          :label="$t('格式化方法')"
+          :render-header="$renderHeader"
           prop="etl_config"
           class-name="filter-column"
           column-key="etl_config"
@@ -80,17 +83,17 @@
             {{ getFormatName(props.row) }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('dataSource.updated_by')">
+        <bk-table-column :label="$t('更新人')" :render-header="$renderHeader">
           <template slot-scope="props">
             {{ props.row.updated_by }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('dataSource.updated_at')">
+        <bk-table-column :label="$t('更新时间')" :render-header="$renderHeader">
           <template slot-scope="props">
             {{ props.row.updated_at }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('dataSource.operation')" width="200">
+        <bk-table-column :label="$t('操作')" :render-header="$renderHeader" width="200">
           <div class="collect-table-operate" slot-scope="props">
             <!-- bkdata_auth_url不为null则表示需要跳转计算平台检索 -->
             <!-- 高级清洗授权 -->
@@ -109,7 +112,7 @@
               text
               ext-cls="mr10 king-button"
               :tips-conf="getTipText(props.row)"
-              :button-text="$t('nav.retrieve')"
+              :button-text="$t('检索')"
               :disabled="(!props.row.is_active || !props.row.index_set_id)"
               :cursor-active="!(props.row.permission && props.row.permission[authorityMap.SEARCH_LOG_AUTH])"
               @on-click="operateHandler(props.row, 'search')">
@@ -131,13 +134,16 @@
               text
               ext-cls="mr10 king-button"
               :tips-conf="''"
-              :button-text="$t('btn.delete')"
+              :button-text="$t('删除')"
               :disabled="props.row.etl_config !== 'bkdata_clean'"
               :cursor-active="!(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])"
               @on-click="operateHandler(props.row, 'delete')">
             </log-button>
           </div>
         </bk-table-column>
+        <div slot="empty">
+          <empty-status :empty-type="emptyType" @operation="handleOperation" />
+        </div>
       </bk-table>
     </section>
   </section>
@@ -146,9 +152,14 @@
 <script>
 import { mapGetters } from 'vuex';
 import * as authorityMap from '../../../../common/authority-map';
+import EmptyStatus from '@/components/empty-status';
+import { clearTableFilter } from '@/common/util';
 
 export default {
   name: 'CleanList',
+  components: {
+    EmptyStatus,
+  },
   data() {
     return {
       isTableLoading: true,
@@ -165,6 +176,8 @@ export default {
         keyword: '',
         etl_config: '',
       },
+      emptyType: 'empty',
+      isFilterSearch: false,
     };
   },
   computed: {
@@ -187,8 +200,8 @@ export default {
         });
       });
       target.push(
-        { text: this.$t('logClean.rawData'), value: 'bk_log_text' },
-        { text: this.$t('logClean.advancedClean'), value: 'bkdata_clean' },
+        { text: this.$t('原始数据'), value: 'bk_log_text' },
+        { text: this.$t('高级清洗'), value: 'bkdata_clean' },
       );
       return target;
     },
@@ -209,6 +222,7 @@ export default {
       Object.keys(data).forEach((item) => {
         this.params[item] = data[item].join('');
       });
+      this.isFilterSearch = Object.values(data).reduce((pre, cur) => ((pre += cur.length), pre), 0);
       this.pagination.current = 1;
       this.search();
     },
@@ -237,6 +251,7 @@ export default {
     },
     requestData() {
       this.isTableLoading = true;
+      this.emptyType = (this.params.keyword || this.isFilterSearch) ? 'search-empty' : 'empty';
       this.$http.request('clean/cleanList', {
         query: {
           ...this.params,
@@ -251,6 +266,7 @@ export default {
       })
         .catch((err) => {
           console.warn(err);
+          this.emptyType = '500';
         })
         .finally(() => {
           this.isTableLoading = false;
@@ -387,7 +403,7 @@ export default {
           clearInterval(this.timer);
           this.timer = null;
           this.syncLoading = false;
-          this.messageSuccess(this.$t('logClean.syncSuccess'));
+          this.messageSuccess(this.$t('同步计算平台的结果表成功'));
           this.requestData();
         } else if (data.status === 'RUNNING') { // 轮循直至同步成功
           if (this.timer) {
@@ -397,13 +413,32 @@ export default {
             this.getSyncStatus(true);
           }, 2000);
         } else {
-          this.messageError(this.$t('logClean.syncFaild'));
+          this.messageError(this.$t('同步计算平台的结果表失败'));
           this.syncLoading = false;
         }
       })
         .catch(() => {
           this.syncLoading = false;
         });
+    },
+    handleSearchChange(val) {
+      if (val === '' && !this.isTableLoading) {
+        this.search();
+      }
+    },
+    handleOperation(type) {
+      if (type === 'clear-filter') {
+        this.params.keyword = '';
+        clearTableFilter(this.$refs.cleanTable);
+        this.search();
+        return;
+      }
+
+      if (type === 'refresh') {
+        this.emptyType = 'empty';
+        this.search();
+        return;
+      }
     },
   },
 };

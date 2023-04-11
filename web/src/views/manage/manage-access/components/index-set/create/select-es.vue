@@ -55,22 +55,25 @@
           <div class="error-tips-container" v-if="indexErrorText">
             <span class="log-icon icon-info-fill" v-bk-tooltips="{ width: 440, content: indexErrorText }"></span>
           </div>
-          <div class="input-tips">{{ $t('indexSetList.tips') }}</div>
+          <div class="input-tips">{{ $t('支持“*”匹配，不支持其他特殊符号') }}</div>
         </bk-form-item>
         <bk-form-item label="">
           <div class="result-tips" v-if="matchedTableIds.length">
             <i class="bk-icon icon-check-circle-shape"></i>
-            {{ $t('成功匹配x条索引', { x: matchedTableIds.length }) }}
+            {{ $t('成功匹配 {x} 条索引', { x: matchedTableIds.length }) }}
           </div>
           <bk-table
             v-bkloading="{ isLoading: tableLoading }"
             :data="matchedTableIds"
-            max-height="259">
+            max-height="400">
             <bk-table-column
               :label="$t('索引')"
               property="result_table_id"
               min-width="490">
             </bk-table-column>
+            <div slot="empty">
+              <empty-status :empty-type="emptyType" @operation="handleOperation" />
+            </div>
           </bk-table>
         </bk-form-item>
         <bk-form-item
@@ -107,6 +110,9 @@
             </bk-option>
           </bk-select>
         </bk-form-item>
+        <div slot="empty">
+          <empty-status :empty-type="emptyType" @operation="handleOperation" />
+        </div>
       </bk-form>
       <div slot="footer" class="button-footer">
         <bk-button
@@ -124,8 +130,12 @@
 
 <script>
 import { mapState } from 'vuex';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
+  components: {
+    EmptyStatus,
+  },
   props: {
     parentData: {
       type: Object,
@@ -145,6 +155,7 @@ export default {
       searchLoading: false,
       confirmLoading: false,
       indexErrorText: '',
+      emptyType: 'empty',
       matchedTableIds: [], // 匹配到的索引 id，result table id list
       timeFields: [], // 字段类型为 date 或 long 的字段
       formData: {
@@ -154,9 +165,9 @@ export default {
         time_field_unit: 'microsecond',
       },
       timeUnits: [
-        { name: '秒（second）', id: 'second' },
-        { name: '毫秒（millisecond）', id: 'millisecond' },
-        { name: '微秒（microsecond）', id: 'microsecond' },
+        { name: this.$t('秒（second）'), id: 'second' },
+        { name: this.$t('毫秒（millisecond）'), id: 'millisecond' },
+        { name: this.$t('微秒（microsecond）'), id: 'microsecond' },
       ],
       formRules: {
         resultTableId: [{
@@ -207,6 +218,20 @@ export default {
         },
       });
     },
+    handleOperation(type) {
+      if (type === 'clear-filter') {
+        this.formData.resultTableId = '*';
+        this.emptyType = 'empty';
+        this.handleSearch();
+        return;
+      }
+
+      if (type === 'refresh') {
+        this.emptyType = 'empty';
+        this.handleSearch();
+        return;
+      }
+    },
     // 如果result_table_id为空，在光标后自动追加*
     handleFocus(value, event) {
       if (!this.formData.resultTableId) {
@@ -221,6 +246,7 @@ export default {
       if (!this.formData.resultTableId || this.formData.resultTableId === '*') {
         return;
       }
+      this.emptyType = 'search-empty';
       this.indexErrorText = '';
       this.formData.time_field = '';
       this.formData.time_field_type = '';
@@ -247,6 +273,7 @@ export default {
       } catch (e) {
         console.warn(e);
         this.indexErrorText += e.message;
+        this.emptyType = '500';
         return [];
       }
     },
@@ -274,6 +301,7 @@ export default {
       } catch (e) {
         console.warn(e);
         this.indexErrorText += e.message;
+        this.emptyType = '500';
         return [];
       }
     },
@@ -329,7 +357,7 @@ export default {
   .slot-container {
     padding-right: 40px;
 
-    ::v-deep .bk-form {
+    :deep(.bk-form) {
       .bk-label {
         text-align: left;
       }

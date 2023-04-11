@@ -25,37 +25,37 @@
     <div class="deploy-sub">
       <!-- 数据ID -->
       <div>
-        <span>{{ $t('dataSource.dataId') }}</span>
+        <span>{{ $t('数据ID') }}</span>
         <span>{{ collectorData.bk_data_id || '-' }}</span>
       </div>
       <!-- 名称 -->
       <div>
-        <span>{{ $t('configDetails.name') }}</span>
+        <span>{{ $t('名称') }}</span>
         <span>{{ collectorData.collector_config_name || '-' }}</span>
       </div>
       <!-- 英文名 -->
       <div>
-        <span>{{ $t('dataSource.source_en_name') }}</span>
+        <span>{{ $t('英文名') }}</span>
         <span>{{ collectorData.collector_config_name_en || '-' }}</span>
       </div>
       <!-- 备注说明 -->
       <div>
-        <span>{{ $t('configDetails.remarkExplain') }}</span>
+        <span>{{ $t('备注说明') }}</span>
         <span>{{ collectorData.description || '-' }}</span>
       </div>
       <!-- 数据分类 -->
       <div>
-        <span>{{ $t('configDetails.dataClassify') }}</span>
+        <span>{{ $t('数据分类') }}</span>
         <span>{{ collectorData.category_name || '-' }}</span>
       </div>
       <!-- 存储集群 -->
       <div>
-        <span>{{ $t('configDetails.StorageCluster') }}</span>
+        <span>{{ $t('存储集群') }}</span>
         <span>{{ collectorData.storage_cluster_name || '-' }}</span>
       </div>
       <!-- 日志类型 -->
       <div>
-        <span>{{ $t('configDetails.logType') }}</span>
+        <span>{{ $t('日志类型') }}</span>
         <span>{{ collectorData.collector_scenario_name || '-' }}</span>
       </div>
       <!-- 容器集群 -->
@@ -95,7 +95,7 @@
                 <div class="specify-box" v-if="isSelectorHaveValue(configItem.container)">
                   <template
                     v-for="([speKey, speValue], speIndex) in Object.entries(configItem.container)">
-                    <div class="specify-container" v-if="speValue" :key="speIndex">
+                    <div class="specify-container" v-if="speValue" :key="speIndex" v-bk-overflow-tips>
                       <span>{{specifyName[speKey]}}</span> : <span>{{speValue}}</span>
                     </div>
                   </template>
@@ -110,11 +110,11 @@
                     <div class="specify-box"
                          v-for="(matchItem, matchKey) of labItem"
                          :key="`${labKey}_${matchKey}`">
-                      <div class="specify-container justify-bt">
+                      <div class="specify-container justify-bt" v-bk-overflow-tips>
                         <span>{{matchItem.key}}</span>
                         <div class="operator">{{matchItem.operator}}</div>
                       </div>
-                      <div class="specify-container">
+                      <div class="specify-container" v-bk-overflow-tips>
                         <span>{{matchItem.value}}</span>
                       </div>
                     </div>
@@ -124,7 +124,7 @@
               </div>
               <!-- 日志路径 -->
               <div>
-                <span>{{ $t('configDetails.logPath') }}</span>
+                <span>{{ $t('日志路径') }}</span>
                 <div v-if=" configItem.params.paths.length" class="deploy-path">
                   <p v-for="(val, key) in configItem.params.paths" :key="key">{{ val }}</p>
                 </div>
@@ -132,7 +132,7 @@
               </div>
               <!-- 日志字符集 -->
               <div>
-                <span>{{ $t('configDetails.logSet') }}</span>
+                <span>{{ $t('日志字符集') }}</span>
                 <span>{{ configItem.data_encoding || '-' }}</span>
               </div>
               <!-- 过滤内容 -->
@@ -141,16 +141,16 @@
                 v-if="configItem.params.conditions &&
                   configItem.params.conditions.type === 'match' &&
                   configItem.params.conditions.match_content !== ''">
-                <span>{{ $t('configDetails.filterContent') }}</span>
+                <span>{{ $t('过滤内容') }}</span>
                 <div>
-                  <p>{{ $t('configDetails.strMatching') }}</p>
+                  <p>{{ $t('字符串匹配') }}</p>
                   <p v-if="configItem.params.conditions.match_content">
                     {{ configItem.params.conditions.match_content }}
                   </p>
                   <p>
                     {{ configItem.params.conditions.match_type }}/{{
                       configItem.params.conditions.match_type === 'include' ?
-                        $t('configDetails.keep') : $t('configDetails.Filter') }}
+                        $t('保留匹配字符串') : $t('过滤匹配字符串') }}
                   </p>
                 </div>
               </div>
@@ -159,9 +159,9 @@
                 v-else-if="configItem.params.conditions &&
                   configItem.params.conditions.type === 'separator' &&
                   configItem.params.conditions.separator_filters !== []">
-                <span>{{ $t('configDetails.filterContent') }}</span>
+                <span>{{ $t('过滤内容') }}</span>
                 <div>
-                  <p>{{ $t('configDetails.sepMarching') }}</p>
+                  <p>{{ $t('分隔符匹配') }}</p>
                   <p v-if="configItem.params.conditions.separator">{{ configItem.params.conditions.separator }}</p>
                   <div class="condition-stylex">
                     <div>
@@ -169,7 +169,7 @@
                         <div
                           v-for="(val, key) in configItem.params.conditions.separator_filters"
                           :key="key">
-                          {{ $t('configDetails.the') }} {{ val.fieldindex }} {{ $t('configDetails.column') }}
+                          {{ $t('第 {n} 列', { n: val.fieldindex })}}
                         </div>
                       </div>
                       <div>
@@ -186,14 +186,14 @@
                       <div class="line-styx"></div>
                       <p>
                         {{ configItem.params.conditions.separator_filters[0].logic_op === 'and' ?
-                          $t('configDetails.and') : $t('configDetails.or') }}
+                          $t('并') : $t('或') }}
                       </p>
                     </div>
                   </div>
                 </div>
               </div>
               <div class="content-style" v-else>
-                <span>{{ $t('configDetails.filterContent') }}</span>
+                <span>{{ $t('过滤内容') }}</span>
                 <div>--</div>
               </div>
               <!-- 段日志 -->
@@ -203,9 +203,10 @@
                   <div class="section-box">
                     <p>{{$t('行首正则')}}: <span>{{configItem.params.multiline_pattern}}</span></p> <br>
                     <p>
-                      {{$t('最多匹配')}}<span>{{configItem.params.multiline_max_lines}}</span>
-                      {{$t('行，最大耗时')}}<span>{{configItem.params.multiline_timeout}}</span>
-                      {{$t('秒')}}
+                      <i18n path="最多匹配{0}行，最大耗时{1}秒">
+                        <span>{{configItem.params.multiline_max_lines}}</span>
+                        <span>{{configItem.params.multiline_timeout}}</span>
+                      </i18n>
                     </p>
                   </div>
                 </div>
@@ -221,11 +222,11 @@
           <div>
             <div v-for="(extraItem, extraIndex) in extraLabelList" :key="extraIndex">
               <div class="specify-box">
-                <div class="specify-container justify-bt">
+                <div class="specify-container justify-bt" v-bk-overflow-tips>
                   <span>{{extraItem.key}}</span>
                   <div class="operator">=</div>
                 </div>
-                <div class="specify-container">
+                <div class="specify-container" v-bk-overflow-tips>
                   <span>{{extraItem.value}}</span>
                 </div>
               </div>

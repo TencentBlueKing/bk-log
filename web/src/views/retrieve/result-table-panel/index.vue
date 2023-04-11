@@ -22,7 +22,7 @@
 
 <template>
   <div class="result-table-panel">
-    <bk-tab :active.sync="active" type="unborder-card">
+    <bk-tab :active.sync="active" type="unborder-card" @tab-change="handleChangeTab">
       <bk-tab-panel
         v-for="(panel, index) in panelList"
         v-bind="panel"
@@ -39,6 +39,7 @@
           v-if="active === 'clustering'"
           v-bind="$attrs"
           v-on="$listeners"
+          ref="logClusteringRef"
           :config-data="configData"
           @showOriginLog="showOriginLog" />
       </keep-alive>
@@ -56,6 +57,14 @@ export default {
   props: {
     configData: {
       type: Object,
+      require: true,
+    },
+    activeTableTab: {
+      type: String,
+      require: true,
+    },
+    isInitPage: {
+      type: Boolean,
       require: true,
     },
   },
@@ -83,9 +92,23 @@ export default {
       return list;
     },
   },
+  watch: {
+    isInitPage() {
+      if (this.activeTableTab === 'clustering' && this.isAiopsToggle) this.active = 'clustering';
+    },
+  },
   methods: {
     showOriginLog() {
       this.active = 'origin';
+    },
+    async handleChangeTab(name) {
+      await this.$nextTick();
+      const clusterRef = this.$refs.logClusteringRef;
+      const clusterParams = name === 'clustering' ? {
+        activeNav: clusterRef?.active,
+        requestData: clusterRef?.requestData,
+      }  : null;
+      this.$emit('backFillClusterRouteParams', name, clusterParams);
     },
   },
 };

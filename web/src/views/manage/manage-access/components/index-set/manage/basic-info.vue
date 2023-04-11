@@ -149,9 +149,9 @@ export default {
       indexesData: [],
       // 健康状态，文案待定，先不国际化
       healthMap: {
-        green: '健康',
-        yellow: '部分故障',
-        red: '严重故障',
+        green: this.$t('健康'),
+        yellow: this.$t('部分故障'),
+        red: this.$t('严重故障'),
       },
       indexesPagination: {
         current: 1,
@@ -321,7 +321,7 @@ export default {
   }
 
   .king-table {
-    ::v-deep .cell {
+    :deep(.cell) {
       padding-top: 8px;
       padding-bottom: 8px;
     }

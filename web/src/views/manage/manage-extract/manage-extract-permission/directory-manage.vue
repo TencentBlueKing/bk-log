@@ -27,11 +27,11 @@
     <div class="directory-manage">
       <div class="row-container">
         <div class="title">
-          {{$t('用户组')}}
+          {{$t('名称')}}
           <span class="required">*</span>
           <span
             class="log-icon icon-info-fill"
-            v-bk-tooltips="{ width: 200, content: $t('不同类别的授权用户') }">
+            v-bk-tooltips="{ width: 200, content: $t('不同类别的授权用户，通过用户组名区分，单业务下唯一') }">
           </span>
         </div>
         <div class="content">
@@ -48,18 +48,18 @@
           <span
             class="log-icon icon-info-fill"
             v-if="allowCreate"
-            v-bk-tooltips="{ width: 200, content: $t('permission.tencentTips') }"></span>
+            v-bk-tooltips="{ width: 200, content: $t('多个QQ号粘贴请使用英文分号 “ ; ” 分隔 ，手动输入QQ号请键入 Enter 保存') }"></span>
           <span
             class="log-icon icon-info-fill"
             v-else
-            v-bk-tooltips="{ width: 200, content: $t('permission.tips') }"></span>
+            v-bk-tooltips="{ width: 200, content: $t('多个用户名粘贴请使用英文分号 “ ; ” 分隔 ，手动输入用户名请键入 Enter 保存') }"></span>
         </div>
         <div class="content">
           <validate-user-selector
             v-model="manageStrategyData.user_list"
             :api="userApi"
             :allow-create="allowCreate"
-            :placeholder="allowCreate ? $t('form.pleaseEnterQQ') : ''" />
+            :placeholder="allowCreate ? $t('请输入QQ并按Enter结束（可多次添加）') : ''" />
         </div>
       </div>
 
@@ -69,7 +69,7 @@
           <span class="required">*</span>
           <span
             class="log-icon icon-info-fill"
-            v-bk-tooltips="{ width: 200, content: $t('授权目录提示') }"></span>
+            v-bk-tooltips="{ width: 200, content: $t('目录以 / 结尾，windows 服务器以 /cygdrive/ 开头') }"></span>
         </div>
         <div class="content">
           <div
@@ -121,14 +121,14 @@
           <div class="flex-box">
             <bk-button @click="showSelectDialog = true">+ {{$t('选择目标')}}</bk-button>
             <div class="select-text">
-              {{$t('已选择')}}
-              <span
-                class="primary"
-                v-if="manageStrategyData.modules.length">
-                {{ manageStrategyData.modules.length }}
-              </span>
-              <span class="error" v-else>{{ manageStrategyData.modules.length }}</span>
-              {{$t('个节点')}}
+              <i18n path="已选择{0}个节点">
+                <span
+                  class="primary"
+                  v-if="manageStrategyData.modules.length">
+                  {{ manageStrategyData.modules.length }}
+                </span>
+                <span class="error" v-else>{{ manageStrategyData.modules.length }}</span>
+              </i18n>
             </div>
           </div>
           <module-select
@@ -143,7 +143,14 @@
         <div class="title">
           {{$t('执行人')}}
           <span class="required">*</span>
-          <span class="log-icon icon-info-fill" v-bk-tooltips="{ width: 200, content: $t('执行人提示') }"></span>
+          <span
+            class="log-icon icon-info-fill"
+            v-bk-tooltips="{
+              width: 200,
+              content: $t('全局设置，下载过程中需使用job传输，将以执行人身份进行，请确保执行人拥有业务权限')
+            }"
+          >
+          </span>
         </div>
         <div class="content">
           <div class="flex-box">
@@ -344,7 +351,7 @@ export default {
           }
 
           .is-input-error.bk-form-control {
-            ::v-deep .bk-form-input {
+            :deep(.bk-form-input) {
               /* stylelint-disable-next-line declaration-no-important */
               border-color: #ff5656 !important;
             }

@@ -62,6 +62,7 @@ class AiopsSignatureAndPattern(SoftDeleteModel):
     model_id = models.CharField(_("模型ID"), max_length=128)
     signature = models.CharField(_("数据指纹"), max_length=256)
     pattern = models.TextField("pattern")
+    label = models.TextField(_("备注"), default="")
 
     class Meta:
         index_together = ["model_id", "signature"]
@@ -147,10 +148,7 @@ class ClusteringSubscription(SoftDeleteModel):
     """
 
     subscription_type = models.CharField(
-        _("订阅类型"),
-        max_length=64,
-        choices=SubscriptionTypeEnum.get_choices(),
-        default=SubscriptionTypeEnum.WECHAT.value,
+        _("订阅类型"), max_length=64, choices=SubscriptionTypeEnum.get_choices(), default=SubscriptionTypeEnum.WECHAT.value,
     )
     space_uid = models.CharField(_("空间ID"), db_index=True, max_length=256)
     index_set_id = models.IntegerField(_("索引集id"), db_index=True)

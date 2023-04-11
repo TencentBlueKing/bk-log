@@ -39,7 +39,9 @@
           <bk-table-column :label="$t('集群名')" min-width="240">
             <template slot-scope="{ row }">
               <bk-radio :checked="clusterSelect === row.storage_cluster_id">
-                <span @click.stop>{{ row.storage_cluster_name }}</span>
+                <div class="overflow-tips" v-bk-overflow-tips>
+                  <span @click.stop>{{ row.storage_cluster_name }}</span>
+                </div>
               </bk-radio>
             </template>
           </bk-table-column>
@@ -76,10 +78,13 @@
       </template>
       <template v-else>
         <div class="noData-container">
-          <div class="noData-message">
-            <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-            <p class="empty-message">{{ tableShowType ? $t('createAPlatformTips') : $t('createAClusterTips')}}</p>
-            <p v-if="!tableShowType" class="button-text" @click="handleCreateCluster">{{$t('创建集群')}}</p>
+          <div slot="empty">
+            <empty-status empty-type="empty" :show-text="false">
+              <div class="noData-message">
+                <p class="empty-message">{{ tableShowType ? $t('当前还没有共享集群，请联系平台管理员提供') : $t('当前还没有业务独享集群，快去创建吧')}}</p>
+                <p v-if="!tableShowType" class="button-text" @click="handleCreateCluster">{{$t('创建集群')}}</p>
+              </div>
+            </empty-status>
           </div>
         </div>
       </template>
@@ -89,8 +94,12 @@
 <script>
 import { formatFileSize } from '../../../common/util';
 import { mapGetters } from 'vuex';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
+  components: {
+    EmptyStatus,
+  },
   props: {
     tableList: {
       type: Array,
@@ -177,7 +186,7 @@ export default {
       }
       this.$bkInfo({
         type: 'warning',
-        title: this.$t('changeClusterTips'),
+        title: this.$t('切换集群将导致历史数据无法查询'),
         confirmFn: () => {
           this.$emit('update:isChangeSelect', true);
           this.$emit('update:storageClusterId', $row.storage_cluster_id);
@@ -201,10 +210,18 @@ export default {
 </script>
 <style lang="scss" scoped>
 @import '@/scss/mixins/flex.scss';
+@import '@/scss/mixins/overflow-tips.scss';
 
 .cluster-container {
   line-height: 14px;
   min-width: 900px;
+
+  .overflow-tips {
+    display: inline-block;
+    transform: translateY(2px);
+
+    @include overflow-tips;
+  }
 
   .cluster-title {
     width: 100%;
@@ -243,12 +260,6 @@ export default {
     .cluster-table {
       width: 58%;
       min-width: 420px;
-
-      ::v-deep .bk-form-radio {
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-      }
     }
 
     .cluster-illustrate {
@@ -288,10 +299,6 @@ export default {
       }
     }
 
-    .bk-radio-text {
-      font-size: 12px;
-    }
-
     .noData-container {
       width: 100%;
       border: 1px solid #dcdee5;
@@ -327,5 +334,23 @@ export default {
       }
     }
   }
+}
+
+:deep(.bk-form-radio) {
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+
+  & > input[type = 'radio'] {
+    /* stylelint-disable-next-line declaration-no-important */
+    display: block !important;
+    min-width: 16px;
+  }
+}
+
+:deep(.bk-radio-text) {
+  font-size: 12px;
+  display: inline;
+  width: 100%;
 }
 </style>

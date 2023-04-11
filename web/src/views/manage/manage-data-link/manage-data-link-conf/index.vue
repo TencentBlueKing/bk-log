@@ -32,37 +32,39 @@
     </div>
     <bk-table
       :data="tableData"
-      :empty-text="$t('btn.vacancy')"
+      :empty-text="$t('暂无内容')"
       v-bkloading="{ isLoading: tableLoading }"
       data-test-id="linkConfigBox_table_linkConfigTable">
       <bk-table-column
         :label="$t('链路名称')"
+        :render-header="$renderHeader"
         prop="link_group_name"
         min-width="20"></bk-table-column>
       <bk-table-column
         :label="$t('允许的空间')"
+        :render-header="$renderHeader"
         prop="bk_biz_id"
         min-width="20">
         <template slot-scope="{ row }">
           <div>{{ filterProjectName(row) || '--'}}</div>
         </template>
       </bk-table-column>
-      <bk-table-column :label="$t('链路信息')" min-width="60">
+      <bk-table-column :label="$t('链路信息')" :render-header="$renderHeader" min-width="60">
         <template slot-scope="{ row }">
           <div>{{ filterLinkInformation(row) || '' }}</div>
         </template>
       </bk-table-column>
-      <bk-table-column :label="$t('备注')" min-width="20">
+      <bk-table-column :label="$t('备注')" :render-header="$renderHeader" min-width="20">
         <div style="padding: 10px 0;" slot-scope="{ row }">
           {{ row.description || '--' }}
         </div>
       </bk-table-column>
-      <bk-table-column :label="$t('是否启用')" min-width="10">
+      <bk-table-column :label="$t('是否启用')" :render-header="$renderHeader" min-width="10">
         <template slot-scope="{ row }">
           <div>{{ row.is_active ? $t('是') : $t('否') }}</div>
         </template>
       </bk-table-column>
-      <bk-table-column :label="$t('操作')" min-width="10">
+      <bk-table-column :label="$t('操作')" :render-header="$renderHeader" min-width="10">
         <template slot-scope="props">
           <bk-button
             theme="primary"
@@ -73,6 +75,9 @@
           <!--<bk-button theme="primary" text @click="deleteConfig(props.row)">{{ $t('删除') }}</bk-button>-->
         </template>
       </bk-table-column>
+      <div slot="empty">
+        <empty-status :empty-type="emptyType" @operation="handleOperation" />
+      </div>
     </bk-table>
     <config-dialog
       :visible.sync="dialogSetting.visible"
@@ -86,11 +91,13 @@
 
 <script>
 import ConfigDialog from './config-dialog';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   name: 'LinkConfiguration',
   components: {
     ConfigDialog,
+    EmptyStatus,
   },
   data() {
     return {
@@ -106,6 +113,7 @@ export default {
         transfer: [],
         es: [],
       },
+      emptyType: 'empty',
     };
   },
   computed: {
@@ -141,6 +149,7 @@ export default {
         });
       } catch (e) {
         console.warn(e);
+        this.emptyType = '500';
       } finally {
         this.tableLoading = false;
       }
@@ -208,6 +217,13 @@ export default {
         type: 'edit',
         dataSource: item,
       };
+    },
+    handleOperation(type) {
+      if (type === 'refresh') {
+        this.emptyType = 'empty';
+        this.init();
+        return;
+      }
     },
     // async deleteConfig (item) {
     //     try {

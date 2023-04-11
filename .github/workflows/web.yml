@@ -20,9 +20,9 @@ jobs:
     - name: Setup Node.js environment
       uses: actions/setup-node@v2.2.0
       with:
-        node-version: 12.22.1
+        node-version: 16.16.0
     - name: Run build web
       run: |
         cd web
-        npm install
+        npm install --legacy-peer-deps
         npm run build

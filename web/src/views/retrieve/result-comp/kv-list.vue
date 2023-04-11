@@ -103,6 +103,10 @@ export default {
       type: Object,
       require: true,
     },
+    listData: {
+      type: Object,
+      default: () => {},
+    },
   },
   data() {
     return {
@@ -114,13 +118,17 @@ export default {
         { id: 'copy', icon: 'log-icon icon-copy' },
       ],
       toolMenuTips: {
-        is: `${this.$t('添加')} is ${this.$t('过滤项')}`,
-        not: `${this.$t('添加')} is not ${this.$t('过滤项')}`,
+        is: this.$t('添加 {n} 过滤项', { n: 'is' }),
+        not: this.$t('添加 {n} 过滤项', { n: 'is not' }),
         hiddenField: this.$t('隐藏字段'),
         displayField: this.$t('显示字段'),
         copy: this.$t('复制'),
-        text_is: `${this.$t('文本类型')}${this.$t('不支持')} is ${this.$t('操作')}`,
-        text_not: `${this.$t('文本类型')}${this.$t('不支持')} is not ${this.$t('操作')}`,
+        text_is: this.$t('文本类型不支持 {n} 操作', { n: 'is' }),
+        text_not: this.$t('文本类型不支持 {n} 操作', { n: 'is not' }),
+      },
+      mappingKay: { // is is not 值映射
+        is: '=',
+        'is not': '!=',
       },
     };
   },
@@ -141,7 +149,10 @@ export default {
   },
   methods: {
     formatterStr(row, field) {
-      return this.tableRowDeepView(row, field, this.getFieldType(field));
+      // 判断当前类型是否为虚拟字段 若是虚拟字段则不使用origin_list而使用list里的数据
+      const fieldType = this.getFieldType(field);
+      const rowData = fieldType === '__virtual__' ? this.listData : row;
+      return this.tableRowDeepView(rowData, field, fieldType);
     },
     getHandleIcon(option, field) {
       if (option.id !== 'display') return option.icon;
@@ -169,12 +180,12 @@ export default {
     checkDisable(id, field) {
       const type = this.getFieldType(field);
       const isExist = this.filterIsExist(id, field);
-      return (['is', 'not'].includes(id) && type === 'text') || type === '__virtual__' || isExist  ? 'is-disabled' : '';
+      return ((['is', 'not'].includes(id) && type === 'text') || type === '__virtual__' || isExist)  ? 'is-disabled' : '';
     },
     getIconPopover(id, field) {
       const type = this.getFieldType(field);
       if (type === 'text' && ['is', 'not'].includes(id)) return this.toolMenuTips[`text_${id}`];
-      if (type === '__virtual__' && ['is', 'not'].includes(id)) return this.$t('unKnowIconTips');
+      if (type === '__virtual__' && ['is', 'not'].includes(id)) return this.$t('该字段为平台补充 不可检索');
       if (this.filterIsExist(id, field)) return this.$t('已添加过滤条件');
       if (id !== 'display') return this.toolMenuTips[id];
 
@@ -239,7 +250,7 @@ export default {
           } else {
             this.$bkMessage({
               theme: 'warning',
-              message: this.$t('retrieve.traceNoDataTips'),
+              message: this.$t('未找到相关的应用，请确认是否有Trace数据的接入。'),
             });
           }
           break;
@@ -272,15 +283,15 @@ export default {
         // trace检索
         case 'trace_id':
         case 'traceid':
-          return this.$t('retrieve.traceRetrieve');
+          return this.$t('trace检索');
         // 主机监控
         case 'serverip':
         case 'ip':
-          return this.$t('retrieve.host');
+          return this.$t('主机');
         // 容器
         case 'container_id':
         case '__ext.container_id':
-          return this.$t('retrieve.container');
+          return this.$t('容器');
         default:
           return;
       }
@@ -291,7 +302,7 @@ export default {
         const curValue = this.tableRowDeepView(this.data, field, this.getFieldType(field), false);
         return this.retrieveParams.addition.some((addition) => {
           return addition.field === field
-        && addition.operator === id
+        && addition.operator === (this.mappingKay[id] ?? id) // is is not 值映射 判断是否
         && addition.value.toString() === curValue.toString();
         });
       }
@@ -316,7 +327,7 @@ export default {
         text-overflow: ellipsis;
         white-space: nowrap;
 
-        ::v-deep .icon-ext {
+        :deep(.icon-ext) {
           width: 13px;
           display: inline-block;
           font-size: 12px;
@@ -372,8 +383,8 @@ export default {
           cursor: pointer;
         }
 
-        .icon-close-circle,
-        .icon-minus-circle,
+        .icon-enlarge-line,
+        .icon-narrow-line,
         .icon-arrows-up-circle,
         .icon-copy {
           &.is-disabled {

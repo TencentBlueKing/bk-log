@@ -154,6 +154,7 @@ class DataAccessHandler(BaseAiopsHandler):
             "json_config": json.dumps(bkdata_json_config),
             "bk_username": self.conf.get("bk_username"),
             "operator": self.conf.get("bk_username"),
+            "no_request": True,
         }
 
         if not clustering_config.bkdata_etl_processing_id:
@@ -177,6 +178,7 @@ class DataAccessHandler(BaseAiopsHandler):
                 "result_table_id": bkdata_result_table_id,
                 "bk_username": self.conf.get("bk_username"),
                 "operator": self.conf.get("bk_username"),
+                "no_request": True,
             }
         )
 
@@ -187,6 +189,7 @@ class DataAccessHandler(BaseAiopsHandler):
                 "storages": ["kafka"],
                 "bk_username": self.conf.get("bk_username"),
                 "operator": self.conf.get("bk_username"),
+                "no_request": True,
             }
         )
 

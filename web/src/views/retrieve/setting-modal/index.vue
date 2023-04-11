@@ -41,7 +41,7 @@
       v-if="isDialogVisiable"
       data-test-id="clusterSetting_div_settingContainer">
       <div class="setting-title">
-        <span>{{$t('retrieveSetting.setting')}}</span>
+        <span>{{$t('设置')}}</span>
         <span class="bk-icon icon-close" @click="closeSetting"></span>
       </div>
 
@@ -69,7 +69,7 @@
         <div class="setting-right">
           <div class="more-details">
             <div class="details">
-              <p><span>{{$t('indexSetList.index_set')}}：</span>{{indexSetItem.index_set_name}}</p>
+              <p><span>{{$t('索引集')}}：</span>{{indexSetItem.index_set_name}}</p>
               <p><span>{{$t('索引')}}：</span>{{showResultTableID}}</p>
               <p><span>{{$t('来源')}}：</span>{{indexSetItem.scenario_name}}</p>
             </div>
@@ -77,7 +77,7 @@
               style="color: #3a84ff; cursor: pointer;"
               v-if="isCollector"
               @click="handleClickDetail">
-              {{$t('retrieveSetting.moreDetails')}}
+              {{$t('更多详情')}}
               <span class="log-icon icon-lianjie"></span>
             </div>
           </div>
@@ -156,20 +156,20 @@ export default {
         // {
         //   id: 'index',
         //   componentsName: 'FullTextIndex',
-        //   name: this.$t('retrieveSetting.fullTextIndex'),
+        //   name: this.$t('全文索引'),
         //   isEditable: true,
         // },
         {
           id: 'extract',
           componentsName: 'FieldExtraction',
-          name: this.$t('retrieveSetting.fieldExtraction'),
+          name: this.$t('字段提取'),
           isEditable: false,
           isDisabled: false,
         },
         {
           id: 'clustering',
           componentsName: 'LogCluster',
-          name: this.$t('retrieveSetting.logCluster'),
+          name: this.$t('日志聚类'),
           isEditable: false,
           isDisabled: false,
         }],
@@ -235,7 +235,7 @@ export default {
         return;
       }
       this.$bkInfo({
-        title: this.$t('pageLeaveTips'),
+        title: this.$t('是否放弃本次操作？'),
         confirmFn: () => {
           this.jumpCloseSwitch();
           this.currentChoice = item.id;
@@ -268,8 +268,8 @@ export default {
         return;
       }
       const msg = item.id === 'extract'
-        ? this.$t('retrieveSetting.fieldLeaveTip')
-        : this.$t('retrieveSetting.clusterLeaveTip');
+        ? this.$t('是否关闭字段提取？')
+        : this.$t('是否关闭日志聚类？');
 
       if (item.id === 'extract') {
         this.$bkInfo({
@@ -352,13 +352,13 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-  ::v-deep .bk-dialog-body {
+  :deep(.bk-dialog-body) {
     background-color: #f5f6fa;
     overflow: hidden;
     padding: 0;
   }
 
-  ::v-deep .bk-dialog-tool {
+  :deep(.bk-dialog-tool) {
     display: none;
   }
 
@@ -426,7 +426,7 @@ export default {
 
       .setting-right {
         margin-left: 20px;
-        max-width: 1000px;
+        max-width: 1020px;
 
         .more-details {
           height: 48px;

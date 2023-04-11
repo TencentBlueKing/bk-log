@@ -24,9 +24,9 @@
   <div class="add-collection-container">
     <bk-alert class="king-alert" type="info" closable>
       <div slot="title" class="slot-title-container">
-        {{ $t('接入前请查看') }}
-        <a class="link" @click="handleGotoLink('logCollection')"> {{ $t('接入指引') }}</a>
-        {{ $t('，尤其是在日志量大的情况下请务必提前沟通。') }}
+        <i18n path="接入前请查看 {0} ，尤其是在日志量大的情况下请务必提前沟通。">
+          <a class="link" @click="handleGotoLink('logCollection')"> {{ $t('接入指引') }}</a>
+        </i18n>
       </div>
     </bk-alert>
     <bk-form
@@ -36,9 +36,9 @@
       data-test-id="addNewCollectionItem_form_acquisitionConfig">
       <!-- 基础信息 -->
       <div data-test-id="acquisitionConfig_div_baseMessageBox">
-        <div class="add-collection-title">{{ $t('dataSource.basic_information') }}</div>
+        <div class="add-collection-title">{{ $t('基础信息') }}</div>
         <bk-form-item
-          :label="$t('dataSource.source_name')"
+          :label="$t('名称')"
           :required="true"
           :rules="rules.collector_config_name"
           :property="'collector_config_name'">
@@ -52,7 +52,7 @@
         </bk-form-item>
         <bk-form-item
           ext-cls="en-bk-form"
-          :label="$t('dataSource.source_en_name')"
+          :label="$t('英文名')"
           :required="true"
           :rules="rules.collector_config_name_en"
           :icon-offset="120"
@@ -66,7 +66,7 @@
                 maxlength="50"
                 data-test-id="baseMessage_input_fillEnglishName"
                 :disabled="isUpdate && !!formData.collector_config_name_en"
-                :placeholder="$t('dataSource.en_name_tips')">
+                :placeholder="$t('支持数字、字母、下划线，长短5～50字符')">
               </bk-input>
               <span v-if="!isTextValid" class="text-error">{{formData.collector_config_name_en}}</span>
             </div>
@@ -74,9 +74,9 @@
               <bk-button v-if="!isTextValid" text @click="handleEnConvert">{{$t('自动转换')}}</bk-button>
             </span>
           </div>
-          <p class="en-name-tips" slot="tip">{{ $t('dataSource.en_name_placeholder') }}</p>
+          <p class="en-name-tips" slot="tip">{{ $t('英文名用于索引和数据源') }}</p>
         </bk-form-item>
-        <bk-form-item :label="$t('configDetails.remarkExplain')">
+        <bk-form-item :label="$t('备注说明')">
           <bk-input
             class="w520"
             type="textarea"
@@ -89,7 +89,7 @@
 
       <!-- 源日志信息 -->
       <div data-test-id="acquisitionConfig_div_sourceLogBox">
-        <div class="add-collection-title">{{ $t('dataSource.Source_log_information') }}</div>
+        <div class="add-collection-title">{{ $t('源日志信息') }}</div>
         <!-- 环境选择 -->
         <bk-form-item :label="$t('环境选择')" required>
           <div class="environment-box">
@@ -115,7 +115,7 @@
           </div>
         </bk-form-item>
         <!-- 物理环境 日志类型 -->
-        <bk-form-item v-if="isPhysicsEnvironment" :label="$t('configDetails.logType')" required>
+        <bk-form-item v-if="isPhysicsEnvironment" :label="$t('日志类型')" required>
           <div class="bk-button-group log-type">
             <bk-button
               v-for="(item, index) in getCollectorScenario"
@@ -135,7 +135,7 @@
         <!-- 数据分类 -->
         <bk-form-item
           required
-          :label="$t('configDetails.dataClassify')"
+          :label="$t('数据分类')"
           :rules="rules.category_id"
           :property="'category_id'">
           <bk-select
@@ -163,7 +163,7 @@
             class="item-target"
             ref="formItemTarget"
             required
-            :label="$t('configDetails.target')"
+            :label="$t('采集目标')"
             :rules="rules.nodes"
             :property="'target_nodes'">
             <bk-button
@@ -171,11 +171,11 @@
               icon="plus"
               style="font-size: 12px"
               data-test-id="sourceLogBox_button_addCollectionTarget"
-              :title="$t('configDetails.newly_increased')"
+              :title="$t('新增')"
               :class="colorRules ? 'rulesColor' : ''"
               :disabled="!formData.category_id"
               @click="showIpSelectorDialog = true">
-              {{ $t('retrieve.select_target') }}
+              {{ $t('选择目标') }}
             </bk-button>
             <input type="text" :value="formData.target_nodes" style="display: none">
           </bk-form-item>
@@ -242,7 +242,7 @@
         ></yaml-editor>
         <template v-else>
           <!-- 容器环境 日志类型 -->
-          <bk-form-item v-if="!isPhysicsEnvironment" :label="$t('configDetails.logType')" required>
+          <bk-form-item v-if="!isPhysicsEnvironment" :label="$t('日志类型')" required>
             <div class="bk-button-group log-type">
               <bk-button
                 v-for="(item, index) in getCollectorScenario"
@@ -341,6 +341,7 @@
                     <div class="specify-box">
                       <div
                         class="specify-container"
+                        v-bk-overflow-tips
                         v-for="([speKey, speValue], speIndex) in Object.entries(conItem.container)"
                         :key="speIndex">
                         <span v-if="speValue">
@@ -362,11 +363,11 @@
                       <div class="specify-box"
                            v-for="(matchItem, matchKey) of labItem"
                            :key="`${labKey}_${matchKey}`">
-                        <div class="specify-container justify-bt">
+                        <div class="specify-container justify-bt" v-bk-overflow-tips>
                           <span>{{matchItem.key}}</span>
                           <div class="operator">{{matchItem.operator}}</div>
                         </div>
-                        <div class="specify-container">
+                        <div class="specify-container" v-bk-overflow-tips>
                           <span>{{matchItem.value}}</span>
                         </div>
                       </div>
@@ -484,19 +485,19 @@
         <bk-button
           theme="primary"
           data-test-id="acquisitionConfig_div_nextPage"
-          :title="$t('retrieve.Start_collecting')"
+          :title="$t('开始采集')"
           :loading="isHandle"
           :disabled="!collectProject"
           @click.stop.prevent="startCollect">
-          {{ $t('retrieve.next') }}
+          {{ $t('下一步') }}
         </bk-button>
         <bk-button
           theme="default"
           data-test-id="acquisitionConfig_div_cancel"
           class="ml10"
-          :title="$t('indexSetList.cancel')"
+          :title="$t('取消')"
           @click="cancel">
-          {{ $t('indexSetList.cancel') }}
+          {{ $t('取消') }}
         </bk-button>
       </div>
     </bk-form>
@@ -652,13 +653,13 @@ export default {
           },
           {
             validator: this.checkEnNameValidator,
-            message: this.$t('enNameValidatorTips'),
+            message: this.$t('只支持输入字母，数字，下划线'),
             trigger: 'blur',
           },
           {
             // 检查英文名是否可用
             validator: this.checkEnNameRepeat,
-            message: this.$t('dataSource.en_name_repeat'),
+            message: this.$t('该英文名已重复'),
             trigger: 'blur',
           },
         ],
@@ -689,14 +690,14 @@ export default {
       localParams: {}, // 缓存的初始数据 用于对比编辑时表单是否有属性更改
       showIpSelectorDialog: false,
       collectTargetTarget: { // 已(动态)选择 静态主机 节点 服务模板 集群模板
-        INSTANCE1: this.$t('configDetails.selected'),
-        INSTANCE2: this.$t('configDetails.staticHosts'),
-        TOPO1: this.$t('configDetails.Dynamic_selection'),
-        TOPO2: this.$t('configDetails.Been'),
-        SERVICE_TEMPLATE1: this.$t('configDetails.selected'),
-        SERVICE_TEMPLATE2: this.$t('configDetails.serviceTemplates'),
-        SET_TEMPLATE1: this.$t('configDetails.selected'),
-        SET_TEMPLATE2: this.$t('configDetails.setTemplates'),
+        INSTANCE1: this.$t('已选择'),
+        INSTANCE2: this.$t('个静态主机'),
+        TOPO1: this.$t('已动态选择'),
+        TOPO2: this.$t('个节点'),
+        SERVICE_TEMPLATE1: this.$t('已选择'),
+        SERVICE_TEMPLATE2: this.$t('个服务模板'),
+        SET_TEMPLATE1: this.$t('已选择'),
+        SET_TEMPLATE2: this.$t('个集群模板'),
       },
       configBaseObj: {}, // 新增配置项的基础对象
       isYaml: false, // 是否是yaml模式
@@ -987,7 +988,7 @@ export default {
     },
     /**
      * @desc: 提交表格时验证是否通过
-     * @returns { Boolean } // 是否可以提交
+    // 是否可以提交
      */
     async submitDataValidate() {
       try { // 基础信息表格验证
@@ -1398,7 +1399,7 @@ export default {
     },
     handleDeleteConfig(index, letterIndex) { // 删除配置项
       this.$bkInfo({
-        subTitle: `${this.$t('确定要删除配置项')}${this.getFromCharCode(letterIndex)}?`,
+        subTitle: this.$t('确定要删除配置项{n}？', { n: this.getFromCharCode(letterIndex) }),
         type: 'warning',
         confirmFn: () => {
           this.formData.configs.splice(index, 1);
@@ -1414,7 +1415,7 @@ export default {
         if (showContainerError && showLabelError) {
           this.$bkMessage({
             theme: 'error',
-            message: `${this.$t('配置项')}${this.getFromCharCode(item.letterIndex)}${this.$t('未选择指定容器或指定标签')}.`,
+            message: this.$t('配置项{n}未选择指定容器或指定标签。', { n: this.getFromCharCode(item.letterIndex) }),
           });
         }
         return !showContainerError || !showLabelError;
@@ -1605,6 +1606,7 @@ export default {
       font-size: 12px;
       color: transparent;
       pointer-events: none;
+
       /* stylelint-disable-next-line declaration-no-important */
       text-decoration: red wavy underline !important;
     }

@@ -18,13 +18,14 @@
     }
 </style>
 <body>
-<p>{{ time_config.start_time }} - {{ time_config.end_time }} {{ title }}</p>
+<p>Title: {{ title }}</p>
+<p>Time Range: {{ time_config.start_time }} - {{ time_config.end_time }}</p>
 <p>Space Name: {{ space_name }}</p>
 <p>Index Set Name: {{ index_set_name }}</p>
-<p>Log analysis：Pattern ({{ all_patterns.patterns.pattern_count + all_patterns.new_patterns.pattern_count }})，Number ({{ all_patterns.patterns.log_count + all_patterns.new_patterns.log_count }}) </p>
-<p><a href='{{ log_search_url }}'>Log Detail</a></p>
+<p>Log analysis: Pattern ({{ all_patterns.patterns.pattern_count + all_patterns.new_patterns.pattern_count }})，Number ({{ all_patterns.patterns.log_count + all_patterns.new_patterns.log_count }}) </p>
+<p><a href="{{ log_search_url }}">Log Detail</a></p>
 {% if all_patterns.new_patterns.data %}
-    <p>New {{ log_col_show_type }} Example:</p>
+    <p>Last 24H New {{ log_col_show_type }} Example:</p>
     <table>
         <thead>
             <tr>
@@ -37,7 +38,7 @@
                     <th>Compared Variety</th>
                 {% endif %}
                 <th>{{ log_col_show_type }}</th>
-                {% for header in group_by%}
+                {% for header in group_by %}
                     <th>{{ header }}</th>
                 {% endfor %}
             </tr>
@@ -46,7 +47,7 @@
         {% for pattern in all_patterns.new_patterns.data %}
             <tr>
                 <td>{{ loop.index }}</td>
-                <td>{{ pattern.signature }}</td>
+                <td><a href="{{ pattern.signature_url }}">{{ pattern.signature }}</a></td>
                 <td>{{ pattern.count }}</td>
                 <td>{{ pattern.percentage | round(2) }}%</td>
                 {% if show_year_on_year %}
@@ -54,7 +55,7 @@
                     <td>{{ pattern.year_on_year_percentage | round(2) }}%</td>
                 {% endif %}
                 <td>{{ pattern.pattern }}</td>
-                {% for group in pattern.group_by%}
+                {% for group in pattern.group %}
                     <td>{{ group }}</td>
                 {% endfor %}
             </tr>
@@ -76,7 +77,7 @@
                     <th>Compared Variety</th>
                 {% endif %}
                 <th>{{ log_col_show_type }}</th>
-                {% for header in group_by%}
+                {% for header in group_by %}
                     <th>{{ header }}</th>
                 {% endfor %}
             </tr>
@@ -85,7 +86,7 @@
         {% for pattern in all_patterns.patterns.data %}
             <tr>
                 <td>{{ loop.index }}</td>
-                <td>{{ pattern.signature }}</td>
+                <td><a href="{{ pattern.signature_url }}">{{ pattern.signature }}</a></td>
                 <td>{{ pattern.count }}</td>
                 <td>{{ pattern.percentage | round(2) }}%</td>
                 {% if show_year_on_year %}
@@ -93,7 +94,7 @@
                     <td>{{ pattern.year_on_year_percentage | round(2) }}%</td>
                 {% endif %}
                 <td>{{ pattern.pattern }}</td>
-                {% for group in pattern.group_by%}
+                {% for group in pattern.group %}
                     <td>{{ group }}</td>
                 {% endfor %}
             </tr>

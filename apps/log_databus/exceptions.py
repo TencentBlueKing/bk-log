@@ -149,6 +149,11 @@ class ResultTableNotExistException(BaseCollectorConfigException):
     MESSAGE = _("采集项{result_table_id}结果表ID不存在")
 
 
+class CollectorPluginNotImplemented(BaseCollectorPluginException):
+    ERROR_CODE = "120"
+    MESSAGE = _("采集插件无采集项实例")
+
+
 class StorageNotExistException(BaseCollectorConfigException):
     ERROR_CODE = "201"
     MESSAGE = _("集群不存在")
@@ -382,3 +387,8 @@ class AllNamespaceNotAllowedException(BaseCollectorConfigException):
 class NodeNotAllowedException(BaseCollectorConfigException):
     ERROR_CODE = "908"
     MESSAGE = _("共享集群下不允许采集node的日志，请检查")
+
+
+class VclusterNodeNotAllowedException(BaseCollectorConfigException):
+    ERROR_CODE = "909"
+    MESSAGE = _("虚拟集群下不允许采集node的日志，请检查")

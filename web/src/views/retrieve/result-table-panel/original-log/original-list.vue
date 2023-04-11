@@ -40,6 +40,7 @@
         <expand-view
           v-bind="$attrs"
           :data="originTableList[$index]"
+          :list-data="tableList[$index]"
           :total-fields="totalFields"
           :visible-fields="visibleFields"
           :retrieve-params="retrieveParams"
@@ -90,7 +91,7 @@
     <!-- 操作按钮 -->
     <bk-table-column
       v-if="showHandleOption"
-      :label="$t('retrieve.operate')"
+      :label="$t('操作')"
       :width="84"
       align="right"
       :resizable="false">

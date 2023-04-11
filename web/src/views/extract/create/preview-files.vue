@@ -25,7 +25,7 @@
     <div class="flex-box">
       <bk-select
         v-model="previewIp"
-        style="width: 190px;margin-right: 20px;background-color: #fff;"
+        style="width: 190px; margin-right: 20px;background-color: #fff;"
         data-test-id="addNewExtraction_div_selectPreviewAddress"
         :clearable="false"
         multiple
@@ -59,10 +59,16 @@
         class="preview-scroll-table"
         style="background-color: #fff;"
         :data="explorerList"
-        :height="300"
+        :height="360"
         @selection-change="handleSelect">
         <bk-table-column type="selection" width="60" :selectable="row => row.size !== '0'"></bk-table-column>
-        <bk-table-column prop="path" :label="$t('文件名')" min-width="80" sortable :sort-by="['path', 'mtime', 'size']">
+        <bk-table-column
+          prop="path"
+          :label="$t('文件名')"
+          :render-header="$renderHeader"
+          min-width="80"
+          sortable
+          :sort-by="['path', 'mtime', 'size']">
           <div class="table-ceil-container" slot-scope="{ row }">
             <span
               v-if="row.size === '0'"
@@ -77,17 +83,24 @@
         <bk-table-column
           prop="mtime"
           :label="$t('最后修改时间')"
+          :render-header="$renderHeader"
           min-width="50"
           sortable
           :sort-by="['mtime', 'path', 'size']">
         </bk-table-column>
         <bk-table-column
           prop="size"
-          :label="'尺寸'"
+          :label="$t('尺寸')"
+          :render-header="$renderHeader"
           min-width="40"
           sortable
           :sort-by="['size', 'mtime', 'path']">
         </bk-table-column>
+        <div slot="empty">
+          <empty-status :empty-type="emptyType" @operation="handleOperation">
+            <div v-if="emptyType === 'search-empty'">{{$t('可以尝试{0}或{1}', { 0: $t('调整预览地址'), 1: $t('调整文件日期') })}}</div>
+          </empty-status>
+        </div>
       </bk-table>
     </div>
   </div>
@@ -96,10 +109,12 @@
 <script>
 import { formatDate } from '@/common/util';
 import FileDatePicker from '@/views/extract/home/file-date-picker';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   components: {
     FileDatePicker,
+    EmptyStatus,
   },
   model: {
     prop: 'downloadFiles',
@@ -129,6 +144,7 @@ export default {
       isSearchChild: false,
       explorerList: [],
       historyStack: [], // 预览地址历史
+      emptyType: 'empty',
     };
   },
   computed: {
@@ -171,6 +187,7 @@ export default {
       }
 
       this.isLoading = true;
+      this.emptyType = 'search-empty';
       this.$http.request('extract/getExplorerList', {
         data: {
           bk_biz_id: this.$store.state.bkBizId,
@@ -198,6 +215,7 @@ export default {
       })
         .catch((err) => {
           console.warn(err);
+          this.emptyType = '500';
         })
         .finally(() => {
           this.isLoading = false;
@@ -227,6 +245,7 @@ export default {
       }
 
       this.isLoading = true;
+      this.emptyType = 'search-empty';
       this.$http.request('extract/getExplorerList', {
         data: {
           bk_biz_id: this.$store.state.bkBizId,
@@ -253,10 +272,24 @@ export default {
       })
         .catch((e) => {
           console.warn(e);
+          this.emptyType = '500';
         })
         .finally(() => {
           this.isLoading = false;
         });
+    },
+    handleOperation(type) {
+      if (type === 'clear-filter') {
+        this.params.keyword = '';
+        this.getExplorerList({});
+        return;
+      }
+
+      if (type === 'refresh') {
+        this.emptyType = 'empty';
+        this.getExplorerList({});
+        return;
+      }
     },
     handleSelect(selection) {
       this.$emit('checked', selection.map(item => item.path));

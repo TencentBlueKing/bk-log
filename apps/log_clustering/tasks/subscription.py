@@ -41,6 +41,7 @@ from apps.log_clustering.constants import (
     SubscriptionTypeEnum,
     YearOnYearChangeEnum,
     YearOnYearEnum,
+    AGGS_FIELD_PREFIX,
 )
 from apps.log_clustering.exceptions import ClusteringConfigNotExistException
 from apps.log_clustering.handlers.pattern import PatternHandler
@@ -48,9 +49,7 @@ from apps.log_clustering.models import ClusteringConfig, ClusteringSubscription
 from apps.log_clustering.serializers import PatternSearchSerlaizer
 from apps.log_clustering.utils.wechat_robot import WeChatRobot
 from apps.log_search.exceptions import IndexSetDoseNotExistException
-from apps.log_search.handlers.search.search_handlers_esquery import (
-    SearchHandler as SearchHandlerEsquery,
-)
+from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler as SearchHandlerEsquery
 from apps.log_search.models import LogIndexSet
 from apps.log_search.serializers import SearchAttrSerializer
 from apps.utils.drf import custom_params_valid
@@ -160,7 +159,9 @@ def query_logs(
     log_prefix: str,
 ) -> dict:
     addition = config.addition if config.addition else []
-    addition.append({"field": f"__dist_{config.pattern_level}", "operator": "is", "value": pattern["signature"]})
+    addition.append(
+        {"field": f"{AGGS_FIELD_PREFIX}_{config.pattern_level}", "operator": "is", "value": pattern["signature"]}
+    )
     params = {
         "start_time": time_config["start_time"],
         "end_time": time_config["end_time"],
@@ -209,6 +210,8 @@ def clean_pattern(
         # 过滤掉空pattern
         if not _data["pattern"]:
             continue
+
+        _data["signature_url"] = generate_log_search_url(config, time_config, signature=_data["signature"])
 
         # 按同比进行过滤
         if (
@@ -266,16 +269,21 @@ def clean_pattern(
     return result
 
 
-def generate_log_search_url(config: ClusteringSubscription, time_config: dict) -> str:
+def generate_log_search_url(config: ClusteringSubscription, time_config: dict, signature: str = "") -> str:
 
     params = {
         "spaceUid": config.space_uid,
         "keyword": config.query_string or "*",
-        "addition": config.addition if config.addition else [],
+        "addition": config.addition.copy() if config.addition else [],
         "host_scopes": config.host_scopes if config.host_scopes else {},
         "start_time": time_config["start_time"],
         "end_time": time_config["end_time"],
     }
+
+    if signature:
+        params["addition"].append(
+            {"field": f"{AGGS_FIELD_PREFIX}_{config.pattern_level}", "operator": "=", "value": signature}
+        )
 
     url = f"{settings.BK_BKLOG_HOST}#/retrieve/{config.index_set_id}?{urlencode(params)}"
     return url
@@ -289,9 +297,16 @@ def render_template(template: str, params: dict) -> str:
     return content
 
 
+def render_title(title: str, params: dict) -> str:
+    template = Environment().from_string(title)
+    content = template.render(**params)
+    return content
+
+
 def send_wechat(params: dict, receivers: list, log_prefix: str):
     robot_api = WeChatRobot()
     tpl_name = "clustering_wechat_en.md" if params["language"] == "en" else "clustering_wechat.md"
+    params["title"] = render_title(params["title"], params)
     content = render_template(tpl_name, params)
     send_params = {
         "chatid": "|".join([receiver["id"] for receiver in receivers]),
@@ -304,6 +319,7 @@ def send_wechat(params: dict, receivers: list, log_prefix: str):
 
 def send_mail(params: dict, receivers: list, log_prefix: str):
     tpl_name = "clustering_mail_en.html" if params["language"] == "en" else "clustering_mail.html"
+    params["title"] = render_title(params["title"], params)
     content = render_template(tpl_name, params)
     send_params = {
         "receivers": ",".join([r["id"] for r in receivers]),
@@ -382,9 +398,14 @@ def send_subscription_task():
     for config in subscription_configs:
         log_prefix = f"[clustering_subscription] space_uid: {config.space_uid} index_set_id: {config.index_set_id}"
         # 查询空间信息
-
         space = api.SpaceApi.get_space_detail(space_uid=config.space_uid)
-        time_zone = space.properties.get("time_zone", "") or settings.TIME_ZONE
+        if not space:
+            logger.info(f"{log_prefix} space not exist, skip")
+            continue
+
+        time_zone = space.extend.get("time_zone", "") or settings.TIME_ZONE
+        language = space.extend.get("language", "") or translation.get_language()
+
         time_config = get_start_and_end_time(config.frequency, config.last_run_at, pytz.timezone(time_zone))
         logger.info(f"{log_prefix} time_config: {time_config}")
         is_run_time = time_config["is_run_time"]
@@ -397,7 +418,6 @@ def send_subscription_task():
         config.last_run_at = time_config["last_run_at"]
         config.save()
 
-        language = space.properties.get("language", "") or translation.get_language()
         send.delay(
             config=config,
             time_config=time_config,

@@ -37,10 +37,11 @@
       <div class="collect-search fr">
         <bk-input
           data-test-id="logCollectionBox_input_searchCollectionItems"
-          :placeholder="$t('dataManage.Search_index_name')"
+          :placeholder="$t('搜索名称、存储索引名')"
           :clearable="true"
           :right-icon="'bk-icon icon-search'"
           v-model="params.keyword"
+          @change="handleSearchChange"
           @enter="search">
         </bk-input>
       </div>
@@ -49,10 +50,11 @@
       <bk-table
         class="collect-table"
         data-test-id="logCollectionBox_table_logCollectionTable"
-        :empty-text="$t('btn.vacancy')"
+        v-bkloading="{ isLoading: isTableLoading }"
+        ref="collectTable"
+        :empty-text="$t('暂无内容')"
         :data="collectList"
         :size="size"
-        v-bkloading="{ isLoading: isTableLoading }"
         :pagination="pagination"
         :limit-list="pagination.limitList"
         @filter-change="handleFilterChange"
@@ -60,7 +62,8 @@
         @page-limit-change="handleLimitChange">
         <bk-table-column
           v-if="checkcFields('bk_data_id')"
-          :label="$t('dataSource.dataId')"
+          :label="$t('数据ID')"
+          :render-header="$renderHeader"
           min-width="60">
           <template slot-scope="props">
             <span>
@@ -68,7 +71,7 @@
             </span>
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('dataSource.collector_config_name')" min-width="90">
+        <bk-table-column :label="$t('名称')" min-width="90" :render-header="$renderHeader">
           <template slot-scope="props">
             <span
               class="text-active"
@@ -79,13 +82,14 @@
             <span
               v-if="!props.row.table_id"
               class="table-mark mark-mini mark-default">
-              {{ $t('dataSource.collector_config_unfinished') }}
+              {{ $t('未完成') }}
             </span>
           </template>
         </bk-table-column>
         <bk-table-column
           v-if="checkcFields('table_id')"
-          :label="$t('dataSource.table_id')"
+          :label="$t('存储名')"
+          :render-header="$renderHeader"
           min-width="80">
           <template slot-scope="props">
             <span
@@ -96,7 +100,8 @@
         </bk-table-column>
         <bk-table-column
           v-if="checkcFields('storage_cluster_name')"
-          :label="$t('dataSource.storage_cluster_name')"
+          :label="$t('存储集群')"
+          :render-header="$renderHeader"
           min-width="70">
           <template slot-scope="props">
             <span :class="{ 'text-disabled': props.row.status === 'stop' }">
@@ -106,7 +111,8 @@
         </bk-table-column>
         <bk-table-column
           v-if="checkcFields('collector_scenario_name')"
-          :label="$t('dataSource.collector_scenario_name')"
+          :label="$t('日志类型')"
+          :render-header="$renderHeader"
           min-width="50"
           class-name="filter-column"
           prop="collector_scenario_id"
@@ -122,7 +128,8 @@
         </bk-table-column>
         <bk-table-column
           v-if="checkcFields('category_name')"
-          :label="$t('dataSource.category_name')"
+          :label="$t('数据类型')"
+          :render-header="$renderHeader"
           min-width="50"
           class-name="filter-column"
           prop="category_id"
@@ -138,7 +145,8 @@
         </bk-table-column>
         <bk-table-column
           v-if="checkcFields('retention')"
-          :label="$t('dataSource.retention')"
+          :label="$t('过期时间')"
+          :render-header="$renderHeader"
           min-width="50">
           <template slot-scope="props">
             <span :class="{ 'text-disabled': props.row.status === 'stop' }">
@@ -149,7 +157,8 @@
         <bk-table-column
           v-if="checkcFields('es_host_state')"
           :class-name="'td-status'"
-          :label="$t('dataSource.es_host_state')"
+          :label="$t('采集状态')"
+          :render-header="$renderHeader"
           min-width="55">
           <template slot-scope="props">
             <bk-popover placement="bottom" :always="true" v-if="needGuide && props.$index === 0">
@@ -184,8 +193,8 @@
               </div>
               <div slot="content" style="padding: 7px 6px;">
                 <span style="color: #d2d5dd;">
-                  {{ $t('dataSource.click_view') }}
-                </span>{{ $t('dataSource.es_host_state') }}
+                  {{ $t('点击查看') }}
+                </span>{{ $t('采集状态') }}
               </div>
             </bk-popover>
             <div
@@ -226,7 +235,8 @@
         </bk-table-column>
         <bk-table-column
           v-if="checkcFields('updated_by')"
-          :label="$t('dataSource.updated_by')"
+          :render-header="$renderHeader"
+          :label="$t('更新人')"
           min-width="55">
           <template slot-scope="props">
             <span :class="{ 'text-disabled': props.row.status === 'stop' }">{{ props.row.updated_by }}</span>
@@ -234,13 +244,18 @@
         </bk-table-column>
         <bk-table-column
           v-if="checkcFields('updated_at')"
-          :label="$t('dataSource.updated_at')"
+          :render-header="$renderHeader"
+          :label="$t('更新时间')"
           width="190">
           <template slot-scope="props">
             <span :class="{ 'text-disabled': props.row.status === 'stop' }">{{ props.row.updated_at }}</span>
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('dataSource.operation')" class-name="operate-column" width="160">
+        <bk-table-column
+          :label="$t('操作')"
+          :render-header="$renderHeader"
+          class-name="operate-column"
+          width="160">
           <div class="collect-table-operate" slot-scope="props">
             <!-- 检索 -->
             <!-- 启用状态下 且存在 index_set_id 才能检索 -->
@@ -258,7 +273,7 @@
                 :disabled="!props.row.is_active || (!props.row.index_set_id && !props.row.bkdata_index_set_ids.length)"
                 v-cursor="{ active: !(props.row.permission && props.row.permission[authorityMap.SEARCH_LOG_AUTH]) }"
                 @click="operateHandler(props.row, 'search')">
-                {{ $t('nav.retrieve') }}
+                {{ $t('检索') }}
               </bk-button>
             </span>
             <!-- 编辑 -->
@@ -287,7 +302,7 @@
                   active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
                 }"
                 @click.stop="operateHandler(props.row, 'clean')">
-                {{ $t('logClean.goToClean') }}
+                {{ $t('前往清洗') }}
               </bk-button>
             </span>
             <bk-dropdown-menu ref="dropdown" align="right">
@@ -317,7 +332,7 @@
                       props.row.status === 'running' ||
                       props.row.status === 'prepare' ||
                       !collectProject">
-                    {{$t('btn.block')}}
+                    {{$t('停用')}}
                   </a>
                   <a
                     href="javascript:;"
@@ -325,7 +340,7 @@
                     v-cursor="{
                       active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
                     }"
-                    @click.stop="operateHandler(props.row, 'stop')">{{$t('btn.block')}}</a>
+                    @click.stop="operateHandler(props.row, 'stop')">{{$t('停用')}}</a>
                 </li>
                 <li v-else>
                   <a
@@ -335,7 +350,7 @@
                       props.row.status === 'running' ||
                       props.row.status === 'prepare' ||
                       !collectProject">
-                    {{$t('btn.start')}}
+                    {{$t('启用')}}
                   </a>
                   <a
                     href="javascript:;"
@@ -343,7 +358,7 @@
                     v-cursor="{
                       active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
                     }"
-                    @click.stop="operateHandler(props.row, 'start')">{{$t('btn.start')}}</a>
+                    @click.stop="operateHandler(props.row, 'start')">{{$t('启用')}}</a>
                 </li>
                 <li>
                   <a
@@ -358,7 +373,7 @@
                       disabled: !props.row.status,
                       delay: 500,
                     }">
-                    {{$t('btn.delete')}}
+                    {{$t('删除')}}
                   </a>
                   <a
                     href="javascript:;"
@@ -366,7 +381,7 @@
                     v-cursor="{
                       active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
                     }"
-                    @click.stop="operateHandler(props.row, 'delete')">{{$t('btn.delete')}}</a>
+                    @click.stop="operateHandler(props.row, 'delete')">{{$t('删除')}}</a>
                 </li>
                 <!-- 存储设置 -->
                 <li>
@@ -379,7 +394,7 @@
                       disabled: !props.row.status || props.row.table_id,
                       delay: 500,
                     }">
-                    {{$t('logClean.storageSetting')}}
+                    {{$t('存储设置')}}
                   </a>
                   <a
                     href="javascript:;"
@@ -387,7 +402,7 @@
                     v-cursor="{
                       active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
                     }"
-                    @click.stop="operateHandler(props.row, 'storage')">{{$t('logClean.storageSetting')}}</a>
+                    @click.stop="operateHandler(props.row, 'storage')">{{$t('存储设置')}}</a>
                 </li>
                 <!-- 克隆 -->
                 <li>
@@ -410,7 +425,7 @@
                     }"
                     @click.stop="operateHandler(props.row, 'clone')">{{ $t('克隆') }}</a>
                 </li>
-                <li v-if="enableCheckCollector">
+                <li v-if="enableCheckCollector && props.row.environment === 'linux'">
                   <a href="javascript:;" @click.stop="handleShowReport(props.row)">
                     {{ $t('一键检测') }}
                   </a>
@@ -427,6 +442,9 @@
             @setting-change="handleSettingChange">
           </bk-table-setting-content>
         </bk-table-column>
+        <div slot="empty">
+          <empty-status :empty-type="emptyType" @operation="handleOperation" />
+        </div>
       </bk-table>
     </section>
     <collection-report-view
@@ -438,16 +456,18 @@
 </template>
 
 <script>
-import { projectManages } from '@/common/util';
+import { projectManages, clearTableFilter } from '@/common/util';
 import collectedItemsMixin from '@/mixins/collected-items-mixin';
 import { mapGetters } from 'vuex';
 import * as authorityMap from '../../../../../common/authority-map';
 import CollectionReportView from '../../components/collection-report-view';
+import EmptyStatus from '../../../../../components/empty-status';
 
 export default {
   name: 'CollectionItem',
   components: {
     CollectionReportView,
+    EmptyStatus,
   },
   mixins: [collectedItemsMixin],
   data() {
@@ -455,59 +475,59 @@ export default {
       // 数据ID
       {
         id: 'bk_data_id',
-        label: this.$t('dataSource.dataId'),
+        label: this.$t('数据ID'),
       },
       // 采集配置名称
       {
         id: 'collector_config_name',
-        label: this.$t('dataSource.collector_config_name'),
+        label: this.$t('名称'),
         disabled: true,
       },
       // 存储名
       {
         id: 'table_id',
-        label: this.$t('dataSource.table_id'),
+        label: this.$t('存储名'),
       },
       // 日志类型
       {
         id: 'collector_scenario_name',
-        label: this.$t('dataSource.collector_scenario_name'),
+        label: this.$t('日志类型'),
       },
       // 过期时间
       {
         id: 'retention',
-        label: this.$t('dataSource.retention'),
+        label: this.$t('过期时间'),
       },
       // 采集状态
       {
         id: 'es_host_state',
-        label: this.$t('dataSource.es_host_state'),
+        label: this.$t('采集状态'),
       },
       // 更新人
       {
         id: 'updated_by',
-        label: this.$t('dataSource.updated_by'),
+        label: this.$t('更新人'),
       },
       // 更新时间
       {
         id: 'updated_at',
-        label: this.$t('dataSource.updated_at'),
+        label: this.$t('更新时间'),
       },
       // 操作
       {
         id: 'operation',
-        label: this.$t('dataSource.operation'),
+        label: this.$t('操作'),
         disabled: true,
       },
       // 存储集群
       {
         id: 'storage_cluster_name',
-        label: this.$t('dataSource.storage_cluster_name'),
+        label: this.$t('存储集群'),
       },
       // 数据类型
       {
         id: 'category_name',
-        label: this.$t('dataSource.category_name'),
+        label: this.$t('数据类型'),
       },
     ];
 
@@ -545,6 +565,9 @@ export default {
       reportDetailShow: false,
       // 一键检测采集项标识
       checkRecordId: '',
+      emptyType: 'empty',
+      filterSearchObj: {},
+      isFilterSearch: false,
     };
   },
   computed: {
@@ -598,6 +621,11 @@ export default {
     this.stopStatusPolling();
   },
   methods: {
+    handleSearchChange(val) {
+      if (val === '' && !this.isTableLoading) {
+        this.requestData();
+      }
+    },
     search() {
       this.pagination.current = 1;
       this.requestData();
@@ -636,7 +664,7 @@ export default {
         if (!row.is_active && row.status !== 'running') {
           this.$bkInfo({
             type: 'warning',
-            subTitle: `${this.$t('当前采集项名称为')} ${row.collector_config_name}，${this.$t('确认要删除')}`,
+            subTitle: this.$t('当前采集项名称为{n}，确认要删除？', { n: row.collector_config_name }),
             confirmFn: () => {
               this.requestDeleteCollect(row);
             },
@@ -705,6 +733,8 @@ export default {
       Object.keys(data).forEach((item) => {
         this.params[item] = data[item].join('');
       });
+      Object.entries(data).forEach(([key, value]) => this.filterSearchObj[key] = value.length);
+      this.isFilterSearch = Object.values(this.filterSearchObj).reduce((pre, cur) => ((pre += cur), pre), 0);
       this.search();
     },
     handleSettingChange({ fields }) {
@@ -732,6 +762,7 @@ export default {
     },
     requestData() {
       this.isTableLoading = true;
+      this.emptyType = (this.params.keyword || this.isFilterSearch) ? 'search-empty' : 'empty';
       this.$http.request('collect/getCollectList', {
         query: {
           bk_biz_id: this.bkBizId,
@@ -763,9 +794,28 @@ export default {
           this.requestCollectStatus();
         }
       })
+        .catch(() => {
+          this.emptyType = '500';
+        })
         .finally(() => {
           this.isTableLoading = false;
         });
+    },
+    handleOperation(type) {
+      if (type === 'clear-filter') {
+        this.params.keyword = '';
+        this.pagination.current = 1;
+        clearTableFilter(this.$refs.collectTable);
+        this.requestData();
+        return;
+      }
+
+      if (type === 'refresh') {
+        this.emptyType = 'empty';
+        this.pagination.current = 1;
+        this.requestData();
+        return;
+      }
     },
     requestCollectList() {
       return new Promise((resolve, reject) => {
@@ -827,7 +877,7 @@ export default {
     toggleCollect(row) {
       const { isActive, status, statusName } = row;
       row.status = 'running';
-      row.status_name = '部署中';
+      row.status_name = this.$t('部署中');
       this.$http.request('collect/startCollect', {
         params: {
           collector_config_id: row.collector_config_id,
