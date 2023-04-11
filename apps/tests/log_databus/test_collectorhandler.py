@@ -43,9 +43,7 @@ PARAMS = {
     "category_id": "application",
     "target_object_type": "HOST",
     "target_node_type": "TOPO",
-    "target_nodes": [
-        {"bk_inst_id": 33, "bk_obj_id": "module"},
-    ],
+    "target_nodes": [{"bk_inst_id": 33, "bk_obj_id": "module"}],
     "data_encoding": "UTF-8",
     "bk_data_name": "abc",
     "description": "这是一个描述",
@@ -239,8 +237,7 @@ def get_data_id(x):
 class TestCollectorHandler(TestCase):
     @staticmethod
     @patch(
-        "apps.api.TransferApi.get_data_id",
-        get_data_id,
+        "apps.api.TransferApi.get_data_id", get_data_id,
     )
     @patch(
         "apps.api.TransferApi.get_result_table",
@@ -307,8 +304,8 @@ class TestCollectorHandler(TestCase):
     @patch("apps.api.CCApi.list_biz_hosts", CCBizHostsFilterTest())
     def test_filter_illegal_ips(self, *args, **kwargs):
         self.assertEqual(
-            CollectorHandler._filter_illegal_ips(
-                bk_biz_id=FILTER_ILLEGAL_IPS_BIZ_ID, ip_list=FILTER_ILLEGAL_IPS_IP_LIST
-            ),
+            CollectorHandler._filter_illegal_ip_and_host_id(
+                bk_biz_id=FILTER_ILLEGAL_IPS_BIZ_ID, ips=FILTER_ILLEGAL_IPS_IP_LIST
+            )[0],
             ["127.0.0.1"],
         )

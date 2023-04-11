@@ -559,7 +559,7 @@ export default {
         selectedFields: settingFields.slice(1, 8),
       },
       // 是否支持一键检测
-      enableCheckCollector: window.ENABLE_CHECK_COLLECTOR,
+      enableCheckCollector: JSON.parse(window.ENABLE_CHECK_COLLECTOR),
       // 一键检测弹窗配置
       reportDetailShow: false,
       // 一键检测采集项标识

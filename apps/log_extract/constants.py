@@ -19,7 +19,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-from dataclasses import dataclass
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
@@ -187,7 +186,9 @@ FILE_SEARCH_TIMEOUT = 60
 JOB_SCRIPT_TYPE = 1
 
 # 作业执行成功标识
-JOB_SUCCESS_STATUS = 9
+JOB_SUCCESS_STATUS = 3
+
+BATCH_GET_JOB_INSTANCE_IP_LOG_IP_LIST_SIZE = 500
 
 # windows系统名称
 WINDOWS_OS_NAME_LIST = settings.WINDOWS_OS_NAME_LIST
@@ -200,6 +201,7 @@ BKLOG_TASK_LOG_REG_MATCH = r"<BKLOG>(.*?):(.*?)</BKLOG>"
 BKLOG_LOG_KEY = 0
 BKLOG_LOG_VALUE = 1
 
+TASK_HOST_ID_INDEX = 2
 TASK_IP_INDEX = 1
 TASK_BK_CLOUD_ID_INDEX = 0
 
@@ -207,10 +209,3 @@ PIPELINE_TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 # jobapi权限code
 JOB_API_PERMISSION_CODE = 9900403
-
-
-@dataclass
-class TransitServer(object):
-    ip: str
-    target_dir: str
-    bk_cloud_id: int

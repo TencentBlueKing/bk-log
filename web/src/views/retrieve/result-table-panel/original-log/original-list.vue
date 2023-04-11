@@ -52,7 +52,9 @@
     <template>
       <bk-table-column class-name="original-time" width="130">
         <template slot-scope="{ row }">
-          <span class="time-field">{{ formatDate(Number(row[timeField]) || '') }}</span>
+          <span class="time-field" :title="isWrap ? '' : formatDate(Number(row[timeField]))">
+            {{ formatDate(Number(row[timeField]) || '') }}
+          </span>
         </template>
       </bk-table-column>
       <bk-table-column :class-name="`original-str${isWrap ? ' is-wrap' : ''}`">
@@ -64,7 +66,9 @@
             :placement="'top'"
             :tippy-options="{ offset: '0, 10', boundary: scrollContent }"
             @eventClick="(operation) => handleMenuClick({ operation, value: JSON.stringify(row) })">
-            <div :class="['str-content', { 'is-limit': !cacheExpandStr.includes($index) }]">
+            <div
+              :class="['str-content', { 'is-limit': !cacheExpandStr.includes($index) }]"
+              :title="isWrap ? '' : JSON.stringify(row)">
               <!-- eslint-disable-next-line vue/no-v-html -->
               <!-- <span>{{ JSON.stringify(row) }}</span> -->
               <text-highlight
@@ -99,6 +103,7 @@
       <template slot-scope="{ row, column, $index }">
         <operator-tools
           :index="$index"
+          log-type="origin"
           :cur-hover-index="curHoverIndex"
           :operator-config="operatorConfig"
           :handle-click="(event) => handleClickTools(event, row, operatorConfig)" />

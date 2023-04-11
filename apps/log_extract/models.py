@@ -107,6 +107,7 @@ class Tasks(OperateRecordModel):
 
     preview_directory = models.CharField(_("预览目录"), null=True, blank=True, max_length=255)
     preview_ip = models.TextField(_("预览地址ip"), null=True, blank=True)
+    preview_ip_list = JsonField(_("预览地址ip列表"), null=True, blank=True)
     preview_time_range = models.CharField(_("预览日期"), max_length=10, null=True, blank=True)
     preview_is_search_child = models.BooleanField(_("预览是否搜索子目录"), default=False, blank=True)
     preview_start_time = models.CharField(_("预览开始日期"), null=True, blank=True, max_length=20)

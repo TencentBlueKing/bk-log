@@ -27,12 +27,13 @@ from django.utils.translation import ugettext_lazy as _
 from pipeline.component_framework.component import Component
 from pipeline.core.flow.activity import Service, StaticIntervalGenerator
 
-from apps.log_extract.constants import ExtractLinkType, BKREPO_CHILD_PACKING_PATH, TransitServer
+from apps.log_extract.constants import ExtractLinkType, BKREPO_CHILD_PACKING_PATH
 from apps.utils.pipline import BaseService
 from apps.log_extract import constants
 from apps.log_extract.fileserver import FileServer
 from apps.log_extract.models import Tasks, ExtractLink, ExtractLinkHost
 from apps.log_extract.utils.packing import get_packed_dir_name
+from apps.log_extract.utils.transit_server import TransitServer
 
 
 class FileDistributionService(BaseService):
@@ -101,7 +102,7 @@ class FileDistributionService(BaseService):
         task_result = FileServer.file_distribution(
             file_source_list=data.get_one_of_inputs("file_source_list"),
             file_target_path=file_target_path,
-            target_ip_list=[{"ip": transit_server.ip, "bk_cloud_id": transit_server.bk_cloud_id}],
+            target_server=[transit_server],
             bk_biz_id=bk_biz_id,
             operator=operator,
             account=data.get_one_of_inputs("account"),
@@ -136,9 +137,9 @@ class FileDistributionService(BaseService):
             return True
 
         # 判断文件分发是否成功
-        ip_status = FileServer.get_ip_status(query_result)
-        if ip_status != constants.JOB_SUCCESS_STATUS:
-            raise Exception(_("文件分发异常({})".format(ip_status)))
+        job_status = FileServer.get_job_instance_status(query_result)
+        if job_status != constants.JOB_SUCCESS_STATUS:
+            raise Exception(_("文件分发异常({})".format(job_status)))
 
         self.finish_schedule()
         return True

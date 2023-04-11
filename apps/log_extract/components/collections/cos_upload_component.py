@@ -68,7 +68,13 @@ class CosUploadService(BaseService):
         task_result = FileServer.execute_script(
             content=script["content"],
             script_params=script["script_params"],
-            ip=[{"ip": transit_server.ip, "bk_cloud_id": transit_server.bk_cloud_id}],
+            ip=[
+                {
+                    "ip": transit_server.ip,
+                    "bk_cloud_id": transit_server.bk_cloud_id,
+                    "bk_host_id": transit_server.bk_host_id,
+                }
+            ],
             bk_biz_id=bk_biz_id,
             operator=operator,
             account=account,
@@ -96,7 +102,9 @@ class CosUploadService(BaseService):
 
         for item in FileServer.get_detail_for_ips(query_result):
             if item["exit_code"] != 0:
-                raise Exception(_("上传网盘异常: {}").format(FileServer.get_job_tag(query_result)))
+                raise Exception(
+                    _("上传网盘异常: {}, status: {}").format(FileServer.get_job_tag(item), item.get("status", ""))
+                )
 
         # 如果是提取链路bkrepo类型 需要上传bkrepo
         if extract_link.link_type == ExtractLinkType.BK_REPO.value:

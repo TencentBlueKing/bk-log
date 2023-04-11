@@ -79,6 +79,7 @@ from apps.log_search.constants import (
 from bkm_space.api import AbstractSpaceApi
 from bkm_space.define import Space as SpaceDefine
 from bkm_space.utils import space_uid_to_bk_biz_id
+from bkm_ipchooser.constants import CommonEnum
 from apps.utils.time_handler import timestamp_to_datetime, datetime_to_timestamp, timestamp_to_timeformat
 
 
@@ -137,6 +138,14 @@ class GlobalConfig(models.Model):
         configs[GlobalTypeEnum.LOG_CLUSTERING_YEAR_ON_YEAR.value] = YearOnYearEnum.get_choices_list_dict()
         # 自定义上报
         configs[GlobalTypeEnum.DATABUS_CUSTOM.value] = CustomTypeEnum.get_choices_list_dict()
+        # 主机标识优先级
+        configs[GlobalTypeEnum.HOST_IDENTIFIER_PRIORITY.value] = []
+        host_identifier_priority = settings.HOST_IDENTIFIER_PRIORITY.split(",")
+        for i in host_identifier_priority:
+            if i in CommonEnum.DEFAULT_HOST_FIELDS.value and i in CommonEnum.IPCHOOSER_FIELD_MAP.value:
+                configs[GlobalTypeEnum.HOST_IDENTIFIER_PRIORITY.value].append(CommonEnum.IPCHOOSER_FIELD_MAP.value[i])
+        # 是否容器化部署
+        configs[GlobalTypeEnum.IS_K8S_DEPLOY.value] = settings.IS_K8S_DEPLOY_MODE
         return configs
 
     class Meta:

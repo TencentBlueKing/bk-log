@@ -679,6 +679,7 @@ export class Storage {
   }
 }
 
+
 /**
  * 深拷贝
  * @param {Object} obj
@@ -720,4 +721,36 @@ export const clearTableFilter =  (refInstance) => {
  */
 export const renderHeader = (h, { column }) => {
   return h('p', { directives: [{ name: 'bk-overflow-tips' }], class: 'title-overflow' }, [column.label]);
+};
+
+/**
+ * @desc: 对象深度对比
+ * @param {Object} object1 对比对象A
+ * @param {Object} object2 对比对象B
+ * @param {Array<string>} ignoreArr 不对比的键名
+ * @returns {Boolean} 两个对象是否相同
+ */
+export const deepEqual = (object1, object2, ignoreArr = []) => {
+  const keys1Arr = Object.keys(object1);
+  const keys2Arr = Object.keys(object2);
+  if (keys1Arr.length !== keys2Arr.length) return false;
+
+  for (const key1 of keys1Arr) {
+    const val1 = object1[key1];
+    let val2;
+    if (keys2Arr.includes(key1)) {
+      val2 = object2[key1];
+      if (ignoreArr.includes(key1)) continue;
+    } else {
+      return false;
+    }
+    const areObjects = isObject(val1) && isObject(val2);
+    if ((areObjects && !deepEqual(val1, val2, ignoreArr)) || (!areObjects && val1 !== val2)) return false;
+  }
+  return true;
+};
+
+// 是否是ipv6
+export const isIPv6 = (str = '') => {
+  return /^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$/.test(str);
 };

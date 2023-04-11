@@ -21,21 +21,21 @@ the project delivered to anyone in the future.
 """
 from __future__ import absolute_import, unicode_literals
 
-import socket
 import time
 from functools import wraps
 
 import arrow
 from django.core.cache import cache
 from django.utils.translation import ugettext as _
-from elasticsearch import Elasticsearch
 
 from apps.api import TransferApi, NodeApi
+from apps.log_esquery.utils.es_client import es_socket_ping
 from apps.utils.log import logger
 from apps.log_databus.constants import STORAGE_CLUSTER_TYPE
 from apps.log_databus.models import CollectorConfig
 from apps.log_measure.exceptions import EsConnectFailException
 from apps.log_search.models import Space
+from apps.log_esquery.utils.es_client import get_es_client
 
 
 class Metric(object):
@@ -242,20 +242,14 @@ class MetricCollector(BaseMetricCollector):
         username = auth_info.get("username")
         password = auth_info.get("password")
 
-        cs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        es_address: tuple = (str(domain_name), int(port))
-        cs.settimeout(2)
-        status: int = cs.connect_ex(es_address)
-        if status != 0:
-            raise EsConnectFailException()
-        cs.close()
-
-        http_auth = (username, password) if username and password else None
-        es_client = Elasticsearch(
+        es_socket_ping(host=domain_name, port=port)
+        es_client = get_es_client(
+            version="",  # 由于版本不确定，所以不传,
             hosts=[domain_name],
-            http_auth=http_auth,
-            scheme="http",
+            username=username,
+            password=password,
             port=port,
+            scheme="http",
             verify_certs=False,
             timeout=10,
         )

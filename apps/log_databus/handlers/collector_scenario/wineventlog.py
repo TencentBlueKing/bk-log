@@ -52,12 +52,7 @@ class WinEventLogScenario(CollectorScenario):
                     "plugin_version": self.PLUGIN_VERSION,
                     "config_templates": [{"name": f"{self.CONFIG_NAME}.conf", "version": "latest"}],
                 },
-                "params": {
-                    "context": {
-                        "dataid": data_id,
-                        "local": [local_params],
-                    }
-                },
+                "params": {"context": {"dataid": data_id, "local": [local_params]}},
             },
         ]
         if FeatureToggleObject.switch(IS_AUTO_DEPLOY_PLUGIN):
@@ -111,12 +106,29 @@ class WinEventLogScenario(CollectorScenario):
         """
         return {
             "option": {
-                "es_unique_field_list": ["cloudId", "serverIp", "winEventId", "winEventChannel", "winEventRecordId"],
+                "es_unique_field_list": [
+                    "cloudId",
+                    "serverIp",
+                    "winEventId",
+                    "winEventChannel",
+                    "winEventRecordId",
+                    "bk_host_id",
+                ],
                 "separator_node_source": "",
                 "separator_node_action": "",
                 "separator_node_name": "",
             },
             "fields": [
+                {
+                    "field_name": "bk_host_id",
+                    "field_type": "float",
+                    "tag": "dimension",
+                    "alias_name": "bk_host_id",
+                    "description": "主机ID",
+                    "option": {"es_type": "integer", "es_include_in_all": False}
+                    if es_version.startswith("5.")
+                    else {"es_type": "integer"},
+                },
                 {
                     "field_name": "__ext",
                     "field_type": "object",

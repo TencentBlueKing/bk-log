@@ -329,7 +329,7 @@ FIELDS = [
 # 时间字段的来源直接设为非维度
 FIELDS_NOT_ES_DOC_VALUES_KEYS = ["key1", "time1"]
 FIELDS_TIME_FIELD_ALIAS_NAME = "time1"
-FIELDS_VAILD_NUM = 4
+FIELDS_VALID_NUM = 4
 FIELDS_TIME_FIELD_OPTION = {
     "time_zone": 0,
     "format": "yyyy-MM-DD hh:mm:ss",
@@ -478,7 +478,7 @@ class TestEtl(TestCase):
                 source_field = item["alias_name"] if item.get("alias_name") else item["field_name"]
                 fields_user[source_field] = item
         self.assertEqual(fields_not_doc_values, FIELDS_NOT_ES_DOC_VALUES_KEYS)
-        self.assertEqual(len(fields_user), FIELDS_VAILD_NUM, "清洗字段数不一致")
+        self.assertEqual(len(fields_user), FIELDS_VALID_NUM, "清洗字段数不一致")
         # 时间字段
         self.assertEqual(fields_user["time1"]["option"]["es_type"], "keyword")
         self.assertEqual(result["params"]["time_alias_name"], "time1")

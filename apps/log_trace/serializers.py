@@ -48,6 +48,7 @@ class TraceSearchAttrSerializer(serializers.Serializer):
     # filter条件，span选择器等
     addition = serializers.ListField(allow_empty=True, required=False, default="")
     host_scopes = serializers.DictField(default={}, required=False)
+    ip_chooser = serializers.DictField(default={}, required=False)
 
     # 时间选择器字段
     start_time = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
