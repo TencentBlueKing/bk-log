@@ -3897,9 +3897,10 @@ class CollectorHandler(object):
 
         from apps.log_databus.handlers.etl import EtlHandler
 
-        result_table = TransferApi.get_result_table_storage(
+        result_table_info = TransferApi.get_result_table_storage(
             {"result_table_list": self.data.table_id, "storage_type": "elasticsearch"}
-        )[self.data.table_id]
+        )
+        result_table = result_table_info.get(self.data.table_id, {})
         if not result_table:
             raise ResultTableNotExistException(ResultTableNotExistException.MESSAGE.format(self.data.table_id))
 
