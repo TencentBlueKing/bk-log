@@ -24,7 +24,7 @@
   <div class="repository-slider-container" data-test-id="archive_div_addNewStorehouse">
     <bk-sideslider
       transfer
-      :title="isEdit ? $t('logArchive.editRepository') : $t('logArchive.createRepository')"
+      :title="isEdit ? $t('编辑归档仓库') : $t('新建归档仓库')"
       :is-show="showSlider"
       :width="676"
       :quick-close="true"
@@ -58,7 +58,7 @@
                 :id="option.storage_cluster_id"
                 :name="option.storage_cluster_name">
                 <div
-                  v-if="!(option.permission && option.permission.manage_es_source)"
+                  v-if="!(option.permission && option.permission[authorityMap.MANAGE_ES_SOURCE_AUTH])"
                   class="option-slot-container no-authority"
                   @click.stop>
                   <span class="text">
@@ -76,8 +76,8 @@
               <span>{{ esClusterSource }}</span>
             </p>
           </bk-form-item>
-          <h3 class="form-title">{{ $t('logArchive.repositoryConfig') }}</h3>
-          <bk-form-item :label="$t('logArchive.repositoryType')" ext-cls="repository-item" required>
+          <h3 class="form-title">{{ $t('配置') }}</h3>
+          <bk-form-item :label="$t('类型')" ext-cls="repository-item" required>
             <div
               :class="{ 'repository-card': true, 'is-active': formData.es_config.type === card.id }"
               v-for="card in repository"
@@ -91,31 +91,31 @@
           <bk-alert type="info">
             <div slot="title" class="repository-alert">
               <div v-if="formData.es_config.type === 'hdfs'">
-                <p>{{ $t('logArchive.repositoryAlert1') }}</p>
-                <p>{{ $t('logArchive.repositoryAlert2') }}</p>
+                <p>{{ $t('1. 用户需要在hdfs设置的kerberos中创建给es使用的principal, 然后导出对应的keytab文件') }}</p>
+                <p>{{ $t('2. 将keytab放es每个节点对应的目录中去') }}</p>
               </div>
               <div v-if="formData.es_config.type === 'fs'">
-                <p>{{ $t('logArchive.repositoryAlert3') }}</p>
+                <p>{{ $t('本地目录配置说明') }}</p>
               </div>
               <div v-if="formData.es_config.type === 'cos'">
-                <p>{{ $t('logArchive.repositoryAlert4') }}</p>
+                <p>{{ $t('COS的自动创建和关联，只能用于腾讯云') }}</p>
               </div>
             </div>
           </bk-alert>
           <bk-form-item
-            :label="$t('logArchive.repositoryName')"
+            :label="$t('仓库名称')"
             required
             property="snapshot_repository_name">
             <bk-input
               v-model="formData.snapshot_repository_name"
               data-test-id="addNewStorehouse_input_repoName"
-              :placeholder="$t('logArchive.repoNmaeTip')">
+              :placeholder="$t('只能输入英文、数字或者下划线')">
             </bk-input>
           </bk-form-item>
           <!-- HDFS -->
           <div v-if="formData.es_config.type === 'hdfs'" key="hdfs">
             <bk-form-item
-              :label="$t('logArchive.archiveDirectory')"
+              :label="$t('归档目录')"
               required
               :rules="basicRules.path"
               :property="formData.hdfsFormData.path">
@@ -124,7 +124,7 @@
                 data-test-id="addNewStorehouse_input_archiveCatalog"></bk-input>
             </bk-form-item>
             <bk-form-item
-              :label="$t('logArchive.HDFSAddr')"
+              :label="$t('HDFS地址')"
               required
               :rules="basicRules.uri"
               :property="formData.hdfsFormData.uri">
@@ -156,7 +156,7 @@
           <!-- FS -->
           <div v-if="formData.es_config.type === 'fs'" key="fs">
             <bk-form-item
-              :label="$t('logArchive.archiveDirectory')"
+              :label="$t('归档目录')"
               data-test-id="addNewStorehouse_input_archiveCatalog"
               required
               :rules="basicRules.location"
@@ -167,7 +167,7 @@
           <!-- COS -->
           <div v-if="formData.es_config.type === 'cos'" key="cos">
             <bk-form-item
-              :label="$t('logArchive.archiveDirectory')"
+              :label="$t('归档目录')"
               required
               :rules="basicRules.base_path"
               :property="formData.cosFormData.base_path">
@@ -176,7 +176,7 @@
                 data-test-id="addNewStorehouse_input_archiveCatalog"></bk-input>
             </bk-form-item>
             <bk-form-item
-              :label="$t('logArchive.region')"
+              :label="$t('区域')"
               required
               :rules="basicRules.region"
               :property="formData.cosFormData.region">
@@ -212,7 +212,7 @@
                 data-test-id="addNewStorehouse_input_APPID"></bk-input>
             </bk-form-item>
             <bk-form-item
-              :label="$t('logArchive.BucketName')"
+              :label="$t('Bucket名字')"
               required
               :rules="basicRules.bucket"
               :property="formData.cosFormData.bucket">
@@ -242,6 +242,7 @@
 
 <script>
 import { mapGetters } from 'vuex';
+import * as authorityMap from '../../../../common/authority-map';
 
 const cosConfigForm = () => {
   return {
@@ -291,7 +292,7 @@ export default {
       esClusterList: [],
       repository: [
         { id: 'hdfs', name: 'HDFS', image: require('@/images/hdfs.png') },
-        { id: 'fs', name: this.$t('logArchive.sharedDirectory'), image: require('@/images/fs.png') },
+        { id: 'fs', name: this.$t('共享目录'), image: require('@/images/fs.png') },
         { id: 'cos', name: 'COS', image: require('@/images/cos.png') },
       ],
       formData: {
@@ -315,6 +316,9 @@ export default {
     ...mapGetters({
       bkBizId: 'bkBizId',
     }),
+    authorityMap() {
+      return authorityMap;
+    },
     isEdit() {
       return this.editClusterId !== null;
     },
@@ -463,7 +467,7 @@ export default {
       try {
         this.$bkLoading();
         const res = await this.$store.dispatch('getApplyData', {
-          action_ids: ['manage_es_source'],
+          action_ids: [authorityMap.MANAGE_ES_SOURCE_AUTH],
           resources: [{
             type: 'es_source',
             id: option.cluster_config.cluster_id,
@@ -486,7 +490,7 @@ export default {
       return new Promise((reject) => {
         this.$bkInfo({
           type: 'warning',
-          title: this.$t('pageLeaveTips'),
+          title: this.$t('是否放弃本次操作？'),
           confirmFn: () => {
             reject(true);
           },

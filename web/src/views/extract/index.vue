@@ -59,7 +59,7 @@ export default {
       this.$router.push({
         name: 'extract',
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
     },
@@ -108,7 +108,7 @@ export default {
       }
     }
 
-    ::v-deep .main-container {
+    :deep(.main-container) {
       position: relative;
       padding-bottom: 60px;
       overflow: auto;

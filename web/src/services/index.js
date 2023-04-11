@@ -44,9 +44,17 @@ import * as archive from './archive';
 import * as logClustering from './log-clustering';
 import * as custom from './custom';
 import * as container from './container';
+import * as docs from './docs';
+import * as favorite from './favorite';
+import * as ipChooser from './ip-chooser';
 
 const getMyProjectList = {
   url: '/meta/projects/mine/',
+  method: 'get',
+};
+
+const getMySpaceList = {
+  url: '/meta/spaces/mine/',
   method: 'get',
 };
 
@@ -56,6 +64,9 @@ export default {
   retrieve,
   project: {
     getMyProjectList,
+  },
+  space: {
+    getMySpaceList,
   },
   indexSet,
   source,
@@ -78,4 +89,7 @@ export default {
   logClustering,
   custom,
   container,
+  docs,
+  favorite,
+  ipChooser,
 };

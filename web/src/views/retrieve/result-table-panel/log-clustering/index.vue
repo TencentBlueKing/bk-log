@@ -48,7 +48,7 @@
 
       <bk-alert
         v-if="active === 'dataFingerprint' && signatureSwitch && !exhibitAll"
-        :title="$t('clusterAlert')"
+        :title="$t('日志聚类必需至少有一个text类型的字段，当前无该字段类型，请前往日志清洗进行设置。')"
         closable
         type="info">
       </bk-alert>
@@ -63,6 +63,7 @@
             v-if="active === 'ignoreNumbers' || active === 'ignoreSymbol'"
             v-bind="$attrs"
             v-on="$listeners"
+            :retrieve-params="retrieveParams"
             :total-fields="totalFields"
             :origin-table-list="originTableList"
             :clustering-field="clusteringField"
@@ -90,12 +91,11 @@
         class="no-text-table"
         :data="[]">
         <div slot="empty">
-          <div class="empty-text">
-            <span class="bk-table-empty-icon bk-icon icon-empty"></span>
-            <p v-if="!isHaveText && indexSetItem.scenario_id !== 'log'">
-              {{$t('canNotFieldMessage1')}}
-              <span class="empty-leave" @click="handleLeaveCurrent">{{$t('计算平台')}}</span>
-              {{$t('canNotFieldMessage2')}}
+          <empty-status class="empty-text" empty-type="empty" :show-text="false">
+            <p v-if="indexSetItem.scenario_id !== 'log' && !isHaveAnalyzed">
+              <i18n path="无分词字段 请前往 {0} 调整清洗">
+                <span class="empty-leave" @click="handleLeaveCurrent">{{$t('计算平台')}}</span>
+              </i18n>
             </p>
             <div v-else>
               <p>{{exhibitText}}</p>
@@ -103,7 +103,7 @@
                 {{exhibitOperate}}
               </span>
             </div>
-          </div>
+          </empty-status>
         </div>
       </bk-table>
 
@@ -124,6 +124,7 @@ import IgnoreTable from './ignore-table';
 import ClusteringLoader from '@/skeleton/clustering-loader';
 import fingerOperate from './components/finger-operate';
 import { mapGetters } from 'vuex';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   components: {
@@ -131,6 +132,7 @@ export default {
     IgnoreTable,
     ClusteringLoader,
     fingerOperate,
+    EmptyStatus,
   },
   props: {
     retrieveParams: {
@@ -157,12 +159,19 @@ export default {
       type: Object,
       required: true,
     },
+    clusterRouteParams: {
+      type: Object,
+      required: true,
+    },
+    isChangeTableNav: {
+      type: Boolean,
+      default: false,
+    },
   },
   data() {
     return {
       active: 'ignoreNumbers',
       clusterSwitch: false, // 日志聚类开关
-      signatureSwitch: false, // 数据指纹开关
       configID: -1, // 采集项ID
       exhibitAll: false, // 是否显示nav
       isClickFingerNav: false, // 是否点击过数据指纹nav
@@ -210,7 +219,7 @@ export default {
       allFingerList: [], // 所有数据指纹List
       showScrollTop: false, // 是否展示返回顶部icon
       throttle: false, // 请求防抖
-      isHaveText: false, // 是否含有text字段
+      isInitPage: true, // 是否是第一次进入数据指纹
     };
   },
   computed: {
@@ -226,7 +235,7 @@ export default {
         : this.loadingWidthList.notCompared;
     },
     exhibitText() {
-      return this.configID ? this.$t('goCleanMessage') : this.$t('noConfigIDMessage');
+      return this.configID ? this.$t('当前无可用字段，请前往日志清洗进行设置') : this.$t('当前索引集不支持字段提取设置');
     },
     exhibitOperate() {
       return this.configID ? this.$t('跳转到日志清洗') : '';
@@ -245,6 +254,12 @@ export default {
     bkBizId() {
       return this.$store.state.bkBizId;
     },
+    isHaveAnalyzed() {
+      return this.totalFields.some(item => item.is_analyzed);
+    },
+    signatureSwitch() { // 数据指纹开关
+      return this.configData.extra?.signature_switch;
+    },
   },
   watch: {
     configData: {
@@ -259,12 +274,12 @@ export default {
         this.configID = this.cleanConfig.extra?.collector_config_id;
         this.isClickFingerNav = false;
         // 当前nav为数据指纹且数据指纹开启点击指纹nav则不再重复请求
-        if (this.active === 'dataFingerprint' && val.extra.signature_switch) {
+        if (this.active === 'dataFingerprint' && this.signatureSwitch) {
           this.isClickFingerNav = true;
         } else {
           this.fingerList = [];
           this.allFingerList = [];
-        }
+        };
         // 判断是否可以字段提取的全局loading
         setTimeout(() => {
           this.globalLoading = false;
@@ -281,12 +296,11 @@ export default {
            *  来源如果是数据平台并且日志聚类大开关有打开则进入text判断
            *  有text则提示去开启日志聚类 无则显示跳转计算平台
            */
-          this.isHaveText = newList.some(el => el.field_type === 'text');
           // 初始化分组下拉列表
           this.filterGroupList();
           this.initTable();
           // 判断是否有text字段 无则提示当前不支持采集项清洗
-          this.exhibitAll = this.isHaveText;
+          this.exhibitAll = newList.some(el => el.field_type === 'text');
         }
       },
     },
@@ -295,8 +309,7 @@ export default {
       handler(newList) {
         if (newList.length) {
           // 过滤条件变化及当前活跃为数据指纹并且数据指纹打开时才发送请求
-          if (this.indexId === this.$route.params.indexId
-          && this.fingerOperateData.signatureSwitch) {
+          if (this.indexId === this.$route.params.indexId && this.signatureSwitch) {
             this.requestFinger();
           } else {
             this.indexId = this.$route.params.indexId;
@@ -307,18 +320,29 @@ export default {
     requestData: {
       deep: true,
       handler() {
-        if (this.fingerOperateData.signatureSwitch) {
+        if (this.signatureSwitch) {
           this.requestFinger();
         }
       },
+    },
+    isChangeTableNav(val) {
+      // 若数据指纹开启则自动显示数据指纹
+      if (val && this.signatureSwitch) {
+        this.active = 'dataFingerprint';
+        this.$emit('update:is-change-table-nav', false);
+      };
     },
   },
   methods: {
     handleClickNav(id) {
       this.active = id;
+      // 切换聚类的nav 缓存聚类params
+      this.$emit('backFillClusterRouteParams', 'clustering', {
+        ...this.clusterRouteParams,
+        activeNav: this.active,
+      });
       if (!this.isClickFingerNav) {
-        if (this.configData.extra.signature_switch
-         && id === 'dataFingerprint') {
+        if (this.signatureSwitch && id === 'dataFingerprint') {
           this.isClickFingerNav = true;
           this.requestFinger();
         }
@@ -337,17 +361,35 @@ export default {
         } else {
           patternLevel = clusterLevel.length  / 2;
         }
-      }
+      };
+      const patternList = clusterLevel.sort((a, b) => Number(b) - Number(a));
+      const queryRequestData = { pattern_level: clusterLevel[patternLevel - 1] };
+      // 通过路由返回的值 初始化数据指纹的操作参数
+      if (this.isInitPage && JSON.stringify(this.clusterRouteParams) !== '{}') {
+        this.active = this.clusterRouteParams.activeNav;
+        const paramData = this.clusterRouteParams.requestData;
+        const findIndex = clusterLevel.findIndex(item => item === String(paramData.pattern_level));
+        if (findIndex >= 0) patternLevel = findIndex + 1;
+        Object.assign(queryRequestData, paramData, {
+          pattern_level: paramData.pattern_level ? paramData.pattern_level : clusterLevel[patternLevel - 1],
+        });
+      };
       Object.assign(this.fingerOperateData, {
         patternSize: patternLevel - 1,
         sliderMaxVal: clusterLevel.length - 1,
-        patternList: clusterLevel,
+        patternList,
         comparedList: yearOnYearList,
       });
-      Object.assign(this.requestData, {
-        pattern_level: clusterLevel[patternLevel - 1],
-      });
+      Object.assign(this.requestData, queryRequestData);
       this.$nextTick(() => {
+        if (this.isInitPage && this.signatureSwitch && JSON.stringify(this.clusterRouteParams) === '{}') {
+          this.active = 'dataFingerprint';
+        };
+        // 初始化nav如果是数据指纹 且打开数据指纹 则初始化时请求一次数据指纹
+        if (this.active === 'dataFingerprint' && this.signatureSwitch) {
+          this.requestFinger();
+        };
+        this.isInitPage = false;
         this.scrollEl = document.querySelector('.result-scroll-container');
       });
     },
@@ -386,22 +428,29 @@ export default {
           }
         }
           break;
+      };
+      // 数据指纹的操作回填到url上
+      if (['compared', 'patternSize', 'isShowNear', 'group'].includes(operateType)) {
+        this.$emit('backFillClusterRouteParams', 'clustering', {
+          activeNav: this.active,
+          requestData: this.requestData,
+        });
       }
     },
     handleLeaveCurrent() {
       // 不显示字段提取时跳转计算平台
-      if (this.indexSetItem.scenario_id !== 'log' && !this.isHaveText) {
+      if (this.indexSetItem.scenario_id !== 'log' && !this.isHaveAnalyzed) {
         const jumpUrl = `${window.BKDATA_URL}`;
         window.open(jumpUrl, '_blank');
         return;
-      }
+      };
       // 无清洗 去清洗
       if (this.configID && this.configID > 0) {
         this.$router.push({
           name: 'clean-edit',
           params: { collectorId: this.configID },
           query: {
-            projectId: window.localStorage.getItem('project_id'),
+            spaceUid: this.$store.state.spaceUid,
             backRoute: this.$route.name,
           },
         });
@@ -428,7 +477,7 @@ export default {
       }
       this.fingerOperateData.comparedList.push({
         id: Number(matchVal[1]),
-        name: `${matchVal[1]}小时前`,
+        name: this.$t('{n} 小时前', { n: matchVal[1] }),
       });
       this.requestData.year_on_year_hour = Number(matchVal[1]);
     },
@@ -448,14 +497,13 @@ export default {
           ...this.retrieveParams,
           ...this.requestData,
         },
-      })
-        .then(async (res) => {
+      }, { cancelWhenRouteChange: false }) // 由于回填指纹的数据导致路由变化，故路由变化时不取消请求
+        .then((res) => {
           this.fingerPage = 1;
           this.fingerList = [];
           this.allFingerList = res.data;
           const sliceFingerList = res.data.slice(0, this.fingerPageSize);
-          const labelsList = await this.getFingerLabelsList(sliceFingerList);
-          this.fingerList.push(...labelsList);
+          this.fingerList.push(...sliceFingerList);
           this.showScrollTop = false;
         })
         .finally(() => {
@@ -477,55 +525,10 @@ export default {
       this.fingerPage += 1;
       const { fingerPage: page, fingerPageSize: pageSize } = this;
       const sliceFingerList = this.allFingerList.slice(pageSize * (page - 1), pageSize * page);
-      const labelsList = await this.getFingerLabelsList(sliceFingerList);
       setTimeout(() => {
-        this.fingerList.push(...labelsList);
+        this.fingerList.push(...sliceFingerList);
         this.isPageOver = false;
       }, 300);
-    },
-    /**
-     * @desc: 获取标签列表
-     * @param { Array } fingerList
-     * @returns { Array } 请求成功时添加labels后的数组
-     */
-    async getFingerLabelsList(fingerList = []) {
-      const setList = new Set();
-      fingerList.forEach((el) => {
-        if (el.monitor?.strategy_id) {
-          setList.add(el.monitor.strategy_id);
-        }
-      });
-      // 获取过滤后的策略ID
-      const strategyIDs = [...setList];
-      // 有策略ID时请求标签接口 无策略ID时则直接返回
-      if (strategyIDs.length) {
-        try {
-          const res = await this.$http.request('/logClustering/getFingerLabels', {
-            params: {
-              index_set_id: this.$route.params.indexId,
-            },
-            data: {
-              strategy_ids: strategyIDs,
-              bk_biz_id: this.bkBizId,
-            },
-          });
-          // 生成标签对象 key为策略ID 值为标签数组
-          const strategyObj = res.data.reduce((pre, cur) => {
-            pre[cur.strategy_id] = cur.labels;
-            return pre;
-          }, {});
-          // 数据指纹列表添加labels属性
-          const labelsList = fingerList.map((el) => {
-            el.labels = strategyObj[el.monitor.strategy_id];
-            return el;
-          });
-          return labelsList;
-        } catch (error) {
-          return fingerList;
-        }
-      } else {
-        return fingerList;
-      }
     },
     /**
      * @desc: 初始化分组select数组
@@ -538,7 +541,7 @@ export default {
           return { id, name: alias ? `${id}(${alias})` : id };
         });
       this.fingerOperateData.groupList = filterList;
-      this.requestData.group_by = [];
+      this.requestData.group_by.splice(0, this.requestData.group_by.length);
     },
     scrollToTop() {
       this.$easeScroll(0, 300, this.scrollEl);
@@ -558,7 +561,7 @@ export default {
 
 .log-cluster-table-container {
   .cluster-nav {
-    min-width: 760px;
+    min-width: 1150px;
     margin-bottom: 12px;
     color: #63656e;
 

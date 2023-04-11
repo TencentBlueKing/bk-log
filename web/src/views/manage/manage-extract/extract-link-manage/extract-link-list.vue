@@ -43,37 +43,55 @@
       :data="extractLinkList"
       row-key="strategy_id"
       data-test-id="extractLinkListBox_table_LinkListTableBox">
-      <bk-table-column :label="$t('链路名称')">
+      <bk-table-column :label="$t('链路名称')" :render-header="$renderHeader">
         <div class="table-ceil-container" slot-scope="{ row }">
           <span v-bk-overflow-tips>{{ row.name }}</span>
         </div>
       </bk-table-column>
-      <bk-table-column :label="$t('链路类型')" prop="created_at">
+      <bk-table-column :label="$t('链路类型')" :render-header="$renderHeader" prop="created_at">
         <div slot-scope="{ row }">
-          <template v-if="row.link_type === 'common'">{{ $t('内网链路') }}</template>
-          <template v-else-if="row.link_type === 'qcloud_cos'">{{ $t('腾讯云链路') }}</template>
+          <template>{{linkNameMap[row.link_type]}}</template>
         </div>
       </bk-table-column>
-      <bk-table-column :label="$t('操作')" width="200">
+      <bk-table-column :label="$t('操作')" :render-header="$renderHeader" width="200">
         <div slot-scope="{ row }" class="task-operation-container">
           <span class="task-operation" @click="handleEditStrategy(row)">{{ $t('编辑') }}</span>
           <span class="task-operation" @click="handleDeleteStrategy(row)">{{ $t('删除') }}</span>
         </div>
       </bk-table-column>
+      <div slot="empty">
+        <empty-status :empty-type="emptyType" @operation="handleOperation" />
+      </div>
     </bk-table>
   </div>
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
+import * as authorityMap from '../../../../common/authority-map';
+import EmptyStatus from '@/components/empty-status';
+
 export default {
   name: 'ExtractLinkList',
+  components: {
+    EmptyStatus,
+  },
   data() {
     return {
       isLoading: true,
       extractLinkList: [],
       isAllowedManage: null, // 是否有管理权限
       isButtonLoading: false, // 没有权限时点击新增按钮请求权限链接
+      linkNameMap: {
+        common: this.$t('内网链路'),
+        qcloud_cos: this.$t('腾讯云链路'),
+        bk_repo: this.$t('bk_repo链路'),
+      },
+      emptyType: 'empty',
     };
+  },
+  computed: {
+    ...mapGetters(['spaceUid']),
   },
   created() {
     this.checkManageAuth();
@@ -82,10 +100,10 @@ export default {
     async checkManageAuth() {
       try {
         const res = await this.$store.dispatch('checkAllowed', {
-          action_ids: ['manage_extract_config'],
+          action_ids: [authorityMap.MANAGE_EXTRACT_AUTH],
           resources: [{
-            type: 'biz',
-            id: this.$store.state.bkBizId,
+            type: 'space',
+            id: this.spaceUid,
           }],
         });
         this.isAllowedManage = res.isAllowed;
@@ -107,6 +125,7 @@ export default {
         this.extractLinkList = res.data;
       } catch (e) {
         console.warn(e);
+        this.emptyType = '500';
       } finally {
         this.isLoading = false;
       }
@@ -117,10 +136,10 @@ export default {
         try {
           this.isButtonLoading = true;
           const res = await this.$store.dispatch('getApplyData', {
-            action_ids: ['manage_extract_config'],
+            action_ids: [authorityMap.MANAGE_EXTRACT_AUTH],
             resources: [{
-              type: 'biz',
-              id: this.$store.state.bkBizId,
+              type: 'space',
+              id: this.spaceUid,
             }],
           });
           this.$store.commit('updateAuthDialogData', res.data);
@@ -133,7 +152,7 @@ export default {
         this.$router.push({
           name: 'extract-link-create',
           query: {
-            projectId: window.localStorage.getItem('project_id'),
+            spaceUid: this.$store.state.spaceUid,
           },
         });
       }
@@ -146,7 +165,8 @@ export default {
           linkId: row.link_id,
         },
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: this.$store.state.spaceUid,
+          editName: row.name,
         },
       });
     },
@@ -172,6 +192,13 @@ export default {
         },
       });
     },
+    handleOperation(type) {
+      if (type === 'refresh') {
+        this.emptyType = 'empty';
+        this.search();
+        return;
+      }
+    },
   },
 };
 </script>
@@ -181,7 +208,7 @@ export default {
     padding: 0 24px 20px;
 
     /*表格内容样式*/
-    ::v-deep .king-table {
+    :deep(.king-table) {
       .task-operation-container {
         display: flex;
         align-items: center;

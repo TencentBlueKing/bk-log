@@ -31,7 +31,7 @@ from apps.api.base import DataAPI  # noqa
 
 
 class _IAMApi(object):
-    MODULE = _("IAM")
+    MODULE = _("IAM权限中心")
 
     def __init__(self):
         self.batch_instance = DataAPI(

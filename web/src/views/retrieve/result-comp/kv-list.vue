@@ -37,6 +37,7 @@
             v-for="(option) in toolMenuList"
             :key="option.id"
             :class="`icon ${getHandleIcon(option, field)} ${checkDisable(option.id, field)}`"
+            v-bk-tooltips="{ content: getIconPopover(option.id, field), delay: 300 }"
             @click.stop="handleMenuClick(option.id, field)">
           </span>
         </div>
@@ -94,16 +95,41 @@ export default {
       type: Object,
       default: () => {},
     },
+    sortList: {
+      type: Array,
+      require: true,
+    },
+    retrieveParams: {
+      type: Object,
+      require: true,
+    },
+    listData: {
+      type: Object,
+      default: () => {},
+    },
   },
   data() {
     return {
       toolMenuList: [
-        { id: 'is', icon: 'bk-icon icon-close-circle' },
-        { id: 'not', icon: 'bk-icon icon-minus-circle' },
+        { id: 'is', icon: 'bk-icon icon-enlarge-line search' },
+        { id: 'not', icon: 'bk-icon icon-narrow-line search' },
         { id: 'display', icon: 'bk-icon icon-arrows-up-circle' },
         // { id: 'chart', icon: 'log-icon icon-chart' },
         { id: 'copy', icon: 'log-icon icon-copy' },
       ],
+      toolMenuTips: {
+        is: this.$t('添加 {n} 过滤项', { n: '=' }),
+        not: this.$t('添加 {n} 过滤项', { n: '!=' }),
+        hiddenField: this.$t('隐藏字段'),
+        displayField: this.$t('显示字段'),
+        copy: this.$t('复制'),
+        text_is: this.$t('文本类型不支持 {n} 操作', { n: '=' }),
+        text_not: this.$t('文本类型不支持 {n} 操作', { n: '!=' }),
+      },
+      mappingKay: { // is is not 值映射
+        is: '=',
+        'is not': '!=',
+      },
     };
   },
   computed: {
@@ -117,10 +143,19 @@ export default {
     hiddenFields() {
       return this.fieldList.filter(item => !this.visibleFields.some(visibleItem => item === visibleItem));
     },
+    filedSettingConfigID() { // 当前索引集的显示字段ID
+      return this.$store.state.retrieve.filedSettingConfigID;
+    },
+    isHaveBkHostIDAndHaveValue() { // 当前是否有bk_host_id字段且有值
+      return !!this.data?.bk_host_id;
+    },
   },
   methods: {
     formatterStr(row, field) {
-      return this.tableRowDeepView(row, field, this.getFieldType(field));
+      // 判断当前类型是否为虚拟字段 若是虚拟字段则不使用origin_list而使用list里的数据
+      const fieldType = this.getFieldType(field);
+      const rowData = fieldType === '__virtual__' ? this.listData : row;
+      return this.tableRowDeepView(rowData, field, fieldType);
     },
     getHandleIcon(option, field) {
       if (option.id !== 'display') return option.icon;
@@ -147,7 +182,18 @@ export default {
     },
     checkDisable(id, field) {
       const type = this.getFieldType(field);
-      return (['is', 'not'].includes(id) && type === 'text') || type === '__virtual__'  ? 'is-disabled' : '';
+      const isExist = this.filterIsExist(id, field);
+      return ((['is', 'not'].includes(id) && type === 'text') || type === '__virtual__' || isExist)  ? 'is-disabled' : '';
+    },
+    getIconPopover(id, field) {
+      const type = this.getFieldType(field);
+      if (type === 'text' && ['is', 'not'].includes(id)) return this.toolMenuTips[`text_${id}`];
+      if (type === '__virtual__' && ['is', 'not'].includes(id)) return this.$t('该字段为平台补充 不可检索');
+      if (this.filterIsExist(id, field)) return this.$t('已添加过滤条件');
+      if (id !== 'display') return this.toolMenuTips[id];
+
+      const isDisplay = this.visibleFields.some(item => item.field_name === field);
+      return this.toolMenuTips[isDisplay ? 'hiddenField' : 'displayField'];
     },
     handleMenuClick(operator, item, field) {
       let params = {};
@@ -186,6 +232,7 @@ export default {
         }
         params.operation = 'display';
         params.displayFieldNames = displayFieldNames;
+        if (!displayFieldNames.length) return; // 可以设置为全部隐藏，但是不请求接口
       }
 
       if (Object.keys(params).length) this.$emit('menuClick', params);
@@ -206,19 +253,23 @@ export default {
           } else {
             this.$bkMessage({
               theme: 'warning',
-              message: this.$t('retrieve.traceNoDataTips'),
+              message: this.$t('未找到相关的应用，请确认是否有Trace数据的接入。'),
             });
           }
           break;
         // 主机监控
         case 'serverIp':
         case 'ip':
-          path = `/?bizId=${this.bkBizId}#/performance/detail/${this.data[field]}-0`;
+        case 'bk_host_id':
+          {
+            const endStr = `${this.data[field]}${(field === 'bk_host_id' && this.isHaveBkHostIDAndHaveValue) ? '' : '-0'}`;
+            path = `/?bizId=${this.bkBizId}#/performance/detail/${endStr}`;
+          }
           break;
         // 容器
         case 'container_id':
         case '__ext.container_id':
-          path = `/?bizId=${this.bkBizId}#/k8s`;
+          path = `/?bizId=${this.bkBizId}#/k8s?dashboardId=pod`;
           break;
         default:
           break;
@@ -234,22 +285,42 @@ export default {
      * @param { string } field
      */
     getRelationMonitorField(field) {
-      switch (field) {
+      const key = field.toLowerCase();
+      switch (key) {
         // trace检索
         case 'trace_id':
-        case 'traceID':
-          return this.$t('retrieve.traceRetrieve');
+        case 'traceid':
+          return this.$t('trace检索');
         // 主机监控
-        case 'serverIp':
+        case 'serverip':
         case 'ip':
-          return this.$t('retrieve.host');
+        case 'bk_host_id': {
+          if (this.isHaveBkHostIDAndHaveValue && ['serverip', 'ip'].includes(key)) return; // bk_host_id有值, 不展示ip和serverIp的主机;
+          const lowerKeyData = Object.entries(this.data).reduce((pre, [curKey, curVal]) => {
+            pre[curKey.toLowerCase()] = curVal;
+            return pre;
+          }, {});
+          return !!lowerKeyData[key] ? this.$t('主机') : null; // 判断ip和serverIp是否有值 无值则不显示主机
+        }
         // 容器
         case 'container_id':
         case '__ext.container_id':
-          return this.$t('retrieve.container');
+          return this.$t('容器');
         default:
           return;
       }
+    },
+    filterIsExist(id, field) {
+      if (this.retrieveParams?.addition.length) {
+        if (id === 'not') id = 'is not';
+        const curValue = this.tableRowDeepView(this.data, field, this.getFieldType(field), false);
+        return this.retrieveParams.addition.some((addition) => {
+          return addition.field === field
+        && addition.operator === (this.mappingKay[id] ?? id) // is is not 值映射 判断是否
+        && addition.value.toString() === curValue.toString();
+        });
+      }
+      return false;
     },
   },
 };
@@ -270,10 +341,11 @@ export default {
         text-overflow: ellipsis;
         white-space: nowrap;
 
-        ::v-deep .icon-ext {
-          width: 18px;
+        :deep(.icon-ext) {
+          width: 13px;
+          display: inline-block;
           font-size: 12px;
-          transform: scale(.8);
+          transform: translateX(-1px) scale(.8);
         }
       }
 
@@ -298,7 +370,11 @@ export default {
           }
         }
 
-        .bk-icon {
+        .search {
+          font-size: 16px;
+        }
+
+        .icon-arrows-up-circle {
           transform: rotate(45deg);
         }
 
@@ -321,8 +397,8 @@ export default {
           cursor: pointer;
         }
 
-        .icon-close-circle,
-        .icon-minus-circle,
+        .icon-enlarge-line,
+        .icon-narrow-line,
         .icon-arrows-up-circle,
         .icon-copy {
           &.is-disabled {

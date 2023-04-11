@@ -24,15 +24,25 @@ import os
 from django.apps.config import AppConfig
 from django.conf import settings
 from django.contrib.auth.signals import user_logged_in
+from django.db.models.signals import post_migrate
 
+from apps.iam import Permission
 from apps.utils.local import activate_request
 from apps.utils.log import logger
 from apps.utils.thread import generate_request
+from iam.contrib.iam_migration.migrator import IAMMigrator
 
 try:
     from blueapps.utils.esbclient import get_client_by_user
 except Exception:  # pylint: disable=broad-except
     pass
+
+
+def migrate_iam(sender, **kwargs):
+    if Permission.get_iam_client().in_compatibility_mode():
+        # 存量部署存在V1的操作时，需要跑该配置将V1操作改名，避免与新名称发生冲突
+        IAMMigrator("legacy.json").migrate()
+    IAMMigrator("initial.json").migrate()
 
 
 class ApiConfig(AppConfig):
@@ -43,6 +53,7 @@ class ApiConfig(AppConfig):
         self.init_bklog_api()
         self.sync_package_version()
         self.check_feature()
+        post_migrate.connect(migrate_iam, sender=self)
         return True
 
     @classmethod
@@ -60,12 +71,6 @@ class ApiConfig(AppConfig):
             return
         from apps.log_search.models import GlobalConfig
 
-        try:
-            with open(os.path.join(settings.PROJECT_ROOT, "VERSION"), encoding="utf-8") as fd:
-                version = fd.read().strip()
-        except Exception:  # pylint: disable=broad-except
-            version = ""
-
         if settings.BKAPP_IS_BKLOG_API:
             config_id = "BACKEND_VERSION"
         else:
@@ -75,14 +80,14 @@ class ApiConfig(AppConfig):
         try:
             config = GlobalConfig.objects.filter(config_id=config_id).first()
             if not config:
-                GlobalConfig.objects.create(config_id=config_id, configs=version)
+                GlobalConfig.objects.create(config_id=config_id, configs=settings.VERSION)
                 return
 
-            if config.configs == version:
+            if config.configs == settings.VERSION:
                 return
 
             # 更新版本
-            config.configs = version
+            config.configs = settings.VERSION
             config.save()
         except Exception:  # pylint: disable=broad-except
             pass
@@ -98,12 +103,30 @@ class ApiConfig(AppConfig):
             activate_request(generate_request())
             from apps.api import BKPAASApi
 
-            try:
-                result = BKPAASApi.uni_apps_query_by_id({"id": settings.SAAS_MONITOR, "format": "bk_std_json"})
-                is_deploy_monitor = bool(result and result[0])
+            uni_apps_query_by_id_part_params = {"format": "bk_std_json", "include_deploy_info": True}
 
-                result = BKPAASApi.uni_apps_query_by_id({"id": settings.SAAS_BKDATA, "format": "bk_std_json"})
-                is_deploy_bkdata = bool(result and result[0])
+            def uni_apps_is_exist(query_result):
+                if not bool(query_result and query_result[0]):
+                    return False
+
+                # 如果是第三方应用，没有部署信息，直接判断为已部署
+                deploy_info = query_result[0].get("deploy_info", {})
+                if not deploy_info:
+                    return True
+
+                # v3的应用需要继续判断部署状态
+                return deploy_info.get("prod", {}).get("deployed", False)
+
+            try:
+                result = BKPAASApi.uni_apps_query_by_id(
+                    {"id": settings.SAAS_MONITOR, **uni_apps_query_by_id_part_params}
+                )
+                is_deploy_monitor = uni_apps_is_exist(result)
+
+                result = BKPAASApi.uni_apps_query_by_id(
+                    {"id": settings.SAAS_BKDATA, **uni_apps_query_by_id_part_params}
+                )
+                is_deploy_bkdata = uni_apps_is_exist(result)
             except Exception as e:  # pylint: disable=broad-except
                 # 忽略这个API请求的错误, 避免错误导致整个APP启动失败
                 # 错误情况下，记录下日志，同时认为对应的APP未部署

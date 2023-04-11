@@ -28,6 +28,7 @@ from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from apps.api import CCApi
 from apps.utils.log import logger
+from apps.utils.db import array_chunk
 from apps.iam import ActionEnum, Permission
 from apps.log_search.handlers.biz import BizHandler
 from apps.log_extract import exceptions
@@ -37,7 +38,10 @@ from apps.log_extract.handlers.thread import ThreadPool
 from apps.log_extract.models import Strategies
 from apps.utils.local import get_request_username
 from apps.exceptions import ApiResultError
-from apps.log_extract.constants import JOB_API_PERMISSION_CODE
+from apps.log_extract.constants import JOB_API_PERMISSION_CODE, BATCH_GET_JOB_INSTANCE_IP_LOG_IP_LIST_SIZE
+from bkm_ipchooser.handlers import topo_handler
+from bkm_ipchooser.query import resource
+from bkm_ipchooser.tools import topo_tool
 
 
 class ExplorerHandler(object):
@@ -99,7 +103,14 @@ class ExplorerHandler(object):
 
         query_result = self.get_finished_result(task_result["job_instance_id"], operator, bk_biz_id)
         success_step = self.get_success_step(query_result)
-        res = self.job_log_to_file_list(success_step["ip_logs"], allowed_dir_file_list)
+        host_list = [
+            {"ip": ip["ip"], "bk_cloud_id": ip["bk_cloud_id"], "bk_host_id": ip.get("bk_host_id", 0)}
+            for ip in success_step.get("step_ip_result_list", [])
+        ]
+        host_logs = self.get_all_host_logs(
+            host_list, task_result["job_instance_id"], success_step["step_instance_id"], bk_biz_id
+        )
+        res = self.job_log_to_file_list(host_logs, allowed_dir_file_list)
         res = sorted(res, key=lambda k: k["mtime"], reverse=True)
         return res
 
@@ -120,14 +131,20 @@ class ExplorerHandler(object):
 
     @staticmethod
     def get_success_step(query_result):
-        task_result, *__ = query_result
-        ip_status_list = []
-        for step_result in task_result["step_results"]:
-            ip_status = step_result["ip_status"]
-            if ip_status == constants.JOB_SUCCESS_STATUS:
-                return step_result
-            ip_status_list.append(str(ip_status))
-        raise exceptions.ExplorerException(_("文件预览异常({})".format(",".join(ip_status_list))))
+        step_result = FileServer.get_step_instance(query_result)
+        ip_status = step_result["status"]
+        if ip_status == constants.JOB_SUCCESS_STATUS:
+            return step_result
+        raise exceptions.ExplorerException(_("文件预览异常({})".format(",".join(ip_status))))
+
+    @staticmethod
+    def get_all_host_logs(ip_list, job_instance_id, step_instance_id, bk_biz_id):
+        ip_list_group = array_chunk(ip_list, BATCH_GET_JOB_INSTANCE_IP_LOG_IP_LIST_SIZE)
+        ip_logs = []
+        for ip_list in ip_list_group:
+            ip_list_log = FileServer.get_host_list_log(ip_list, job_instance_id, step_instance_id, bk_biz_id)
+            ip_logs.extend(ip_list_log.get("script_task_logs", []))
+        return ip_logs
 
     def job_log_to_file_list(self, ip_logs, allowed_dir_file_list):
         res = []
@@ -153,6 +170,7 @@ class ExplorerHandler(object):
                         {
                             "ip": ip_log["ip"],
                             "bk_cloud_id": ip_log["bk_cloud_id"],
+                            "bk_host_id": ip_log["host_id"],
                             "type": "dir" if file_type == "dirname" else "file",
                             "path": file_name,
                             "size": format_size(int(file_size[-1])) if file_type != "dirname" else "0",
@@ -236,8 +254,121 @@ class ExplorerHandler(object):
         combined_topo = self.combin_filter_topo(user_topo_list, format_bizs_set)
         return combined_topo
 
+    @classmethod
+    def check_node(cls, node, auth_info):
+        if node["bk_obj_id"] == "biz" and node["bk_inst_id"] in auth_info["auth_topo"]["bizs"]:
+            return True
+        if node["bk_obj_id"] == "set" and node["bk_inst_id"] in auth_info["auth_topo"]["sets"]:
+            return True
+        if node["bk_obj_id"] == "module" and (
+            node["bk_inst_name"] in auth_info["auth_modules"] or node["bk_inst_id"] in auth_info["auth_topo"]["modules"]
+        ):
+            return True
+        return False
+
+    @classmethod
+    def filter_nodes(cls, nodes, auth_info):
+        filtered_nodes = []
+        for node in nodes:
+            if cls.check_node(node, auth_info):
+                filtered_nodes.append(node)
+            else:
+                node["child"] = cls.filter_nodes(node["child"], auth_info)
+                if node["child"]:
+                    filtered_nodes.append(node)
+        return filtered_nodes
+
+    def ipchooser_trees(self, scope_list):
+        """
+        新版IP选择器：查询拓扑树
+        """
+        if not scope_list:
+            return []
+
+        bk_biz_id = scope_list[0]["bk_biz_id"]
+        request_user = get_request_username()
+        origin_tree = resource.ResourceQueryHelper.get_topo_tree(bk_biz_id, return_all=True)
+
+        # 获取策略
+        auth_info = self.get_auth_info(request_user, bk_biz_id)
+
+        # 过滤用户有权限的节点
+        filtered_nodes = self.filter_nodes([origin_tree], auth_info)
+
+        # 对拓扑树进行格式化
+        formatted_tree = topo_handler.TopoHandler.format_tree(
+            topo_tool.TopoTool.get_topo_tree_with_count(bk_biz_id, return_all=True, topo_tree=filtered_nodes[0])
+        )
+        return [formatted_tree]
+
+    @classmethod
+    def dig_out_modules(cls, tree):
+        """
+        挖掘出节点下面的所有模块列表
+        """
+        if tree["object_id"] == "module":
+            return [{"instance_id": tree["instance_id"], "object_id": tree["object_id"]}]
+        modules = []
+        for node in tree["child"]:
+            modules.extend(cls.dig_out_modules(node))
+        return modules
+
+    @classmethod
+    def filter_modules(cls, trees, query_nodes):
+        """
+        过滤出node_list中用户有权限的模块列表
+        :param trees: 用户有权限的整个拓扑结构
+        :param query_nodes: 用户想要查询主机的节点列表
+        :return: 用户有权限查询主机的模块列表
+        """
+        modules = []
+        for tree in trees:
+            matched = False
+            for query_node in query_nodes:
+                if query_node["object_id"] == tree["object_id"] and query_node["instance_id"] == tree["instance_id"]:
+                    matched = True
+                    break
+            if matched:
+                # 节点匹配的话，直接挖掘出节点下面全部的模块列表
+                modules.extend(cls.dig_out_modules(tree))
+            else:
+                # 不匹配的话，继续递归查找
+                modules.extend(cls.filter_modules(tree["child"], query_nodes))
+        return modules
+
+    def ipchooser_query_hosts(self, data):
+        """
+        新版IP选择器：查询主机
+        """
+        trees = self.ipchooser_trees(data["scope_list"])
+        node_list = self.filter_modules(trees, data["node_list"])
+        return topo_handler.TopoHandler.query_hosts(
+            scope_list=data["scope_list"],
+            readable_node_list=node_list,
+            conditions=data["conditions"],
+            start=data["start"],
+            page_size=data["page_size"],
+        )
+
+    def ipchooser_query_host_id_infos(self, data):
+        """
+        新版IP选择器：查询主机ID
+        """
+        trees = self.ipchooser_trees(data["scope_list"])
+        node_list = self.filter_modules(trees, data["node_list"])
+        return topo_handler.TopoHandler.query_host_id_infos(
+            scope_list=data["scope_list"],
+            readable_node_list=node_list,
+            conditions=data["conditions"],
+            start=data["start"],
+            page_size=data["page_size"],
+        )
+
     @staticmethod
     def add_dot(file_type):
+        if file_type == "*":
+            # 如果只带一个星号，代表匹配全部，包括无后缀
+            return "[^/]*"
         file_type = file_type.replace("*", "[^/]*")
         return f".{file_type}"
 
@@ -460,19 +591,24 @@ class ExplorerHandler(object):
 
     @classmethod
     def _get_topo_filter_rule(cls, ip_list):
-        return {
+        condition = {
             "condition": "OR",
-            "rules": [
-                {
-                    "condition": "AND",
-                    "rules": [
-                        {"field": "bk_host_innerip", "operator": "equal", "value": ip["ip"]},
-                        {"field": "bk_cloud_id", "operator": "equal", "value": ip["bk_cloud_id"]},
-                    ],
-                }
-                for ip in ip_list
-            ],
+            "rules": [],
         }
+
+        for ip in ip_list:
+            if ip.get("bk_host_id"):
+                rules = [
+                    {"field": "bk_host_id", "operator": "equal", "value": ip["bk_host_id"]},
+                ]
+            else:
+                rules = [
+                    {"field": "bk_host_innerip", "operator": "equal", "value": ip["ip"]},
+                    {"field": "bk_cloud_id", "operator": "equal", "value": ip["bk_cloud_id"]},
+                ]
+            condition["rules"].append({"condition": "AND", "rules": rules})
+
+        return condition
 
     @classmethod
     def get_module_by_ip(cls, bk_biz_id, ip_list):
@@ -618,7 +754,10 @@ class ExplorerHandler(object):
             if request_dir.startswith(allowed_dir_file["file_path"]):
                 search_params["file_path"] = request_dir
                 for file_type in allowed_dir_file["file_type"]:
-                    search_params["file_type"].add("".join(["\\", file_type]))
+                    if file_type.startswith("."):
+                        # 如果是以 . 开头，则增加对其的转义
+                        file_type = f"\\{file_type}"
+                    search_params["file_type"].add(file_type)
 
         if not search_params["file_type"]:
             search_params.clear()
@@ -635,7 +774,11 @@ class ExplorerHandler(object):
             for allowed_dir_file in allowed_dir_file_list:
                 file_types = []
                 for file_type in allowed_dir_file["file_type"]:
-                    file_types.append(fr"(\{file_type})" + ("$" if file_type[-1] != "*" else ""))
+                    if file_type.startswith("."):
+                        # 如果是以 . 开头，则增加对其的转义
+                        file_types.append(rf"(\{file_type})" + ("$" if file_type[-1] != "*" else ""))
+                    else:
+                        file_types.append(file_type + ("$" if file_type[-1] != "*" else ""))
                 # pattern样例：'^/data/[a-zA-Z0-9._/-]+(.gz|.log|.txt)$'
                 if request_file.startswith(allowed_dir_file["file_path"]):
                     file_name = request_file.replace(allowed_dir_file["file_path"], "")

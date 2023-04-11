@@ -27,16 +27,15 @@ from apps.log_clustering.handlers.clustering_config import ClusteringConfigHandl
 from apps.log_clustering.handlers.data_access.data_access import DataAccessHandler
 from apps.log_clustering.tasks.flow import update_clustering_clean
 from apps.log_databus.constants import EtlConfig
-from apps.log_databus.exceptions import CollectorActiveException, CollectorResultTableIDDuplicateException
+from apps.log_databus.exceptions import CollectorActiveException
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.collector_scenario.custom_define import get_custom
 from apps.log_databus.handlers.etl import EtlHandler
 from apps.log_databus.handlers.etl_storage import EtlStorage
 from apps.log_databus.handlers.storage import StorageHandler
-from apps.log_databus.models import CleanStash, CollectorConfig
+from apps.log_databus.models import CleanStash
 from apps.log_search.constants import CollectorScenarioEnum
 from apps.utils.local import get_request_username
-from apps.utils.log import logger
 
 
 class TransferEtlHandler(EtlHandler):
@@ -77,16 +76,18 @@ class TransferEtlHandler(EtlHandler):
             if clustering_handler.data.bkdata_etl_processing_id:
                 DataAccessHandler().create_or_update_bkdata_etl(self.data.collector_config_id, fields, etl_params)
             etl_params["etl_flat"] = True
+            etl_params["separator_node_action"] = ""
             log_clustering_fields = CollectorScenario.log_clustering_fields(cluster_info["cluster_config"]["version"])
             fields = CollectorScenario.fields_insert_field_index(source_fields=fields, dst_fields=log_clustering_fields)
             update_clustering_clean.delay(index_set_id=clustering_handler.data.index_set_id)
 
-        # 判断是否已存在同result_table_id
-        if CollectorConfig(table_id=table_id).get_result_table_by_id():
-            logger.error(f"result_table_id {table_id} already exists")
-            raise CollectorResultTableIDDuplicateException(
-                CollectorResultTableIDDuplicateException.MESSAGE.format(result_table_id=table_id)
-            )
+        # 暂时去掉这个效验逻辑，底下的逻辑都是幂等的，可以继续也必须继续往下走
+        # # 判断是否已存在同result_table_id
+        # if is_add and CollectorConfig(table_id=table_id).get_result_table_by_id():
+        #     logger.error(f"result_table_id {table_id} already exists")
+        #     raise CollectorResultTableIDDuplicateException(
+        #         CollectorResultTableIDDuplicateException.MESSAGE.format(result_table_id=table_id)
+        #     )
 
         # 1. meta-创建/修改结果表
         etl_storage = EtlStorage.get_instance(etl_config=etl_config)

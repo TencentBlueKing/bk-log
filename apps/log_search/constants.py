@@ -135,6 +135,7 @@ ASYNC_EXPORT_EXPIRED = 86400
 HAVE_DATA_ID = "have_data_id"
 BKDATA_OPEN = "bkdata"
 NOT_CUSTOM = "not_custom"
+IGNORE_DISPLAY_CONFIG = "ignore_display_config"
 
 FIND_MODULE_WITH_RELATION_FIELDS = ["bk_module_id", "bk_module_name", "service_template_id"]
 
@@ -311,6 +312,8 @@ class GlobalTypeEnum(ChoicesEnum):
     LOG_CLUSTERING_LEVEL = "log_clustering_level"
     LOG_CLUSTERING_YEAR_ON_YEAR = "log_clustering_level_year_on_year"
     DATABUS_CUSTOM = "databus_custom"
+    HOST_IDENTIFIER_PRIORITY = "host_identifier_priority"
+    IS_K8S_DEPLOY = "is_k8s_deploy"
 
     _choices_labels = (
         (CATEGORY, _("数据分类")),
@@ -328,6 +331,8 @@ class GlobalTypeEnum(ChoicesEnum):
         (LOG_CLUSTERING_LEVEL, _("日志聚类敏感度")),
         (LOG_CLUSTERING_YEAR_ON_YEAR, _("日志聚类同比配置")),
         (DATABUS_CUSTOM, _("自定义上报")),
+        (HOST_IDENTIFIER_PRIORITY, _("主机标识优先级")),
+        (IS_K8S_DEPLOY, _("是否容器化部署")),
     )
 
 
@@ -412,11 +417,73 @@ python
         OTLP_LOG: _(
             """
 # 注意事项
-# 使用方法
-不同云区域的自定义上报服务地址
+
+API 频率限制 5w/s
+
+# 上报地址
 
 {otlp_report_config}
 
+# 使用方法
+
+安装依赖
+
+    $ pip install "opentelemetry-api>=1.7.1,<1.13.0" "opentelemetry-sdk>=1.7.1,<1.13.0"
+    $ pip install "opentelemetry-exporter-otlp>=1.7.1,<1.13.0"
+
+    # 依赖版本
+    # Package                                Version
+    # -------------------------------------- ---------
+    # opentelemetry-api                      1.11.1
+    # opentelemetry-sdk                      1.11.1
+    # opentelemetry-exporter-otlp            1.11.1
+
+上报日志
+
+    import logging
+    import time
+
+    from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
+    from opentelemetry.sdk._logs import LogEmitterProvider, set_log_emitter_provider
+    from opentelemetry.sdk._logs.export import BatchLogProcessor
+    from opentelemetry.sdk.resources import Resource
+
+    try:
+        from opentelemetry.sdk._logs import LoggingHandler
+    except ImportError:
+        from opentelemetry.sdk._logs import OTLPHandler as LoggingHandler
+
+    # init settings
+    service_name = "${{service_name}}"
+    bk_data_token = "${{bk_data_token}}"
+    endpoint = "${{endpoint}}"
+
+    # init log emitter
+    log_emitter_provider = LogEmitterProvider(
+        resource=Resource.create({{"service.name": service_name, "bk.data.token": bk_data_token}})
+    )
+    set_log_emitter_provider(log_emitter_provider)
+
+    # init exporter
+    exporter = OTLPLogExporter(endpoint=endpoint)
+    log_emitter_provider.add_log_processor(BatchLogProcessor(exporter))
+
+    # init logger
+    handler = LoggingHandler(
+        level=logging.NOTSET,
+        log_emitter=log_emitter_provider.get_log_emitter(__name__),
+    )
+    logging.getLogger("root").addHandler(handler)
+
+    # init log
+    logger = logging.getLogger("root")
+    logger.setLevel(logging.INFO)
+
+    # report log
+    logger.info(msg="msg content", extra={{"attribute.a": "a", "attribute.b": "b"}})
+
+    # 防止未上报进程结束
+    time.sleep(3)
 
 [opentelemetry官方文档](https://opentelemetry.io/)
 """
@@ -574,13 +641,13 @@ class GlobalCategoriesEnum(ChoicesEnum):
 
     APPLICATIONS = {
         "id": "applications",
-        "name": "应用",
+        "name": _("应用"),
         "children": [
             {"id": "application_check", "name": _("业务应用"), "children": []},
         ],
     }
 
-    OTHER = {"id": "others", "name": "其他", "children": [{"id": "other_rt", "name": _("其他"), "children": []}]}
+    OTHER = {"id": "others", "name": _("其他"), "children": [{"id": "other_rt", "name": _("其他"), "children": []}]}
 
     @classmethod
     def get_init_categories(cls):
@@ -818,6 +885,11 @@ class FieldDateFormatEnum(ChoicesEnum):
         return [
             {"id": "yyyy-MM-dd HH:mm:ss", "name": "YYYY-MM-DD HH:mm:ss", "description": "2006-01-02 15:04:05"},
             {
+                "id": "yyyy-MM-dd HH:mm:ss,SSS",
+                "name": "YYYY-MM-DD HH:mm:ss,SSS",
+                "description": "2006-01-02 15:04:05,000",
+            },
+            {
                 "id": "yyyy-MM-dd HH:mm:ss.SSS",
                 "name": "YYYY-MM-DD HH:mm:ss.SSS",
                 "description": "2006-01-02 15:04:05.000",
@@ -1010,6 +1082,7 @@ RT_RESERVED_WORD_EXAC = [
     "TIME",
     # 内置字段
     "BK_BIZ_ID",
+    "BK_HOST_ID",
     "IP",
     "PLAT_ID",
     "BK_CLOUD_ID",
@@ -1112,7 +1185,165 @@ class UserMetaConfType(object):
     """
 
     USER_GUIDE = "user_guide"
+    FUNCTION_GUIDE = "function_guide"
 
+
+class UserFunctionGuideType(ChoicesEnum):
+    """
+    用户功能引导类型
+    """
+
+    # 检索收藏
+    SEARCH_FAVORITE = "search_favorite"
+
+    _choices_keys = (SEARCH_FAVORITE,)
+
+
+# 索引集无数据检查缓存前缀
+INDEX_SET_NO_DATA_CHECK_PREFIX = "index_set_no_data_check_prefix"
+
+# 索引集无数据检查时间间隔
+INDEX_SET_NO_DATA_CHECK_INTERVAL = 15
 
 ERROR_MSG_CHECK_FIELDS_FROM_BKDATA = _(", 请在计算平台清洗中调整")
 ERROR_MSG_CHECK_FIELDS_FROM_LOG = _(", 请联系平台管理员")
+
+
+class FavoriteVisibleType(ChoicesEnum):
+    """
+    检索收藏可见类型枚举
+    """
+
+    PRIVATE = "private"
+    PUBLIC = "public"
+
+    _choices_labels = (
+        (PRIVATE, _("个人可见")),
+        (PUBLIC, _("公开可见")),
+    )
+
+
+class FavoriteGroupType(ChoicesEnum):
+    """
+    检索收藏组类型枚举
+    """
+
+    PRIVATE = "private"
+    PUBLIC = "public"
+    UNGROUPED = "unknown"
+
+    _choices_labels = (
+        (PRIVATE, _("个人收藏")),
+        (PUBLIC, _("公共组")),
+        (UNGROUPED, _("未分组")),
+    )
+
+
+class FavoriteListOrderType(ChoicesEnum):
+    """
+    检索列表排序类型
+    """
+
+    NAME_ASC = "NAME_ASC"
+    NAME_DESC = "NAME_DESC"
+    UPDATED_AT_DESC = "UPDATED_AT_DESC"
+
+    _choices_labels = (
+        (NAME_ASC, _("名称升序")),
+        (NAME_DESC, _("名称降序")),
+        (UPDATED_AT_DESC, _("更新时间降序")),
+    )
+
+
+INDEX_SET_NOT_EXISTED = _("索引集不存在")
+FULL_TEXT_SEARCH_FIELD_NAME = _("全文检索")
+
+
+class OperatorEnum:
+    """操作符枚举"""
+
+    EQ = {"operator": "=", "label": "=", "placeholder": _("请选择或直接输入，逗号分隔")}
+    NE = {"operator": "!=", "label": "!=", "placeholder": _("请选择或直接输入，逗号分隔")}
+    LT = {"operator": "<", "label": "<", "placeholder": _("请选择或直接输入")}
+    GT = {"operator": ">", "label": ">", "placeholder": _("请选择或直接输入")}
+    LTE = {"operator": "<=", "label": "<=", "placeholder": _("请选择或直接输入")}
+    GTE = {"operator": ">=", "label": ">=", "placeholder": _("请选择或直接输入")}
+    EXISTS = {"operator": "exists", "label": _("exists"), "placeholder": _("确认字段已存在")}
+    NOT_EXISTS = {"operator": "does not exists", "label": _("does not exists"), "placeholder": _("确认字段不存在")}
+    IS_TRUE = {"operator": "is true", "label": "is true", "placeholder": _("字段为true")}
+    IS_FALSE = {"operator": "is false", "label": "is false", "placeholder": _("字段为false")}
+
+
+OPERATORS = {
+    "keyword": [OperatorEnum.EQ, OperatorEnum.NE, OperatorEnum.EXISTS, OperatorEnum.NOT_EXISTS],
+    "text": [OperatorEnum.EQ, OperatorEnum.NE, OperatorEnum.EXISTS, OperatorEnum.NOT_EXISTS],
+    "integer": [
+        OperatorEnum.EQ,
+        OperatorEnum.NE,
+        OperatorEnum.LT,
+        OperatorEnum.LTE,
+        OperatorEnum.GT,
+        OperatorEnum.GTE,
+        OperatorEnum.EXISTS,
+        OperatorEnum.NOT_EXISTS,
+    ],
+    "long": [
+        OperatorEnum.EQ,
+        OperatorEnum.NE,
+        OperatorEnum.LT,
+        OperatorEnum.LTE,
+        OperatorEnum.GT,
+        OperatorEnum.GTE,
+        OperatorEnum.EXISTS,
+        OperatorEnum.NOT_EXISTS,
+    ],
+    "double": [
+        OperatorEnum.EQ,
+        OperatorEnum.NE,
+        OperatorEnum.LT,
+        OperatorEnum.LTE,
+        OperatorEnum.GT,
+        OperatorEnum.GTE,
+        OperatorEnum.EXISTS,
+        OperatorEnum.NOT_EXISTS,
+    ],
+    "date": [
+        OperatorEnum.EQ,
+        OperatorEnum.NE,
+        OperatorEnum.LT,
+        OperatorEnum.LTE,
+        OperatorEnum.GT,
+        OperatorEnum.GTE,
+        OperatorEnum.EXISTS,
+        OperatorEnum.NOT_EXISTS,
+    ],
+    "bool": [OperatorEnum.IS_TRUE, OperatorEnum.IS_FALSE, OperatorEnum.EXISTS, OperatorEnum.NOT_EXISTS],
+    "conflict": [
+        OperatorEnum.EQ,
+        OperatorEnum.NE,
+        OperatorEnum.LT,
+        OperatorEnum.LTE,
+        OperatorEnum.GT,
+        OperatorEnum.GTE,
+        OperatorEnum.EXISTS,
+        OperatorEnum.NOT_EXISTS,
+    ],
+}
+
+# 实际操作符映射
+REAL_OPERATORS_MAP = {
+    OperatorEnum.EQ["operator"]: "is one of",
+    OperatorEnum.NE["operator"]: "is not one of",
+    OperatorEnum.LT["operator"]: "lt",
+    OperatorEnum.GT["operator"]: "gt",
+    OperatorEnum.LTE["operator"]: "lte",
+    OperatorEnum.GTE["operator"]: "gte",
+    # 兼容监控调用API模块时的操作符
+    "eq": "is one of",
+    "neq": "is not one of",
+}
+
+DEFAULT_INDEX_OBJECT_FIELDS_PRIORITY = ["__ext.io_kubernetes_pod", "serverIp", "ip"]
+
+# 默认索引集字段配置名称
+DEFAULT_INDEX_SET_FIELDS_CONFIG_NAME = _("默认")

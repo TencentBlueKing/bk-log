@@ -24,7 +24,17 @@ from collections import defaultdict
 from typing import List, Dict, Any
 import copy
 
+from elasticsearch_dsl import Search, Q
+from luqum.auto_head_tail import auto_head_tail
+from luqum.elasticsearch import SchemaAnalyzer, ElasticsearchQueryBuilder
+from luqum.exceptions import ParseError
+from luqum.parser import parser, lexer
+from luqum.tree import Word
+from luqum.visitor import TreeTransformer
+
+from apps.log_esquery.exceptions import BaseSearchDslException
 from apps.log_search.constants import FieldDataTypeEnum
+from apps.log_search.handlers.search.mapping_handlers import MappingHandlers
 
 type_match_phrase = Dict[str, Dict[str, Any]]  # pylint: disable=invalid-name
 type_match_phrase_query = Dict[str, Dict[str, Dict[str, Any]]]  # pylint: disable=invalid-name
@@ -49,18 +59,82 @@ bool_must_dict_template: type_bool_must_dict = {"bool": {"must": [], "must_not":
 bool_should_dict_template: type_bool_should_dict = {"bool": {"should": []}}
 
 
+class NestedFieldQueryTransformer(TreeTransformer):
+    def __init__(self, nested_fields, *args, **kwargs):
+        super(NestedFieldQueryTransformer, self).__init__(*args, **kwargs)
+        self.nested_fields = nested_fields
+
+    def visit_search_field(self, node, context):
+        for field in self.nested_fields:
+            if node.name.startswith(f"{field}."):
+                setattr(self, "has_nested_field", True)
+                break
+
+        yield from self.generic_visit(node, context)
+
+
 class EsQueryBuilder(object):
     def __init__(self):
         pass
 
     @classmethod
-    def build_query_string(cls, search_string: str) -> type_query_string:
-        return {
-            "query_string": {
-                "query": search_string,
-                "analyze_wildcard": True,
-            }
-        }
+    def build_query_string(cls, search_string: str, mappings: List) -> Search:
+        search = Search()
+
+        try:
+            query_tree = parser.parse(search_string, lexer=lexer)
+        except ParseError:
+            raise BaseSearchDslException(BaseSearchDslException.MESSAGE.format(dsl=search_string))
+
+        nested_fields, full_mappings = cls._merge_mappings(mappings)
+
+        if isinstance(query_tree, Word):
+            # 不带字段查询
+            keyword_query = Q("query_string", query=str(query_tree), analyze_wildcard=True)
+            if str(query_tree) == "*":
+                # 单独*通配符 作为单个query_string处理
+                return search.query(keyword_query)
+
+            # 带上nested字段检索
+            nested_field_queries = []
+            for f in nested_fields:
+                nested_field_queries.append(Q("nested", path=f, query=keyword_query))
+
+            return search.query("bool", should=[keyword_query] + nested_field_queries)
+        else:
+            transformer = NestedFieldQueryTransformer(nested_fields)
+            query_tree = transformer.visit(query_tree)
+
+            if getattr(transformer, "has_nested_field", False):
+                # 存在nested字段
+                schema_analyzer = SchemaAnalyzer(full_mappings)
+                builder = ElasticsearchQueryBuilder(**schema_analyzer.query_builder_options())
+                return search.query(builder(query_tree))
+
+            query_tree = auto_head_tail(query_tree)
+            return search.query("query_string", query=str(query_tree), analyze_wildcard=True)
+
+    @classmethod
+    def _merge_mappings(cls, mappings):
+        property_dict: dict = MappingHandlers.find_property_dict(mappings)
+        fields_result: list = MappingHandlers.get_all_index_fields_by_mapping(property_dict)
+
+        conflict_fields = [i["field_name"] for i in fields_result if i["field_type"] == "conflict"]
+        properties = {}
+        for mapping in mappings:
+            for index_name, index_config in mapping.items():
+                # 只关注最上层mapping定义
+                index_properties = index_config.get("mappings", {}).get("properties", {})
+                properties.update({k: v for k, v in index_properties.items() if k not in conflict_fields})
+
+        nested_fields = [k for k, v in properties.items() if v.get("type") == FieldDataTypeEnum.NESTED.value]
+
+        for nested_field in nested_fields:
+            # 保证每个嵌套类型字段都定义了一个properties，否则luqum无法正确识别nested字段
+            if not properties[nested_field].get("properties"):
+                properties[nested_field]["properties"] = {"_": {}}
+
+        return nested_fields, {"mappings": {"properties": properties}}
 
     @classmethod
     def build_exists(cls, field: str):
@@ -246,7 +320,9 @@ class BoolShouldIns(object):
 
 
 class Dsl(object):
-    def __init__(self, query_string: str, filter_dict_list: List, range_field_dict: Dict[str, Dict[str, Any]]):
+    def __init__(
+        self, query_string: str, filter_dict_list: List, range_field_dict: Dict[str, Dict[str, Any]], mappings: List
+    ):
         # 处理filter list
         must_ins_list: List = []
         self.filters: List = self.divid_filter_list(filter_dict_list)
@@ -256,7 +332,9 @@ class Dsl(object):
         self.should_ins = BoolShouldIns(must_ins_list).should_ins
 
         # 生成query string
-        self.query_string: type_query_string = EsQueryBuilder.build_query_string(query_string)
+        self.query_string: type_query_string = (
+            EsQueryBuilder.build_query_string(query_string, mappings).to_dict().get("query", {})
+        )
         self.range_dict: type_range = None
         if range_field_dict:
             # 生成range dict

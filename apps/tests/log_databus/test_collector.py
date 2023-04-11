@@ -24,10 +24,12 @@ import copy
 from unittest.mock import patch
 from django.test import TestCase, override_settings
 
+from apps.log_search.models import Space
 from apps.log_databus.exceptions import CollectorConfigNotExistException
 from apps.log_databus.handlers.collector import CollectorHandler
-from apps.log_databus.constants import LogPluginInfo
+from apps.log_databus.constants import LogPluginInfo, WorkLoadType
 from apps.exceptions import ApiRequestError, ApiResultError
+from bkm_space.define import SpaceTypeEnum
 from .test_collectorhandler import TestCollectorHandler, get_data_id
 from ...log_databus.serializers import CollectorCreateSerializer
 from ...utils.drf import custom_params_valid
@@ -97,6 +99,7 @@ PART_FAILED_INSTANCE_DATA = {
                         }
                     ],
                     "bk_host_innerip": "127.0.0.1",
+                    "bk_host_id": 1,
                 },
                 "service": {},
             },
@@ -125,6 +128,7 @@ PART_FAILED_INSTANCE_DATA = {
                         }
                     ],
                     "bk_host_innerip": "127.0.0.1",
+                    "bk_host_id": 1,
                 },
                 "service": {},
             },
@@ -267,25 +271,31 @@ STATUS_DATA_RETURN = [
         "status": "FAILED",
         "status_name": "失败",
         "ip": "127.0.0.1",
-        "bk_cloud_id": 0,
+        "cloud_id": 0,
         "instance_id": "host|instance|host|127.0.0.1-0-0",
         "instance_name": "127.0.0.1",
         "plugin_name": "unifytlogc",
         "plugin_version": "3.0.10",
         "bk_supplier_id": "0",
         "create_time": "2019-09-19T20:32:19.957883",
+        "host_id": 1,
+        "ipv6": "",
+        "host_name": "rbtnode1",
     },
     {
         "status": "SUCCESS",
         "status_name": "正常",
         "ip": "127.0.0.1",
-        "bk_cloud_id": 0,
+        "cloud_id": 0,
+        "ipv6": "",
+        "host_name": "rbtnode1",
         "instance_id": "host|instance|host|127.0.0.1-0-0",
         "instance_name": "127.0.0.1",
         "plugin_name": "unifytlogc",
         "plugin_version": "3.0.10",
         "bk_supplier_id": "0",
         "create_time": "2019-09-19T20:32:19.957883",
+        "host_id": 1,
     },
 ]
 TOPO_TREE = [
@@ -678,6 +688,7 @@ TASK_DETAIL_DATA = {
                 }
             ],
             "bk_host_innerip": "127.0.0.1",
+            "bk_host_id": 1,
         },
         "service": {},
     },
@@ -769,6 +780,7 @@ TASK_STATUS_DATA = [
                     }
                 ],
                 "bk_host_innerip": "127.0.0.1",
+                "bk_host_id": 1,
             },
             "service": {},
         },
@@ -835,6 +847,105 @@ class CCSetTest(object):
         return []
 
 
+BK_BIZ_ID = -200
+SPACE_ID = "1ce0ae294d63478ea46a2a1772acd8a7"
+SPACE_UID = "bcs__{}".format(SPACE_ID)
+BCS_CLUSTER_ID = "BCS-K8S-10000"
+PROJECTS = [
+    {
+        "approval_status": 2,
+        "approval_time": "2021-01-01T00:00:00+08:00",
+        "approver": "",
+        "bg_id": 1,
+        "bg_name": "test-bg",
+        "cc_app_id": 0,
+        "center_id": 1,
+        "center_name": "test-center-name",
+        "created_at": "2021-01-01T00:00:00+08:00",
+        "creator": "admin",
+        "data_id": 0,
+        "deploy_type": "[0]",
+        "dept_id": 1,
+        "dept_name": "test-dept-name",
+        "description": "testproject",
+        "english_name": "testproject",
+        "extra": {},
+        "is_offlined": False,
+        "is_secrecy": False,
+        "kind": 0,
+        "logo_addr": "",
+        "project_id": "1ce0ae294d63478ea46a2a1772acd8a7",
+        "project_name": "testproject",
+        "project_type": 1,
+        "remark": "",
+        "updated_at": "2021-01-01T00:00:00+08:00",
+        "updater": "",
+        "use_bk": False,
+    }
+]
+
+
+PROJECT_CLUSTER_LIST = [
+    {
+        "clusterID": BCS_CLUSTER_ID,
+        "clusterName": "公共集群测试",
+        "federationClusterID": "",
+        "provider": "provider",
+        "region": "ap-region",
+        "vpcID": "vpc-123",
+        "projectID": "1ce0ae294d63478ea46a2a1772acd8a7",
+        "businessID": "2",
+        "environment": "stag",
+        "engineType": "k8s",
+        "isExclusive": True,
+        "clusterType": "single",
+        "labels": {},
+        "creator": "admin",
+        "createTime": "2021-01-01T00:00:00+08:00",
+        "updateTime": "2021-01-01T00:00:00+08:00",
+        "bcsAddons": {},
+        "extraAddons": {},
+        "systemID": "cls-system-id",
+        "manageType": "INDEPENDENT_CLUSTER",
+        "status": "RUNNING",
+        "is_shared": True,
+    }
+]
+
+
+SHARED_CLUSTERS_NS = {
+    "count": 2,
+    "results": [
+        {
+            "cluster_id": BCS_CLUSTER_ID,
+            "created_at": "2021-01-01T00:00:00+08:00",
+            "creator": "admin",
+            "description": "",
+            "env_type": "dev",
+            "has_image_secret": False,
+            "id": 2,
+            "name": "test-cluster-share-test1",
+            "project_id": "1ce0ae294d63478ea46a2a1772acd8a7",
+            "status": "",
+            "updated_at": "2021-01-01T00:00:00+08:00",
+        },
+        {
+            "cluster_id": BCS_CLUSTER_ID,
+            "created_at": "2021-01-01T00:00:00+08:00",
+            "creator": "admin",
+            "description": "",
+            "env_type": "dev",
+            "has_image_secret": False,
+            "id": 3,
+            "name": "test-cluster-share-test2",
+            "project_id": "1ce0ae294d63478ea46a2a1772acd8a7",
+            "status": "",
+            "updated_at": "2021-01-01T00:00:00+08:00",
+        },
+    ],
+}
+
+
 def subscription_statistic(params):
     return [
         {
@@ -853,6 +964,17 @@ def subscription_statistic(params):
 
 @patch("apps.log_databus.tasks.bkdata.async_create_bkdata_data_id.delay", return_value=None)
 class TestCollector(TestCase):
+    def setUp(self) -> None:
+        Space.objects.create(
+            space_uid=SPACE_UID,
+            bk_biz_id=BK_BIZ_ID,
+            space_type_id=SpaceTypeEnum.BCS.value,
+            space_type_name="容器项目",
+            space_id=SPACE_ID,
+            space_name="测试容器日志项目",
+            space_code="testproject",
+        )
+
     @patch(
         "apps.api.TransferApi.get_data_id",
         get_data_id,
@@ -1218,7 +1340,11 @@ class TestCollector(TestCase):
         )
         self.assertEqual(result["allowed"], True)
 
+    @patch("apps.api.BcsApi.list_cluster_by_project_id", lambda _: PROJECT_CLUSTER_LIST)
+    @patch("apps.api.BcsCcApi.list_project", lambda _: PROJECTS)
+    @patch("apps.api.BcsCcApi.list_shared_clusters_ns", lambda _: SHARED_CLUSTERS_NS)
     def test_validate_container_config_yaml(self, *args, **kwargs):
+
         yaml_config = """
 ---
 encoding: UTF-8
@@ -1228,8 +1354,11 @@ labelSelector:
     app.kubernetes.io/instance: bk-apigateway
     app.kubernetes.io/name: bk-apigateway
 logConfigType: std_log_config
-namespace: default
-
+namespaceSelector:
+  any: false
+  matchNames:
+  - test-cluster-share-test1
+  - test-cluster-share-test2
 ---
 encoding: UTF-8
 labelSelector:
@@ -1240,7 +1369,37 @@ logConfigType: container_log_config
 path:
   - /var/log/influxdb-proxy.log
   - /var/log/influxdb.log
-namespace: default
+namespaceSelector:
+  any: false
+  matchNames:
+  - test-cluster-share-test1
+  - test-cluster-share-test2
         """
-        result = CollectorHandler().validate_container_config_yaml(yaml_config)
+        result = CollectorHandler().validate_container_config_yaml(
+            bk_biz_id=BK_BIZ_ID, bcs_cluster_id=BCS_CLUSTER_ID, yaml_config=yaml_config
+        )
         self.assertTrue(result["parse_status"])
+
+    @patch("apps.api.BcsApi.list_cluster_by_project_id", lambda _: PROJECT_CLUSTER_LIST)
+    @patch("apps.api.BcsCcApi.list_project", lambda _: PROJECTS)
+    def test_list_bcs_clusters(self, *args, **kwargs):
+        clusters = CollectorHandler().list_bcs_clusters(BK_BIZ_ID)
+        self.assertEqual(len(clusters), 1)
+        self.assertEqual(BCS_CLUSTER_ID, clusters[0]["id"])
+
+    def test_list_workload_type(self, *args, **kwargs):
+        workload_type_list = CollectorHandler().list_workload_type()
+        self.assertEqual(
+            workload_type_list,
+            [WorkLoadType.DEPLOYMENT, WorkLoadType.JOB, WorkLoadType.DAEMON_SET, WorkLoadType.STATEFUL_SET],
+        )
+
+    @patch("apps.api.BcsApi.list_cluster_by_project_id", lambda _: PROJECT_CLUSTER_LIST)
+    @patch("apps.api.BcsCcApi.list_project", lambda _: PROJECTS)
+    @patch("apps.api.BcsCcApi.list_shared_clusters_ns", lambda _: SHARED_CLUSTERS_NS)
+    def test_list_namespace(self, *args, **kwargs):
+        expect_namespace_list = {"test-cluster-share-test1", "test-cluster-share-test2"}
+
+        result = CollectorHandler().list_namespace(bk_biz_id=BK_BIZ_ID, bcs_cluster_id=BCS_CLUSTER_ID)
+        result_ns = {r["id"] for r in result}
+        self.assertSetEqual(expect_namespace_list, result_ns)

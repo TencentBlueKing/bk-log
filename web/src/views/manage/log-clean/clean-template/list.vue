@@ -36,29 +36,33 @@
           data-test-id="cleanTemplateBox_input_cleanTemplateSearch"
           :right-icon="'bk-icon icon-search'"
           v-model="params.keyword"
-          @enter="search">
+          @enter="search"
+          @change="handleSearchChange">
         </bk-input>
       </div>
     </section>
     <section class="clean-template-list">
       <bk-table
         class="clean-table"
-        :data="templateList"
-        :size="size"
         data-test-id="cleanTemplateBox_table_cleanTemplateTable"
         v-bkloading="{ isLoading: isTableLoading }"
+        :data="templateList"
+        :size="size"
+        :render-header="$renderHeader"
         :pagination="pagination"
         :limit-list="pagination.limitList"
+        ref="cleanTable"
         @filter-change="handleFilterChange"
         @page-change="handlePageChange"
         @page-limit-change="handleLimitChange">
-        <bk-table-column :label="$t('logClean.templateName')">
+        <bk-table-column :label="$t('模板名称')">
           <template slot-scope="props">
             {{ props.row.name }}
           </template>
         </bk-table-column>
         <bk-table-column
-          :label="$t('logClean.etlConfig')"
+          :label="$t('格式化方法')"
+          :render-header="$renderHeader"
           prop="clean_type"
           class-name="filter-column"
           column-key="clean_type"
@@ -68,7 +72,7 @@
             {{ getFormatName(props.row) }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('dataSource.operation')" width="200">
+        <bk-table-column :label="$t('操作')" :render-header="$renderHeader" width="200">
           <div class="collect-table-operate" slot-scope="props">
             <!-- 编辑 -->
             <bk-button
@@ -84,10 +88,13 @@
               text
               class="mr10 king-button"
               @click.stop="operateHandler(props.row, 'delete')">
-              {{ $t('btn.delete') }}
+              {{ $t('删除') }}
             </bk-button>
           </div>
         </bk-table-column>
+        <div slot="empty">
+          <empty-status :empty-type="emptyType" @operation="handleOperation" />
+        </div>
       </bk-table>
     </section>
   </section>
@@ -95,9 +102,14 @@
 
 <script>
 import { mapGetters } from 'vuex';
+import { clearTableFilter } from '@/common/util';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   name: 'CleanTemplate',
+  components: {
+    EmptyStatus,
+  },
   data() {
     return {
       isTableLoading: true,
@@ -113,11 +125,13 @@ export default {
         keyword: '',
         clean_type: '',
       },
+      emptyType: 'empty',
+      isFilterSearch: false,
     };
   },
   computed: {
     ...mapGetters({
-      projectId: 'projectId',
+      spaceUid: 'spaceUid',
       bkBizId: 'bkBizId',
       globalsData: 'globals/globalsData',
     }),
@@ -147,7 +161,7 @@ export default {
       this.$router.push({
         name: 'clean-template-create',
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
     },
@@ -155,6 +169,7 @@ export default {
       Object.keys(data).forEach((item) => {
         this.params[item] = data[item].join('');
       });
+      this.isFilterSearch = Object.values(data).reduce((pre, cur) => ((pre += cur.length), pre), 0);
       this.search();
     },
     /**
@@ -182,6 +197,7 @@ export default {
     },
     requestData() {
       this.isTableLoading = true;
+      this.emptyType = (this.params.keyword || this.isFilterSearch) ? 'search-empty' : 'empty';
       this.$http.request('clean/cleanTemplate', {
         query: {
           ...this.params,
@@ -209,7 +225,8 @@ export default {
             templateId: row.clean_template_id,
           },
           query: {
-            projectId: window.localStorage.getItem('project_id'),
+            spaceUid: this.$store.state.spaceUid,
+            editName: row.name,
           },
         });
         return;
@@ -217,7 +234,7 @@ export default {
       if (operateType === 'delete') {
         this.$bkInfo({
           type: 'warning',
-          subTitle: `${this.$t('当前模板名称为')} ${row.name}，${this.$t('确认要删除')}`,
+          subTitle: this.$t('当前模板名称为{n}，确认要删除？', { n: row.name }),
           confirmFn: () => {
             this.requestDeleteTemp(row);
           },
@@ -254,6 +271,25 @@ export default {
         return conf.id === cleantype;
       });
       return matchItem ? matchItem.name : '';
+    },
+    handleSearchChange(val) {
+      if (val === '' && !this.isTableLoading) {
+        this.search();
+      }
+    },
+    handleOperation(type) {
+      if (type === 'clear-filter') {
+        this.params.keyword = '';
+        clearTableFilter(this.$refs.cleanTable);
+        this.search();
+        return;
+      }
+
+      if (type === 'refresh') {
+        this.emptyType = 'empty';
+        this.search();
+        return;
+      }
     },
   },
 };

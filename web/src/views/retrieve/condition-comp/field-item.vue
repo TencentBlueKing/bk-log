@@ -35,11 +35,11 @@
         }"
       ></span>
       <!-- 字段名 -->
-      <span class="field-name">
+      <span class="overflow-tips field-name" v-bk-overflow-tips>
         {{ showFieldAlias ? fieldAliasMap[fieldItem.field_name] : fieldItem.field_name }}
       </span>
       <!-- 聚合字段数量 -->
-      <span class="field-count">{{ gatherFieldsCount }}</span>
+      <span class="field-count" v-if="isShowFieldsCount">{{ gatherFieldsCount }}</span>
       <!-- 设置字段显示或隐藏 -->
       <div
         class="operation-text"
@@ -51,9 +51,11 @@
     <agg-chart
       v-if="showFieldsChart"
       v-show="isExpand"
+      :retrieve-params="retrieveParams"
       :parent-expand="isExpand"
       :statistical-field-data="statisticalFieldData"
-      :field-name="fieldItem.field_name" />
+      :field-name="fieldItem.field_name"
+      :field-type="fieldItem.field_type" />
   </li>
 </template>
 
@@ -93,6 +95,10 @@ export default {
         return {};
       },
     },
+    retrieveParams: {
+      type: Object,
+      required: true,
+    },
   },
   data() {
     return {
@@ -107,6 +113,9 @@ export default {
     // 显示融合字段统计比例图表
     showFieldsChart() {
       return Object.keys(this.statisticalFieldData).length && this.fieldItem.field_type !== 'text';
+    },
+    isShowFieldsCount() {
+      return !['object', 'nested', 'text'].includes(this.fieldItem.field_type);
     },
   },
   methods: {
@@ -128,6 +137,8 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+  @import '@/scss/mixins/overflow-tips.scss';
+
   .filed-item {
     margin-bottom: 6px;
 

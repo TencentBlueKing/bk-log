@@ -3,7 +3,9 @@ from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 
 from apps.generic import ModelViewSet
-from apps.log_databus.exceptions import CollectorConfigNotExistException
+from apps.iam import ActionEnum, ResourceEnum
+from apps.iam.handlers.drf import insert_permission_field
+from apps.log_databus.exceptions import CollectorConfigNotExistException, CollectorPluginNotImplemented
 from apps.log_databus.handlers.collector_plugin import CollectorPluginHandler
 from apps.log_databus.handlers.collector_plugin.base import get_collector_plugin_handler
 from apps.log_databus.models import CollectorConfig, CollectorPlugin
@@ -49,6 +51,20 @@ class CollectorPluginViewSet(ModelViewSet):
         if self.action in ["update", "partial_update"]:
             return CollectorPluginUpdateSerializer
         return CollectorPluginSerializer
+
+    @insert_permission_field(
+        id_field=lambda d: d["_collector_config_id"],
+        actions=[ActionEnum.VIEW_COLLECTION, ActionEnum.MANAGE_COLLECTION],
+        resource_meta=ResourceEnum.COLLECTION,
+    )
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        for plugin in response.data:
+            try:
+                plugin["_collector_config_id"] = CollectorPlugin.get_collector_config_id(plugin["collector_plugin_id"])
+            except CollectorPluginNotImplemented:
+                plugin["_collector_config_id"] = -1
+        return response
 
     def create(self, request, *args, **kwargs):
         """
@@ -246,6 +262,7 @@ class CollectorPluginViewSet(ModelViewSet):
         @apiParam {String} target_nodes.ip 主机实例ip （静态）
         @apiParam {Int} target_nodes.bk_cloud_id 蓝鲸云区域id （静态）
         @apiParam {Int} target_nodes.bk_supplier_id 供应商id （静态）
+        @apiParam {Int} target_nodes.bk_host_id 主机ID （静态）
         @apiParam {String} data_encoding 日志字符集 可选字段`UTF-8, GBK`
         @apiParam {String} description 备注说明
         @apiParam {json} params 插件参数（日志路径、过滤方式等）
@@ -347,6 +364,7 @@ class CollectorPluginViewSet(ModelViewSet):
         @apiParam {String} target_nodes.ip 主机实例ip （静态）
         @apiParam {Int} target_nodes.bk_cloud_id 蓝鲸云区域id （静态）
         @apiParam {Int} target_nodes.bk_supplier_id 供应商id （静态）
+        @apiParam {Int} target_nodes.bk_host_id 主机ID （静态）
         @apiParam {String} data_encoding 日志字符集 可选字段`UTF-8, GBK`
         @apiParam {String} description 备注说明
         @apiParam {json} params 插件参数（日志路径、过滤方式等）

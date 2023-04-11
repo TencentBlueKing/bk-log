@@ -33,6 +33,8 @@ import VueJsonPretty from 'vue-json-pretty';
 import 'vue-json-pretty/lib/styles.css';
 import cursor from '@/directives/cursor';
 import LogButton from '@/components/log-button';
+import docsLinkMixin from '@/mixins/docs-link-mixin';
+import { renderHeader } from './common/util';
 import './common/global';
 import './static/icons/log-icons.css';
 // 接入OTLP
@@ -53,6 +55,7 @@ registerInstrumentations({
   )],
 });
 const tracer = provider.getTracer('bk-log');
+Vue.prototype.$renderHeader = renderHeader;
 Vue.prototype.tracer = tracer;
 
 try {
@@ -85,6 +88,7 @@ router.onError((err) => {
 Vue.component('VueJsonPretty', VueJsonPretty);
 Vue.component('LogButton', LogButton);
 Vue.directive('cursor', cursor);
+Vue.mixin(docsLinkMixin);
 Vue.use(methods);
 
 if (process.env.NODE_ENV === 'development') {

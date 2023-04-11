@@ -77,6 +77,11 @@ const checkRegexp = {
   url: '/clustering_config/check_regexp/',
   method: 'post',
 };
+// 标签编辑
+const editLabel = {
+  url: '/pattern/:index_set_id/label/ ',
+  method: 'post',
+};
 
 export {
   getConfig,
@@ -90,4 +95,5 @@ export {
   getNewClsStrategy,
   updateNewClsStrategy,
   checkRegexp,
+  editLabel,
 };

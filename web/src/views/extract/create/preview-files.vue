@@ -25,16 +25,16 @@
     <div class="flex-box">
       <bk-select
         v-model="previewIp"
-        style="width: 190px;margin-right: 20px;background-color: #fff;"
+        style="width: 190px; margin-right: 20px;background-color: #fff;"
         data-test-id="addNewExtraction_div_selectPreviewAddress"
         :clearable="false"
         multiple
         show-select-all>
         <bk-option
-          v-for="option in ipList"
-          :key="option.bk_cloud_id + ':' + option.ip"
-          :id="option.bk_cloud_id + ':' + option.ip"
-          :name="option.bk_cloud_id + ':' + option.ip"
+          v-for="option in ipSelectNewNameList"
+          :key="option.selectID"
+          :id="option.selectID"
+          :name="option.name"
         ></bk-option>
       </bk-select>
       <span>{{ $t('文件日期') }}：</span>
@@ -59,10 +59,16 @@
         class="preview-scroll-table"
         style="background-color: #fff;"
         :data="explorerList"
-        :height="300"
+        :height="360"
         @selection-change="handleSelect">
         <bk-table-column type="selection" width="60" :selectable="row => row.size !== '0'"></bk-table-column>
-        <bk-table-column prop="path" :label="$t('文件名')" min-width="80" sortable :sort-by="['path', 'mtime', 'size']">
+        <bk-table-column
+          prop="path"
+          :label="$t('文件名')"
+          :render-header="$renderHeader"
+          min-width="80"
+          sortable
+          :sort-by="['path', 'mtime', 'size']">
           <div class="table-ceil-container" slot-scope="{ row }">
             <span
               v-if="row.size === '0'"
@@ -77,17 +83,24 @@
         <bk-table-column
           prop="mtime"
           :label="$t('最后修改时间')"
+          :render-header="$renderHeader"
           min-width="50"
           sortable
           :sort-by="['mtime', 'path', 'size']">
         </bk-table-column>
         <bk-table-column
           prop="size"
-          :label="'尺寸'"
+          :label="$t('尺寸')"
+          :render-header="$renderHeader"
           min-width="40"
           sortable
           :sort-by="['size', 'mtime', 'path']">
         </bk-table-column>
+        <div slot="empty">
+          <empty-status :empty-type="emptyType" @operation="handleOperation">
+            <div v-if="emptyType === 'search-empty'">{{$t('可以尝试{0}或{1}', { 0: $t('调整预览地址'), 1: $t('调整文件日期') })}}</div>
+          </empty-status>
+        </div>
       </bk-table>
     </div>
   </div>
@@ -96,10 +109,12 @@
 <script>
 import { formatDate } from '@/common/util';
 import FileDatePicker from '@/views/extract/home/file-date-picker';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   components: {
     FileDatePicker,
+    EmptyStatus,
   },
   model: {
     prop: 'downloadFiles',
@@ -112,6 +127,10 @@ export default {
     },
     fileOrPath: {
       type: String,
+      required: true,
+    },
+    ipSelectNewNameList: {
+      type: Array,
       required: true,
     },
   },
@@ -129,6 +148,7 @@ export default {
       isSearchChild: false,
       explorerList: [],
       historyStack: [], // 预览地址历史
+      emptyType: 'empty',
     };
   },
   computed: {
@@ -140,7 +160,7 @@ export default {
     ipList(val) {
       this.previewIp.splice(0);
       if (val.length) {
-        this.previewIp.push(`${val[0].bk_cloud_id}:${val[0].ip}`);
+        this.previewIp.push(this.getIpListID(val[0]));
       }
       this.explorerList.splice(0); // 选择服务器后清空表格
       this.historyStack.splice(0); // 选择服务器后清空历史堆栈
@@ -162,15 +182,10 @@ export default {
         return;
       }
       this.$emit('update:fileOrPath', path);
-      const ipList = [];
-      for (let i = 0; i < this.previewIp.length; i++) {
-        const cloudId = this.previewIp[i].split(':')[0];
-        const ip = this.previewIp[i].split(':')[1];
-        const target = this.ipList.find(item => item.ip === ip && item.bk_cloud_id === Number(cloudId));
-        ipList.push(target);
-      }
+      const ipList = this.getFindIpList();
 
       this.isLoading = true;
+      this.emptyType = 'search-empty';
       this.$http.request('extract/getExplorerList', {
         data: {
           bk_biz_id: this.$store.state.bkBizId,
@@ -198,14 +213,28 @@ export default {
       })
         .catch((err) => {
           console.warn(err);
+          this.emptyType = '500';
         })
         .finally(() => {
           this.isLoading = false;
         });
     },
+    getFindIpList() {
+      const ipList = [];
+      for (let i = 0; i < this.previewIp.length; i++) {
+        const target = this.ipList.find(item => this.getIpListID(item) === this.previewIp[i]);
+        ipList.push(target);
+      }
+      return ipList;
+    },
+    // 拼接预览地址唯一key
+    getIpListID(option) {
+      return `${option.bk_host_id ?? ''}_${option.ip ?? ''}_${option.bk_cloud_id ?? ''}`;
+    },
     // 父组件克隆时调用
     handleClone({
-      preview_ip: ip,
+      ip_list: ipList,
+      preview_ip_list: previewIpList,
       preview_directory: path,
       preview_time_range: timeRange,
       preview_start_time: startTime,
@@ -213,24 +242,18 @@ export default {
       preview_is_search_child: isSearchChild,
       file_path: downloadFiles,
     }) {
-      this.previewIp = ip.split(',');
       this.timeRange = timeRange;
       this.timeValue = [new Date(startTime), new Date(endTime)];
       this.isSearchChild = isSearchChild;
-
-      const ipList = [];
-      for (let i = 0; i < this.previewIp.length; i++) {
-        const cloudId = this.previewIp[i].split(':')[0];
-        const ip = this.previewIp[i].split(':')[1];
-        const target = this.ipList.find(item => item.ip === ip && item.bk_cloud_id === Number(cloudId));
-        ipList.push(target);
-      }
+      const findIpList = this.findPreviewIpListValue(previewIpList, ipList);
+      this.previewIp = findIpList.map(item => this.getIpListID(item));
 
       this.isLoading = true;
+      this.emptyType = 'search-empty';
       this.$http.request('extract/getExplorerList', {
         data: {
           bk_biz_id: this.$store.state.bkBizId,
-          ip_list: ipList,
+          ip_list: findIpList,
           path,
           time_range: timeRange,
           start_time: startTime,
@@ -253,10 +276,37 @@ export default {
       })
         .catch((e) => {
           console.warn(e);
+          this.emptyType = '500';
         })
         .finally(() => {
           this.isLoading = false;
         });
+    },
+    findPreviewIpListValue(previewIpList, ipList) { // 获取previewIpList对应的ipList参数
+      if (previewIpList && previewIpList.length) {
+        return previewIpList.map((item) => {
+          return ipList.find((dItem) => {
+            const hostMatch = item.bk_host_id === dItem.bk_host_id;
+            const ipMatch = `${item.ip}_${item.bk_cloud_id}` === `${dItem.ip}_${dItem.bk_cloud_id}`;
+            if (item?.bk_host_id) return (hostMatch || ipMatch);
+            return ipMatch;
+          });
+        });
+      }
+      return [];
+    },
+    handleOperation(type) {
+      if (type === 'clear-filter') {
+        this.params.keyword = '';
+        this.getExplorerList({});
+        return;
+      }
+
+      if (type === 'refresh') {
+        this.emptyType = 'empty';
+        this.getExplorerList({});
+        return;
+      }
     },
     handleSelect(selection) {
       this.$emit('checked', selection.map(item => item.path));

@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from django.utils.translation import ugettext_lazy as _
+
 """
 Tencent is pleased to support the open source community by making BK-LOG 蓝鲸日志平台 available.
 Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
@@ -41,7 +43,7 @@ TRAINING_INPUT_VALUE = {
     "training_input": [
         {
             "field_type": "string",
-            "field_alias": "系统索引",
+            "field_alias": _("系统索引"),
             "field_name": "__index__",
             "field_index": 0,
             "properties": {
@@ -65,7 +67,7 @@ TRAINING_INPUT_VALUE = {
         },
         {
             "field_type": "string",
-            "field_alias": "用户索引",
+            "field_alias": _("用户索引"),
             "field_name": "__id__",
             "field_index": 1,
             "properties": {
@@ -83,13 +85,13 @@ TRAINING_INPUT_VALUE = {
                 "input_type": "field",
             },
             "data_field_name": "__id__",
-            "data_field_alias": "用户索引",
+            "data_field_alias": _("用户索引"),
             "roles": ["index"],
             "components": ["__group_id__", "timestamp"],
         },
         {
             "field_type": "string",
-            "field_alias": "分组索引",
+            "field_alias": _("分组索引"),
             "field_name": "__group_id__",
             "field_index": 2,
             "properties": {
@@ -107,7 +109,7 @@ TRAINING_INPUT_VALUE = {
                 "input_type": "field",
             },
             "data_field_name": "__group_id__",
-            "data_field_alias": "分组字段",
+            "data_field_alias": _("分组字段"),
             "roles": ["index_component", "group"],
             "components": [],
         },
@@ -137,7 +139,7 @@ TRAINING_INPUT_VALUE = {
         },
         {
             "field_type": "string",
-            "field_alias": "日志内容",
+            "field_alias": _("日志内容"),
             "field_name": "log",
             "field_index": 4,
             "properties": {
@@ -189,7 +191,7 @@ TRAINING_INPUT_VALUE = {
 ALGORITHM_CONFIG_TRAINING_INPUT = [
     {
         "field_type": "string",
-        "field_alias": "系统索引",
+        "field_alias": _("系统索引"),
         "field_name": "__index__",
         "field_index": 0,
         "properties": {
@@ -213,7 +215,7 @@ ALGORITHM_CONFIG_TRAINING_INPUT = [
     },
     {
         "field_type": "string",
-        "field_alias": "用户索引",
+        "field_alias": _("用户索引"),
         "field_name": "__id__",
         "field_index": 1,
         "properties": {
@@ -231,13 +233,13 @@ ALGORITHM_CONFIG_TRAINING_INPUT = [
             "input_type": "field",
         },
         "data_field_name": "__id__",
-        "data_field_alias": "用户索引",
+        "data_field_alias": _("用户索引"),
         "roles": ["index"],
         "components": ["__group_id__", "timestamp"],
     },
     {
         "field_type": "string",
-        "field_alias": "分组索引",
+        "field_alias": _("分组索引"),
         "field_name": "__group_id__",
         "field_index": 2,
         "properties": {
@@ -255,7 +257,7 @@ ALGORITHM_CONFIG_TRAINING_INPUT = [
             "input_type": "field",
         },
         "data_field_name": "__group_id__",
-        "data_field_alias": "分组字段",
+        "data_field_alias": _("分组字段"),
         "roles": ["index_component", "group"],
         "components": [],
     },
@@ -285,7 +287,7 @@ ALGORITHM_CONFIG_TRAINING_INPUT = [
     },
     {
         "field_type": "string",
-        "field_alias": "日志内容",
+        "field_alias": _("日志内容"),
         "field_name": "log",
         "field_index": 4,
         "properties": {
@@ -345,176 +347,7 @@ ALGORITHM_CONFIG_TRAINING_META = {
 }
 
 EVALUATE_INPUT_VALUE = {
-    "evaluate_input": [
-        {
-            "field_type": "string",
-            "field_alias": "系统索引",
-            "field_name": "__index__",
-            "field_index": 0,
-            "properties": {
-                "role_changeable": False,
-                "deletable": False,
-                "name_inherited": True,
-                "value_fixed": False,
-                "passthrough": False,
-                "compatibility": False,
-                "required": True,
-                "complex": False,
-                "constraint_type": None,
-                "constraints": {},
-                "extra": {},
-                "input_type": "field",
-            },
-            "data_field_name": "__index__",
-            "data_field_alias": "系统索引",
-            "roles": ["index", "system"],
-            "components": [],
-        },
-        {
-            "field_type": "string",
-            "field_alias": "用户索引",
-            "field_name": "__id__",
-            "field_index": 1,
-            "properties": {
-                "role_changeable": False,
-                "deletable": False,
-                "name_inherited": True,
-                "value_fixed": False,
-                "passthrough": False,
-                "compatibility": False,
-                "required": True,
-                "complex": True,
-                "constraint_type": None,
-                "constraints": {},
-                "extra": {},
-                "input_type": "field",
-            },
-            "data_field_name": "__id__",
-            "data_field_alias": "user index",
-            "roles": ["index"],
-            "components": ["__group_id__", "timestamp"],
-        },
-        {
-            "field_type": "string",
-            "field_alias": "分组索引",
-            "field_name": "__group_id__",
-            "field_index": 2,
-            "properties": {
-                "role_changeable": False,
-                "deletable": False,
-                "name_inherited": True,
-                "value_fixed": True,
-                "passthrough": False,
-                "compatibility": False,
-                "required": True,
-                "complex": False,
-                "constraint_type": None,
-                "constraints": {},
-                "extra": {},
-                "input_type": "field",
-            },
-            "data_field_name": "__group_id__",
-            "data_field_alias": "分组字段",
-            "roles": ["index_component", "group"],
-            "components": [],
-        },
-        {
-            "field_type": "string",
-            "field_alias": "group",
-            "field_name": "line_id",
-            "field_index": 3,
-            "properties": {
-                "role_changeable": False,
-                "deletable": False,
-                "name_inherited": True,
-                "value_fixed": False,
-                "passthrough": False,
-                "compatibility": True,
-                "required": True,
-                "complex": False,
-                "constraint_type": None,
-                "constraints": {},
-                "extra": {},
-                "input_type": "field",
-            },
-            "data_field_name": "line_id",
-            "data_field_alias": None,
-            "roles": ["data"],
-            "components": [],
-        },
-        {
-            "field_type": "text",
-            "field_alias": "token",
-            "field_name": "token",
-            "field_index": 4,
-            "properties": {
-                "role_changeable": False,
-                "deletable": False,
-                "name_inherited": False,
-                "value_fixed": False,
-                "passthrough": False,
-                "compatibility": False,
-                "required": True,
-                "complex": False,
-                "constraint_type": None,
-                "constraints": {},
-                "extra": {},
-                "input_type": "field",
-            },
-            "data_field_name": "token",
-            "data_field_alias": None,
-            "roles": ["feature"],
-            "components": [],
-        },
-        {
-            "field_type": "text",
-            "field_alias": "log_signature",
-            "field_name": "log_signature",
-            "field_index": 5,
-            "properties": {
-                "role_changeable": False,
-                "deletable": False,
-                "name_inherited": False,
-                "value_fixed": False,
-                "passthrough": False,
-                "compatibility": False,
-                "required": True,
-                "complex": False,
-                "constraint_type": "",
-                "constraints": {},
-                "extra": {},
-                "input_type": "field",
-            },
-            "data_field_name": "log_signature",
-            "data_field_alias": None,
-            "roles": ["feature"],
-            "components": [],
-        },
-        {
-            "field_type": "timestamp",
-            "field_alias": "timestamp",
-            "field_name": "timestamp",
-            "field_index": 6,
-            "properties": {
-                "role_changeable": False,
-                "deletable": False,
-                "name_inherited": False,
-                "value_fixed": False,
-                "passthrough": False,
-                "compatibility": False,
-                "required": True,
-                "complex": False,
-                "constraint_type": "",
-                "constraints": {},
-                "extra": {},
-                "input_type": "field",
-            },
-            "data_field_name": "timestamp",
-            "data_field_alias": None,
-            "roles": ["timestamp"],
-            "components": [],
-        },
-    ]
+    "evaluate_input": [],
 }
 
 ALGORITHM_CONFIG_PREDICT_META = {
@@ -523,14 +356,14 @@ ALGORITHM_CONFIG_PREDICT_META = {
         "ts_depend": "0d",
         "input_columns_changeable": {"value": True, "condition": "lt", "condition_value": "500"},
     },
-    "output": {"table_name": "预测输出"},
+    "output": {"table_name": _("预测输出")},
     "add_on_input": [],
 }
 
 ALGORITHM_CONFIG_PREDICT_INPUT = [
     {
         "field_name": "__index__",
-        "field_alias": "系统索引",
+        "field_alias": _("系统索引"),
         "field_index": 1,
         "data_field_name": "__index__",
         "data_field_alias": "index",
@@ -553,10 +386,10 @@ ALGORITHM_CONFIG_PREDICT_INPUT = [
     },
     {
         "field_name": "__id__",
-        "field_alias": "用户索引",
+        "field_alias": _("用户索引"),
         "field_index": 2,
         "data_field_name": "__id__",
-        "data_field_alias": "用户索引",
+        "data_field_alias": _("用户索引"),
         "field_type": "string",
         "roles": ["index"],
         "properties": {
@@ -576,10 +409,10 @@ ALGORITHM_CONFIG_PREDICT_INPUT = [
     },
     {
         "field_name": "__group_id__",
-        "field_alias": "分组索引",
+        "field_alias": _("分组索引"),
         "field_index": 3,
         "data_field_name": "__group_id__",
-        "data_field_alias": "分组字段",
+        "data_field_alias": _("分组字段"),
         "field_type": "string",
         "roles": ["group", "index_component"],
         "properties": {
@@ -622,7 +455,7 @@ ALGORITHM_CONFIG_PREDICT_INPUT = [
     },
     {
         "field_name": "log",
-        "field_alias": "日志内容",
+        "field_alias": _("日志内容"),
         "field_index": 5,
         "data_field_name": "log",
         "data_field_alias": None,
@@ -671,7 +504,7 @@ ALGORITHM_CONFIG_PREDICT_INPUT = [
 ALGORITHM_CONFIG_PREDICT_OUTPUT = [
     {
         "field_name": "__index__",
-        "field_alias": "系统索引",
+        "field_alias": _("系统索引"),
         "field_index": 1,
         "data_field_name": "__index__",
         "data_field_alias": "index",
@@ -694,10 +527,10 @@ ALGORITHM_CONFIG_PREDICT_OUTPUT = [
     },
     {
         "field_name": "__id__",
-        "field_alias": "用户索引",
+        "field_alias": _("用户索引"),
         "field_index": 2,
         "data_field_name": "__id__",
-        "data_field_alias": "用户索引",
+        "data_field_alias": _("用户索引"),
         "field_type": "string",
         "roles": ["index"],
         "properties": {
@@ -717,10 +550,10 @@ ALGORITHM_CONFIG_PREDICT_OUTPUT = [
     },
     {
         "field_name": "__group_id__",
-        "field_alias": "分组索引",
+        "field_alias": _("分组索引"),
         "field_index": 3,
         "data_field_name": "__group_id__",
-        "data_field_alias": "分组字段",
+        "data_field_alias": _("分组字段"),
         "field_type": "string",
         "roles": ["group", "index_component"],
         "properties": {
@@ -832,7 +665,7 @@ ALGORITHM_CONFIG_PREDICT_OUTPUT = [
     },
     {
         "field_name": "log",
-        "field_alias": "日志内容",
+        "field_alias": _("日志内容"),
         "field_index": 8,
         "data_field_name": "log",
         "data_field_alias": None,

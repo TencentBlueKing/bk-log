@@ -33,11 +33,11 @@
     :scrollable="true"
     @cancel="closeDialog">
     <div class="table-title">
-      {{$t('exportHistory.downloadHistory')}}
+      {{$t('下载历史')}}
     </div>
     <div class="search-history">
-      <span v-bk-tooltips="$t('exportHistory.btnTip')" class="top-start">
-        <bk-button theme="primary" @click="handleSearchAll"> {{$t('exportHistory.btn')}}</bk-button>
+      <span v-bk-tooltips="$t('查看所有的索引集的下载历史')" class="top-start">
+        <bk-button theme="primary" @click="handleSearchAll"> {{$t('查看所有')}}</bk-button>
       </span>
     </div>
     <div class="table-container" v-bkloading="{ isLoading: tableLoading }">
@@ -56,7 +56,7 @@
         <!-- index_set_id -->
         <template v-if="isShowSetLabel">
           <bk-table-column
-            :label="$t('exportHistory.indexSetID')"
+            :label="$t('索引集ID')"
             width="100">
             <template slot-scope="{ row }">
               <span>
@@ -67,7 +67,7 @@
         </template>
         <!-- 检测请求参数 -->
         <bk-table-column
-          :label="$t('exportHistory.parameter')"
+          :label="$t('检索请求参数')"
           width="180">
           <template slot-scope="{ row }">
             <bk-popover placement="top" theme="light">
@@ -83,18 +83,18 @@
         </bk-table-column>
         <!-- 下载类型 -->
         <bk-table-column
-          :label="$t('exportHistory.downloadType')"
+          :label="$t('下载类型')"
           align="center"
           header-align="center">
           <template slot-scope="{ row }">
             <span>
-              {{row.export_type === 'async' ? $t('exportHistory.async') : $t('exportHistory.sync')}}
+              {{row.export_type === 'async' ? $t('异步') : $t('同步')}}
             </span>
           </template>
         </bk-table-column>
         <!-- 导出状态 -->
         <bk-table-column
-          :label="$t('exportHistory.exportState')"
+          :label="$t('导出状态')"
           align="center"
           header-align="center">
           <template slot-scope="{ row }">
@@ -104,9 +104,9 @@
               theme="light">
               <div slot="content">
                 <span v-if="!row.error_msg">
-                  {{$t('exportHistory.completeTime')}}: {{getFormatDate(row.export_completed_at)}}
+                  {{$t('完成时间')}}: {{getFormatDate(row.export_completed_at)}}
                 </span>
-                <span v-else>{{$t('exportHistory.abnormalReason')}}: {{row.error_msg}}</span>
+                <span v-else>{{$t('异常原因')}}: {{row.error_msg}}</span>
               </div>
               <span :class="['status',`status-${row.export_status + ''}`]">
                 <i class="bk-icon icon-circle-shape"></i>
@@ -121,7 +121,7 @@
         </bk-table-column>
         <!-- 文件名 -->
         <bk-table-column
-          :label="$t('exportHistory.fileName')"
+          :label="$t('文件名')"
           align="center"
           header-align="center">
           <template slot-scope="{ row }">
@@ -141,7 +141,7 @@
         </bk-table-column>
         <!-- 文件大小 -->
         <bk-table-column
-          :label="$t('exportHistory.fileSize')"
+          :label="$t('文件大小')"
           align="center"
           header-align="center">
           <template slot-scope="{ row }">
@@ -150,14 +150,14 @@
         </bk-table-column>
         <!-- 操作者 -->
         <bk-table-column
-          :label="$t('exportHistory.operator')"
+          :label="$t('操作者')"
           prop="export_created_by"
           align="center"
           header-align="center">
         </bk-table-column>
         <!-- 操作时间 -->
         <bk-table-column
-          :label="$t('exportHistory.operatingTime')"
+          :label="$t('操作时间')"
           align="center"
           header-align="center">
           <template slot-scope="{ row }">
@@ -166,7 +166,7 @@
         </bk-table-column>
         <!-- 操作 -->
         <bk-table-column
-          :label="$t('exportHistory.operate')"
+          :label="$t('操作')"
           width="150"
           align="center"
           header-align="center">
@@ -176,37 +176,40 @@
                 text
                 v-if="row.download_able"
                 @click="downloadExport(row)">
-                {{$t('exportHistory.download')}}
+                {{$t('下载')}}
               </bk-button>
               <span
                 v-else
-                v-bk-tooltips="$t('exportHistory.downloadExpired')"
+                v-bk-tooltips="$t('下载链接过期')"
                 class="top-start">
                 <bk-button text disabled>
-                  {{$t('exportHistory.download')}}
+                  {{$t('下载')}}
                 </bk-button>
               </span>
             </span>
             <span v-if="isShowRetry(row)" style="margin-right: 10px;">
               <bk-button
                 text
-                v-if="row.retry_able"
+                v-if="row.retry_able && row.export_status !== 'success'"
                 @click="retryExport(row)">
-                {{$t('exportHistory.retry')}}
+                {{$t('重试')}}
               </bk-button>
               <span
                 v-else
-                v-bk-tooltips="$t('exportHistory.dataExpired')"
+                v-bk-tooltips="{
+                  content: $t('数据源过期'),
+                  disabled: row.export_status === 'success'
+                }"
                 class="top-start">
                 <bk-button text disabled>
-                  {{$t('exportHistory.retry')}}
+                  {{$t('重试')}}
                 </bk-button>
               </span>
             </span>
             <bk-button
               text
               @click="handleRetrieve(row)">
-              {{$t('exportHistory.retrieve')}}
+              {{$t('检索')}}
             </bk-button>
           </template>
         </bk-table-column>
@@ -235,14 +238,14 @@ export default {
       isShowSetLabel: false, // 是否展示索引集ID
       timer: false,
       exportStatusList: {
-        download_log: this.$t('exportHistory.pulling'),
-        export_package: this.$t('exportHistory.exportPackage'),
-        export_upload: this.$t('exportHistory.exportUpload'),
-        success: this.$t('exportHistory.success'),
-        failed: this.$t('exportHistory.failed'),
-        download_expired: this.$t('exportHistory.downloadExpired'),
-        data_expired: this.$t('exportHistory.dataExpired'),
-        null: this.$t('exportHistory.exporting'),
+        download_log: this.$t('拉取中'),
+        export_package: this.$t('打包中'),
+        export_upload: this.$t('上传中'),
+        success: this.$t('完成'),
+        failed: this.$t('异常'),
+        download_expired: this.$t('下载链接过期'),
+        data_expired: this.$t('数据源过期'),
+        null: this.$t('下载中'),
       },
       pagination: {
         current: 1,
@@ -355,10 +358,10 @@ export default {
       return formatDate(time);
     },
     handleRetrieve($row) {
-      const projectId = window.localStorage.getItem('project_id');
+      const spaceUid = this.$store.state.spaceUid;
       const { log_index_set_id: indexSetID, search_dict: dict } = $row;
       const params = encodeURIComponent(JSON.stringify({ ...dict }));
-      const jumpUrl = `${window.SITE_URL}#/retrieve/${indexSetID}?projectId=${projectId}&bizId=${dict.bk_biz_id}&retrieveParams=${params}`;
+      const jumpUrl = `${window.SITE_URL}#/retrieve/${indexSetID}?spaceUid=${spaceUid}&bizId=${dict.bk_biz_id}&retrieveParams=${params}`;
       window.open(jumpUrl, '_blank');
     },
     /**

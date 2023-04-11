@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/camelcase -->
 <!--
   - Tencent is pleased to support the open source community by making BK-LOG 蓝鲸日志平台 available.
   - Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
@@ -35,13 +36,26 @@
             data-test-id="addNewExtraction_button_selectTheServer"
           >{{ $t('选择服务器') }}</bk-button>
           <div class="select-text">
-            {{ $t('已选择') }}
-            <span class="primary" v-if="ipList.length">{{ ipList.length }}</span>
-            <span class="error" v-else>{{ ipList.length }}</span>
-            {{ $t('个节点') }}
+            <i18n path="已选择{0}个节点">
+              <span class="primary" v-if="ipList.length">{{ ipList.length }}</span>
+              <span class="error" v-else>{{ ipList.length }}</span>
+            </i18n>
           </div>
         </div>
-        <ip-select :show-select-dialog.sync="showSelectDialog" @confirm="handleConfirm" />
+        <log-ip-selector
+          mode="dialog"
+          extract-scene
+          allow-host-list-miss-host-id
+          keep-host-field-output
+          :height="670"
+          :show-dialog.sync="showSelectDialog"
+          :value="selectorNodes"
+          :show-view-diff="isClone"
+          :original-value="ipSelectorOriginalValue"
+          :panel-list="['staticTopo']"
+          @change="handleConfirm"
+        />
+        <!-- <ip-select :show-select-dialog.sync="showSelectDialog" @confirm="handleConfirm" /> -->
       </div>
     </div>
 
@@ -49,7 +63,10 @@
       <div class="title">
         {{ $t('目录或文件名') }}
         <span class="required">*</span>
-        <span class="log-icon icon-info-fill" v-bk-tooltips="$t('查询目录提示')"></span>
+        <span
+          class="log-icon icon-info-fill"
+          v-bk-tooltips="`${$t('以')}/${$t('结尾查询指定目录下内容，否则默认查询该目录及其子目录下所有文件')}`">
+        </span>
       </div>
       <div class="content">
         <files-input
@@ -65,6 +82,7 @@
         ref="preview"
         v-model="downloadFiles"
         :ip-list="ipList"
+        :ip-select-new-name-list="ipSelectNewNameList"
         :file-or-path="fileOrPath"
         @update:fileOrPath="handleFileOrPathUpdate" />
     </div>
@@ -85,11 +103,11 @@
     <div class="row-container">
       <div class="title">{{ $t('提取链路') }}</div>
       <div class="content">
-        <!-- eslint-disable-next-line vue/camelcase -->
-        <bk-select v-model="link_id"
-                   style="width: 250px;margin-right: 20px;background-color: #fff;"
-                   data-test-id="addNewExtraction_select_selectLink"
-                   :clearable="false">
+        <bk-select
+          v-model="link_id"
+          style="width: 250px;margin-right: 20px;background-color: #fff;"
+          data-test-id="addNewExtraction_select_selectLink"
+          :clearable="false">
           <bk-option
             v-for="link in extractLinks"
             :key="link.link_id"
@@ -117,15 +135,18 @@
 </template>
 
 <script>
-import IpSelect from '@/views/extract/create/ip-select';
+import LogIpSelector, { toSelectorNode, toTransformNode } from '@/components/log-ip-selector/log-ip-selector';
+// import IpSelect from '@/views/extract/create/ip-select';
 import FilesInput from '@/views/extract/create/files-input';
 import TextFilter from '@/views/extract/create/test-filter';
 import PreviewFiles from '@/views/extract/create/preview-files';
+import { mapGetters } from 'vuex';
 
 export default {
   name: 'ExtractCreate',
   components: {
-    IpSelect,
+    LogIpSelector,
+    // IpSelect,
     FilesInput,
     TextFilter,
     PreviewFiles,
@@ -140,12 +161,25 @@ export default {
       remark: '', // 备注
       extractLinks: [], // 提取链路
       link_id: null,
+      // 编辑态ip选择器初始值
+      ipSelectorOriginalValue: null,
+      ipSelectNewNameList: [], // 生成新的展示所用的预览地址列表
     };
   },
   computed: {
+    ...mapGetters({
+      globalsData: 'globals/globalsData',
+    }),
     canSubmit() {
       // eslint-disable-next-line eqeqeq
       return (!this.ipList.length || !this.downloadFiles.length) && this.link_id != null;
+    },
+    isClone() {
+      return this.$route.name === 'extract-clone' && !!(sessionStorage.getItem('cloneData'));
+    },
+    // ip选择器选中节点
+    selectorNodes() {
+      return { host_list: toSelectorNode(this.ipList, 'INSTANCE') };
     },
   },
   mounted() {
@@ -154,20 +188,48 @@ export default {
   },
   methods: {
     async checkIsClone() {
-      if (this.$route.name === 'extract-clone' && sessionStorage.getItem('cloneData')) {
+      if (this.isClone) {
         const cloneData = JSON.parse(sessionStorage.getItem('cloneData'));
         sessionStorage.removeItem('cloneData');
-
         this.ipList = cloneData.ip_list; // 克隆下载目标
         this.fileOrPath = cloneData.preview_directory; // 克隆目录
         this.$refs.textFilter.handleClone(cloneData); // 克隆文本过滤
         this.remark = cloneData.remark; // 克隆备注
         // 获取目录下拉列表和预览地址
+        this.initCloneDisplayName(); // 克隆时 请求displayName列表来展示预览字段
         this.handleCloneAvailablePaths(cloneData);
         this.$nextTick(() => {
           this.$refs.preview.handleClone(cloneData);
         });
+        this.ipSelectorOriginalValue = { host_list: toSelectorNode(this.ipList, 'INSTANCE') };
       }
+    },
+    initCloneDisplayName() {
+      const requestIpList = this.ipList.map((item) => {
+        if (item?.bk_host_id) {
+          return {
+            host_id: item.bk_host_id,
+          };
+        }
+        return {
+          ip: item.ip ?? '',
+          cloud_id: item.bk_cloud_id ?? '',
+        };
+      });
+      this.$http.request('extract/getIpListDisplayName', {
+        data: {
+          host_list: requestIpList,
+        },
+        params: {
+          bk_biz_id: this.$store.state.bkBizId,
+        },
+      }).then((res) => {
+        this.initSelectNewNameList(res.data, true);
+      })
+        .catch((err) => {
+          console.warn(err);
+          this.ipSelectNewNameList = [];
+        });
     },
     getExtractLinkList() {
       this.$http.request('extract/getExtractLinkList', {
@@ -200,10 +262,50 @@ export default {
     handleFilesSelect(fileOrPath) {
       this.$refs.preview.getExplorerList({ path: fileOrPath });
     },
-    handleConfirm(ipList, availablePaths) {
+    async handleConfirm(value) {
+      const { host_list: hostList } = value;
+      this.initSelectNewNameList(hostList);
+      const ipList = toTransformNode(hostList, 'INSTANCE', true);
+      // 选择服务器后，获取可预览的路径
+      const strategies = await this.$http.request('extract/getAvailableExplorerPath', {
+        data: {
+          bk_biz_id: this.$store.state.bkBizId,
+          ip_list: ipList,
+        },
+      });
+      const availablePaths = strategies.data.map(item => item.file_path);
       this.ipList = ipList;
       this.availablePaths = availablePaths;
     },
+    /**
+     * @desc: 初始化预览地址
+     * @param {Array} hostList host列表
+     * @param {Boolean} isClone 是否是克隆回显
+     */
+    initSelectNewNameList(hostList, isClone = false) {
+      if (!isClone) { // 新增 使用ip选择器里的值展示
+        const priorityList = this.globalsData.host_identifier_priority ?? ['ip', 'host_name', 'ipv6'];
+        this.ipSelectNewNameList = hostList.map(item => ({
+          bk_host_id: item.host_id,
+          ip: item.ip,
+          bk_cloud_id: item.cloud_area.id,
+          selectID: `${item.host_id ?? ''}_${item.ip ?? ''}_${item.cloud_area.id ?? ''}`, // select唯一key
+          name: item[priorityList.find(pItem => Boolean(item[pItem]))] ?? '',
+        }));
+      } else { // 克隆 通过接口请求返回的display_name展示值
+        this.ipSelectNewNameList = hostList.map(item => ({
+          bk_host_id: item.bk_host_id,
+          ip: item.bk_host_innerip,
+          bk_cloud_id: item.bk_cloud_id,
+          selectID: `${item.bk_host_id ?? ''}_${item.bk_host_innerip ?? ''}_${item.bk_cloud_id ?? ''}`, // select唯一key
+          name: item.display_name,
+        }));
+      }
+    },
+    // handleConfirm(ipList, availablePaths) {
+    //   this.ipList = ipList;
+    //   this.availablePaths = availablePaths;
+    // },
     handleSubmit() {
       this.$emit('loading', true);
       // 根据预览地址选择的文件提交下载任务
@@ -212,7 +314,7 @@ export default {
           bk_biz_id: this.$store.state.bkBizId,
           ip_list: this.ipList, // 下载目标
           preview_directory: this.fileOrPath, // 目录
-          preview_ip: this.$refs.preview.previewIp.join(','), // 预览地址
+          preview_ip_list: this.$refs.preview.getFindIpList(), // 预览地址
           preview_time_range: this.$refs.preview.timeRange, // 文件日期
           preview_start_time: this.$refs.preview.timeStringValue[0], // 文件日期
           preview_end_time: this.$refs.preview.timeStringValue[1], // 文件日期
@@ -235,7 +337,7 @@ export default {
       this.$router.push({
         name: 'log-extract-task',
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
     },

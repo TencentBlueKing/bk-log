@@ -36,6 +36,7 @@ from apps.log_databus.constants import (
     TargetNodeTypeEnum,
     TargetObjectTypeEnum,
 )
+from apps.log_databus.handlers.collector import build_bk_data_name
 from apps.log_databus.handlers.etl import EtlHandler
 from apps.log_databus.models import CollectorConfig
 from apps.log_databus.serializers import CollectorEtlStorageSerializer
@@ -72,11 +73,11 @@ class Command(BaseCommand):
         #      name: bk-log-search-saas
         #    - dataid: 11000002
         #      name: bk-log-search-api
-        config = {}
         with open(builtin_collect_file_path, encoding="utf-8") as f:
             config = yaml.load(f.read(), Loader=yaml.FullLoader)
+        config = config or {}
 
-        for built_in_info in config["builtin_collect"]:
+        for built_in_info in config.get("builtin_collect") or []:
             try:
                 if not (BUILT_IN_MIN_DATAID <= int(built_in_info["dataId"]) <= BUILT_IN_MAX_DATAID):
                     print("data id (%s) not valid, do nothing" % built_in_info["dataId"])
@@ -139,7 +140,7 @@ class Command(BaseCommand):
 
     @classmethod
     def create_data_id(cls, collect_config):
-        data_name = f"{collect_config.bk_biz_id}_{settings.TABLE_ID_PREFIX}_{collect_config.collector_config_name_en}"
+        data_name = build_bk_data_name(collect_config.bk_biz_id, collect_config.collector_config_name_en)
         params = {
             "data_name": data_name,
             "etl_config": "bk_flat_batch",

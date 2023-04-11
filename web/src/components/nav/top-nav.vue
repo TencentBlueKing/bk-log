@@ -24,9 +24,9 @@
   <section class="log-search-top-nav">
     <div class="top-nav-content">
       <div class="top-nav-title fl" v-if="title">
-        <div v-if="title === $t('nav.Data_sampling')" class="skip">
-          <span @click="clickSkip('collectAccess')">{{$t('nav.collectAccess')}} / </span>
-          <span @click="clickSkip('allocation')">{{$t('dataSource.es_host_state')}} / </span>
+        <div v-if="title === $t('数据采样')" class="skip">
+          <span @click="clickSkip('collectAccess')">{{$t('采集接入')}} / </span>
+          <span @click="clickSkip('allocation')">{{$t('采集状态')}} / </span>
           {{title}}
         </div>
         <div v-else style="display: flex;align-items: center">
@@ -74,7 +74,7 @@ export default {
           this.$router.replace({
             name: this.parentRoute,
             query: {
-              projectId: window.localStorage.getItem('project_id'),
+              spaceUid: this.$store.state.spaceUid,
             },
           });
         }
@@ -105,7 +105,7 @@ export default {
         this.$router.push({
           name: menu.id,
           query: {
-            projectId: window.localStorage.getItem('project_id'),
+            spaceUid: this.$store.state.spaceUid,
           },
         });
       }
@@ -126,7 +126,7 @@ export default {
         name: val,
         hash: '#hisitory',
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
     },

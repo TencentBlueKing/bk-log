@@ -25,38 +25,43 @@
     <div class="deploy-sub">
       <!-- 数据ID -->
       <div>
-        <span>{{ $t('dataSource.dataId') }}</span>
+        <span>{{ $t('数据ID') }}</span>
         <span>{{ collectorData.bk_data_id || '-' }}</span>
       </div>
       <!-- 名称 -->
       <div>
-        <span>{{ $t('configDetails.name') }}</span>
+        <span>{{ $t('名称') }}</span>
         <span>{{ collectorData.collector_config_name || '-' }}</span>
       </div>
       <!-- 英文名 -->
       <div>
-        <span>{{ $t('dataSource.source_en_name') }}</span>
+        <span>{{ $t('英文名') }}</span>
         <span>{{ collectorData.collector_config_name_en || '-' }}</span>
       </div>
       <!-- 备注说明 -->
       <div>
-        <span>{{ $t('configDetails.remarkExplain') }}</span>
+        <span>{{ $t('备注说明') }}</span>
         <span>{{ collectorData.description || '-' }}</span>
       </div>
       <!-- 数据分类 -->
       <div>
-        <span>{{ $t('configDetails.dataClassify') }}</span>
+        <span>{{ $t('数据分类') }}</span>
         <span>{{ collectorData.category_name || '-' }}</span>
       </div>
       <!-- 存储集群 -->
       <div>
-        <span>{{ $t('configDetails.StorageCluster') }}</span>
+        <span>{{ $t('存储集群') }}</span>
         <span>{{ collectorData.storage_cluster_name || '-' }}</span>
       </div>
       <!-- 日志类型 -->
       <div>
-        <span>{{ $t('configDetails.logType') }}</span>
+        <span>{{ $t('日志类型') }}</span>
         <span>{{ collectorData.collector_scenario_name || '-' }}</span>
+      </div>
+      <!-- 容器集群 -->
+      <div>
+        <span>{{ $t('容器集群') }}</span>
+        <span>{{ bcsClusterName }}</span>
       </div>
       <!-- 配置项 -->
       <div>
@@ -67,6 +72,11 @@
                class="config-box">
             <div class="config-title">{{getFromCharCode(configIndex)}}</div>
             <div class="deploy-sub">
+              <!-- 容器环境 -->
+              <div>
+                <span>{{ $t('容器环境') }}</span>
+                <span>{{ configItem.collectorName }}</span>
+              </div>
               <!-- Namespace -->
               <div>
                 <span>Namespace</span>
@@ -85,14 +95,12 @@
                 <div class="specify-box" v-if="isSelectorHaveValue(configItem.container)">
                   <template
                     v-for="([speKey, speValue], speIndex) in Object.entries(configItem.container)">
-                    <div class="specify-container" v-if="speValue" :key="speIndex">
+                    <div class="specify-container" v-if="speValue" :key="speIndex" v-bk-overflow-tips>
                       <span>{{specifyName[speKey]}}</span> : <span>{{speValue}}</span>
                     </div>
                   </template>
                 </div>
-                <span v-else>
-                  {{$t('所有')}}
-                </span>
+                <span v-else>{{$t('所有')}}</span>
               </div>
               <!-- 关联标签 -->
               <div>
@@ -102,35 +110,29 @@
                     <div class="specify-box"
                          v-for="(matchItem, matchKey) of labItem"
                          :key="`${labKey}_${matchKey}`">
-                      <div class="specify-container justify-bt">
+                      <div class="specify-container justify-bt" v-bk-overflow-tips>
                         <span>{{matchItem.key}}</span>
                         <div class="operator">{{matchItem.operator}}</div>
                       </div>
-                      <div class="specify-container">
+                      <div class="specify-container" v-bk-overflow-tips>
                         <span>{{matchItem.value}}</span>
                       </div>
                     </div>
                   </template>
                 </div>
-                <span v-else>
-                  {{$t('所有')}}
-                </span>
+                <span v-else>{{$t('所有')}}</span>
               </div>
               <!-- 日志路径 -->
               <div>
-                <span>
-                  {{ $t('configDetails.logPath') }}
-                </span>
+                <span>{{ $t('日志路径') }}</span>
                 <div v-if=" configItem.params.paths.length" class="deploy-path">
                   <p v-for="(val, key) in configItem.params.paths" :key="key">{{ val }}</p>
                 </div>
-                <span v-else>
-                  --
-                </span>
+                <span v-else>--</span>
               </div>
               <!-- 日志字符集 -->
               <div>
-                <span>{{ $t('configDetails.logSet') }}</span>
+                <span>{{ $t('字符集') }}</span>
                 <span>{{ configItem.data_encoding || '-' }}</span>
               </div>
               <!-- 过滤内容 -->
@@ -139,17 +141,16 @@
                 v-if="configItem.params.conditions &&
                   configItem.params.conditions.type === 'match' &&
                   configItem.params.conditions.match_content !== ''">
-                <span>{{ $t('configDetails.filterContent') }}</span>
+                <span>{{ $t('过滤内容') }}</span>
                 <div>
-                  <p>{{ $t('configDetails.strMatching') }}</p>
-                  <p
-                    v-if="configItem.params.conditions.match_content">
+                  <p>{{ $t('字符串匹配') }}</p>
+                  <p v-if="configItem.params.conditions.match_content">
                     {{ configItem.params.conditions.match_content }}
                   </p>
                   <p>
                     {{ configItem.params.conditions.match_type }}/{{
                       configItem.params.conditions.match_type === 'include' ?
-                        $t('configDetails.keep') : $t('configDetails.Filter') }}
+                        $t('保留匹配字符串') : $t('过滤匹配字符串') }}
                   </p>
                 </div>
               </div>
@@ -158,9 +159,9 @@
                 v-else-if="configItem.params.conditions &&
                   configItem.params.conditions.type === 'separator' &&
                   configItem.params.conditions.separator_filters !== []">
-                <span>{{ $t('configDetails.filterContent') }}</span>
+                <span>{{ $t('过滤内容') }}</span>
                 <div>
-                  <p>{{ $t('configDetails.sepMarching') }}</p>
+                  <p>{{ $t('分隔符匹配') }}</p>
                   <p v-if="configItem.params.conditions.separator">{{ configItem.params.conditions.separator }}</p>
                   <div class="condition-stylex">
                     <div>
@@ -168,7 +169,7 @@
                         <div
                           v-for="(val, key) in configItem.params.conditions.separator_filters"
                           :key="key">
-                          {{ $t('configDetails.the') }} {{ val.fieldindex }} {{ $t('configDetails.column') }}
+                          {{ $t('第 {n} 列', { n: val.fieldindex })}}
                         </div>
                       </div>
                       <div>
@@ -185,18 +186,31 @@
                       <div class="line-styx"></div>
                       <p>
                         {{ configItem.params.conditions.separator_filters[0].logic_op === 'and' ?
-                          $t('configDetails.and') : $t('configDetails.or') }}
+                          $t('并') : $t('或') }}
                       </p>
                     </div>
                   </div>
                 </div>
               </div>
               <div class="content-style" v-else>
-                <span>{{ $t('configDetails.filterContent') }}</span>
-                <div>
-                  --
-                </div>
+                <span>{{ $t('过滤内容') }}</span>
+                <div>--</div>
               </div>
+              <!-- 段日志 -->
+              <template v-if="collectorData.collector_scenario_id === 'section'">
+                <div class="content-style">
+                  <span>{{ $t('段日志参数') }}</span>
+                  <div class="section-box">
+                    <p>{{$t('行首正则')}}: <span>{{configItem.params.multiline_pattern}}</span></p> <br>
+                    <p>
+                      <i18n path="最多匹配{0}行，最大耗时{1}秒">
+                        <span>{{configItem.params.multiline_max_lines}}</span>
+                        <span>{{configItem.params.multiline_timeout}}</span>
+                      </i18n>
+                    </p>
+                  </div>
+                </div>
+              </template>
             </div>
           </div>
         </div>
@@ -208,11 +222,11 @@
           <div>
             <div v-for="(extraItem, extraIndex) in extraLabelList" :key="extraIndex">
               <div class="specify-box">
-                <div class="specify-container justify-bt">
+                <div class="specify-container justify-bt" v-bk-overflow-tips>
                   <span>{{extraItem.key}}</span>
                   <div class="operator">=</div>
                 </div>
-                <div class="specify-container">
+                <div class="specify-container" v-bk-overflow-tips>
                   <span>{{extraItem.value}}</span>
                 </div>
               </div>
@@ -254,7 +268,13 @@ export default {
         workload_name: this.$t('应用名称'),
         container_name: this.$t('容器名称'),
       },
+      collectorNameMap: {
+        container_log_config: 'Container',
+        node_log_config: 'Node',
+        std_log_config: this.$t('标准输出'),
+      },
       dataLinkName: '--',
+      bcsClusterName: '--', // 容器环境集群名
     };
   },
   computed: {
@@ -291,6 +311,7 @@ export default {
     async initContainerConfigData(data) {
       // 分yaml模式和ui模式下的config展示
       try {
+        this.bcsClusterName = await this.getBcsClusterName(data.bcs_cluster_id);
         const showData = data.yaml_config_enabled ? await this.getYamlConfigData(data.yaml_config) : data;
         this.extraLabelList = showData.extra_labels;
         this.collectorConfigs = showData.configs.map((item) => {
@@ -305,6 +326,7 @@ export default {
             container: yamlContainer,
             label_selector: yamlSelector,
             namespaces,
+            collector_type,
           } = item;
           let container;
           let labelSelector;
@@ -322,10 +344,12 @@ export default {
               match_expressions,
             };
           }
+          const collectorName = this.collectorNameMap[collector_type] || '--';
           return {
             namespaces,
             data_encoding,
             container,
+            collectorName,
             label_selector: labelSelector,
             params,
           };
@@ -355,7 +379,13 @@ export default {
         extra_labels: [],
       };
       try {
-        const res = await this.$http.request('container/yamlJudgement', { data: { yaml_config: yamlConfig } });
+        const res = await this.$http.request('container/yamlJudgement', {
+          data: {
+            bk_biz_id: this.$store.state.bkBizId,
+            bcs_cluster_id: this.collectorData.bcs_cluster_id,
+            yaml_config: yamlConfig,
+          },
+        });
         const { parse_result: parseResult, parse_status: parseStatus } = res.data;
         if (Array.isArray(parseResult) && !parseStatus) return defaultConfigData; // 返回值若是数组则表示yaml解析出错
         if (parseStatus) return {
@@ -375,6 +405,18 @@ export default {
     },
     isContainerHaveValue(container) {
       return Object.values(container)?.some(item => !!item) || false;
+    },
+    /**
+     * @desc: 获取bcs集群列表名
+     */
+    async getBcsClusterName(bcsID) {
+      try {
+        const query = { bk_biz_id: this.$store.state.bkBizId };
+        const res = await this.$http.request('container/getBcsList', { query });
+        return res.data.find(item => item.id === bcsID)?.name || '--';
+      } catch (error) {
+        return '--';
+      }
     },
   },
 };
@@ -424,6 +466,12 @@ export default {
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+    }
+
+    .section-box {
+      > :last-child {
+        margin-top: 4px;
+      }
     }
 
     > div {

@@ -105,7 +105,7 @@ export default {
     margin-top: 18px;
 
     .king-input-retrieve {
-      ::v-deep .bk-form-input {
+      :deep(.bk-form-input) {
         height: 48px;
         border-color: #fff;
       }

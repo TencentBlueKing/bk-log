@@ -67,7 +67,7 @@ class CreatePreTreatFlowService(BaseService):
         index_set_id = data.get_one_of_inputs("index_set_id")
         clustering_config = ClusteringConfig.objects.get(index_set_id=index_set_id)
         deploy_data = DataFlowHandler().get_latest_deploy_data(flow_id=clustering_config.pre_treat_flow_id)
-        if deploy_data["status"] == "failed":
+        if deploy_data["status"] == "failure":
             return False
         if deploy_data["status"] == "success":
             self.finish_schedule()
@@ -111,13 +111,13 @@ class CreateAfterTreatFlowService(BaseService):
         index_set_id = data.get_one_of_inputs("index_set_id")
         clustering_config = ClusteringConfig.objects.get(index_set_id=index_set_id)
         deploy_data = DataFlowHandler().get_latest_deploy_data(flow_id=clustering_config.after_treat_flow_id)
-        if deploy_data["status"] == "failed":
+        if deploy_data["status"] == "failure":
             return False
         if deploy_data["status"] == "success":
             with ignored(Exception):
                 send_params = {
                     "receivers": clustering_config.created_by,
-                    "content": "聚类流程已经完成",
+                    "content": _("聚类流程已经完成"),
                     "title": str(_("【日志平台】")),
                 }
                 CmsiApi.send_mail(send_params)
@@ -198,7 +198,7 @@ class CreateNewIndexSetService(BaseService):
         src_index_set_indexes = src_index_set.indexes
         new_cls_index_set = IndexSetHandler.create(
             index_set_name="{}_clustering".format(src_index_set.index_set_name),
-            project_id=src_index_set.project_id,
+            space_uid=src_index_set.space_uid,
             storage_cluster_id=src_index_set.storage_cluster_id,
             scenario_id=src_index_set.scenario_id,
             view_roles=None,

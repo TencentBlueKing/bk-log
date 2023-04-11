@@ -38,14 +38,20 @@ DIST_CLUSTERING_FIELDS = [
     "dist_07 AS __dist_07",
     "dist_09 AS __dist_09",
 ]
-DEFAULT_SPARK_EXECUTOR_INSTANCES = 20
-DEFAULT_PSEUDO_SHUFFLE = 200
+DEFAULT_SPARK_EXECUTOR_INSTANCES = 8
+DEFAULT_SPARK_EXECUTOR_CORES = 2
+DEFAULT_SPARK_PSEUDO_SHUFFLE = 200
 DEFAULT_SPARK_LOCALITY_WAIT = "0s"
+
+DEFAULT_FLINK_BATCH_SIZE = 100
+DEFAULT_FLINK_CPU = 2
+DEFAULT_FLINK_MEMORY = 2048
+
 STREAM_SOURCE_NODE_TYPE = "stream_source"
 DIVERSION_NODE_NAME = _("回流数据")
 TSPIDER_STORAGE_NODE_TYPE = "tspider_storage"
-TSPIDER_STORAGE_NODE_NAME = _("回流数据(tspider_storage)")
 TSPIDER_STORAGE_INDEX_FIELDS = ["history_time", "event_time"]
+MYSQL_STORAGE_NODE_TYPE = "mysql_storage"
 
 SPLIT_TYPE = "split"
 
@@ -104,7 +110,7 @@ DEFAULT_MODEL_INPUT_FIELDS = [
     {
         "field_index": 1,
         "data_field_name": "__index__",
-        "field_alias": "系统索引",
+        "field_alias": _("系统索引"),
         "components": [],
         "roles": ["system", "index"],
         "data_field_alias": "index",
@@ -128,9 +134,9 @@ DEFAULT_MODEL_INPUT_FIELDS = [
         "field_name": "__id__",
         "field_type": "string",
         "components": ["__group_id__", "timestamp"],
-        "field_alias": "用户索引",
+        "field_alias": _("用户索引"),
         "data_field_name": "__id__",
-        "data_field_alias": "用户索引",
+        "data_field_alias": _("用户索引"),
         "roles": ["index"],
         "field_index": 2,
         "properties": {
@@ -150,7 +156,7 @@ DEFAULT_MODEL_INPUT_FIELDS = [
     {
         "data_field_name": [],
         "data_field_alias": "",
-        "field_alias": "分组字段",
+        "field_alias": _("分组字段"),
         "field_type": "string",
         "properties": {
             "name_inherited": True,
@@ -173,7 +179,7 @@ DEFAULT_MODEL_INPUT_FIELDS = [
     {
         "data_field_name": "log",
         "field_name": "log",
-        "field_alias": "日志内容",
+        "field_alias": _("日志内容"),
         "field_type": "string",
         "field_index": 4,
         "data_field_alias": "",
@@ -212,7 +218,7 @@ DEFAULT_MODEL_INPUT_FIELDS = [
         "field_name": "timestamp",
         "data_field_name": "timestamp",
         "data_field_alias": "",
-        "field_alias": "时间戳",
+        "field_alias": _("时间戳"),
         "components": [],
         "field_type": "timestamp",
     },
@@ -237,15 +243,15 @@ DEFAULT_MODEL_OUTPUT_FIELDS = [
             "role_changeable": False,
             "passthrough": False,
         },
-        "field_alias": "系统索引",
+        "field_alias": _("系统索引"),
         "field_index": 1,
         "roles": ["index"],
         "field_name": "__index__",
         "data_field_name": "__index__",
     },
     {
-        "field_alias": "用户索引",
-        "data_field_alias": "用户索引",
+        "field_alias": _("用户索引"),
+        "data_field_alias": _("用户索引"),
         "components": ["__group_id__", "timestamp"],
         "roles": ["index"],
         "properties": {
@@ -267,7 +273,7 @@ DEFAULT_MODEL_OUTPUT_FIELDS = [
         "field_type": "string",
     },
     {
-        "field_alias": "分组索引",
+        "field_alias": _("分组索引"),
         "roles": ["index_component", "group"],
         "properties": {
             "deletable": False,
@@ -287,30 +293,7 @@ DEFAULT_MODEL_OUTPUT_FIELDS = [
         "components": [],
         "field_index": 3,
         "data_field_name": "__group_id__",
-        "data_field_alias": "分组字段",
-    },
-    {
-        "roles": ["predict_result"],
-        "properties": {
-            "deletable": False,
-            "complex": False,
-            "constraint_type": "",
-            "role_changeable": False,
-            "extra": {},
-            "value_fixed": False,
-            "constraints": {},
-            "required": True,
-            "name_inherited": False,
-            "passthrough": False,
-            "compatibility": False,
-        },
-        "data_field_alias": None,
-        "field_index": 4,
-        "field_name": "token",
-        "field_type": "text",
-        "components": [],
-        "field_alias": "token",
-        "data_field_name": "",
+        "data_field_alias": _("分组字段"),
     },
     {
         "properties": {
@@ -376,7 +359,7 @@ DEFAULT_MODEL_OUTPUT_FIELDS = [
         },
         "data_field_alias": None,
         "field_type": "string",
-        "field_alias": "日志内容",
+        "field_alias": _("日志内容"),
         "roles": ["passthrough", "feature"],
         "data_field_name": "log",
         "field_name": "log",

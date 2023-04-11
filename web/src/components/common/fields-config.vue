@@ -23,12 +23,15 @@
 <template>
   <div :id="id" class="fields-config-tippy" v-bkloading="{ isLoading }">
     <!-- 字段显示设置 -->
-    <div class="config-title">{{$t('field.configDisplayAndSort')}}</div>
+    <div class="config-title">{{$t('设置显示与排序')}}</div>
     <div class="field-list-container">
       <!-- 已选字段 -->
       <div class="field-list">
         <div class="list-title">
-          {{$t('field.displayFieldsHaveSelected') + displayFieldNames.length + ' / ' + limitCount}}）
+          <i18n path="显示字段（已选 {0} / {1})">
+            <span>{{displayFieldNames.length}}</span>
+            <span>{{limitCount}}</span>
+          </i18n>
         </div>
         <vue-draggable v-bind="dragOptions" v-model="displayFieldNames">
           <transition-group>
@@ -37,7 +40,7 @@
               <div class="field_name">{{ field }}</div>
               <div
                 :class="['operate-button', disabledRemove && 'disabled']"
-                @click="removeItem(index)">{{$t('btn.delete')}}
+                @click="removeItem(index)">{{$t('删除')}}
               </div>
             </li>
           </transition-group>
@@ -45,11 +48,11 @@
       </div>
       <!-- 其他字段 -->
       <div class="field-list">
-        <div class="list-title">{{$t('field.otherFields')}}</div>
+        <div class="list-title">{{$t('其他字段')}}</div>
         <ul>
           <li class="list-item rest-item" v-for="field in restFieldNames" :key="field">
             <div class="field_name">{{ field }}</div>
-            <div :class="['operate-button', disabledAdd && 'disabled']" @click="addItem(field)">{{$t('btn.add')}}</div>
+            <div :class="['operate-button', disabledAdd && 'disabled']" @click="addItem(field)">{{$t('添加')}}</div>
           </li>
         </ul>
       </div>
@@ -60,8 +63,8 @@
         size="small"
         style="margin-right: 8px;"
         theme="primary"
-        @click="handleConfirm">{{$t('btn.confirm')}}</bk-button>
-      <bk-button size="small" style="margin-right: 24px;" @click="handleCancel">{{$t('btn.cancel')}}</bk-button>
+        @click="handleConfirm">{{$t('确定')}}</bk-button>
+      <bk-button size="small" style="margin-right: 24px;" @click="handleCancel">{{$t('取消')}}</bk-button>
     </div>
   </div>
 </template>

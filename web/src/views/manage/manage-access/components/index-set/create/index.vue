@@ -69,13 +69,18 @@
           </bk-form-item>
           <bk-form-item
             :label="$t('集群')"
+            v-if="scenarioId !== 'bkdata'"
             required
-            property="storage_cluster_id"
-            v-if="scenarioId === 'es'">
+            property="storage_cluster_id">
             <bk-select
               data-test-id="newlogIndexSetBox_select_selectCluster"
               v-model="formData.storage_cluster_id"
+              v-bk-tooltips.top="{
+                content: $t('不能跨集群添加多个索引，切换集群请先清空索引'),
+                delay: 300,
+                disabled: !formData.indexes.length }"
               :clearable="false"
+              :disabled="!!formData.indexes.length"
               searchable>
               <bk-option
                 v-for="option in clusterList"
@@ -85,7 +90,7 @@
                 :id="option.storage_cluster_id"
                 :name="option.storage_cluster_name">
                 <div
-                  v-if="!(option.permission && option.permission.manage_es_source)"
+                  v-if="!(option.permission && option.permission[authorityMap.MANAGE_ES_SOURCE_AUTH])"
                   class="option-slot-container no-authority"
                   @click.stop>
                   <span class="text">{{ option.storage_cluster_name }}</span>
@@ -137,7 +142,13 @@
                 closable
                 :key="item.result_table_id"
                 @close="removeCollection(index)">
-                {{ item.result_table_id }}
+                <span
+                  style="max-width: 360px;"
+                  class="overflow-tips"
+                  v-bk-overflow-tips
+                >
+                  {{ item.result_table_id }}
+                </span>
               </bk-tag>
             </template>
             <bk-button
@@ -175,6 +186,7 @@ import SelectEs from './select-es';
 import AuthContainerPage from '@/components/common/auth-container-page';
 import { projectManages } from '@/common/util';
 import { mapGetters, mapState } from 'vuex';
+import * as authorityMap from '../../../../../../common/authority-map';
 
 export default {
   name: 'IndexSetCreate',
@@ -221,9 +233,12 @@ export default {
     };
   },
   computed: {
-    ...mapState(['projectId', 'bkBizId', 'showRouterLeaveTip']),
+    ...mapState(['spaceUid', 'bkBizId', 'showRouterLeaveTip']),
     ...mapState('collect', ['curIndexSet']),
     ...mapGetters('globals', ['globalsData']),
+    authorityMap() {
+      return authorityMap;
+    },
     collectProject() {
       return projectManages(this.$store.state.topMenu, 'collection-item');
     },
@@ -239,12 +254,13 @@ export default {
   created() {
     this.checkAuth();
     this.fetchPageData();
+    this.getIndexStorage();
   },
   // eslint-disable-next-line no-unused-vars
   beforeRouteLeave(to, from, next) {
     if (!this.isSubmit && !this.showRouterLeaveTip) {
       this.$bkInfo({
-        title: this.$t('pageLeaveTips'),
+        title: this.$t('是否放弃本次操作？'),
         confirmFn: () => {
           next();
         },
@@ -260,16 +276,16 @@ export default {
         const isEdit = this.$route.name.endsWith('edit');
         this.isEdit = isEdit;
         const paramData = isEdit ? {
-          action_ids: ['manage_indices'],
+          action_ids: [authorityMap.MANAGE_INDICES_AUTH],
           resources: [{
             type: 'indices',
             id: this.$route.params.indexSetId,
           }],
         } : {
-          action_ids: ['create_indices'],
+          action_ids: [authorityMap.CREATE_INDICES_AUTH],
           resources: [{
-            type: 'biz',
-            id: this.bkBizId,
+            type: 'space',
+            id: this.spaceUid,
           }],
         };
         const res = await this.$store.dispatch('checkAndGetData', paramData);
@@ -326,18 +342,42 @@ export default {
         const s1 = [];
         const s2 = [];
         for (const item of clusterRes.data) {
-          if (item.permission?.manage_es_source) {
+          if (item.permission?.[authorityMap.MANAGE_ES_SOURCE_AUTH]) {
             s1.push(item);
           } else {
             s2.push(item);
           }
         }
-        this.clusterList = s1.concat(s2);
+        this.clusterList = s1.concat(s2).filter(item => !item.is_platform);
         if (this.$route.query.cluster) {
           const clusterId = this.$route.query.cluster;
           if (this.clusterList.some(item => item.storage_cluster_id === Number(clusterId))) {
             this.formData.storage_cluster_id = Number(clusterId);
           }
+        }
+      } catch (e) {
+        console.warn(e);
+      }
+    },
+    async getIndexStorage() { // 索引集列表的集群
+      try {
+        if (this.scenarioId !== 'log') return;
+        const queryData = { bk_biz_id: this.bkBizId };
+        const res = await  this.$http.request('collect/getStorage', {
+          query: queryData,
+        });
+        if (res.data) {
+        // 根据权限排序
+          const s1 = [];
+          const s2 = [];
+          for (const item of res.data) {
+            if (item.permission?.manage_es_source) {
+              s1.push(item);
+            } else {
+              s2.push(item);
+            }
+          }
+          this.clusterList = s1.concat(s2);
         }
       } catch (e) {
         console.warn(e);
@@ -349,7 +389,7 @@ export default {
         this.$el.click(); // 因为下拉在loading上面所以需要关闭下拉
         this.basicLoading = true;
         const res = await this.$store.dispatch('getApplyData', {
-          action_ids: ['manage_es_source'],
+          action_ids: [authorityMap.MANAGE_ES_SOURCE_AUTH],
           resources: [{
             type: 'es_source',
             id: option.storage_cluster_id,
@@ -370,6 +410,7 @@ export default {
       this.$refs.selectCollectionRef.openDialog();
     },
     addCollection(item) {
+      if (this.scenarioId === 'log') this.formData.storage_cluster_id = item.storage_cluster_id;
       this.formData.indexes.push(item);
     },
     // 删除采集项
@@ -412,8 +453,7 @@ export default {
         this.submitLoading = true;
         const requestBody = Object.assign({
           view_roles: [], // 兼容后端历史遗留代码
-          project_id: this.projectId,
-          bk_biz_id: this.bkBizId,
+          space_uid: this.spaceUid,
         }, this.formData);
         if (this.isShowTrace) {
           requestBody.is_trace_log = true;
@@ -477,7 +517,7 @@ export default {
           window.location.assign(redirectUrl);
         }
       } else {
-        this.messageSuccess(this.isEdit ? this.$t('common.configSuccessfully') : this.$t('common.createdSuccessfully'));
+        this.messageSuccess(this.isEdit ? this.$t('设置成功') : this.$t('创建成功'));
         this.returnIndexList();
       }
     },
@@ -492,94 +532,96 @@ export default {
 </script>
 
 <style scoped lang="scss">
-  .create-index-container {
-    padding: 20px 24px;
+@import '@/scss/mixins/overflow-tips.scss';
 
-    .article {
-      padding: 22px 24px;
-      margin-bottom: 20px;
-      border: 1px solid #dcdee5;
-      border-radius: 3px;
-      background-color: #fff;
+.create-index-container {
+  padding: 20px 24px;
 
-      .title {
-        margin: 0 0 10px;
-        font-size: 14px;
-        font-weight: bold;
-        color: #63656e;
-        line-height: 20px;
+  .article {
+    padding: 22px 24px;
+    margin-bottom: 20px;
+    border: 1px solid #dcdee5;
+    border-radius: 3px;
+    background-color: #fff;
+
+    .title {
+      margin: 0 0 10px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #63656e;
+      line-height: 20px;
+    }
+
+    .king-form {
+      width: 680px;
+
+      :deep(.bk-form-item) {
+        padding: 10px 0;
+        margin: 0;
       }
+    }
 
-      .king-form {
-        width: 680px;
+    .collection-form {
+      display: flex;
+      font-size: 14px;
+      color: #63656e;
 
-        ::v-deep .bk-form-item {
-          padding: 10px 0;
-          margin: 0;
+      .collection-label {
+        position: relative;
+        width: 160px;
+        padding: 10px 24px 10px 0;
+        line-height: 32px;
+        text-align: right;
+
+        &:after {
+          content: '*';
+          color: #ea3636;
+          font-size: 12px;
+          display: inline-block;
+          position: absolute;
+          top: 12px;
+          right: 16px;
         }
       }
 
-      .collection-form {
+      .selected-collection {
         display: flex;
-        font-size: 14px;
-        color: #63656e;
+        flex-flow: wrap;
+        padding: 10px 0 0;
 
-        .collection-label {
-          position: relative;
-          width: 160px;
-          padding: 10px 24px 10px 0;
+        :deep(.bk-tag) {
+          display: inline-flex;
+          align-items: center;
+          height: 32px;
           line-height: 32px;
-          text-align: right;
+          background-color: #f0f1f5;
+          padding: 0 4px 0 10px;
+          margin: 0 10px 10px 0;
 
-          &:after {
-            content: '*';
+          .bk-tag-close {
+            font-size: 18px;
+          }
+        }
+
+        .king-button {
+          margin-bottom: 10px;
+        }
+      }
+
+      .selected-collection.trace {
+        flex-flow: column;
+        padding: 10px 0;
+
+        .king-table {
+          width: 1000px;
+          margin-top: 10px;
+
+          .error-text {
             color: #ea3636;
-            font-size: 12px;
-            display: inline-block;
-            position: absolute;
-            top: 12px;
-            right: 16px;
-          }
-        }
-
-        .selected-collection {
-          display: flex;
-          flex-flow: wrap;
-          padding: 10px 0 0;
-
-          ::v-deep .bk-tag {
-            display: inline-flex;
-            align-items: center;
-            height: 32px;
-            line-height: 32px;
-            background-color: #f0f1f5;
-            padding: 0 4px 0 10px;
-            margin: 0 10px 10px 0;
-
-            .bk-tag-close {
-              font-size: 18px;
-            }
-          }
-
-          .king-button {
-            margin-bottom: 10px;
-          }
-        }
-
-        .selected-collection.trace {
-          flex-flow: column;
-          padding: 10px 0;
-
-          .king-table {
-            width: 1000px;
-            margin-top: 10px;
-
-            .error-text {
-              color: #ea3636;
-            }
           }
         }
       }
     }
   }
+}
 </style>

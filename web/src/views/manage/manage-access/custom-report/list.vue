@@ -32,16 +32,17 @@
           v-cursor="{ active: isAllowedCreate === false }"
           @click="operateHandler({}, 'add')"
           :disabled="!collectProject || isAllowedCreate === null || isRequest">
-          {{ $t('customReport.reportCreate') }}
+          {{ $t('新建自定义上报') }}
         </bk-button>
         <div class="collect-search fr">
           <bk-input
             clearable
             v-model="inputKeyWords"
             data-test-id="customContainer_input_searchTableItem"
-            :placeholder="$t('dataManage.Search_index_name')"
+            :placeholder="$t('搜索名称、存储索引名')"
             :right-icon="'bk-icon icon-search'"
-            @enter="search">
+            @enter="search"
+            @change="handleSearchChange">
           </bk-input>
         </div>
       </div>
@@ -56,7 +57,8 @@
           @page-change="handlePageChange"
           @page-limit-change="handleLimitChange">
           <bk-table-column
-            :label="$t('customReport.dataID')"
+            :label="$t('数据ID')"
+            :render-header="$renderHeader"
             prop="collector_config_id"
             width="100">
             <template slot-scope="props">
@@ -65,65 +67,73 @@
               </span>
             </template>
           </bk-table-column>
-          <bk-table-column :label="$t('customReport.name')" prop="collector_config_name">
+          <bk-table-column :label="$t('名称')" :render-header="$renderHeader" prop="collector_config_name">
             <template slot-scope="props">
               <span class="collector-config-name" @click="operateHandler(props.row, 'view')">
                 {{ props.row.collector_config_name || '--' }}
               </span>
             </template>
           </bk-table-column>
-          <bk-table-column :label="$t('customReport.monitoring')" prop="category_name">
+          <bk-table-column :label="$t('监控对象')" :render-header="$renderHeader" prop="category_name">
             <template slot-scope="props">
               <span>
                 {{ props.row.category_name || '--' }}
               </span>
             </template>
           </bk-table-column>
-          <bk-table-column :label="$t('customReport.typeOfData')" prop="custom_name">
+          <bk-table-column :label="$t('数据类型')" :render-header="$renderHeader" prop="custom_name">
             <template slot-scope="props">
               <span>
                 {{ props.row.custom_name || '--' }}
               </span>
             </template>
           </bk-table-column>
-          <bk-table-column
-            :label="$t('dataSource.retention')"
-            min-width="50">
+          <bk-table-column :label="$t('过期时间')" :render-header="$renderHeader" min-width="50">
             <template slot-scope="props">
               <span>
                 {{ props.row.retention ? `${props.row.retention}${$t('天')}` : '--' }}
               </span>
             </template>
           </bk-table-column>
-          <bk-table-column :label="$t('customReport.createRecord')" prop="created_at">
+          <bk-table-column :label="$t('创建记录')" :render-header="$renderHeader" prop="created_at">
             <template slot-scope="props">
               <span>
                 {{ props.row.created_at || '--' }}
               </span>
             </template>
           </bk-table-column>
-          <bk-table-column :label="$t('customReport.updateRecord')" prop="updated_at" width="239">
+          <bk-table-column
+            :label="$t('更新记录')"
+            :render-header="$renderHeader"
+            prop="updated_at"
+            width="239">
             <template slot-scope="props">
               <span>
                 {{ props.row.updated_at || '--' }}
               </span>
             </template>
           </bk-table-column>
-          <bk-table-column :label="$t('customReport.operation')" width="202" class-name="operate-column">
+          <bk-table-column
+            :label="$t('操作')"
+            :render-header="$renderHeader"
+            class-name="operate-column"
+            width="202">
             <div class="collect-table-operate" slot-scope="props">
               <bk-button
                 class="king-button"
                 theme="primary"
                 text
                 :disabled="!props.row.is_active || (!props.row.index_set_id && !props.row.bkdata_index_set_ids.length)"
-                v-cursor="{ active: !(props.row.permission && props.row.permission.search_log) }"
+                v-cursor="{ active: !(props.row.permission && props.row.permission[authorityMap.SEARCH_LOG_AUTH]) }"
                 @click="operateHandler(props.row, 'search')">
-                {{ $t('nav.retrieve') }}</bk-button>
+                {{ $t('检索') }}</bk-button>
               <bk-button
                 class="king-button"
                 theme="primary"
                 text
-                v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+                v-cursor="{
+                  active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
+                }"
                 @click="operateHandler(props.row, 'edit')">
                 {{ $t('编辑') }}</bk-button>
               <bk-button
@@ -131,9 +141,11 @@
                 theme="primary"
                 text
                 :disabled="!props.row.table_id"
-                v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+                v-cursor="{
+                  active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
+                }"
                 @click="operateHandler(props.row, 'clean')">
-                {{ $t('logClean.goToClean') }}</bk-button>
+                {{ $t('前往清洗') }}</bk-button>
               <bk-dropdown-menu ref="dropdown" align="right">
                 <i
                   class="bk-icon icon-more"
@@ -145,7 +157,9 @@
                   <li>
                     <a
                       href="javascript:;"
-                      v-cursor="{ active: !(props.row.permission && props.row.permission.view_collection) }"
+                      v-cursor="{
+                        active: !(props.row.permission && props.row.permission[authorityMap.VIEW_COLLECTION_AUTH])
+                      }"
                       @click="operateHandler(props.row, 'view')">
                       {{ $t('详情') }}
                     </a>
@@ -155,14 +169,16 @@
                       href="javascript:;"
                       class="text-disabled"
                       v-if="!collectProject">
-                      {{$t('btn.block')}}
+                      {{$t('停用')}}
                     </a>
                     <a
                       href="javascript:;"
                       v-else
-                      v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+                      v-cursor="{
+                        active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
+                      }"
                       @click.stop="operateHandler(props.row, 'stop')">
-                      {{$t('btn.block')}}
+                      {{$t('停用')}}
                     </a>
                   </li>
                   <li v-else>
@@ -170,14 +186,16 @@
                       href="javascript:;"
                       class="text-disabled"
                       v-if="!collectProject">
-                      {{$t('btn.start')}}
+                      {{$t('启用')}}
                     </a>
                     <a
                       href="javascript:;"
                       v-else
-                      v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+                      v-cursor="{
+                        active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
+                      }"
                       @click.stop="operateHandler(props.row, 'start')">
-                      {{$t('btn.start')}}
+                      {{$t('启用')}}
                     </a>
                   </li>
                   <li>
@@ -185,20 +203,25 @@
                       href="javascript:;"
                       class="text-disabled"
                       v-if="!collectProject">
-                      {{$t('btn.delete')}}
+                      {{$t('删除')}}
                     </a>
                     <a
                       href="javascript:;"
                       v-else
-                      v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+                      v-cursor="{
+                        active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
+                      }"
                       @click="deleteCollect(props.row)">
-                      {{$t('btn.delete')}}
+                      {{$t('删除')}}
                     </a>
                   </li>
                 </ul>
               </bk-dropdown-menu>
             </div>
           </bk-table-column>
+          <div slot="empty">
+            <empty-status :empty-type="emptyType" @operation="handleOperation" />
+          </div>
         </bk-table>
       </div>
     </section>
@@ -209,9 +232,14 @@
 import { projectManages } from '@/common/util';
 import collectedItemsMixin from '@/mixins/collected-items-mixin';
 import { mapGetters } from 'vuex';
+import * as authorityMap from '../../../../common/authority-map';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   name: 'CustomReportList',
+  components: {
+    EmptyStatus,
+  },
   mixins: [collectedItemsMixin],
   data() {
     return {
@@ -229,14 +257,18 @@ export default {
         limit: 10,
         limitList: [10, 20, 50, 100],
       },
+      emptyType: 'empty',
     };
   },
   computed: {
     ...mapGetters({
-      projectId: 'projectId',
+      spaceUid: 'spaceUid',
       bkBizId: 'bkBizId',
       authGlobalInfo: 'globals/authContainerInfo',
     }),
+    authorityMap() {
+      return authorityMap;
+    },
   },
   created() {
     !this.authGlobalInfo && this.checkCreateAuth();
@@ -256,7 +288,7 @@ export default {
         if (operateType === 'stop') {
           this.$bkInfo({
             type: 'warning',
-            title: this.$t('retrieve.Confirm_disable'),
+            title: this.$t('确认停用当前采集项？'),
             confirmFn: () => {
               this.toggleCollect(row, operateType);
             },
@@ -268,6 +300,7 @@ export default {
       }
 
       let backRoute;
+      let editName;
       const params = {};
       const query = {};
       const routeMap = {
@@ -291,6 +324,10 @@ export default {
         backRoute = this.$route.name;
       }
 
+      if (operateType === 'edit') {
+        editName = row.collector_config_name;
+      }
+
       const targetRoute = routeMap[operateType];
       // this.$store.commit('collect/setCurCollect', row);
       this.$router.push({
@@ -298,8 +335,9 @@ export default {
         params,
         query: {
           ...query,
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: this.$store.state.spaceUid,
           backRoute,
+          editName,
         },
       });
     },
@@ -325,7 +363,7 @@ export default {
     deleteCollect(row) {
       this.$bkInfo({
         type: 'warning',
-        subTitle: `${this.$t('当前上报名称为')} ${row.collector_config_name}，${this.$t('确认要删除')}`,
+        subTitle: this.$t('当前上报名称为{n}，确认要删除？', { n: row.collector_config_name }),
         confirmFn: () => {
           this.requestDeleteCollect(row);
         },
@@ -333,6 +371,7 @@ export default {
     },
     requestData() {
       this.isRequest = true;
+      this.emptyType = this.inputKeyWords ? 'search-empty' : 'empty';
       this.$http.request('collect/getCollectList', {
         query: {
           bk_biz_id: this.bkBizId,
@@ -348,9 +387,32 @@ export default {
           this.pagination.count = data.total;
         }
       })
+        .catch(() => {
+          this.emptyType = '500';
+        })
         .finally(() => {
           this.isRequest = false;
         });
+    },
+    handleSearchChange(val) {
+      if (val === '' && !this.isRequest) {
+        this.requestData();
+      }
+    },
+    handleOperation(type) {
+      if (type === 'clear-filter') {
+        this.inputKeyWords = '';
+        this.pagination.current = 1;
+        this.requestData();
+        return;
+      }
+
+      if (type === 'refresh') {
+        this.emptyType = 'empty';
+        this.pagination.current = 1;
+        this.requestData();
+        return;
+      }
     },
   },
 };

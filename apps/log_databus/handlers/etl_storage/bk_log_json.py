@@ -47,7 +47,7 @@ class BkLogJsonEtlStorage(EtlStorage):
         option = {
             "retain_original_text": etl_params.get("retain_original_text", False),
             "separator_node_source": "data",
-            "separator_node_action": "json",
+            "separator_node_action": etl_params.get("separator_node_action", "json"),
             "separator_node_name": self.separator_node_name,
             "separator_fields_remove": "",
             "etl_flat": etl_params.get("etl_flat", False),
@@ -123,11 +123,11 @@ class BkLogJsonEtlStorage(EtlStorage):
                                             "next": None,
                                             "subtype": "assign_obj",
                                             "label": "labelb140",
-                                            "assign": [
-                                                {"key": "data", "assign_to": "data", "type": "text"}
+                                            "assign": (
+                                                [{"key": "data", "assign_to": "data", "type": "text"}]
                                                 if retain_original_text
-                                                else {},
-                                            ]
+                                                else []
+                                            )
                                             + [
                                                 self._to_bkdata_assign(built_in_field)
                                                 for built_in_field in built_in_fields

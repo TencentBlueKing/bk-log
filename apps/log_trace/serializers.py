@@ -27,26 +27,18 @@ from rest_framework import serializers
 from django.utils.translation import ugettext_lazy as _
 
 from apps.exceptions import ValidationError
-from apps.log_search.handlers.meta import MetaHandler
 from apps.log_search.handlers.search.aggs_handlers import AggsHandlers
 from apps.log_trace.constants import TIME_DIMENSION_VALUE, MetricTypeEnum
 from apps.utils.local import get_local_param
+from bkm_space.serializers import SpaceUIDField
 
 
 class TraceIndexSetScopeSerializer(serializers.Serializer):
     """
     获取索引集所属项目
-    如果用户传的是bk_biz_id，直接转成对应的project_id, 新项目要求bk_biz_id
     """
 
-    bk_biz_id = serializers.IntegerField(label=_("业务ID"), required=False)
-    project_id = serializers.IntegerField(label=_("项目ID"), required=False)
-
-    def validate(self, attrs):
-        if not attrs.get("bk_biz_id"):
-            raise ValidationError(_("请输入业务ID"))
-
-        return MetaHandler.get_project_info(attrs["bk_biz_id"])
+    space_uid = SpaceUIDField(label=_("空间唯一标识"), required=True)
 
 
 class TraceSearchAttrSerializer(serializers.Serializer):
@@ -56,6 +48,7 @@ class TraceSearchAttrSerializer(serializers.Serializer):
     # filter条件，span选择器等
     addition = serializers.ListField(allow_empty=True, required=False, default="")
     host_scopes = serializers.DictField(default={}, required=False)
+    ip_chooser = serializers.DictField(default={}, required=False)
 
     # 时间选择器字段
     start_time = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
@@ -72,17 +65,10 @@ class TraceSearchAttrSerializer(serializers.Serializer):
     # 支持用户自定义排序，后续优化再考虑加入
     # sort_list = serializers.ListField(required=False, allow_null=True, allow_empty=True)
 
-    def validate(self, attrs):
-        super().validate(attrs)
-        return attrs
-
 
 class TraceSearchTraceIdAttrSerializer(serializers.Serializer):
     startTime = serializers.CharField(allow_null=False, allow_blank=False)
     traceID = serializers.CharField(allow_null=False, allow_blank=False)
-
-    def validate(self, attrs):
-        return attrs
 
 
 class AggsTermsSerializer(serializers.Serializer):
@@ -102,7 +88,7 @@ class AggsTermsSerializer(serializers.Serializer):
     order = serializers.DictField(required=False, default=AggsHandlers.DEFAULT_ORDER)
 
     def validate(self, attrs):
-        super().validate(attrs)
+        attrs = super().validate(attrs)
 
         # 查询全量数据
         if attrs["time_dimension"] == -1:
@@ -128,7 +114,7 @@ class DateHistogramSerializer(TraceSearchAttrSerializer):
         metric_field = serializers.CharField(required=False)
 
         def validate(self, attrs):
-            super().validate(attrs)
+            attrs = super().validate(attrs)
 
             metric_type = attrs.get("metric_type")
             metric_field = attrs.get("metric_field")

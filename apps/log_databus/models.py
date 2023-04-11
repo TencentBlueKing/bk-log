@@ -20,8 +20,10 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 
+from typing import Union
+
 from apps.exceptions import ApiResultError
-from apps.log_databus.exceptions import ArchiveNotFound
+from apps.log_databus.exceptions import ArchiveNotFound, CollectorPluginNotImplemented
 from apps.models import MultiStrSplitByCommaFieldText
 from apps.utils.cache import cache_one_hour
 from apps.utils.function import map_if
@@ -44,6 +46,7 @@ from django_jsonfield_backport.models import JSONField  # noqa  pylint: disable=
 
 from apps.api import CmsiApi, TransferApi  # noqa
 from apps.log_databus.constants import (  # noqa
+    ArchiveInstanceType,
     ETLProcessorChoices,
     EtlConfigChoices,
     TargetObjectTypeEnum,  # noqa
@@ -56,7 +59,7 @@ from apps.log_databus.constants import (  # noqa
     Environment,
 )
 from apps.log_search.constants import CollectorScenarioEnum, GlobalCategoriesEnum, InnerTag, CustomTypeEnum  # noqa
-from apps.log_search.models import ProjectInfo, LogIndexSet  # noqa
+from apps.log_search.models import LogIndexSet, Space  # noqa
 from apps.models import MultiStrSplitByCommaField, JsonField, SoftDeleteModel, OperateRecordModel  # noqa
 
 
@@ -162,6 +165,7 @@ class CollectorConfig(CollectorBase):
     yaml_config = models.TextField(_("yaml配置内容"), default="")
     rule_id = models.IntegerField(_("bcs规则集id"), default=0)
     is_display = models.BooleanField(_("采集项是否对用户可见"), default=True)
+    log_group_id = models.BigIntegerField(_("自定义日志组ID"), null=True, blank=True)
 
     def get_name(self):
         return self.collector_config_name
@@ -194,7 +198,7 @@ class CollectorConfig(CollectorBase):
         result = multi_execute_func.run()
         from apps.log_databus.handlers.etl_storage import EtlStorage
 
-        self.etl_config = EtlStorage.get_etl_config(result["result_table_config"])
+        self.etl_config = EtlStorage.get_etl_config(result["result_table_config"], default=self.etl_config)
         etl_storage = EtlStorage.get_instance(etl_config=self.etl_config)
         etl_config = etl_storage.parse_result_table_config(
             result_table_config=result["result_table_config"],
@@ -262,6 +266,7 @@ class CollectorConfig(CollectorBase):
         verbose_name_plural = _("用户采集配置")
         ordering = ("-updated_at",)
         unique_together = [("collector_config_name", "bk_biz_id")]
+        index_together = [["custom_type", "log_group_id"]]
 
     def has_apply_itsm(self):
         if self.itsm_ticket_status:
@@ -299,9 +304,9 @@ class CollectorConfig(CollectorBase):
         self.save()
 
     def generate_itsm_title(self):
-        bk_biz_name = ProjectInfo.objects.filter(bk_biz_id=self.bk_biz_id).first().project_name
+        space = Space.objects.get(bk_biz_id=self.bk_biz_id)
         return str(
-            _("【日志采集】{}-{}-{}".format(bk_biz_name, self.collector_config_name, self.created_at.strftime("%Y%m%d")))
+            _("【日志采集】{}-{}-{}".format(space.space_name, self.collector_config_name, self.created_at.strftime("%Y%m%d")))
         )
 
     def get_cur_cap(self, bytes="mb"):
@@ -328,6 +333,13 @@ class CollectorConfig(CollectorBase):
         """
         return self.environment == Environment.CONTAINER
 
+    @property
+    def is_custom_scenario(self):
+        """
+        是否为自定义上报场景
+        """
+        return self.collector_scenario_id == CollectorScenarioEnum.CUSTOM.value
+
 
 class ContainerCollectorConfig(SoftDeleteModel):
     collector_config_id = models.IntegerField(_("采集项id"), db_index=True)
@@ -345,6 +357,7 @@ class ContainerCollectorConfig(SoftDeleteModel):
     status = models.CharField(
         _("下发状态"), null=True, blank=True, max_length=30, choices=ContainerCollectStatus.get_choices()
     )
+    status_detail = models.TextField("状态详情", default="", blank=True)
     raw_config = models.JSONField(_("原始配置"), null=True, blank=True)
     parent_container_config_id = models.IntegerField(_("父配置id"), default=0)
     rule_id = models.IntegerField(_("bcs规则集id"), default=0)
@@ -470,7 +483,13 @@ class CleanStash(SoftDeleteModel):
 
 class ArchiveConfig(SoftDeleteModel):
     archive_config_id = models.AutoField(_("归档配置id"), primary_key=True)
-    collector_config_id = models.IntegerField(_("关联采集项id"))
+    instance_id = models.IntegerField(_("关联采集项id"))
+    instance_type = models.CharField(
+        _("实例类型"),
+        max_length=64,
+        choices=ArchiveInstanceType.choices,
+        default=ArchiveInstanceType.COLLECTOR_CONFIG.value,
+    )
     bk_biz_id = models.IntegerField(_("业务id"))
     # 快照存储天数
     snapshot_days = models.IntegerField(_("快照天数"), default=0)
@@ -483,21 +502,33 @@ class ArchiveConfig(SoftDeleteModel):
         verbose_name_plural = _("归档配置表")
 
     @cached_property
-    def collector_config(self) -> "CollectorConfig":
-        return CollectorConfig.objects.get(collector_config_id=self.collector_config_id)
+    def instance(self) -> Union["CollectorConfig", "CollectorPlugin"]:
+        if self.instance_type == ArchiveInstanceType.COLLECTOR_CONFIG.value:
+            return CollectorConfig.objects.get(collector_config_id=self.instance_id)
+        if self.instance_type == ArchiveInstanceType.COLLECTOR_PLUGIN.value:
+            return CollectorPlugin.objects.get(collector_plugin_id=self.instance_id)
 
     @property
-    def table_id(self):
-        return self.collector_config.table_id
+    def table_id(self) -> str:
+        return self.instance.table_id
 
     @property
-    def collector_config_name(self):
-        return self.collector_config.collector_config_name
+    def instance_name(self) -> str:
+        return self.instance.get_name()
+
+    @property
+    def collector_config_id(self) -> int:
+        # 对采集插件归档时，获取采集插件下首个采集项ID
+        if self.instance_type == ArchiveInstanceType.COLLECTOR_PLUGIN.value:
+            return CollectorPlugin.get_collector_config_id(self.instance_id)
+        if self.instance_type == ArchiveInstanceType.COLLECTOR_CONFIG.value:
+            return self.instance_id
 
     @classmethod
-    def get_collector_config_id(cls, archive_config_id):
+    def get_collector_config_id(cls, archive_config_id) -> int:
         try:
-            return cls.objects.get(archive_config_id=archive_config_id).collector_config.collector_config_id
+            archive_config: cls = cls.objects.get(archive_config_id=archive_config_id)
+            return archive_config.collector_config_id
         except cls.DoesNotExist:
             raise ArchiveNotFound
 
@@ -539,7 +570,7 @@ class RestoreConfig(SoftDeleteModel):
         # notify user
         send_params = {
             "receivers": self.notice_user,
-            "content": "你创建的归档回溯已经完成",
+            "content": _("你创建的归档回溯已经完成"),
             "title": str(_("【日志平台】")),
         }
         CmsiApi.send_mail(send_params)
@@ -548,7 +579,7 @@ class RestoreConfig(SoftDeleteModel):
     @classmethod
     def get_collector_config_id(cls, restore_config_id):
         restore: "RestoreConfig" = cls.objects.get(restore_config_id=restore_config_id)
-        return restore.archive.collector_config.collector_config_id
+        return restore.archive.collector_config_id
 
 
 class CollectorPlugin(CollectorBase):
@@ -587,6 +618,7 @@ class CollectorPlugin(CollectorBase):
     storage_replies = models.IntegerField(_("副本数量"), null=True)
     storage_shards_nums = models.IntegerField(_("ES分片数量"), null=True, default=None, blank=True)
     storage_shards_size = models.IntegerField(_("单shards分片大小"), null=True, default=None, blank=True)
+    index_settings = models.JSONField(_("索引Settings"), default=dict)
 
     class Meta:
         verbose_name = _("用户采集插件")
@@ -630,3 +662,15 @@ class CollectorPlugin(CollectorBase):
             is_display=display_status, updated_at=timezone.now(), updated_by=request_user
         )
         logger.info("[Change Collector Plugin Display Status] %s %s", self.collector_plugin_id, request_user)
+
+    @classmethod
+    def get_collector_config_id(cls, collector_plugin_id: int) -> int:
+        """获取任一采集项ID (默认返回ID最小的)"""
+        collector = (
+            CollectorConfig.objects.filter(collector_plugin_id=collector_plugin_id)
+            .order_by("collector_config_id")
+            .first()
+        )
+        if collector is None:
+            raise CollectorPluginNotImplemented()
+        return collector.collector_config_id

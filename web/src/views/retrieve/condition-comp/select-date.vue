@@ -85,26 +85,26 @@ export default {
       dateHistory: {}, // 日期组件历史值，每次开启记录，关闭比较，变化就搜索
       shortTextEnum: {
         customized: '',
-        '5s': this.$t('retrieve.period_5S'),
-        '5m': this.$t('retrieve.period_5Min'),
-        '15m': this.$t('retrieve.period_15Min'),
-        '30m': this.$t('retrieve.period_30Min'),
-        '1h': this.$t('retrieve.period_1H'),
-        '4h': this.$t('retrieve.period_4H'),
-        '12h': this.$t('retrieve.period_12H'),
-        '1d': this.$t('retrieve.period_1D'),
-        [this.$t('retrieve.period_5S')]: '5s',
-        [this.$t('retrieve.period_5Min')]: '5m',
-        [this.$t('retrieve.period_15Min')]: '15m',
-        [this.$t('retrieve.period_30Min')]: '30m',
-        [this.$t('retrieve.period_1H')]: '1h',
-        [this.$t('retrieve.period_4H')]: '4h',
-        [this.$t('retrieve.period_12H')]: '12h',
-        [this.$t('retrieve.period_1D')]: '1d',
+        '5s': this.$t('近 5 秒'),
+        '5m': this.$t('近 5 分钟'),
+        '15m': this.$t('近 15 分钟'),
+        '30m': this.$t('近 30 分钟'),
+        '1h': this.$t('近 1 小时'),
+        '4h': this.$t('近 4 小时'),
+        '12h': this.$t('近 12 小时'),
+        '1d': this.$t('近 1 天'),
+        [this.$t('近 5 秒')]: '5s',
+        [this.$t('近 5 分钟')]: '5m',
+        [this.$t('近 15 分钟')]: '15m',
+        [this.$t('近 30 分钟')]: '30m',
+        [this.$t('近 1 小时')]: '1h',
+        [this.$t('近 4 小时')]: '4h',
+        [this.$t('近 12 小时')]: '12h',
+        [this.$t('近 1 天')]: '1d',
       },
       shortcuts: [
         {
-          text: this.$t('retrieve.period_5S'),
+          text: this.$t('近 5 秒'),
           value() {
             const end = new Date();
             const start = new Date();
@@ -112,7 +112,7 @@ export default {
             return [start, end];
           },
         }, {
-          text: this.$t('retrieve.period_5Min'),
+          text: this.$t('近 5 分钟'),
           value() {
             const end = new Date();
             const start = new Date();
@@ -120,7 +120,7 @@ export default {
             return [start, end];
           },
         }, {
-          text: this.$t('retrieve.period_15Min'),
+          text: this.$t('近 15 分钟'),
           value() {
             const end = new Date();
             const start = new Date();
@@ -128,7 +128,7 @@ export default {
             return [start, end];
           },
         }, {
-          text: this.$t('retrieve.period_30Min'),
+          text: this.$t('近 30 分钟'),
           value() {
             const end = new Date();
             const start = new Date();
@@ -136,7 +136,7 @@ export default {
             return [start, end];
           },
         }, {
-          text: this.$t('retrieve.period_1H'),
+          text: this.$t('近 1 小时'),
           value() {
             const end = new Date();
             const start = new Date();
@@ -144,7 +144,7 @@ export default {
             return [start, end];
           },
         }, {
-          text: this.$t('retrieve.period_4H'),
+          text: this.$t('近 4 小时'),
           value() {
             const end = new Date();
             const start = new Date();
@@ -152,7 +152,7 @@ export default {
             return [start, end];
           },
         }, {
-          text: this.$t('retrieve.period_12H'),
+          text: this.$t('近 12 小时'),
           value() {
             const end = new Date();
             const start = new Date();
@@ -160,7 +160,7 @@ export default {
             return [start, end];
           },
         }, {
-          text: this.$t('retrieve.period_1D'),
+          text: this.$t('近 1 天'),
           value() {
             const end = new Date();
             const start = new Date();
@@ -259,7 +259,7 @@ export default {
       &.is-retrieve-home {
         width: 320px;
 
-        ::v-deep .bk-date-picker-editor {
+        :deep(.bk-date-picker-editor) {
           background: #fff;
           border-color: #fff;
           line-height: 30px;
@@ -269,7 +269,7 @@ export default {
           }
         }
 
-        ::v-deep .icon-date-picker {
+        :deep(.icon-date-picker) {
           position: absolute;
           left: 7px;
           top: 7px;
@@ -330,13 +330,13 @@ export default {
       &.is-defalut-picker {
         min-width: 268px;
 
-        ::v-deep .bk-date-picker-editor {
+        :deep(.bk-date-picker-editor) {
           padding-left: 5px;
           padding-right: 0;
           border: none;
         }
 
-        ::v-deep .icon-wrapper {
+        :deep(.icon-wrapper) {
           display: none;
         }
       }
@@ -362,7 +362,7 @@ export default {
     &.is-custom-picker:hover {
       .custom-clock,
       .icon-angle-down,
-      ::v-deep .bk-date-picker-rel .bk-date-picker-editor {
+      :deep(.bk-date-picker-rel .bk-date-picker-editor) {
         color: #3a84ff;
       }
     }

@@ -21,6 +21,8 @@ the project delivered to anyone in the future.
 """
 from concurrent.futures import ThreadPoolExecutor
 
+import pytz
+from django.utils import timezone
 from rest_framework.test import APIRequestFactory
 from rest_framework.request import Request
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -28,7 +30,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from opentelemetry.context import attach, get_current
 
 from apps.utils.function import ignored
-from apps.utils.local import get_request, activate_request
+from apps.utils.local import get_request, activate_request, get_local_param, set_local_param
 
 
 class FuncThread:
@@ -38,17 +40,23 @@ class FuncThread:
         self.result_key = result_key
         self.results = results
         self.use_request = use_request
+        self.requests = None
         with ignored(AttributeError, BaseException):
             self.requests = get_request()
         self.trace_context = get_current()
+        self.timezone = get_local_param("time_zone")
 
     def _init_context(self):
         with ignored(Exception):
             attach(self.trace_context)
 
+            if self.timezone:
+                set_local_param("time_zone", self.timezone)
+                timezone.activate(pytz.timezone(self.timezone))
+
     def run(self):
         self._init_context()
-        if self.use_request:
+        if self.use_request and self.requests:
             activate_request(self.requests)
         if self.params:
             self.results[self.result_key] = self.func(self.params)
@@ -65,9 +73,10 @@ class MultiExecuteFunc(object):
     基于多线程的批量并发执行函数
     """
 
-    def __init__(self):
+    def __init__(self, max_workers=None):
         self.results = {}
         self.task_list = []
+        self.max_workers = max_workers
 
     def append(self, result_key, func, params=None, use_request=True):
         if result_key in self.results:
@@ -78,7 +87,7 @@ class MultiExecuteFunc(object):
         self.task_list.append(task)
 
     def run(self):
-        with ThreadPoolExecutor() as executor:
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             executor.map(executor_wrap, self.task_list)
         return self.results
 

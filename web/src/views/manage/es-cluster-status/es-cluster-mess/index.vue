@@ -46,21 +46,25 @@
         v-bkloading="{ isLoading: tableLoading }"
         data-test-id="esAccessBox_table_esAccessTableBox"
         class="king-table"
+        ref="clusterTable"
         :data="tableDataPaged"
         :pagination="pagination"
+        @filter-change="handleFilterChange"
         @page-change="handlePageChange"
         @page-limit-change="handleLimitChange">
         <bk-table-column
           label="ID"
+          :render-header="$renderHeader"
           prop="cluster_config.cluster_id"
           min-width="60">
         </bk-table-column>
         <bk-table-column
           :label="$t('名称')"
+          :render-header="$renderHeader"
           prop="cluster_config.cluster_name"
           min-width="170">
         </bk-table-column>
-        <bk-table-column :label="$t('地址')" min-width="170">
+        <bk-table-column :label="$t('地址')" :render-header="$renderHeader" min-width="170">
           <template slot-scope="props">
             {{ props.row.cluster_config.domain_name || '--' }}
           </template>
@@ -68,6 +72,7 @@
         <bk-table-column
           v-if="checkcFields('source_type')"
           :label="$t('来源')"
+          :render-header="$renderHeader"
           prop="source_type"
           min-width="80"
           class-name="filter-column"
@@ -82,18 +87,21 @@
         <bk-table-column
           v-if="checkcFields('port')"
           :label="$t('端口')"
+          :render-header="$renderHeader"
           prop="cluster_config.port"
           min-width="80">
         </bk-table-column>
         <bk-table-column
           v-if="checkcFields('schema')"
           :label="$t('协议')"
+          :render-header="$renderHeader"
           prop="cluster_config.schema"
           min-width="80">
         </bk-table-column>
         <bk-table-column
           v-if="checkcFields('cluster_config')"
           :label="$t('连接状态')"
+          :render-header="$renderHeader"
           min-width="80"
           class-name="filter-column"
           prop="cluster_config.cluster_id"
@@ -110,6 +118,7 @@
         <bk-table-column
           v-if="checkcFields('enable_hot_warm')"
           :label="$t('冷热数据')"
+          :render-header="$renderHeader"
           min-width="80">
           <template slot-scope="{ row }">
             {{ row.cluster_config.enable_hot_warm ? $t('开') : $t('关') }}
@@ -118,6 +127,7 @@
         <bk-table-column
           v-if="checkcFields('storage_total')"
           width="90"
+          :render-header="$renderHeader"
           :label="$t('总量')">
           <template slot-scope="{ row }">
             <span>{{formatFileSize(row.storage_total)}}</span>
@@ -126,6 +136,7 @@
         <bk-table-column
           v-if="checkcFields('storage_usage')"
           width="110"
+          :render-header="$renderHeader"
           :label="$t('空闲率')">
           <template slot-scope="{ row }">
             <div class="percent">
@@ -139,34 +150,37 @@
         <bk-table-column
           v-if="checkcFields('creator')"
           :label="$t('创建人')"
+          :render-header="$renderHeader"
           prop="cluster_config.creator"
           min-width="80">
         </bk-table-column>
         <bk-table-column
           v-if="checkcFields('create_time')"
           :label="$t('创建时间')"
+          :render-header="$renderHeader"
           class-name="filter-column"
           prop="cluster_config.create_time"
           min-width="170"
           sortable>
         </bk-table-column>
-        <bk-table-column :label="$t('操作')" width="180">
+        <bk-table-column :label="$t('操作')" :render-header="$renderHeader" width="180">
           <template slot-scope="props">
+            <!-- 共享集群，平台默认时 无法新建索引集 -->
             <log-button
               theme="primary"
               text
               class="mr10"
-              :tips-conf="$t('unableEditTip')"
-              :button-text="$t('建索引集')"
-              :disabled="!props.row.is_editable"
+              :tips-conf="props.row.is_platform ? $t('公共集群，禁止创建自定义索引集') : $t('平台默认的集群不允许编辑和删除，请联系管理员。')"
+              :button-text="$t('新建索引集')"
+              :disabled="!props.row.is_editable || props.row.is_platform"
               @on-click="createIndexSet(props.row)">>
             </log-button>
             <log-button
               theme="primary"
               text
               class="mr10"
-              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_es_source) }"
-              :tips-conf="$t('unableEditTip')"
+              v-cursor="{ active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_ES_SOURCE_AUTH]) }"
+              :tips-conf="$t('平台默认的集群不允许编辑和删除，请联系管理员。')"
               :button-text="$t('编辑')"
               :disabled="!props.row.is_editable"
               @on-click="editDataSource(props.row)">
@@ -175,8 +189,8 @@
               theme="primary"
               text
               class="mr10"
-              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_es_source) }"
-              :tips-conf="$t('unableEditTip')"
+              v-cursor="{ active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_ES_SOURCE_AUTH]) }"
+              :tips-conf="$t('平台默认的集群不允许编辑和删除，请联系管理员。')"
               :button-text="$t('删除')"
               :disabled="!props.row.is_editable"
               @on-click="deleteDataSource(props.row)">
@@ -191,22 +205,25 @@
             @setting-change="handleSettingChange">
           </bk-table-setting-content>
         </bk-table-column>
+        <div slot="empty">
+          <empty-status :empty-type="emptyType" @operation="handleOperation" />
+        </div>
       </bk-table>
     </div>
 
     <div
       :class="['intro-container',isDraging && 'draging-move']"
       :style="`width: ${ introWidth }px`">
+      <div :class="`drag-item ${!introWidth && 'hidden-drag'}`" :style="`right: ${introWidth - 18}px`">
+        <span
+          class="bk-icon icon-more"
+          @mousedown.left="dragBegin"></span>
+      </div>
       <intro-panel
         :is-open-window="isOpenWindow"
         @handleActiveDetails="handleActiveDetails" />
     </div>
 
-    <div :class="`drag-item ${!introWidth && 'hidden-drag'}`" :style="`right: ${introWidth - 18}px`">
-      <span
-        class="bk-icon icon-more"
-        @mousedown.left="dragBegin"></span>
-    </div>
     <!-- 编辑或新建ES源 -->
     <es-slider
       v-if="isRenderSlider"
@@ -222,14 +239,19 @@
 import { mapGetters } from 'vuex';
 import EsSlider from './es-slider';
 import IntroPanel from './components/intro-panel.vue';
-import { formatFileSize } from '../../../../common/util';
+import dragMixin from '@/mixins/drag-mixin';
+import { formatFileSize, clearTableFilter, isIPv6 } from '../../../../common/util';
+import * as authorityMap from '../../../../common/authority-map';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   name: 'EsClusterMess',
   components: {
     EsSlider,
     IntroPanel,
+    EmptyStatus,
   },
+  mixins: [dragMixin],
   data() {
     const settingFields = [
       // 数据ID
@@ -314,23 +336,27 @@ export default {
       isRenderSlider: true, // 渲染侧边栏组件，关闭侧滑时销毁组件，避免接口在 pending 时关闭侧滑后又马上打开
       showSlider: false, // 显示编辑或新建ES源侧边栏
       editClusterId: null, // 编辑ES源ID,
-      isOpenWindow: true,
+      isOpenWindow: false,
       sourceStateFilters: [{ text: this.$t('正常'), value: true }, { text: this.$t('失败'), value: false }],
       clusterSetting: {
         fields: settingFields,
         selectedFields: settingFields.slice(0, 10),
       },
-      minIntroWidth: 300,
-      maxIntroWidth: 480,
-      introWidth: 360,
-      isDraging: false,
+      introWidth: 0,
+      emptyType: 'empty',
+      filterSearchObj: {},
+      isFilterSearch: false,
     };
   },
   computed: {
     ...mapGetters({
       bkBizId: 'bkBizId',
+      spaceUid: 'spaceUid',
       globalsData: 'globals/globalsData',
     }),
+    authorityMap() {
+      return authorityMap;
+    },
     sourceFilters() {
       const { es_source_type } = this.globalsData;
       const target = [];
@@ -356,10 +382,10 @@ export default {
     async checkCreateAuth() {
       try {
         const res = await this.$store.dispatch('checkAllowed', {
-          action_ids: ['create_es_source'],
+          action_ids: [authorityMap.CREATE_ES_SOURCE_AUTH],
           resources: [{
-            type: 'biz',
-            id: this.bkBizId,
+            type: 'space',
+            id: this.spaceUid,
           }],
         });
         this.isAllowedCreate = res.isAllowed;
@@ -373,8 +399,7 @@ export default {
      */
     async getTableData() {
       try {
-        this.tableLoading = true;
-        // 表格数据
+        this.tableLoading = true;// 表格数据
         const tableRes = await this.$http.request('/source/list', {
           query: {
             bk_biz_id: this.bkBizId,
@@ -382,9 +407,7 @@ export default {
         });
         this.tableLoading = false;
         const list = tableRes.data;
-        if (!list.length) {
-          return;
-        }
+        if (!list.length) return;
         this.tableDataOrigin = list;
         this.tableDataSearched = list;
         this.pagination.count = list.length;
@@ -445,21 +468,43 @@ export default {
       return row[property] === value;
     },
     searchCallback() {
-      if (this.params.keyword) {
+      const keyword = this.params.keyword.trim();
+      if (keyword) {
         this.tableDataSearched = this.tableDataOrigin.filter((item) => {
+          // 若是ipv6 则拿补全后的keyword与补全后的原地址对比
+          if (isIPv6(keyword)) {
+            return this.completeIPv6Address(item.cluster_config.domain_name) === this.completeIPv6Address(keyword);
+          };
           if (item.cluster_config.cluster_name) {
             return (item.cluster_config.cluster_name
                       + item.cluster_config.creator
-                      + item.cluster_config.es_host).includes(this.params.keyword);
+                      + item.cluster_config.domain_name).includes(keyword);
           }
-          return (item.source_name + item.updated_by).includes(this.params.keyword);
+          return (item.source_name + item.updated_by).includes(keyword);
         });
       } else {
         this.tableDataSearched = this.tableDataOrigin;
       }
+      this.emptyType = (this.params.keyword || this.isFilterSearch) ? 'search-empty' : 'empty';
       this.pagination.current = 1;
       this.pagination.count = this.tableDataSearched.length;
       this.computePageData();
+    },
+    // ipv6补全
+    completeIPv6Address(address) {
+      const sections = address.split(':');
+      const missingSections = 8 - sections.length;
+
+      for (let i = 0; i < missingSections; i++) {
+        sections.splice(sections.indexOf(''), 1, '0000');
+      }
+
+      return sections.map((section) => {
+        if (section.length < 4) {
+          section = '0'.repeat(4 - section.length) + section;
+        }
+        return section;
+      }).join(':');
     },
     // 根据分页数据过滤表格
     computePageData() {
@@ -477,10 +522,10 @@ export default {
         try {
           this.tableLoading = true;
           const res = await this.$store.dispatch('getApplyData', {
-            action_ids: ['create_es_source'],
+            action_ids: [authorityMap.CREATE_ES_SOURCE_AUTH],
             resources: [{
-              type: 'biz',
-              id: this.bkBizId,
+              type: 'space',
+              id: this.spaceUid,
             }],
           });
           this.$store.commit('updateAuthDialogData', res.data);
@@ -496,7 +541,7 @@ export default {
       this.$router.push({
         name: 'es-index-set-create',
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: this.$store.state.spaceUid,
           cluster: row.cluster_config.cluster_id,
         },
       });
@@ -504,10 +549,10 @@ export default {
     // 编辑ES源
     async editDataSource(item) {
       const id = item.cluster_config.cluster_id;
-      if (!(item.permission?.manage_es_source)) {
+      if (!(item.permission?.[authorityMap.MANAGE_ES_SOURCE_AUTH])) {
         try {
           const paramData = {
-            action_ids: ['manage_es_source'],
+            action_ids: [authorityMap.MANAGE_ES_SOURCE_AUTH],
             resources: [{
               type: 'es_source',
               id,
@@ -529,17 +574,17 @@ export default {
     },
     // 删除ES源
     async deleteDataSource(row) {
-      this.tableLoading = true;
       const id = row.cluster_config.cluster_id;
-      if (!(row.permission?.manage_es_source)) {
+      if (!(row.permission?.[authorityMap.MANAGE_ES_SOURCE_AUTH])) {
         try {
           const paramData = {
-            action_ids: ['manage_es_source'],
+            action_ids: [authorityMap.MANAGE_ES_SOURCE_AUTH],
             resources: [{
               type: 'es_source',
               id,
             }],
           };
+          this.tableLoading = true;
           const res = await this.$store.dispatch('getApplyData', paramData);
           this.$store.commit('updateAuthDialogData', res.data);
         } catch (err) {
@@ -552,7 +597,7 @@ export default {
 
       this.$bkInfo({
         type: 'warning',
-        subTitle: `${this.$t('当前集群为')} ${row.cluster_config.domain_name}， ${this.$t('确认要删除')}`,
+        subTitle: this.$t('当前集群为{n}，确认要删除？', { n: row.cluster_config.domain_name }),
         confirmFn: () => {
           this.handleDelete(row);
         },
@@ -606,33 +651,27 @@ export default {
     checkcFields(field) {
       return this.clusterSetting.selectedFields.some(item => item.id === field);
     },
-    // 控制页面布局宽度
-    dragBegin(e) {
-      this.currentTreeBoxWidth = this.introWidth;
-      this.currentScreenX = e.screenX;
-      window.addEventListener('mousemove', this.dragMoving, { passive: true });
-      window.addEventListener('mouseup', this.dragStop, { passive: true });
-    },
-    dragMoving(e) {
-      this.isDraging = true;
-      const newTreeBoxWidth = this.currentTreeBoxWidth - e.screenX + this.currentScreenX;
-      if (newTreeBoxWidth < this.minIntroWidth) {
-        this.introWidth = this.minIntroWidth;
-      } else if (newTreeBoxWidth >= this.maxIntroWidth) {
-        this.introWidth = this.maxIntroWidth;
-      } else {
-        this.introWidth = newTreeBoxWidth;
-      }
-    },
-    dragStop() {
-      this.isDraging = false;
-      this.currentTreeBoxWidth = null;
-      this.currentScreenX = null;
-      window.removeEventListener('mousemove', this.dragMoving);
-      window.removeEventListener('mouseup', this.dragStop);
-    },
     getPercent($row) {
       return (100 - $row.storage_usage) / 100;
+    },
+    handleFilterChange(data) {
+      Object.entries(data).forEach(([key, value]) => this.filterSearchObj[key] = value.length);
+      this.isFilterSearch = Object.values(this.filterSearchObj).reduce((pre, cur) => ((pre += cur), pre), 0);
+      this.searchCallback();
+    },
+    handleOperation(type) {
+      if (type === 'clear-filter') {
+        this.params.keyword = '';
+        clearTableFilter(this.$refs.clusterTable);
+        this.getTableData();
+        return;
+      }
+
+      if (type === 'refresh') {
+        this.emptyType = 'empty';
+        this.getTableData();
+        return;
+      }
     },
   },
 };
@@ -670,7 +709,7 @@ export default {
         }
       }
 
-      ::v-deep .cell {
+      :deep(.cell) {
         padding: 4px 15px;
       }
 

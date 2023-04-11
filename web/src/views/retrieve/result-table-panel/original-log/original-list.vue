@@ -27,7 +27,6 @@
     :data="tableList"
     :show-header="false"
     :outer-border="false"
-    :empty-text="$t('retrieve.notData')"
     @row-click="tableRowClick"
     @row-mouse-enter="handleMouseEnter"
     @row-mouse-leave="handleMouseLeave"
@@ -41,8 +40,10 @@
         <expand-view
           v-bind="$attrs"
           :data="originTableList[$index]"
+          :list-data="tableList[$index]"
           :total-fields="totalFields"
           :visible-fields="visibleFields"
+          :retrieve-params="retrieveParams"
           @menuClick="handleMenuClick">
         </expand-view>
       </template>
@@ -51,7 +52,9 @@
     <template>
       <bk-table-column class-name="original-time" width="130">
         <template slot-scope="{ row }">
-          <span class="time-field">{{ formatDate(Number(row[timeField]) || '') }}</span>
+          <span class="time-field" :title="isWrap ? '' : formatDate(Number(row[timeField]))">
+            {{ formatDate(Number(row[timeField]) || '') }}
+          </span>
         </template>
       </bk-table-column>
       <bk-table-column :class-name="`original-str${isWrap ? ' is-wrap' : ''}`">
@@ -63,7 +66,9 @@
             :placement="'top'"
             :tippy-options="{ offset: '0, 10', boundary: scrollContent }"
             @eventClick="(operation) => handleMenuClick({ operation, value: JSON.stringify(row) })">
-            <div :class="['str-content', { 'is-limit': !cacheExpandStr.includes($index) }]">
+            <div
+              :class="['str-content', { 'is-limit': !cacheExpandStr.includes($index) }]"
+              :title="isWrap ? '' : JSON.stringify(row)">
               <!-- eslint-disable-next-line vue/no-v-html -->
               <!-- <span>{{ JSON.stringify(row) }}</span> -->
               <text-highlight
@@ -90,7 +95,7 @@
     <!-- 操作按钮 -->
     <bk-table-column
       v-if="showHandleOption"
-      :label="$t('retrieve.operate')"
+      :label="$t('操作')"
       :width="84"
       align="right"
       :resizable="false">
@@ -98,6 +103,7 @@
       <template slot-scope="{ row, column, $index }">
         <operator-tools
           :index="$index"
+          log-type="origin"
           :cur-hover-index="curHoverIndex"
           :operator-config="operatorConfig"
           :handle-click="(event) => handleClickTools(event, row, operatorConfig)" />
@@ -111,6 +117,9 @@
         :visible-fields="visibleFields">
       </retrieve-loader>
     </bk-table-column>
+    <template v-else slot="empty">
+      <empty-view v-bind="$attrs" v-on="$listeners" />
+    </template>
     <!-- 下拉刷新骨架屏loading -->
     <template slot="append" v-if="tableList.length && visibleFields.length && isPageOver">
       <retrieve-loader

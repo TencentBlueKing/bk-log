@@ -22,6 +22,7 @@
 
 import { mapState } from 'vuex';
 import { menuArr } from '../components/nav/complete-menu';
+import * as authorityMap from '../common/authority-map';
 
 export default {
   data() {
@@ -42,9 +43,9 @@ export default {
       topMenu: state => state.topMenu,
       menuList: state => state.menuList,
       activeTopMenu: state => state.activeTopMenu,
-      projectId: state => state.projectId,
+      spaceUid: state => state.spaceUid,
       bkBizId: state => state.bkBizId,
-      myProjectList: state => state.myProjectList,
+      mySpaceList: state => state.mySpaceList,
     }),
   },
   watch: {
@@ -57,59 +58,49 @@ export default {
     },
   },
   methods: {
-    async requestMyProjectList() {
+    async requestMySpaceList() {
       try {
-        const res = await this.$http.request('project/getMyProjectList');
-        // 根据权限排序
-        const s1 = [];
-        const s2 = [];
+        const res = await this.$http.request('space/getMySpaceList');
         const queryObj = JSON.parse(JSON.stringify(this.$route.query));
         if (queryObj.from) {
           this.$store.commit('updateAsIframe', queryObj.from);
           this.$store.commit('updateIframeQuery', queryObj);
         }
 
-        for (const item of res.data) {
-          // eslint-disable-next-line camelcase
-          if (item.permission?.view_business) {
-            s1.push(item);
-          } else {
-            s2.push(item);
-          }
-        }
-        const projectList = s1.concat(s2);
+        const spaceList = res.data;
 
-        projectList.forEach((item) => {
+        spaceList.forEach((item) => {
           item.bk_biz_id = `${item.bk_biz_id}`;
-          item.project_id = `${item.project_id}`;
+          item.space_uid = `${item.space_uid}`;
+          item.space_full_code_name = `${item.space_name}(#${item.space_code})`;
         });
-        const { bizId, projectId } = queryObj;
+        const { bizId, spaceUid } = queryObj;
         const demoId = String(window.DEMO_BIZ_ID);
-        const demoProject = projectList.find(item => item.bk_biz_id === demoId);
-        const demoProjectUrl = demoProject ? this.getDemoProjectUrl(demoProject.project_id) : '';
-        this.$store.commit('setDemoUrl', demoProjectUrl);
-        const isOnlyDemo = demoProject && projectList.length === 1;
-        if (!projectList.length || isOnlyDemo) { // 没有一个业务或只有一个demo业务显示欢迎页面
+        const demoProject = spaceList.find(item => item.bk_biz_id === demoId);
+        const demoProjectUrl = demoProject ? this.getDemoProjectUrl(demoProject.space_uid) : '';
+        this.$store.commit('setDemoUid', demoProject ? demoProject.space_uid : '');
+        const isOnlyDemo = demoProject && spaceList.length === 1;
+        if (!spaceList.length || isOnlyDemo) { // 没有一个业务或只有一个demo业务显示欢迎页面
           const args = {
             newBusiness: { url: window.BIZ_ACCESS_URL },
             getAccess: {},
           };
           if (isOnlyDemo) {
-            this.$store.commit('updateMyProjectList', projectList);
-            if (bizId === demoProject.bk_biz_id || projectId === demoProject.project_id) {
+            this.$store.commit('updateMySpaceList', spaceList);
+            if (bizId === demoProject.bk_biz_id || spaceUid === demoProject.space_uid) {
               // 查询参数指定查看 demo 业务
-              return this.checkProjectChange(demoProject.project_id);
+              return this.checkSpaceChange(demoProject.space_uid);
             }
             args.demoBusiness = {
               url: demoProjectUrl,
             };
           }
-          if (projectId || bizId) { // 查询参数带非 demo 业务 id，获取业务名和权限链接
-            const query = bizId ? { bk_biz_id: bizId } : { project_id: projectId };
+          if (spaceUid || bizId) { // 查询参数带非 demo 业务 id，获取业务名和权限链接
+            const query = spaceUid ? { space_uid: spaceUid } : { bk_biz_id: bizId };
             const [betaRes, authRes] = await Promise.all([
               this.$http.request('/meta/getMaintainerApi', { query }),
               this.$store.dispatch('getApplyData', {
-                action_ids: ['view_business'],
+                action_ids: [authorityMap.VIEW_BUSINESS],
                 resources: [], // todo 需要将 url query 改成 bizId
               }),
             ]);
@@ -117,27 +108,26 @@ export default {
             args.getAccess.url = authRes.data.apply_url;
           } else {
             const authRes = await this.$store.dispatch('getApplyData', {
-              action_ids: ['view_business'],
+              action_ids: [authorityMap.VIEW_BUSINESS],
               resources: [],
             });
             args.getAccess.url = authRes.data.apply_url;
           }
           this.$store.commit('setPageLoading', false);
-          this.checkProjectChange();
+          this.checkSpaceChange();
           this.$emit('welcome', args);
         } else { // 正常业务
-          this.$store.commit('updateMyProjectList', projectList);
+          this.$store.commit('updateMySpaceList', spaceList);
           // 首先从查询参数找，然后从storage里面找，还找不到就返回第一个不是demo的业务
           // eslint-disable-next-line max-len
-          const firstRealProjectId = projectList.find(item => item.bk_biz_id !== demoId).project_id;
-          if (projectId || bizId) {
-            const matchProject = projectList.find(item => item.project_id === projectId || item.bk_biz_id === bizId);
-            this.checkProjectChange(matchProject ? matchProject.project_id : firstRealProjectId);
+          const firstRealSpaceUid = spaceList.find(item => item.bk_biz_id !== demoId).space_uid;
+          if (spaceUid || bizId) {
+            const matchProject = spaceList.find(item => item.space_uid === spaceUid || item.bk_biz_id === bizId);
+            this.checkSpaceChange(matchProject ? matchProject.space_uid : firstRealSpaceUid);
           } else {
-            const storageProjectId = window.localStorage.getItem('project_id');
-            const hasProject = storageProjectId
-              ? projectList.some(item => item.project_id === storageProjectId) : false;
-            this.checkProjectChange(hasProject ? storageProjectId : firstRealProjectId);
+            const storageSpaceUid = window.localStorage.getItem('space_uid');
+            const hasSpace = storageSpaceUid ? spaceList.some(item => item.space_uid === storageSpaceUid) : false;
+            this.checkSpaceChange(hasSpace ? storageSpaceUid : firstRealSpaceUid);
           }
         }
       } catch (e) {
@@ -149,16 +139,16 @@ export default {
       let siteUrl = window.SITE_URL;
       if (!siteUrl.startsWith('/')) siteUrl = `/${siteUrl}`;
       if (!siteUrl.endsWith('/')) siteUrl += '/';
-      return `${window.location.origin + siteUrl}#/retrieve?projectId=${id}`;
+      return `${window.location.origin + siteUrl}#/retrieve?spaceUid=${id}`;
     },
-    checkProjectChange(projectId = '') {
+    checkSpaceChange(spaceUid = '') {
       if (!this.isFirstLoad && this.$route.meta.needBack) {
         this.$store.commit('updateRouterLeaveTip', true);
 
         this.$bkInfo({
-          title: this.$t('pageLeaveTips'),
+          title: this.$t('是否放弃本次操作？'),
           confirmFn: () => {
-            this.projectChange(projectId);
+            this.spaceChange(spaceUid);
           },
           cancelFn: () => {
             this.$store.commit('updateRouterLeaveTip', false);
@@ -166,44 +156,42 @@ export default {
         });
         return;
       }
-      this.projectChange(projectId);
+      this.spaceChange(spaceUid);
     },
     /**
      * 更新当前项目
-     * @param  {String} projectId - 当前项目id
+     * @param  {String} spaceUid - 当前项目id
      */
-    async projectChange(projectId = '') {
-      this.$store.commit('updateProject', projectId);
-      if (projectId) {
-        const project = this.myProjectList.find(item => item.project_id === projectId);
-        await this.checkProjectAuth(project);
+    async spaceChange(spaceUid = '') {
+      this.$store.commit('updateSpace', spaceUid);
+      if (spaceUid) {
+        const space = this.mySpaceList.find(item => item.space_uid === spaceUid);
+        await this.checkSpaceAuth(space);
       }
-      window.localStorage.setItem('project_id', projectId);
-      let bizId = '';
-      for (const item of this.myProjectList) {
-        if (item.project_id === projectId) {
-          bizId = item.bk_biz_id;
-          window.localStorage.setItem('bk_biz_id', bizId);
+      window.localStorage.setItem('space_uid', spaceUid);
+      for (const item of this.mySpaceList) {
+        if (item.space_uid === spaceUid) {
+          window.localStorage.setItem('bk_biz_id', item.bk_biz_id);
           break;
         }
       }
-      projectId && this.setRouter(projectId, bizId); // 项目id不为空时，获取菜单
+      spaceUid && this.setRouter(spaceUid); // 项目id不为空时，获取菜单
     },
     // 选择的业务是否有权限
-    async checkProjectAuth(project) {
+    async checkSpaceAuth(space) {
       // eslint-disable-next-line camelcase
-      if (project && project.permission && project.permission.view_business) {
+      if (space && space.permission && space.permission[authorityMap.VIEW_BUSINESS]) {
         // 有权限 不显示无业务权限的页面
         this.$store.commit('globals/updateAuthContainerInfo', null);
         return;
       };
       try {
-        this.$store.commit('updateProject', project.project_id);
+        this.$store.commit('updateSpace', space.space_uid);
         const res = await this.$store.dispatch('getApplyData', {
-          action_ids: ['view_business'],
+          action_ids: [authorityMap.VIEW_BUSINESS],
           resources: [{
-            type: 'biz',
-            id: project.bk_biz_id,
+            type: 'space',
+            id: space.space_uid,
           }],
         });
         this.$store.commit('globals/updateAuthContainerInfo', res.data);
@@ -211,9 +199,9 @@ export default {
         console.warn(err);
       }
     },
-    async setRouter(projectId, bizId) {
+    async setRouter(spaceUid) {
       try {
-        const res = await this.$store.dispatch('getMenuList', projectId);
+        const res = await this.$store.dispatch('getMenuList', spaceUid);
         const menuList = this.replaceMenuId(res.data || []);
 
         menuList.forEach((child) => {
@@ -270,6 +258,16 @@ export default {
               return matchedList.some(record => record.name === item.id);
             }) : {};
           this.$store.commit('updateActiveManageSubNav', activeManageSubNav);
+          // 动态更新title
+          let headTitle = '';
+          if (activeTopMenu.id === 'manage') {
+            headTitle = activeManageNav.name;
+          } else if (activeTopMenu.id === 'retrieve') {
+            headTitle = this.$t('日志检索');
+          } else {
+            headTitle = activeTopMenu.name;
+          }
+          document.title = `${headTitle} - ${this.$t('日志平台')} | ${this.$t('腾讯蓝鲸智云')}`;
         }, {
           immediate: true,
         });
@@ -284,11 +282,11 @@ export default {
           const RoutingHop = meta.needBack && !this.isFirstLoad ? meta.backName : name ? name : 'retrieve';
           const newQuery = {
             ...query,
-            projectId,
+            spaceUid,
           };
           if (query.bizId) {
-            delete newQuery.projectId;
-            newQuery.bizId = bizId;
+            newQuery.spaceUid = spaceUid;
+            delete newQuery.bizId;
           }
           if (params.indexId) delete params.indexId;
           this.$store.commit('setPageLoading', true);

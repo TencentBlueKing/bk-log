@@ -26,7 +26,9 @@ import time
 from copy import deepcopy
 from multiprocessing.pool import ThreadPool
 from urllib import parse
-from retrying import Retrying
+
+from requests import Response
+from retrying import Retrying, RetryError
 
 import requests
 from django.conf import settings
@@ -96,9 +98,22 @@ class DataApiRetryClass(object):
         self.wait_random_min = wait_random_min
         self.wait_random_max = wait_random_max
         self.fail_exceptions = []
+        self.fail_check_functions = []
 
-    def add_exceptions(self, *exceptions):
+    def add_exceptions(self, exceptions: list):
         self.fail_exceptions.extend(exceptions)
+
+    def add_fail_check_functions(self, fail_check_functions: list):
+        """
+        添加检查result是否失败的函数, 参数默认接受result对象
+        函数语义为函数结果是否为True, 为False则重试
+        eg: fail_check_functions=[
+            lambda x: x.json()["result"]
+        ],
+        可以使用 check_result_is_true 这个默认函数
+        eg: fail_check_functions=[check_result_is_true]
+        """
+        self.fail_check_functions.extend(fail_check_functions)
 
     @property
     def retry_on_exception(self):
@@ -106,19 +121,51 @@ class DataApiRetryClass(object):
             for fail_exception in self.fail_exceptions:
                 if isinstance(exception, fail_exception):
                     return False
+            # retry_on_exception 默认 Retrying.always_reject=True
             return True
 
         return wraps
 
+    @property
+    def retry_on_result(self):
+        """result为请求的返回结果"""
+
+        def wraps(result):
+            for fail_check_func in self.fail_check_functions:
+                # 如果函数判断为: False, 需要重试; True, 不需要重试
+                if not fail_check_func(result):
+                    return True
+            # retry_on_result 默认 Retrying.never_reject=False
+            return False
+
+        return wraps
+
     @staticmethod
-    def create_retry_obj(*exceptions, stop_max_attempt_number=1, wait_random_min=0, wait_random_max=1000):
+    def create_retry_obj(
+        exceptions: list = None,
+        fail_check_functions: list = None,
+        stop_max_attempt_number=1,
+        wait_random_min=0,
+        wait_random_max=1000,
+    ):
         retry_obj = DataApiRetryClass(
             stop_max_attempt_number=stop_max_attempt_number,
             wait_random_min=wait_random_min,
             wait_random_max=wait_random_max,
         )
-        retry_obj.add_exceptions(*exceptions)
+        if exceptions:
+            retry_obj.add_exceptions(exceptions)
+        if fail_check_functions:
+            retry_obj.add_fail_check_functions(fail_check_functions)
         return retry_obj
+
+
+def check_result_is_true(result: Response) -> bool:
+    """通用的根据result结果重试判断函数"""
+    try:
+        return result.json()["result"]
+    except Exception:
+        return False
 
 
 class DataAPI(object):
@@ -277,11 +324,16 @@ class DataAPI(object):
                         wait_random_min=self.data_api_retry_cls.wait_random_min,
                         wait_random_max=self.data_api_retry_cls.wait_random_max,
                         retry_on_exception=self.data_api_retry_cls.retry_on_exception,
+                        retry_on_result=self.data_api_retry_cls.retry_on_result,
                     ).call(self._send, params, timeout, request_id, request_cookies)
                 else:
                     raw_response = self._send(params, timeout, request_id, request_cookies)
             except ReadTimeout as e:
                 raise DataAPIException(self, self.get_error_message(str(e)))
+            except RetryError as e:
+                if e.last_attempt.has_exception:
+                    raise DataAPIException(self, self.get_error_message(str(e)))
+                raw_response = e.last_attempt.value
             except Exception as e:  # pylint: disable=W0703
                 raise DataAPIException(self, self.get_error_message(str(e)))
 
@@ -707,7 +759,7 @@ class DataDRFAPISet(object):
             url, url_keys = self.to_url(key, self.custom_config[key], is_standard=True)
 
         if action is None:
-            raise Exception("请求方法%s不存在" % key)
+            raise Exception(_("请求方法%s不存在") % key)
 
         method = action.method
 
@@ -779,7 +831,7 @@ class PassThroughAPI(DataAPI):
         if not is_supported:
             logger.error("【API ERROR】%s 暂不支持透传" % sub_url)
             raise PermissionError(
-                "非法请求，模块【{module}】，方法【{method}】，接口【{sub_url}】".format(module=module, method=method, sub_url=sub_url)
+                _("非法请求，模块【{module}】，方法【{method}】，接口【{sub_url}】").format(module=module, method=method, sub_url=sub_url)
             )
 
 

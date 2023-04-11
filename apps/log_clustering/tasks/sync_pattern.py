@@ -20,6 +20,8 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 from concurrent.futures import ThreadPoolExecutor
+from typing import List
+
 from celery.task import periodic_task
 from celery.schedules import crontab
 
@@ -27,7 +29,9 @@ from apps.log_clustering.constants import (
     PATTERN_INDEX,
     CONTENT_PATTERN_INDEX,
     PATTERN_SIGNATURE_INDEX,
+    ORIGIN_LOG_INDEX,
 )
+from apps.log_clustering.exceptions import ModelReleaseNotFoundException
 from apps.log_clustering.handlers.aiops.aiops_model.aiops_model_handler import AiopsModelHandler
 from apps.log_clustering.models import AiopsModel, AiopsSignatureAndPattern
 
@@ -40,19 +44,15 @@ def sync_pattern():
 
 
 def sync(model_id):
-    release_id = AiopsModelHandler().get_latest_released_id(model_id=model_id)
-    if not release_id:
+    try:
+        release_id = AiopsModelHandler().get_latest_released_id(model_id=model_id)
+    except ModelReleaseNotFoundException:
         return None
+
     patterns = get_pattern(model_id=model_id, release_id=release_id)
-    created_patterns = get_created_pattern(patterns=patterns, model_id=model_id)
-    AiopsSignatureAndPattern.objects.bulk_create(
-        [
-            AiopsSignatureAndPattern(
-                model_id=model_id, signature=created_pattern["signature"], pattern=created_pattern["pattern"]
-            )
-            for created_pattern in created_patterns
-        ]
-    )
+    objects_to_create, objects_to_update = make_signature_objects(patterns=patterns, model_id=model_id)
+    AiopsSignatureAndPattern.objects.bulk_create(objects_to_create)
+    AiopsSignatureAndPattern.objects.bulk_update(objects_to_update, fields=["pattern"])
 
 
 def get_pattern(model_id, release_id) -> list:
@@ -90,23 +90,62 @@ def get_pattern(model_id, release_id) -> list:
     for _, sensitive_patterns in content[CONTENT_PATTERN_INDEX].items():
         for sensitive_pattern in sensitive_patterns:
             signature = sensitive_pattern[PATTERN_SIGNATURE_INDEX]
-            pattern_list = []
+
+            if not sensitive_pattern[ORIGIN_LOG_INDEX]:
+                pattern_list = []
+                for pattern in sensitive_pattern[PATTERN_INDEX]:
+                    if hasattr(pattern, "name"):
+                        pattern_list.append("#{}#".format(pattern.name))
+                        continue
+                    pattern_list.append(str(pattern))
+                patterns.append({"signature": str(signature), "pattern": " ".join(pattern_list)})
+                continue
+
+            origin_log = sensitive_pattern[ORIGIN_LOG_INDEX][0]
+            pattern_str = ""
             for pattern in sensitive_pattern[PATTERN_INDEX]:
+
                 if hasattr(pattern, "name"):
-                    pattern_list.append("#{}#".format(pattern.name))
-                    continue
-                pattern_list.append(str(pattern))
-            patterns.append({"signature": str(signature), "pattern": " ".join(pattern_list)})
+                    value = pattern.value
+                    name = f"#{pattern.name}#"
+                else:
+                    value = pattern
+                    name = pattern
+                idx = origin_log.find(value)
+                if idx == -1:
+                    break
+                pattern_str += origin_log[0:idx]
+                pattern_str += name
+                origin_log = origin_log[idx + len(value) :]
+            pattern_str += origin_log
+            patterns.append({"signature": str(signature), "pattern": pattern_str})
     return patterns
 
 
-def get_created_pattern(patterns, model_id):
-    origin_pattern_map = {pattern["signature"]: pattern for pattern in patterns}
-    existed_signature_map = set(
-        AiopsSignatureAndPattern.objects.filter(model_id=model_id).values_list("signature", flat=True)
-    )
-    dst_patterns = []
-    for origin_signature, origin_pattern in origin_pattern_map.items():
+def make_signature_objects(patterns, model_id) -> [List[AiopsSignatureAndPattern], List[AiopsSignatureAndPattern]]:
+    """
+    生成 signature 对象
+    :param patterns:
+    :param model_id:
+    :return:
+    """
+    origin_signature_map = {pattern["signature"]: pattern for pattern in patterns}
+    existed_signature_map = {obj.signature: obj for obj in AiopsSignatureAndPattern.objects.filter(model_id=model_id)}
+
+    objects_to_create = []
+    objects_to_update = []
+
+    for origin_signature, origin_pattern in origin_signature_map.items():
         if origin_signature not in existed_signature_map:
-            dst_patterns.append(origin_pattern)
-    return dst_patterns
+            # 不存在的，创建一个新对象
+            objects_to_create.append(
+                AiopsSignatureAndPattern(
+                    model_id=model_id, signature=origin_signature, pattern=origin_pattern["pattern"]
+                )
+            )
+        else:
+            # 已经存在的，只更新对象中的 pattern 字段
+            signature_obj = existed_signature_map[origin_signature]
+            signature_obj.pattern = origin_pattern["pattern"]
+            objects_to_update.append(signature_obj)
+    return objects_to_create, objects_to_update

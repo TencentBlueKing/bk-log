@@ -21,6 +21,7 @@ the project delivered to anyone in the future.
 """
 import base64
 from typing import Dict
+from django.utils.translation import ugettext_lazy as _
 
 import arrow
 from cloudpickle import cloudpickle
@@ -143,10 +144,10 @@ class AiopsModelHandler(BaseAiopsHandler):
         self,
         experiment_id: int,
         window: str = "1h",
-        worker_nums: int = 6,
-        memory: int = 2048,
+        worker_nums: int = 2,
+        memory: int = 4096,
         time_limit: int = 7200,
-        core: int = 4,
+        core: int = 2,
         max_memory: int = 8192,
     ):
         """
@@ -637,7 +638,7 @@ class AiopsModelHandler(BaseAiopsHandler):
         return [
             AlgorithmConfigConfCls(
                 field_name="min_members",
-                field_alias="最少日志数量",
+                field_alias=_("最少日志数量"),
                 field_index=1,
                 default_value=1,
                 sample_value=None,
@@ -665,7 +666,7 @@ class AiopsModelHandler(BaseAiopsHandler):
             ),
             AlgorithmConfigConfCls(
                 field_name="max_dist_list",
-                field_alias="敏感度",
+                field_alias=_("敏感度"),
                 field_index=2,
                 default_value="0.1,0.3,0.5,0.7,0.9",
                 sample_value=None,
@@ -693,7 +694,7 @@ class AiopsModelHandler(BaseAiopsHandler):
             ),
             AlgorithmConfigConfCls(
                 field_name="predefined_varibles",
-                field_alias="预先定义的正则表达式",
+                field_alias=_("预先定义的正则表达式"),
                 field_index=3,
                 default_value=PREDEFINED_VARIBLES_DEFAULT_VALUE,
                 sample_value=None,
@@ -721,7 +722,7 @@ class AiopsModelHandler(BaseAiopsHandler):
             ),
             AlgorithmConfigConfCls(
                 field_name="delimeter",
-                field_alias="分词符",
+                field_alias=_("分词符"),
                 field_index=4,
                 default_value=DELIMETER_DEFAULT_VALUE,
                 sample_value=None,
@@ -749,7 +750,7 @@ class AiopsModelHandler(BaseAiopsHandler):
             ),
             AlgorithmConfigConfCls(
                 field_name="max_log_length",
-                field_alias="最大日志长度",
+                field_alias=_("最大日志长度"),
                 field_index=5,
                 default_value=100,
                 sample_value=None,
@@ -777,7 +778,7 @@ class AiopsModelHandler(BaseAiopsHandler):
             ),
             AlgorithmConfigConfCls(
                 field_name="is_case_sensitive",
-                field_alias="是否大小写敏感",
+                field_alias=_("是否大小写敏感"),
                 field_index=6,
                 default_value=1,
                 sample_value=None,
@@ -1102,12 +1103,20 @@ class AiopsModelHandler(BaseAiopsHandler):
         max_log_length: int,
         is_case_sensitive: int,
     ):
+        for item in input_data:
+            # 追加内置字段
+            item.update({"__group_id__": "0", "__id__": "0", "__index__": "0"})
         aiops_experiment_debug_request = AiopsExperimentsDebugCls(
             project_id=self.conf.get("project_id"),
             input_config=AiopsExperimentsDebugInputConfigCls(
                 algorithm_name=self.conf.get("debug_algorithm_name"),
                 input_data=input_data,
-                feature_columns=[{"field_name": "log", "data_field_name": clustering_field}],
+                feature_columns=[
+                    {"data_field_name": clustering_field, "field_name": "log"},
+                    {"data_field_name": "__index__", "field_name": "__index__"},
+                    {"data_field_name": "__id__", "field_name": "__id__"},
+                    {"data_field_name": "__group_id__", "field_name": "__group_id__"},
+                ],
                 training_args=[
                     {"field_name": "min_members", "value": min_members},
                     {"field_name": "max_dist_list", "value": max_dist_list},

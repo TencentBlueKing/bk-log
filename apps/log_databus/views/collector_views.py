@@ -29,7 +29,6 @@ from rest_framework.response import Response
 
 from apps.exceptions import ValidationError
 from apps.log_databus.constants import EtlConfig, Environment
-from apps.log_databus.exceptions import NeedBcsClusterIdException
 from apps.log_search.exceptions import BkJwtVerifyException
 from apps.generic import ModelViewSet
 from apps.iam import ActionEnum, ResourceEnum
@@ -71,11 +70,19 @@ from apps.log_databus.serializers import (
     FastCollectorCreateSerializer,
     FastCollectorUpdateSerializer,
     ContainerCollectorConfigToYamlSerializer,
+    ListBCSCollectorSerializer,
 )
-from apps.log_search.constants import BKDATA_OPEN, CollectorScenarioEnum, HAVE_DATA_ID, NOT_CUSTOM
+from apps.log_search.constants import (
+    BKDATA_OPEN,
+    CollectorScenarioEnum,
+    HAVE_DATA_ID,
+    IGNORE_DISPLAY_CONFIG,
+    NOT_CUSTOM,
+)
 from apps.log_search.permission import Permission
 from apps.utils.drf import detail_route, list_route
 from apps.utils.function import ignored
+from bkm_space.utils import space_uid_to_bk_biz_id
 
 
 class CollectorViewSet(ModelViewSet):
@@ -121,6 +128,7 @@ class CollectorViewSet(ModelViewSet):
             "etl_time",
             "update_or_create_clean_config",
             "custom_update",
+            "report_token",
         ]:
             return [InstanceActionPermission([ActionEnum.MANAGE_COLLECTION], ResourceEnum.COLLECTION)]
         return [ViewBusinessPermission()]
@@ -133,7 +141,9 @@ class CollectorViewSet(ModelViewSet):
             qs = qs.filter(Q(etl_config=EtlConfig.BK_LOG_TEXT) | Q(etl_config__isnull=True))
         if self.request.query_params.get(NOT_CUSTOM):
             qs = qs.exclude(collector_scenario_id=CollectorScenarioEnum.CUSTOM.value)
-        return qs.all()
+        if self.request.query_params.get(IGNORE_DISPLAY_CONFIG):
+            return qs.all()
+        return qs.filter(is_display=True)
 
     def get_serializer_class(self, *args, **kwargs):
         action_serializer_map = {
@@ -303,6 +313,9 @@ class CollectorViewSet(ModelViewSet):
 
         if not request.GET.get("page") or not request.GET.get("pagesize"):
             raise ValidationError(_("分页参数不能为空"))
+        if request.GET.get("space_uid", ""):
+            request.GET["bk_biz_id"] = space_uid_to_bk_biz_id(request.GET["space_uid"])
+
         response = super().list(request, *args, **kwargs)
         response.data["list"] = CollectorHandler.add_cluster_info(response.data["list"])
 
@@ -356,6 +369,7 @@ class CollectorViewSet(ModelViewSet):
         @apiSuccess {String} target_nodes.ip 主机实例ip
         @apiSuccess {Int} target_nodes.bk_cloud_id 蓝鲸云主机id
         @apiSuccess {Int} target_nodes.bk_supplier_id 支撑id
+        @apiParam {Int} target_nodes.bk_host_id 主机ID （静态）
         @apiSuccess {String} data_encoding 日志字符集
         @apiSuccess {String} bk_data_id META-采集项ID
         @apiSuccess {String} bk_data_name META-采集项名称
@@ -521,6 +535,7 @@ class CollectorViewSet(ModelViewSet):
         @apiParam {String} target_nodes.ip 主机实例ip （静态）
         @apiParam {Int} target_nodes.bk_cloud_id 蓝鲸云区域id （静态）
         @apiParam {Int} target_nodes.bk_supplier_id 供应商id （静态）
+        @apiParam {Int} target_nodes.bk_host_id 主机ID （静态）
         @apiParam {String} data_encoding 日志字符集 可选字段`UTF-8, GBK`
         @apiParam {String} bk_data_name 存储索引名
         @apiParam {String} description 备注说明
@@ -628,6 +643,7 @@ class CollectorViewSet(ModelViewSet):
         @apiParam {String} target_nodes.ip 主机实例ip
         @apiParam {Int} target_nodes.bk_cloud_id 蓝鲸云主机id
         @apiParam {Int} target_nodes.bk_supplier_id 支撑id
+        @apiParam {Int} target_nodes.bk_host_id 主机ID （静态）
         @apiParam {String} data_encoding 日志字符集 可选字段`UTF-8, GBK`
         @apiParam {String} description 备注说明
         @apiParam {json} params 日志信息
@@ -841,6 +857,7 @@ class CollectorViewSet(ModelViewSet):
         @apiSuccess {String} contents.bk_obj_name 集群名称
         @apiSuccess {List} contents.child 主机实例列表
         @apiSuccess {String} contents.child.status 实例订阅状态 (FAILED:失败； SUCCESS：成功； PENDING：执行中)
+        @apiSuccess {String} contents.child.bk_host_id 主机ID
         @apiSuccess {String} contents.child.ip 实例IP
         @apiSuccess {String} contents.child.bk_cloud_id 云区域ID
         @apiSuccess {String} contents.child.instance_name 实例名称
@@ -861,6 +878,7 @@ class CollectorViewSet(ModelViewSet):
                         "bk_obj_id":"set",
                         "child":[
                             {
+                                "bk_host_id": 1,
                                 "status":"FAILED",
                                 "ip":"127.0.0.1",
                                 "bk_cloud_id":0,
@@ -876,6 +894,7 @@ class CollectorViewSet(ModelViewSet):
                                 "create_time": "2019-08-24T18:47:27",
                             },
                             {
+                                "bk_host_id": 2,
                                 "status":"FAILED",
                                 "ip":"127.0.0.1",
                                 "bk_cloud_id":0,
@@ -1397,6 +1416,7 @@ class CollectorViewSet(ModelViewSet):
         @apiParam {Int} target_nodes.bk_inst_id 节点实例id (动态)
         @apiParam {String} target_nodes.bk_obj_id 节点对象id （动态）
         @apiParam {String} target_nodes.ip 主机实例ip （静态）
+        @apiParam {String} target_nodes.bk_host_id 主机ID （静态）
         @apiParam {Int} target_nodes.bk_cloud_id 蓝鲸云区域id （静态）
         @apiParam {Int} target_nodes.bk_supplier_id 供应商id （静态）
         @apiParam {String} data_encoding 日志字符集 可选字段`UTF-8, GBK`
@@ -1493,6 +1513,7 @@ class CollectorViewSet(ModelViewSet):
         @apiParam {String} target_nodes.ip 主机实例ip （静态）
         @apiParam {Int} target_nodes.bk_cloud_id 蓝鲸云区域id （静态）
         @apiParam {Int} target_nodes.bk_supplier_id 供应商id （静态）
+        @apiParam {String} target_nodes.bk_host_id 主机ID （静态）
         @apiParam {String} data_encoding 日志字符集 可选字段`UTF-8, GBK`
         @apiParam {String} bk_data_name 存储索引名
         @apiParam {String} description 备注说明
@@ -1981,11 +2002,13 @@ class CollectorViewSet(ModelViewSet):
         auth_info = Permission.get_auth_info(request, raise_exception=False)
         if not auth_info:
             raise BkJwtVerifyException()
-        bcs_cluster_id = request.GET.get("bcs_cluster_id")
-        if not bcs_cluster_id:
-            raise NeedBcsClusterIdException()
+        data = self.params_valid(ListBCSCollectorSerializer)
         return Response(
-            CollectorHandler().list_bcs_collector(bcs_cluster_id=bcs_cluster_id, bk_app_code=auth_info["bk_app_code"])
+            CollectorHandler().list_bcs_collector(
+                bcs_cluster_id=data["bcs_cluster_id"],
+                bk_biz_id=data.get("bk_biz_id"),
+                bk_app_code=auth_info["bk_app_code"],
+            )
         )
 
     @list_route(methods=["POST"], url_path="create_bcs_collector")
@@ -2004,7 +2027,7 @@ class CollectorViewSet(ModelViewSet):
         if not auth_info:
             raise BkJwtVerifyException()
         data = self.params_valid(BCSCollectorSerializer)
-        rule_id = collector_config_id
+        rule_id = int(collector_config_id)
         return Response(CollectorHandler().update_bcs_container_config(data=data, rule_id=rule_id))
 
     @detail_route(methods=["DELETE"], url_path="delete_bcs_collector")
@@ -2026,16 +2049,20 @@ class CollectorViewSet(ModelViewSet):
 
     @list_route(methods=["GET"], url_path="list_namespace")
     def list_namespace(self, request):
-        cluster_id = request.GET.get("cluster_id")
-        return Response(CollectorHandler().list_namespace(bcs_cluster_id=cluster_id))
+        bcs_cluster_id = request.GET.get("bcs_cluster_id")
+        bk_biz_id = request.GET.get("bk_biz_id")
+        return Response(CollectorHandler().list_namespace(bk_biz_id=bk_biz_id, bcs_cluster_id=bcs_cluster_id))
 
     @list_route(methods=["GET"], url_path="list_topo")
     def list_topo(self, request):
         topo_type = request.GET.get("type")
+        bk_biz_id = request.GET.get("bk_biz_id")
         bcs_cluster_id = request.GET.get("bcs_cluster_id")
         namespace = request.GET.get("namespace", "")
         return Response(
-            CollectorHandler().list_topo(topo_type=topo_type, bcs_cluster_id=bcs_cluster_id, namespace=namespace)
+            CollectorHandler().list_topo(
+                topo_type=topo_type, bk_biz_id=bk_biz_id, bcs_cluster_id=bcs_cluster_id, namespace=namespace
+            )
         )
 
     @list_route(methods=["GET"], url_path="get_labels")
@@ -2077,7 +2104,11 @@ class CollectorViewSet(ModelViewSet):
     @list_route(methods=["POST"], url_path="validate_container_config_yaml")
     def validate_container_config_yaml(self, request):
         data = self.params_valid(ValidateContainerCollectorYamlSerializer)
-        return Response(CollectorHandler().validate_container_config_yaml(data["yaml_config"]))
+        return Response(
+            CollectorHandler().validate_container_config_yaml(
+                data["bk_biz_id"], data["bcs_cluster_id"], data["yaml_config"]
+            )
+        )
 
     @list_route(methods=["POST"])
     def fast_create(self, request):
@@ -2102,6 +2133,7 @@ class CollectorViewSet(ModelViewSet):
         @apiParam {String} target_nodes.ip 主机实例ip （静态）
         @apiParam {Int} target_nodes.bk_cloud_id 蓝鲸云区域id （静态）
         @apiParam {Int} target_nodes.bk_supplier_id 供应商id （静态）
+        @apiParam {String} target_nodes.bk_host_id 主机ID （静态）
         @apiParam {String} etl_config 清洗类型（格式化方式）
         @apiParam {Object} etl_params 清洗配置，不同的清洗类型的参数有所不同
         @apiParam {String} etl_params.separator 分隔符，当etl_config=="bk_log_delimiter"时需要传递
@@ -2174,6 +2206,7 @@ class CollectorViewSet(ModelViewSet):
         @apiParam {String} target_nodes.ip 主机实例ip （静态）
         @apiParam {Int} target_nodes.bk_cloud_id 蓝鲸云区域id （静态）
         @apiParam {Int} target_nodes.bk_supplier_id 供应商id （静态）
+        @apiParam {String} target_nodes.bk_host_id 主机ID （静态）
         @apiParam {String} etl_config 清洗类型（格式化方式）
         @apiParam {Object} etl_params 清洗配置，不同的清洗类型的参数有所不同
         @apiParam {String} etl_params.separator 分隔符，当etl_config=="bk_log_delimiter"时需要传递
@@ -2234,7 +2267,16 @@ class CollectorViewSet(ModelViewSet):
             base64.b64encode(
                 CollectorHandler.container_dict_configs_to_yaml(
                     container_configs=data["configs"],
-                    add_pod_label=data["add_pod_label"], extra_labels=data["extra_labels"]
+                    add_pod_label=data["add_pod_label"],
+                    extra_labels=data["extra_labels"],
                 ).encode("utf-8")
             )
         )
+
+    @detail_route(methods=["GET"], url_path="report_token")
+    def report_token(self, request, collector_config_id=None):
+        return Response(CollectorHandler(collector_config_id).get_report_token())
+
+    @list_route(methods=["GET"], url_path="report_host")
+    def report_host(self, request):
+        return Response(CollectorHandler().get_report_host())

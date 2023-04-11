@@ -129,6 +129,11 @@ class TaskFileLinkNotExist(BaseExtractException):
     MESSAGE = _("下载目标文件不存在")
 
 
+class TaskCannotCreateByCommonLink(BaseExtractException):
+    ErrorCode = "119"
+    MESSAGE = _("当前容器化部署方式, 不支持内网链路")
+
+
 class ExplorerDirFailed(BaseExtractException):
     ErrorCode = "201"
     MESSAGE = _("访问{request_dir}目录错误，请检查是否已授权")
@@ -236,7 +241,7 @@ class FileServerExecuteFailed(BaseExtractException):
 
 class PipelineApiFailed(BaseExtractException):
     ErrorCode = "402"
-    MESSAGE = _(" {message}")
+    MESSAGE = _("{message}")
 
 
 class PipelineRevoked(BaseExtractException):

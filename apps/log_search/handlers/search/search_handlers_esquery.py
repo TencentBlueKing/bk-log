@@ -28,18 +28,18 @@ from django.core.cache import cache
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
-from apps.api import CCApi, MonitorApi
+from apps.api import MonitorApi
 from apps.api.base import DataApiRetryClass
-from apps.exceptions import ApiRequestError
+from apps.exceptions import ApiRequestError, ApiResultError
 from apps.log_clustering.models import ClusteringConfig
-from apps.log_databus.constants import EtlConfig, TargetNodeTypeEnum
+from apps.log_databus.constants import EtlConfig
 from apps.log_databus.models import CollectorConfig
 from apps.log_search.models import (
     LogIndexSet,
     LogIndexSetData,
     Scenario,
-    UserIndexSetConfig,
     UserIndexSetSearchHistory,
+    UserIndexSetFieldsConfig,
 )
 from apps.log_search.constants import (
     TimeEnum,
@@ -49,9 +49,12 @@ from apps.log_search.constants import (
     ASYNC_SORTED,
     FieldDataTypeEnum,
     MAX_EXPORT_REQUEST_RETRY,
-    DEFAULT_BK_CLOUD_ID,
     ERROR_MSG_CHECK_FIELDS_FROM_BKDATA,
     ERROR_MSG_CHECK_FIELDS_FROM_LOG,
+    TimeFieldTypeEnum,
+    TimeFieldUnitEnum,
+    OperatorEnum,
+    REAL_OPERATORS_MAP,
 )
 from apps.log_search.exceptions import (
     BaseSearchIndexSetException,
@@ -68,7 +71,9 @@ from apps.log_search.exceptions import (
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.api import BkLogApi, BcsCcApi
 from apps.utils.cache import cache_five_minute
+from apps.utils.core.cache.cmdb_host import CmdbHostCache
 from apps.utils.db import array_group
+from apps.utils.ipchooser import IPChooser
 from apps.utils.local import get_request_username
 from apps.log_search.handlers.es.dsl_bkdata_builder import (
     DslBkDataCreateSearchContextBody,
@@ -78,12 +83,11 @@ from apps.log_search.handlers.es.dsl_bkdata_builder import (
 )
 from apps.log_search.handlers.es.indices_optimizer_context_tail import IndicesOptimizerContextTail
 from apps.utils.local import get_local_param
-from apps.log_search.handlers.biz import BizHandler
 from apps.log_search.handlers.search.mapping_handlers import MappingHandlers
-from apps.log_search.handlers.search.search_sort_builder import SearchSortBuilder
 from apps.log_search.handlers.search.pre_search_handlers import PreSearchHandlers
-from apps.log_search.constants import TimeFieldTypeEnum, TimeFieldUnitEnum
 from apps.utils.log import logger
+from apps.utils.lucene import generate_query_string
+from bkm_ipchooser.constants import CommonEnum
 
 max_len_dict = Dict[str, int]  # pylint: disable=invalid-name
 
@@ -107,7 +111,9 @@ def fields_config(name: str, is_active: bool = False):
 
 
 class SearchHandler(object):
-    def __init__(self, index_set_id: int, search_dict: dict, pre_check_enable=True, can_highlight=True):
+    def __init__(
+        self, index_set_id: int, search_dict: dict, pre_check_enable=True, can_highlight=True, export_fields=None
+    ):
         self.search_dict: dict = search_dict
 
         # 透传查询类型
@@ -132,7 +138,7 @@ class SearchHandler(object):
 
         # 检索历史记录
         self.addition = copy.deepcopy(search_dict.get("addition", []))
-        self.host_scopes = copy.deepcopy(search_dict.get("host_scopes", {}))
+        self.ip_chooser = copy.deepcopy(search_dict.get("ip_chooser", {}))
 
         self.use_time_range = search_dict.get("use_time_range", True)
         # 构建时间字段
@@ -213,13 +219,18 @@ class SearchHandler(object):
         self.iterationIdx: str = search_dict.get("iterationIdx", None)  # pylint: disable=invalid-name
         self.iterationIndex: str = search_dict.get("iterationIndex", None)  # pylint: disable=invalid-name
         self.dtEventTimeStamp = search_dict.get("dtEventTimeStamp", None)  # pylint: disable=invalid-name
+        self.bk_host_id = search_dict.get("bk_host_id", None)  # pylint: disable=invalid-name
 
         # 上下文初始化标记
         self.zero: bool = search_dict.get("zero", False)
 
+        # 导出字段
+        self.export_fields = export_fields
+
+        # 请求用户名
+        self.request_username = get_request_username()
+
     def fields(self, scope="default"):
-        # field_result, display_fields = self._get_all_fields_by_index_id(scope)
-        # sort_list: list = self._get_sort_list_by_index_id(scope)
         mapping_handlers = MappingHandlers(
             self.indices,
             self.index_set_id,
@@ -230,7 +241,7 @@ class SearchHandler(object):
             end_time=self.end_time,
         )
         field_result, display_fields = mapping_handlers.get_all_fields_by_index_id(scope)
-        sort_list: list = MappingHandlers.get_sort_list_by_index_id(self.index_set_id, scope)
+        sort_list: list = MappingHandlers.get_sort_list_by_index_id(self.index_set_id)
 
         # 校验sort_list字段是否存在
         field_result_list = [i["field_name"] for i in field_result]
@@ -260,6 +271,10 @@ class SearchHandler(object):
             self.clean_config(),
         ]:
             result_dict["config"].append(fields_config)
+        # 将用户当前使用的配置id传递给前端
+        result_dict["config_id"] = UserIndexSetFieldsConfig.get_config(
+            index_set_id=self.index_set_id, username=self.request_username
+        ).id
 
         return result_dict
 
@@ -307,11 +322,14 @@ class SearchHandler(object):
         log_index_set = LogIndexSet.objects.get(index_set_id=self.index_set_id)
         clustering_config = ClusteringConfig.objects.filter(index_set_id=self.index_set_id).first()
         if clustering_config:
-            return True, {
-                "collector_config_id": log_index_set.collector_config_id,
-                "signature_switch": clustering_config.signature_enable,
-                "clustering_field": clustering_config.clustering_fields,
-            }
+            return (
+                True,
+                {
+                    "collector_config_id": log_index_set.collector_config_id,
+                    "signature_switch": clustering_config.signature_enable,
+                    "clustering_field": clustering_config.clustering_fields,
+                },
+            )
         return False, {"collector_config_id": None, "signature_switch": False, "clustering_field": None}
 
     @fields_config("clean_config")
@@ -323,10 +341,13 @@ class SearchHandler(object):
         if not log_index_set.collector_config_id:
             return False, {"collector_config_id": None}
         collector_config = CollectorConfig.objects.get(collector_config_id=log_index_set.collector_config_id)
-        return collector_config.etl_config != EtlConfig.BK_LOG_TEXT, {
-            "collector_scenario_id": collector_config.collector_scenario_id,
-            "collector_config_id": log_index_set.collector_config_id,
-        }
+        return (
+            collector_config.etl_config != EtlConfig.BK_LOG_TEXT,
+            {
+                "collector_scenario_id": collector_config.collector_scenario_id,
+                "collector_config_id": log_index_set.collector_config_id,
+            },
+        )
 
     @fields_config("context_and_realtime")
     def analyze_fields(self, field_result):
@@ -405,30 +426,33 @@ class SearchHandler(object):
         if self.size > MAX_RESULT_WINDOW:
             once_size = MAX_RESULT_WINDOW
 
-        result: dict = BkLogApi.search(
-            {
-                "indices": self.indices,
-                "scenario_id": self.scenario_id,
-                "storage_cluster_id": self.storage_cluster_id,
-                "start_time": self.start_time,
-                "end_time": self.end_time,
-                "query_string": self.query_string,
-                "filter": self.filter,
-                "sort_list": self.sort_list,
-                "start": self.start,
-                "size": once_size,
-                "aggs": self.aggs,
-                "highlight": self.highlight,
-                "use_time_range": self.use_time_range,
-                "time_zone": self.time_zone,
-                "time_range": self.time_range,
-                "time_field": self.time_field,
-                "time_field_type": self.time_field_type,
-                "time_field_unit": self.time_field_unit,
-                "scroll": self.scroll,
-                "collapse": self.collapse,
-            }
-        )
+        try:
+            result: dict = BkLogApi.search(
+                {
+                    "indices": self.indices,
+                    "scenario_id": self.scenario_id,
+                    "storage_cluster_id": self.storage_cluster_id,
+                    "start_time": self.start_time,
+                    "end_time": self.end_time,
+                    "query_string": self.query_string,
+                    "filter": self.filter,
+                    "sort_list": self.sort_list,
+                    "start": self.start,
+                    "size": once_size,
+                    "aggs": self.aggs,
+                    "highlight": self.highlight,
+                    "use_time_range": self.use_time_range,
+                    "time_zone": self.time_zone,
+                    "time_range": self.time_range,
+                    "time_field": self.time_field,
+                    "time_field_type": self.time_field_type,
+                    "time_field_unit": self.time_field_unit,
+                    "scroll": self.scroll,
+                    "collapse": self.collapse,
+                }
+            )
+        except ApiResultError as e:
+            raise ApiResultError(_("搜索出错，请检查查询语句是否正确"), code=e.code, errors=e.errors)
 
         # 需要scroll滚动查询：is_scroll为True，size超出单次最大查询限制，total大于MAX_RESULT_WINDOW
         # @TODO bkdata暂不支持scroll查询
@@ -446,10 +470,13 @@ class SearchHandler(object):
         return result
 
     def _save_history(self, result, search_type):
-        params = {"keyword": self.query_string, "host_scopes": self.host_scopes, "addition": self.addition}
-        username = get_request_username()
+        params = {"keyword": self.query_string, "ip_chooser": self.ip_chooser, "addition": self.addition}
         self._cache_history(
-            username=username, index_set_id=self.index_set_id, params=params, search_type=search_type, result=result
+            username=self.request_username,
+            index_set_id=self.index_set_id,
+            params=params,
+            search_type=search_type,
+            result=result,
         )
 
     @cache_five_minute("search_history_{username}_{index_set_id}_{search_type}_{params}", need_md5=True)
@@ -543,13 +570,13 @@ class SearchHandler(object):
                     "collapse": self.collapse,
                 },
                 data_api_retry_cls=DataApiRetryClass.create_retry_obj(
-                    BaseException,
+                    exceptions=[BaseException],
                     stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY,
                 ),
             )
             return result
 
-        sorted_list = [[sorted_field, ASYNC_SORTED] for sorted_field in sorted_fields]
+        sorted_list = self._get_user_sorted_list(sorted_fields)
 
         result = BkLogApi.search(
             {
@@ -575,7 +602,7 @@ class SearchHandler(object):
                 "collapse": self.collapse,
             },
             data_api_retry_cls=DataApiRetryClass.create_retry_obj(
-                BaseException, stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
+                exceptions=[BaseException], stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
             ),
         )
         return result
@@ -589,11 +616,11 @@ class SearchHandler(object):
         """
         search_after_size = len(search_result["hits"]["hits"])
         result_size = search_after_size
-        sorted_list = [[sorted_field, ASYNC_SORTED] for sorted_field in sorted_fields]
+        sorted_list = self._get_user_sorted_list(sorted_fields)
         while search_after_size == MAX_RESULT_WINDOW and result_size < self.size:
             search_after = []
-            for sorted_field in sorted_fields:
-                search_after.append(search_result["hits"]["hits"][-1]["_source"].get(sorted_field))
+            for sorted_field in sorted_list:
+                search_after.append(search_result["hits"]["hits"][-1]["_source"].get(sorted_field[0]))
             search_result = BkLogApi.search(
                 {
                     "indices": self.indices,
@@ -619,7 +646,7 @@ class SearchHandler(object):
                     "search_after": search_after,
                 },
                 data_api_retry_cls=DataApiRetryClass.create_retry_obj(
-                    BaseException, stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
+                    exceptions=[BaseException], stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
                 ),
             )
 
@@ -646,23 +673,12 @@ class SearchHandler(object):
                     "scroll_id": _scroll_id,
                 },
                 data_api_retry_cls=DataApiRetryClass.create_retry_obj(
-                    BaseException, stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
+                    exceptions=[BaseException], stop_max_attempt_number=MAX_EXPORT_REQUEST_RETRY
                 ),
             )
             scroll_size = len(scroll_result["hits"]["hits"])
             result_size += scroll_size
             yield self._deal_query_result(scroll_result)
-
-    def _get_sort_list_by_index_id(self, scope="default"):
-        username = get_request_username()
-        index_config_obj = UserIndexSetConfig.objects.filter(
-            index_set_id=self.index_set_id, created_by=username, scope=scope, is_deleted=False
-        )
-        if not index_config_obj.exists():
-            return list()
-
-        sort_list = index_config_obj.first().sort_list
-        return sort_list if isinstance(sort_list, list) else list()
 
     @staticmethod
     def get_bcs_manage_url(cluster_id, container_id):
@@ -725,56 +741,7 @@ class SearchHandler(object):
 
     @staticmethod
     def _build_query_string(history):
-        key_word = history["params"].get("keyword", "")
-        if key_word is None:
-            key_word = ""
-        query_string = key_word
-        # IP快选、过滤条件
-        host_scopes = history["params"].get("host_scopes", {})
-
-        target_nodes = host_scopes.get("target_nodes", [])
-
-        if target_nodes:
-            if host_scopes["target_node_type"] == TargetNodeTypeEnum.INSTANCE.value:
-                query_string += " AND ({})".format(
-                    ",".join([f"{target_node['bk_cloud_id']}:{target_node['ip']}" for target_node in target_nodes])
-                )
-            elif host_scopes["target_node_type"] == TargetNodeTypeEnum.DYNAMIC_GROUP.value:
-                # target_nodes: [
-                #   "11c290dc-66e8-11ec-84ba-1e84cfcf753a",
-                #   "11c290dc-66e8-11ec-84ba-1e84cfcf753a"
-                # ]
-                dynamic_name_list = [str(target_node["name"]) for target_node in target_nodes]
-                query_string += " AND (dynamic_group_name:" + ",".join(dynamic_name_list) + ")"
-            else:
-                first_node, *_ = target_nodes
-                target_list = [str(target_node["bk_inst_id"]) for target_node in target_nodes]
-                query_string += f" AND ({first_node['bk_obj_id']}:" + ",".join(target_list) + ")"
-
-        if host_scopes.get("modules"):
-            modules_list = [str(_module["bk_inst_id"]) for _module in host_scopes["modules"]]
-            query_string += " ADN (modules:" + ",".join(modules_list) + ")"
-            host_scopes["target_node_type"] = TargetNodeTypeEnum.TOPO.value
-            host_scopes["target_nodes"] = host_scopes["modules"]
-
-        if host_scopes.get("ips"):
-            query_string += " AND (ips:" + host_scopes["ips"] + ")"
-            host_scopes["target_node_type"] = TargetNodeTypeEnum.INSTANCE.value
-            host_scopes["target_nodes"] = [
-                {"ip": ip, "bk_cloud_id": DEFAULT_BK_CLOUD_ID} for ip in host_scopes["ips"].split(",")
-            ]
-
-        additions = history["params"].get("addition", [])
-
-        if additions:
-            query_string += (
-                " AND ("
-                + " AND ".join(
-                    [f'{addition["field"]} {addition["operator"]} {addition["value"]}' for addition in additions]
-                )
-                + ")"
-            )
-        history["query_string"] = query_string
+        history["query_string"] = generate_query_string(history["params"])
         return history
 
     @staticmethod
@@ -788,12 +755,16 @@ class SearchHandler(object):
                 return False
             if op1_params["addition"] != op2_params["addition"]:
                 return False
-            host_scopes_op1: dict = op1_params["host_scopes"]
-            host_scopes_op2: dict = op2_params["host_scopes"]
-            if host_scopes_op1["ips"] != host_scopes_op2["ips"]:
+            ip_chooser_op1: dict = op1_params.get("ip_chooser", {})
+            ip_chooser_op2: dict = op2_params.get("ip_chooser", {})
+
+            if ip_chooser_op1.keys() != ip_chooser_op2.keys():
                 return False
-            if host_scopes_op1["modules"] != host_scopes_op2["modules"]:
-                return False
+
+            for k in ip_chooser_op1:
+                if ip_chooser_op1[k] != ip_chooser_op2[k]:
+                    return False
+
             return True
 
         def _not_repeat(history):
@@ -943,6 +914,7 @@ class SearchHandler(object):
                 gseindex=self.gseindex,
                 path=self.path,
                 ip=self.ip,
+                bk_host_id=self.bk_host_id,
                 container_id=self.container_id,
                 logfile=self.logfile,
                 order=order,
@@ -956,6 +928,7 @@ class SearchHandler(object):
                 gseIndex=self.gseIndex,
                 path=self.path,
                 serverIp=self.serverIp,
+                bk_host_id=self.bk_host_id,
                 container_id=self.container_id,
                 logfile=self.logfile,
                 order=order,
@@ -979,6 +952,7 @@ class SearchHandler(object):
                     gseindex=self.gseindex,
                     path=self.path,
                     ip=self.ip,
+                    bk_host_id=self.bk_host_id,
                     container_id=self.container_id,
                     logfile=self.logfile,
                     zero=self.zero,
@@ -990,6 +964,7 @@ class SearchHandler(object):
                     start=self.start,
                     gseIndex=self.gseIndex,
                     path=self.path,
+                    bk_host_id=self.bk_host_id,
                     serverIp=self.serverIp,
                     container_id=self.container_id,
                     logfile=self.logfile,
@@ -1047,19 +1022,42 @@ class SearchHandler(object):
             return time_field, TimeFieldTypeEnum.DATE.value, TimeFieldUnitEnum.SECOND.value
 
     def _init_sort(self) -> list:
-        sort_list = SearchSortBuilder.sort_list(**self.search_dict)
-        return sort_list
+        index_set_id = self.search_dict.get("index_set_id")
+        # 获取用户对sort的排序需求
+        sort_list: List = self.search_dict.get("sort_list", [])
+        if sort_list:
+            return sort_list
+        # 用户已设置排序规则
+        username = get_request_username()
+        scope = self.search_dict.get("search_type", "default")
+        config_obj = UserIndexSetFieldsConfig.get_config(index_set_id=index_set_id, username=username)
+        if config_obj:
+            sort_list = config_obj.sort_list
+            if sort_list:
+                return sort_list
+        # 安全措施, 用户未设置排序规则，且未创建默认配置时, 使用默认排序规则
+        from apps.log_search.handlers.search.mapping_handlers import MappingHandlers
+
+        return MappingHandlers.get_default_sort_list(
+            index_set_id=index_set_id,
+            scenario_id=self.scenario_id,
+            scope=scope,
+            default_sort_tag=self.search_dict.get("default_sort_tag", False),
+        )
 
     # 过滤filter
     def _init_filter(self):
 
-        new_attrs: dict = self._combine_addition_host_scope(self.search_dict)
+        new_attrs: dict = self._combine_addition_ip_chooser(self.search_dict)
         mapping_handlers = MappingHandlers(
             index_set_id=self.index_set_id,
             indices=self.indices,
             scenario_id=self.scenario_id,
             storage_cluster_id=self.storage_cluster_id,
         )
+        # 获取各个字段类型
+        final_fields_list, __ = mapping_handlers.get_all_fields_by_index_id()
+        field_type_map = {i["field_name"]: i["field_type"] for i in final_fields_list}
         filter_list: list = new_attrs.get("addition", [])
         new_filter_list: list = []
         for item in filter_list:
@@ -1070,7 +1068,10 @@ class SearchHandler(object):
             value = item.get("value")
             operator: str = item.get("method") if item.get("method") else item.get("operator")
             condition: str = item.get("condition", "and")
-            if operator in ["exists", "does not exists"]:
+            if operator in REAL_OPERATORS_MAP.keys():
+                operator = REAL_OPERATORS_MAP[operator]
+
+            if operator in [OperatorEnum.EXISTS["operator"], OperatorEnum.NOT_EXISTS["operator"]]:
                 new_filter_list.append(
                     {"field": field, "value": "0", "operator": operator, "condition": condition, "type": _type}
                 )
@@ -1078,6 +1079,11 @@ class SearchHandler(object):
             # 此处对于前端传递filter为空字符串需要放行
             if (not field or not value or not operator) and not isinstance(value, str):
                 continue
+            # bool类型的字段且操作符为 is true 和 is false的时候做转换
+            if field_type_map.get(field, "") == "bool":
+                if operator in [OperatorEnum.IS_TRUE["operator"], OperatorEnum.IS_FALSE["operator"]]:
+                    operator = "is"
+                    value = operator.split(" ")[-1]
 
             new_filter_list.append(
                 {"field": field, "value": value, "operator": operator, "condition": condition, "type": _type}
@@ -1160,55 +1166,70 @@ class SearchHandler(object):
         else:
             require_field_match = False
 
-        if self.scenario_id == Scenario.BKDATA:
-            highlight = {
-                "pre_tags": ["<mark>"],
-                "post_tags": ["</mark>"],
-                "fields": {
-                    "log": {
-                        # "type": "fvh"
-                        "number_of_fragments": 0
-                    }
-                },
-                "require_field_match": require_field_match,
-            }
-            if self.query_string == "":
-                highlight = {}
-            return highlight
         highlight = {
             "pre_tags": ["<mark>"],
             "post_tags": ["</mark>"],
             "fields": {"*": {"number_of_fragments": 0}},
             "require_field_match": require_field_match,
         }
+
+        if self.query_string == "":
+            highlight = {}
+
         return highlight
 
     def _add_cmdb_fields(self, log):
         if not self.search_dict.get("bk_biz_id"):
             return log
+
         bk_biz_id = self.search_dict.get("bk_biz_id")
+        bk_host_id = log.get("bk_host_id")
         server_ip = log.get("serverIp", log.get("ip"))
         bk_cloud_id = log.get("cloudId", log.get("cloudid"))
-        if not server_ip:
+        if not bk_host_id and not server_ip:
             return log
+        # 以上情况说明请求不包含能去cmdb查询主机信息的字段，直接返回
+        log["__module__"] = ""
+        log["__set__"] = ""
+        log["__ipv6__"] = ""
 
-        from apps.utils.core.cache.cmdb_host import CmdbHostCache
-
-        host = CmdbHostCache.get(bk_biz_id, server_ip)
-        host_info = None
-        if not bk_cloud_id and host:
-            host_info = next(iter(host.values()))
-        if bk_cloud_id:
-            host_info = host.get(str(bk_cloud_id))
+        host_key = bk_host_id if bk_host_id else server_ip
+        host_info = CmdbHostCache.get(bk_biz_id, host_key)
+        # 当主机被迁移业务或者删除的时候, 会导致缓存中没有该主机信息, 放空处理
         if not host_info:
-            log["__module__"] = ""
-            log["__set__"] = ""
             return log
-        log["__module__"] = " | ".join([module["bk_inst_name"] for module in host_info.get("module", [])])
-        log["__set__"] = " | ".join([set["bk_inst_name"] for set in host_info.get("set", [])])
+
+        if bk_host_id and host_info:
+            host = host_info
+        else:
+            if not bk_cloud_id:
+                host = next(iter(host_info.values()))
+            else:
+                host = host_info.get(str(bk_cloud_id))
+        if not host:
+            return log
+
+        set_list, module_list = [], []
+        if host.get("topo"):
+            for _set in host.get("topo", []):
+                set_list.append(_set["bk_set_name"])
+                for module in _set.get("module", []):
+                    module_list.append(module["bk_module_name"])
+        # 兼容旧缓存数据
+        else:
+            set_list = [_set["bk_inst_name"] for _set in host.get("set", [])]
+            module_list = [_module["bk_inst_name"] for _module in host.get("module", [])]
+
+        log["__set__"] = " | ".join(set_list)
+        log["__module__"] = " | ".join(module_list)
+        log["__ipv6__"] = host.get("bk_host_innerip_v6", "")
         return log
 
     def _deal_query_result(self, result_dict: dict) -> dict:
+        if self.export_fields:
+            # 将导出字段和检索日志有的字段取交集
+            support_fields_list = [i["field_name"] for i in self.fields()["fields"]]
+            self.export_fields = list(set(self.export_fields).intersection(set(support_fields_list)))
         result: dict = {
             "aggregations": result_dict.get("aggregations", {}),
         }
@@ -1228,6 +1249,17 @@ class SearchHandler(object):
             log = hit["_source"]
             origin_log = copy.deepcopy(log)
             log = self._add_cmdb_fields(log)
+            if self.export_fields:
+                new_origin_log = {}
+                for _export_field in self.export_fields:
+                    # 此处是为了虚拟字段[__set__, __module__, ipv6]可以导出
+                    if _export_field in origin_log:
+                        new_origin_log[_export_field] = origin_log[_export_field]
+                    else:
+                        new_origin_log[_export_field] = log.get(_export_field, "")
+                origin_log = new_origin_log
+            else:
+                origin_log = log
             origin_log_list.append(origin_log)
             _index = hit["_index"]
             log.update({"index": _index})
@@ -1297,8 +1329,11 @@ class SearchHandler(object):
             self.field.update({_key: {"max_length": len(_key)}})
 
     def _analyze_context_result(
-        self, log_list: List[Dict[str, Any]], mark_gseindex: int = None, mark_gseIndex: int = None
-            # pylint: disable=invalid-name
+        self,
+        log_list: List[Dict[str, Any]],
+        mark_gseindex: int = None,
+        mark_gseIndex: int = None
+        # pylint: disable=invalid-name
     ) -> Dict[str, Any]:
 
         log_list_reversed: list = log_list
@@ -1312,6 +1347,7 @@ class SearchHandler(object):
             for index, item in enumerate(log_list):
                 gseindex: str = item.get("gseindex")
                 ip: str = item.get("ip")
+                bk_host_id: int = item.get("bk_host_id")
                 path: str = item.get("path")
                 container_id: str = item.get("container_id")
                 logfile: str = item.get("logfile")
@@ -1322,15 +1358,24 @@ class SearchHandler(object):
                         _count_start = index
 
                 if (
-                    self.gseindex == str(gseindex)
-                    and self.ip == ip
-                    and self.path == path
-                    and self._iteration_idx == str(_iteration_idx)
-                ) or (
-                    self.gseindex == str(gseindex)
-                    and self.container_id == container_id
-                    and self.logfile == logfile
-                    and self._iteration_idx == str(_iteration_idx)
+                    (
+                        self.gseindex == str(gseindex)
+                        and self.bk_host_id == bk_host_id
+                        and self.path == path
+                        and self._iteration_idx == str(_iteration_idx)
+                    )
+                    or (
+                        self.gseindex == str(gseindex)
+                        and self.ip == ip
+                        and self.path == path
+                        and self._iteration_idx == str(_iteration_idx)
+                    )
+                    or (
+                        self.gseindex == str(gseindex)
+                        and self.container_id == container_id
+                        and self.logfile == logfile
+                        and self._iteration_idx == str(_iteration_idx)
+                    )
                 ):
                     _index = index
                     break
@@ -1339,6 +1384,7 @@ class SearchHandler(object):
             for index, item in enumerate(log_list):
                 gseIndex: str = item.get("gseIndex")  # pylint: disable=invalid-name
                 serverIp: str = item.get("serverIp")  # pylint: disable=invalid-name
+                bk_host_id: int = item.get("bk_host_id")
                 path: str = item.get("path")
                 iterationIndex: str = item.get("iterationIndex")  # pylint: disable=invalid-name
                 # find the counting range point
@@ -1346,6 +1392,11 @@ class SearchHandler(object):
                     if str(gseIndex) == mark_gseIndex:
                         _count_start = index
                 if (
+                    self.gseIndex == str(gseIndex)
+                    and self.bk_host_id == bk_host_id
+                    and self.path == path
+                    and self.iterationIndex == str(iterationIndex)
+                ) or (
                     self.gseIndex == str(gseIndex)
                     and self.serverIp == serverIp
                     and self.path == path
@@ -1386,84 +1437,29 @@ class SearchHandler(object):
             log_not_empty_list.append(a_item_dict)
         return log_not_empty_list
 
-    def _get_addition_host(self, bk_biz_id, target_node_type: str, target_nodes: list) -> list:
-        host_list = []
-        if target_node_type == TargetNodeTypeEnum.INSTANCE.value:
-            host_list = target_nodes
-        elif target_node_type == TargetNodeTypeEnum.DYNAMIC_GROUP.value:
-            conditions = []
-            for target_node in target_nodes:
-                dynamic_group_id = target_node["id"]
-                data = CCApi.execute_dynamic_group.bulk_request(
-                    params={
-                        "bk_biz_id": bk_biz_id,
-                        "id": dynamic_group_id,
-                        "fields": ["bk_cloud_id", "bk_host_innerip", "bk_supplier_account", "bk_set_id", "bk_set_name"],
-                    }
-                )
-                for each_instance in data or []:
-                    if each_instance.get("bk_host_innerip"):
-                        host_list.append(
-                            {
-                                "ip": each_instance["bk_host_innerip"],
-                                "bk_cloud_id": each_instance["bk_cloud_id"],
-                            }
-                        )
-                    else:
-                        conditions.append(
-                            {
-                                "bk_inst_id": each_instance["bk_set_id"],
-                                "bk_obj_id": "set",
-                            }
-                        )
-            host_result = BizHandler(bk_biz_id).search_host(conditions)
-            host_list.extend(
-                [{"ip": host["bk_host_innerip"], "bk_cloud_id": host["bk_cloud_id"]} for host in host_result]
-            )
-
-        else:
-            conditions = [
-                {"bk_obj_id": node_obj["bk_obj_id"], "bk_inst_id": node_obj["bk_inst_id"]} for node_obj in target_nodes
-            ]
-            host_result = BizHandler(bk_biz_id).search_host(conditions)
-            host_list = [{"ip": host["bk_host_innerip"], "bk_cloud_id": host["bk_cloud_id"]} for host in host_result]
-
-        return host_list
-
-    def _combine_addition_host_scope(self, attrs: dict):
-        host_scopes_ip_list: list = []
-        ips_list: list = []
-        translated_ips: list = []
-        target_ips = []
-        host_scopes: dict = attrs.get("host_scopes")
-        if host_scopes:
-            modules: list = host_scopes.get("modules")
-            target_nodes = host_scopes.get("target_nodes", {})
-            target_node_type = host_scopes.get("target_node_type", "")
-            if target_nodes:
-                target_ips = [
-                    host["ip"] for host in self._get_addition_host(attrs["bk_biz_id"], target_node_type, target_nodes)
-                ]
-            if modules:
-                biz_handler = BizHandler(attrs["bk_biz_id"])
-                search_list: list = biz_handler.search_host(modules)
-                host_list: list = [x.get("bk_host_innerip") for x in search_list]
-                translated_ips: list = host_list
-
-            ips: str = host_scopes.get("ips")
-            if ips:
-                ips_list = ips.split(",")
-
-        host_scopes_ip_list = host_scopes_ip_list + ips_list + translated_ips + target_ips
+    def _combine_addition_ip_chooser(self, attrs: dict):
+        ip_chooser_ip_list: list = []
+        ip_chooser_host_id_list: list = []
+        ip_chooser: dict = attrs.get("ip_chooser")
+        if ip_chooser:
+            ip_chooser_host_list = IPChooser(
+                bk_biz_id=attrs["bk_biz_id"], fields=CommonEnum.SIMPLE_HOST_FIELDS.value
+            ).transfer2host(ip_chooser)
+            ip_chooser_host_id_list = [host["bk_host_id"] for host in ip_chooser_host_list]
+            ip_chooser_ip_list = [host["bk_host_innerip"] for host in ip_chooser_host_list]
         addition_ip_list, new_addition = self._deal_addition(attrs)
-
         if addition_ip_list:
             search_ip_list = addition_ip_list
-        elif not addition_ip_list and host_scopes_ip_list:
-            search_ip_list = host_scopes_ip_list
+        elif not addition_ip_list and ip_chooser_ip_list:
+            search_ip_list = ip_chooser_ip_list
         else:
             search_ip_list = []
+        if ip_chooser_host_id_list:
+            new_addition.append({"field": "bk_host_id", "operator": "is one of", "value": ip_chooser_host_id_list})
         new_addition.append({"field": self.ip_field, "operator": "is one of", "value": list(set(search_ip_list))})
+        # 当IP选择器传了模块,模版,动态拓扑但是实际没有主机时, 此时应不返回任何数据, 塞入特殊数据bk_host_id=0来实现
+        if ip_chooser and not ip_chooser_host_id_list and not ip_chooser_ip_list:
+            new_addition.append({"field": "bk_host_id", "operator": "is one of", "value": [0]})
         attrs["addition"] = new_addition
         return attrs
 
@@ -1476,6 +1472,8 @@ class SearchHandler(object):
         for _add in addition:
             field: str = _add.get("key") if _add.get("key") else _add.get("field")
             _operator: str = _add.get("method") if _add.get("method") else _add.get("operator")
+            if _operator in REAL_OPERATORS_MAP.keys():
+                _operator = REAL_OPERATORS_MAP[_operator]
             if field == self.ip_field:
                 value = _add.get("value")
                 if value and _operator in ["is", "is one of", "eq"]:
@@ -1483,19 +1481,7 @@ class SearchHandler(object):
                         addition_ip_list.extend(value.split(","))
                     elif isinstance(value, list):
                         addition_ip_list = addition_ip_list + value
-                # 非IP合并的逻辑按照正常filter处理
-                value = _add.get("value")
-                new_value: list = []
-                if value:
-                    new_value = self._deal_normal_addition(value, _operator)
-                new_addition.append(
-                    {
-                        "field": field,
-                        "operator": _operator,
-                        "value": new_value,
-                        "condition": _add.get("condition", "and"),
-                    }
-                )
+                continue
             # 处理逗号分隔in类型查询
             value = _add.get("value")
             new_value: list = []
@@ -1503,12 +1489,7 @@ class SearchHandler(object):
             if isinstance(value, str) or value:
                 new_value = self._deal_normal_addition(value, _operator)
             new_addition.append(
-                {
-                    "field": field,
-                    "operator": _operator,
-                    "value": new_value,
-                    "condition": _add.get("condition", "and"),
-                }
+                {"field": field, "operator": _operator, "value": new_value, "condition": _add.get("condition", "and")}
             )
         return addition_ip_list, new_addition
 
@@ -1540,3 +1521,16 @@ class SearchHandler(object):
             return ERROR_MSG_CHECK_FIELDS_FROM_BKDATA
         else:
             return ERROR_MSG_CHECK_FIELDS_FROM_LOG
+
+    def _get_user_sorted_list(self, sorted_fields):
+        config = UserIndexSetFieldsConfig.get_config(index_set_id=self.index_set_id, username=self.request_username)
+        if not config:
+            return [[sorted_field, ASYNC_SORTED] for sorted_field in sorted_fields]
+        user_sort_list = config.sort_list
+        user_sort_fields = [i[0] for i in user_sort_list]
+        for sorted_field in sorted_fields:
+            if sorted_field in user_sort_fields:
+                continue
+            user_sort_list.append([sorted_field, ASYNC_SORTED])
+
+        return user_sort_list

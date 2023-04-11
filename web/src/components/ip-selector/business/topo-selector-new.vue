@@ -64,6 +64,7 @@
   import { Vue, Component, Prop, Ref, Watch, Emit } from 'vue-property-decorator'
   import IpSelector from '../index.vue'
   import AgentStatus from '../components/agent-status.vue'
+  import store from '@/store';
   import {
     IPanel,
     ITableConfig,
@@ -225,6 +226,10 @@
         return item
       })
     }
+
+    private get bkBizId(): string {
+      return store.getters.bkBizId
+    } 
 
     // 更多操作配置
     private get previewOperateList () {
@@ -416,13 +421,12 @@
     private async handleGetDefaultData () {
       if (['dynamic-topo', 'static-topo'].includes(this.active)) {
         // 动态拓扑默认组件数据
-        if (!this.topoTree.length) {
-          const data = await this.getTopoTree()
+        const data = await this.getTopoTree()
           this.topoTree = this.removeIpNodes(data)
           this.active === 'dynamic-topo' && this.handleSetDefaultCheckedNodes()
-        }
         return [
           {
+            id: '0',
             name: this.$t('根节点'),
             children: this.topoTree,
           },
@@ -693,7 +697,7 @@
           bk_obj_id,
           bk_inst_id,
           bk_inst_name,
-          bk_biz_id: window.localStorage.getItem('bk_biz_id')
+          bk_biz_id: this.bkBizId,
         }
       })
       const newList = await getNodeAgentStatus(nodeList).catch(() => [])

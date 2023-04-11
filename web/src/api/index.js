@@ -36,6 +36,8 @@ import HttpRequst from './_httpRequest';
 import mockList from '@/mock/index.js';
 import serviceList from '@/services/index.js';
 import { context, trace } from '@opentelemetry/api';
+import { makeMessage } from '@/common/util';
+import i18n from '@/language/i18n';
 
 const baseURL = window.AJAX_URL_PREFIX || '/api/v1';
 // axios 实例
@@ -156,7 +158,7 @@ async function getPromise(method, url, data, userConfig = {}) {
         reject(error);
       }
     });
-  }).catch(error => handleReject(error, config, url))
+  }).catch(error => handleReject(error, config))
     .finally(() => {
     // console.log('finally', config)
     });
@@ -201,14 +203,14 @@ function handleResponse({ config, response, resolve, reject }) {
  *
  * @return {Promise} promise 对象
  */
-function handleReject(error, config, url) {
+function handleReject(error, config) {
   if (axios.isCancel(error)) {
     return Promise.reject(error);
   }
-  const service = getHttpService(url, serviceList);
-  const ajaxUrl = service ? service.url : '';
-  console.error('Request error UrlPath：', ajaxUrl);
-  console.error('Request error TraceId：', config.span._spanContext.traceId);
+  // const service = getHttpService(url, serviceList);
+  // const ajaxUrl = service ? service.url : '';
+  // console.error('Request error UrlPath：', ajaxUrl);
+  const traceparent = config.span._spanContext.traceId;
 
   http.queue.delete(config.requestId);
 
@@ -236,11 +238,12 @@ function handleReject(error, config, url) {
       }
       return Promise.reject(nextError);
     } if (status === 500) {
-      nextError.message = '系统出现异常';
+      nextError.message = i18n.t('系统出现异常');
     } else if (data && data.message) {
       nextError.message = data.message;
     }
-    messageError(nextError.message);
+    const resMessage = makeMessage(nextError.message, traceparent);
+    messageError(resMessage);
     console.error(nextError.message);
     return Promise.reject(nextError);
   }
@@ -252,7 +255,7 @@ function handleReject(error, config, url) {
   }
 
   if (config.globalError && code !== 0) {
-    const message = error.message || '系统出现异常';
+    const message = error.message || i18n.t('系统出现异常');
     if (code !== 0 && code !== '0000' && code !== '00') {
       if (code === 4003) {
         bus.$emit('show-apply-perm', error.data);
@@ -261,13 +264,15 @@ function handleReject(error, config, url) {
       } else if (code === '3621602') {
         return 1;
       } else {
-        messageError(message);
+        const resMessage = makeMessage(message, traceparent);
+        messageError(resMessage);
       }
     }
     return Promise.reject(new Error(message));
   }
 
-  messageError(error.message);
+  const resMessage = makeMessage(error.message, traceparent);
+  messageError(resMessage);
   console.error(error.message);
   return Promise.reject(error);
 }
@@ -319,17 +324,17 @@ function getCancelToken() {
   };
 }
 
-function getHttpService(url, serverList) {
-  const splitor = url.split('/').filter(f => f);
+// function getHttpService(url, serverList) {
+//   const splitor = url.split('/').filter(f => f);
 
-  let _service = splitor[1]
-    ? serverList[splitor[0]][splitor[1]]
-    : serverList[splitor[0]];
-  if (typeof _service === 'function') {
-    _service = _service(url, serverList);
-  }
-  return _service;
-}
+//   let _service = splitor[1]
+//     ? serverList[splitor[0]][splitor[1]]
+//     : serverList[splitor[0]];
+//   if (typeof _service === 'function') {
+//     _service = _service(url, serverList);
+//   }
+//   return _service;
+// }
 
 Vue.prototype.$http = http;
 

@@ -52,8 +52,13 @@
             data-test-id="basicInformation_select_selectLinkType"
             v-model="formData.link_type"
             :clearable="false">
-            <bk-option id="common" :name="$t('内网链路')"></bk-option>
+            <bk-option
+              v-if="!isK8sDeploy || isShowCommon"
+              id="common"
+              :disabled="isDisableCommon"
+              :name="$t('内网链路')"></bk-option>
             <bk-option id="qcloud_cos" :name="$t('腾讯云链路')"></bk-option>
+            <bk-option id="bk_repo" :name="$t('bk_repo链路')"></bk-option>
           </bk-select>
         </bk-form-item>
         <bk-form-item
@@ -137,10 +142,10 @@
         <div class="custom-content">
           <ul class="host-list" ref="hostListRef">
             <li class="host-item header">
-              <div class="min-box dir-container">{{ $t('挂载目录') }}</div>
-              <div class="min-box id-container">{{ $t('主机云区域ID') }}</div>
-              <div class="min-box ip-container">{{ $t('主机IP') }}</div>
-              <div class="min-box operation-container">{{ $t('操作') }}</div>
+              <div class="min-box dir-container" :title="$t('挂载目录')">{{ $t('挂载目录') }}</div>
+              <div class="min-box id-container" :title="$t('主机云区域ID')">{{ $t('主机云区域ID') }}</div>
+              <div class="min-box ip-container" :title="$t('主机IP')">{{ $t('主机IP') }}</div>
+              <div class="min-box operation-container" :title="$t('操作')">{{ $t('操作') }}</div>
             </li>
             <li
               class="host-item"
@@ -252,12 +257,20 @@ export default {
       },
       isAdminError: false, // 人员是否为空
       cacheOperator: [], // 缓存的人员
+      isDisableCommon: false, // 是否禁用内网链路
+      editInitLinkType: '', // 编辑初始化时的链路类型
     };
   },
   computed: {
     ...mapState({
       showRouterLeaveTip: state => state.showRouterLeaveTip,
     }),
+    isK8sDeploy() { // 是否要禁用内网链路
+      return this.$store.getters['globals/globalsData']?.is_k8s_deploy;
+    },
+    isShowCommon() { // 禁用内网链路且 编辑时初始化是内网链路则展示内网链路且禁用选项
+      return (this.$route.params.linkId && this.editInitLinkType === 'common');
+    },
   },
   created() {
     this.init();
@@ -266,7 +279,7 @@ export default {
   beforeRouteLeave(to, from, next) {
     if (!this.isSubmit && !this.showRouterLeaveTip) {
       this.$bkInfo({
-        title: this.$t('pageLeaveTips'),
+        title: this.$t('是否放弃本次操作？'),
         confirmFn: () => {
           next();
         },
@@ -295,15 +308,23 @@ export default {
           formData.operator = [formData.operator];
           this.formData = Object.assign({}, this.formData, formData);
           this.basicLoading = false;
+          this.editInitLinkType = this.formData.link_type;
         } catch (e) {
           console.warn(e);
           this.$router.push({
             name: 'extract-link-list',
             query: {
-              projectId: window.localStorage.getItem('project_id'),
+              spaceUid: this.$store.state.spaceUid,
             },
           });
+        } finally {
+          if (this.isK8sDeploy && this.editInitLinkType === 'common') {
+            this.isDisableCommon = true; // 禁用内网链路选项
+          }
         }
+      } else {
+        // 新建时 内网链路禁用则更改初始值
+        if (this.isK8sDeploy) this.formData.link_type = 'qcloud_cos';
       }
     },
     addHost() {
@@ -370,7 +391,7 @@ export default {
         this.$router.push({
           name: 'extract-link-list',
           query: {
-            projectId: window.localStorage.getItem('project_id'),
+            spaceUid: this.$store.state.spaceUid,
           },
         });
       } catch (e) {
@@ -427,7 +448,7 @@ export default {
       .king-form {
         width: 680px;
 
-        ::v-deep .bk-form-item {
+        :deep(.bk-form-item) {
           padding: 10px 0;
           margin: 0;
         }
@@ -490,7 +511,7 @@ export default {
               .king-input {
                 width: 86%;
 
-                ::v-deep .bk-form-input.error {
+                :deep(.bk-form-input.error) {
                   border-color: #ea3636;
                 }
               }
@@ -515,11 +536,11 @@ export default {
 
   }
 
-  ::v-deep .user-selector {
+  :deep(.user-selector) {
     width: 100%;
   }
 
-  ::v-deep .is-error .user-selector-container {
+  :deep(.is-error .user-selector-container) {
     border-color: #ff5656;
   }
 </style>

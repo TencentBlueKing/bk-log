@@ -23,8 +23,10 @@
 <template>
   <div
     data-test-id="custom_div_addNewCustomBox"
+    ref="addNewCustomBoxRef"
     v-bkloading="{ isLoading: containerLoading }"
-    :class="`custom-create-container ${isOpenWindow ? 'is-active-details' : ''}`">
+    :style="`padding-right: ${introWidth + 20}px;`"
+    class="custom-create-container">
     <bk-form
       :label-width="103"
       :model="formData"
@@ -34,7 +36,7 @@
         <!-- 数据ID -->
         <bk-form-item
           required
-          :label="$t('customReport.dataID')"
+          :label="$t('数据ID')"
           :property="'bk_data_id'"
           v-if="isEdit">
           <bk-input
@@ -43,14 +45,14 @@
             v-model="formData.bk_data_id">
           </bk-input>
         </bk-form-item>
-        <!-- <bk-form-item :label="$t('customReport.token')" required :property="'name'">
+        <!-- <bk-form-item :label="$t('数据token')" required :property="'name'">
           <bk-input class="form-input" :disabled="true" v-model="formData.name"></bk-input>
         </bk-form-item> -->
         <!-- 数据名称 -->
         <bk-form-item
           required
           :disabled="submitLoading"
-          :label="$t('customReport.dataName')"
+          :label="$t('数据名称')"
           :property="'collector_config_name'"
           :rules="baseRules.collector_config_name">
           <bk-input
@@ -63,9 +65,9 @@
         <!-- 数据类型 -->
         <bk-form-item
           required
-          :label="$t('customReport.typeOfData')"
+          :label="$t('数据类型')"
           :property="'name'">
-          <div style="margin-top: -4px">
+          <div style="margin-top: -4px; min-width: 500px;">
             <div class="bk-button-group">
               <bk-button
                 v-for=" (item,index) of globalsData.databus_custom"
@@ -77,31 +79,41 @@
                 {{item.name}}
               </bk-button>
             </div>
-            <p class="group-tip" slot="tip">{{$t('customReport.typeTips')}}</p>
+            <p class="group-tip" slot="tip">{{$t('自定义上报数据，可以通过采集器，或者指定协议例如otlp等方式进行上报，自定义上报有一定的使用要求，具体可以查看使用说明')}}</p>
           </div>
         </bk-form-item>
         <bk-form-item
           required
-          :label="$t('customReport.englishName')"
+          ext-cls="en-bk-form"
+          :icon-offset="120"
+          :label="$t('英文名')"
           :property="'collector_config_name_en'"
           :rules="baseRules.collector_config_name_en">
-          <bk-input
-            class="form-input"
-            show-word-limit
-            maxlength="50"
-            data-test-id="addNewCustomBox_input_englishName"
-            v-model="formData.collector_config_name_en"
-            :disabled="submitLoading || isEdit"
-            :placeholder="$t('dataSource.en_name_tips')"></bk-input>
+          <div class="en-name-box">
+            <div>
+              <bk-input
+                class="form-input"
+                show-word-limit
+                maxlength="50"
+                data-test-id="addNewCustomBox_input_englishName"
+                v-model="formData.collector_config_name_en"
+                :disabled="submitLoading || isEdit"
+                :placeholder="$t('支持数字、字母、下划线，长短5～50字符')"></bk-input>
+              <span v-if="!isTextValid" class="text-error">{{formData.collector_config_name_en}}</span>
+            </div>
+            <span v-bk-tooltips.top="$t('自动转换成正确的英文名格式')">
+              <bk-button v-if="!isTextValid" text @click="handleEnConvert">{{$t('自动转换')}}</bk-button>
+            </span>
+          </div>
         </bk-form-item>
         <!-- 数据分类 -->
         <bk-form-item
           required
-          :label="$t('customReport.dataClassification')"
+          :label="$t('数据分类')"
           :property="'category_id'"
           :rules="baseRules.category_id">
           <bk-select
-            style="width: 320px;"
+            style="width: 500px;"
             v-model="formData.category_id"
             data-test-id="addNewCustomBox_select_selectDataCategory"
             :disabled="submitLoading">
@@ -117,24 +129,24 @@
             </template>
           </bk-select>
         </bk-form-item>
-        <bk-form-item :label="$t('customReport.instruction')">
+        <bk-form-item :label="$t('说明')">
           <bk-input
             class="form-input"
             type="textarea"
             v-model="formData.description"
             data-test-id="addNewCustomBox_input_description"
             :disabled="submitLoading"
-            :placeholder="$t('customReport.notEntered')"
+            :placeholder="$t('未输入')"
             :maxlength="100"></bk-input>
         </bk-form-item>
       </div>
       <!-- 存储设置 -->
       <div class="create-form">
-        <div class="form-title">{{$t('customReport.storageSettings')}}</div>
+        <div class="form-title">{{$t('存储设置')}}</div>
         <!-- 存储集群 -->
         <bk-form-item
           required
-          :label="$t('dataSource.storage_cluster_name')"
+          :label="$t('存储集群')"
           :property="'data_link_id'">
           <cluster-table
             :table-list="clusterList"
@@ -151,11 +163,11 @@
         <bk-form-item
           required
           v-if="!isCloseDataLink"
-          :label="$t('customReport.dataLink')"
+          :label="$t('数据链路')"
           :rules="storageRules.data_link_id"
           :property="'data_link_id'">
           <bk-select
-            style="width: 320px;"
+            style="width: 500px;"
             v-model="formData.data_link_id"
             data-test-id="addNewCustomBox_select_selectDataLink"
             :clearable="false"
@@ -170,28 +182,27 @@
         </bk-form-item>
         <!-- 索引集名称 -->
         <bk-form-item
-          :label="$t('configDetails.storageIndexName')"
+          :label="$t('索引名')"
           class="form-inline-div"
           :rules="storageRules.table_id"
           :property="'table_id'">
-          <!-- <div class="prefix">{{formData.table_id_prefix}}</div> -->
           <bk-input
-            style="width: 320px"
+            style="width: 500px;"
             disabled
             v-model="formData.collector_config_name_en"
             data-test-id="addNewCustomBox_input_configName"
             maxlength="50"
             minlength="5"
-            :placeholder="$t('dataManage.input_number')">
+            :placeholder="$t('英文或者数字，5～50长度')">
             <template slot="prepend">
-              <div class="group-text">{{`${bkBizId}_bklog_`}}</div>
+              <div class="group-text">{{showGroupText}}</div>
             </template>
           </bk-input>
         </bk-form-item>
         <!-- 过期时间 -->
-        <bk-form-item :label="$t('configDetails.expirationTime')">
+        <bk-form-item :label="$t('过期时间')">
           <bk-select
-            style="width: 320px;"
+            style="width: 500px;"
             v-model="formData.retention"
             data-test-id="addNewCustomBox_select_expireDate"
             :clearable="false"
@@ -207,7 +218,7 @@
                 v-model="customRetentionDay"
                 size="small"
                 type="number"
-                :placeholder="$t('输入自定义天数')"
+                :placeholder="$t('输入自定义天数，按 Enter 确认')"
                 :show-controls="false"
                 @enter="enterCustomDay($event, 'retention')"
               ></bk-input>
@@ -215,7 +226,7 @@
           </bk-select>
         </bk-form-item>
         <!-- 副本数 -->
-        <bk-form-item :label="$t('configDetails.copyNumber')">
+        <bk-form-item :label="$t('副本数')">
           <bk-input
             data-test-id="addNewCustomBox_input_copyNumber"
             v-model="formData.storage_replies"
@@ -265,7 +276,7 @@
                 size="small"
                 type="number"
                 data-test-id="storageBox_input_customize"
-                :placeholder="$t('输入自定义天数')"
+                :placeholder="$t('输入自定义天数，按 Enter 确认')"
                 :show-controls="false"
                 @enter="enterCustomDay($event, 'hot')"
               ></bk-input>
@@ -279,21 +290,29 @@
       </div>
     </bk-form>
 
-    <intro-panel
-      :data="formData"
-      :is-open-window="isOpenWindow"
-      @handleActiveDetails="handleActiveDetails" />
+    <div
+      :class="['intro-container',isDraging && 'draging-move']"
+      :style="`width: ${ introWidth }px`">
+      <div :class="`drag-item ${!introWidth && 'hidden-drag'}`" :style="`right: ${introWidth - 18}px`">
+        <span
+          class="bk-icon icon-more"
+          @mousedown.left="dragBegin"></span>
+      </div>
+      <intro-panel
+        :data="formData"
+        :is-open-window="isOpenWindow"
+        @handleActiveDetails="handleActiveDetails" />
+    </div>
 
     <div class="submit-btn">
       <bk-button
-        class="fl"
+        style="margin-right: 20px;"
         theme="primary"
         :loading="submitLoading"
         @click="handleSubmitChange">
         {{$t('提交')}}
       </bk-button>
       <bk-button
-        class="fr"
         theme="default"
         @click="cancel">
         {{$t('取消')}}
@@ -305,6 +324,7 @@
 <script>
 import { mapGetters } from 'vuex';
 import storageMixin from '@/mixins/storage-mixin';
+import dragMixin from '@/mixins/drag-mixin';
 import IntroPanel from './components/intro-panel';
 import clusterTable from '@/components/collection-access/components/cluster-table';
 
@@ -314,7 +334,7 @@ export default {
     IntroPanel,
     clusterTable,
   },
-  mixins: [storageMixin],
+  mixins: [storageMixin, dragMixin],
   data() {
     return {
       isItsm: window.FEATURE_TOGGLE.collect_itsm === 'on',
@@ -365,14 +385,17 @@ export default {
           },
           {
             max: 50,
+            message: this.$t('不能多于50个字符'),
             trigger: 'blur',
           },
           {
             min: 5,
+            message: this.$t('不能少于5个字符'),
             trigger: 'blur',
           },
           {
-            regex: /^[A-Za-z0-9_]+$/,
+            validator: this.checkEnNameValidator,
+            message: this.$t('只支持输入字母，数字，下划线'),
             trigger: 'blur',
           },
         ],
@@ -418,11 +441,11 @@ export default {
       clusterList: [], // 共享集群
       exclusiveList: [], // 独享集群
       editStorageClusterID: null,
+      isTextValid: true,
     };
   },
   computed: {
     ...mapGetters({
-      projectId: 'projectId',
       bkBizId: 'bkBizId',
       globalsData: 'globals/globalsData',
     }),
@@ -434,6 +457,9 @@ export default {
     isCloseDataLink() {
       // 没有可上报的链路时，编辑采集配置链路ID为0或null时，隐藏链路配置框，并且不做空值校验。
       return !this.linkConfigurationList.length || (this.isEdit && !this.formData.data_link_id);
+    },
+    showGroupText() {
+      return Number(this.bkBizId) > 0 ? `${this.bkBizId}_bklog_` : `space_${Math.abs(Number(this.bkBizId))}_bklog_`;
     },
   },
   watch: {
@@ -462,6 +488,9 @@ export default {
       .finally(() => {
         this.containerLoading = false;
       });
+    this.$nextTick(() => {
+      this.maxIntroWidth = this.$refs.addNewCustomBoxRef.clientWidth - 380;
+    });
   },
   methods: {
     handleChangeType(id) {
@@ -566,13 +595,33 @@ export default {
     },
     handleActiveDetails(state) {
       this.isOpenWindow = state;
+      this.introWidth = state ? 360 : 0;
+    },
+    checkEnNameValidator(val) {
+      this.isTextValid = new RegExp(/^[A-Za-z0-9_]+$/).test(val);
+      return this.isTextValid;
+    },
+    handleEnConvert() {
+      const str = this.formData.collector_config_name_en;
+      const convertStr = str.split('').reduce((pre, cur) => {
+        if (cur === '-') cur = '_';
+        if (!/\w/.test(cur)) cur = '';
+        return pre += cur;
+      }, '');
+      this.formData.collector_config_name_en = convertStr;
+      this.$refs.validateForm.validate().then(() => {
+        this.isTextValid = true;
+      })
+        .catch(() => {
+          if (convertStr.length < 5) this.isTextValid = true;
+        });
     },
   },
   // eslint-disable-next-line no-unused-vars
   beforeRouteLeave(to, from, next) {
     if (!this.isSubmit) {
       this.$bkInfo({
-        title: this.$t('pageLeaveTips'),
+        title: this.$t('是否放弃本次操作？'),
         confirmFn: () => {
           next();
         },
@@ -592,10 +641,28 @@ export default {
 
   .custom-create-container {
     padding: 0 24px;
-    transition: padding .5s;
 
-    &.is-active-details {
-      padding: 0 420px 0 24px;
+    .en-bk-form {
+      width: 680px;
+
+      .en-name-box {
+        align-items: center;
+
+        @include flex-justify(space-between);
+      }
+
+      .text-error {
+        display: inline-block;
+        position: absolute;
+        top: 6px;
+        left: 12px;
+        font-size: 12px;
+        color: transparent;
+        pointer-events: none;
+
+        /* stylelint-disable-next-line declaration-no-important */
+        text-decoration: red wavy underline !important;
+      }
     }
 
     .create-form {
@@ -614,7 +681,7 @@ export default {
       }
 
       .form-input {
-        width: 320px;
+        width: 500px;
       }
 
       .group-tip {
@@ -624,10 +691,45 @@ export default {
     }
 
     .submit-btn {
-      width: 140px;
       margin: 20px 20px 100px ;
+    }
 
-      @include clearfix;
+    .intro-container {
+      position: fixed;
+      top: 99px;
+      right: 0;
+      z-index: 999;
+      height: calc(100vh - 99px);
+      overflow: hidden;
+      border-left: 1px solid transparent;
+
+      .drag-item {
+        width: 20px;
+        height: 40px;
+        display: inline-block;
+        color: #c4c6cc;
+        position: absolute;
+        z-index: 100;
+        right: 304px;
+        top: 48%;
+        user-select: none;
+        cursor: col-resize;
+
+        &.hidden-drag {
+          display: none;
+        }
+
+        .icon-more::after {
+          content: '\e189';
+          position: absolute;
+          left: 0;
+          top: 12px;
+        }
+      }
+
+      &.draging-move {
+        border-left-color: #3a84ff;
+      }
     }
   }
 </style>

@@ -22,6 +22,7 @@ the project delivered to anyone in the future.
 
 from dataclasses import dataclass, field
 from typing import List, Any, Dict
+from django.utils.translation import ugettext_lazy as _
 
 
 @dataclass
@@ -378,6 +379,7 @@ class AfterTreatDataFlowCls(object):
     target_bk_biz_id: int
     es: ElasticsearchCls = ElasticsearchCls()
     es_cluster: str = ""
+    is_flink_env: bool = False
 
 
 @dataclass
@@ -391,7 +393,7 @@ class AddFlowNodesCls(object):
         default_factory=lambda: {
             "bk_biz_id": 0,
             "from_result_table_ids": [],
-            "name": "join signature缓存",
+            "name": _("join signature缓存"),
             "result_table_id": "",
         }
     )

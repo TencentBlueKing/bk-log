@@ -32,7 +32,7 @@
         <div class="form-div mt log-paths" v-for="(log, index) in logPaths" :key="index">
           <bk-form-item
             required
-            :label="index === 0 ? $t('retrieve.logPath') : ''"
+            :label="index === 0 ? $t('日志路径') : ''"
             :rules="rules.paths"
             :property="'params.paths.' + index + '.value'">
             <div class="flex-ac">
@@ -51,13 +51,14 @@
               </div>
             </div>
             <div class="tips" v-if="index === 0">
-              {{ $t('retrieve.log_available') }}
-              <span class="font-gray">{{ $t('retrieve.log_wildcard_character') }}</span>
+              <i18n path="日志文件的绝对路径，可使用 {0}">
+                <span class="font-gray">{{ $t('通配符') }}</span>
+              </i18n>
             </div>
           </bk-form-item>
         </div>
         <!-- 日志字符集 -->
-        <bk-form-item class="mt" :label="$t('configDetails.logSet')" required>
+        <bk-form-item class="mt" :label="$t('字符集')" required>
           <bk-select
             data-test-id="sourceLogBox_div_changeLogCharacterTet"
             style="width: 320px;"
@@ -74,80 +75,88 @@
         </bk-form-item>
       </div>
       <!-- 过滤内容 -->
-      <div :class="['config-item', 'filter-content',showType === 'horizontal' && 'horizontal-item']">
-        <span v-bk-tooltips="$t('retrieve.suggest_clean')">
-          <span class="filter-title">{{$t('configDetails.filterContent')}}</span>
+      <div :class="[
+        'config-item',
+        'filter-content',
+        showType === 'horizontal' && 'horizontal-item',
+        isEnLanguage && 'en-span'
+      ]">
+        <span v-bk-tooltips="$t('为减少传输和存储成本，可以过滤掉部分内容,更复杂的可在“清洗”功能中完成')">
+          <span class="filter-title">{{$t('过滤内容')}}</span>
         </span>
         <bk-radio-group v-model="subFormData.params.conditions.type" @change="chooseType">
-          <bk-radio value="match" style="margin-right: 8px">{{$t('retrieve.String_filtering')}}</bk-radio>
-          <bk-radio value="separator">{{$t('retrieve.Separator_filtering')}}</bk-radio>
+          <bk-radio value="match" style="margin-right: 8px">{{$t('字符串过滤')}}</bk-radio>
+          <bk-radio value="separator">{{$t('分隔符过滤')}}</bk-radio>
         </bk-radio-group>
-        <div class="flex-ac filter-select">
-          <bk-select
-            :clearable="false"
-            v-if="isString" v-model="subFormData.params.conditions.match_type">
-            <bk-option id="include" :name="$t('retrieve.Keep_string')"></bk-option>
-            <bk-option id="exclude" :name="$t('retrieve.Keep_filtering')" disabled>
-              <span v-bk-tooltips.right="$t('正在开发中')">{{ $t('retrieve.Keep_filtering') }}</span>
-            </bk-option>
-          </bk-select>
-          <bk-input
-            v-show="isString"
-            v-model="subFormData.params.conditions.match_content"
-            style="margin-left: 8px;"></bk-input>
-          <bk-select
-            style="width: 320px; height: 32px"
-            v-if="!isString"
-            v-model="subFormData.params.conditions.separator">
-            <bk-option
-              v-for="(option, index) in globalsData.data_delimiter"
-              :key="index"
-              :id="option.id"
-              :name="option.name">
-            </bk-option>
-          </bk-select>
-        </div>
-        <div class="tips" v-show="!isString">{{ $t('retrieve.Complex_filtering') }}</div>
-        <div class="form-div" v-if="!isString">
-          <div class="choose-table">
-            <div class="choose-table-item choose-table-item-head">
-              <div class="left">{{ $t('retrieve.How_columns') }}</div>
-              <div class="main">{{ $t('retrieve.equal_to') }}</div>
-              <div class="right">{{ $t('retrieve.To_add_delete') }}</div>
-            </div>
-            <div class="choose-table-item-body">
-              <div class="choose-table-item" v-for="(item, index) in separatorFilters" :key="index">
-                <div class="left">
-                  <bk-form-item
-                    label="" :rules="rules.separator_filters"
-                    :property="'params.conditions.separator_filters.' + index + '.fieldindex'">
-                    <bk-input style="width: 100px;" v-model="item.fieldindex"></bk-input>
-                  </bk-form-item>
-                </div>
-                <div :class="['main', { line: separatorFilters.length > 1 }] ">
-                  <bk-form-item
-                    label="" :rules="rules.separator_filters"
-                    :property="'params.conditions.separator_filters.' + index + '.word'">
-                    <bk-input v-model="item.word"></bk-input>
-                  </bk-form-item>
-                </div>
-                <div class="right">
-                  <i class="bk-icon icon-plus-circle-yuan icons" @click="addItem"></i>
-                  <i
-                    :class="['bk-icon icon-minus-circle-shape icons ml9', { disable: separatorFilters.length === 1 }] "
-                    @click="delItem(index)">
-                  </i>
-                </div>
+        <template v-if="isClickTypeRadio">
+          <div class="flex-ac filter-select">
+            <bk-select
+              :clearable="false"
+              v-if="isString" v-model="subFormData.params.conditions.match_type">
+              <bk-option id="include" :name="$t('include(保留匹配字符串)')"></bk-option>
+              <bk-option id="exclude" :name="$t('exclude(过滤匹配字符串)')" disabled>
+                <span v-bk-tooltips.right="$t('正在开发中')">{{ $t('exclude(过滤匹配字符串)') }}</span>
+              </bk-option>
+            </bk-select>
+            <bk-input
+              v-show="isString"
+              v-model="subFormData.params.conditions.match_content"
+              style="margin-left: 8px;"></bk-input>
+            <bk-select
+              style="width: 320px; height: 32px"
+              v-if="!isString"
+              v-model="subFormData.params.conditions.separator">
+              <bk-option
+                v-for="(option, index) in globalsData.data_delimiter"
+                :key="index"
+                :id="option.id"
+                :name="option.name">
+              </bk-option>
+            </bk-select>
+          </div>
+          <div class="tips" v-show="!isString">{{ $t('复杂的过滤条件（超过5个）会影响机器性能') }}</div>
+          <div class="form-div" v-if="!isString">
+            <div class="choose-table">
+              <div class="choose-table-item choose-table-item-head">
+                <div class="left">{{ $t('第几列') }}</div>
+                <div class="main">{{ $t('等于') }}</div>
+                <div class="right">{{ $t('增/删') }}</div>
               </div>
-              <div class="choose-select" v-if="separatorFilters && separatorFilters.length > 1">
-                <bk-select class="select-div" v-model="type" @selected="changeType">
-                  <bk-option id="and" :name="$t('configDetails.and')"></bk-option>
-                  <bk-option id="or" :name="$t('configDetails.or')"></bk-option>
-                </bk-select>
+              <div class="choose-table-item-body">
+                <div class="choose-table-item" v-for="(item, index) in separatorFilters" :key="index">
+                  <div class="left">
+                    <bk-form-item
+                      label="" :rules="rules.separator_filters"
+                      :property="'params.conditions.separator_filters.' + index + '.fieldindex'">
+                      <bk-input style="width: 100px;" v-model="item.fieldindex"></bk-input>
+                    </bk-form-item>
+                  </div>
+                  <div :class="['main', { line: separatorFilters.length > 1 }] ">
+                    <bk-form-item
+                      label="" :rules="rules.separator_filters"
+                      :property="'params.conditions.separator_filters.' + index + '.word'">
+                      <bk-input v-model="item.word"></bk-input>
+                    </bk-form-item>
+                  </div>
+                  <div class="right">
+                    <i class="bk-icon icon-plus-circle-yuan icons" @click="addItem"></i>
+                    <i
+                      :class="['bk-icon icon-minus-circle-shape icons ml9',
+                               { disable: separatorFilters.length === 1 }]"
+                      @click="delItem(index)">
+                    </i>
+                  </div>
+                </div>
+                <div class="choose-select" v-if="separatorFilters && separatorFilters.length > 1">
+                  <bk-select class="select-div" v-model="type" @selected="changeType">
+                    <bk-option id="and" :name="$t('并')"></bk-option>
+                    <bk-option id="or" :name="$t('或')"></bk-option>
+                  </bk-select>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </template>
       </div>
       <!-- 段日志正则调试 -->
       <div v-if="hasMultilineReg" class="multiline-log-container">
@@ -173,27 +182,26 @@
           </bk-form-item>
         </div>
         <div :class="['row-container', 'second',showType === 'horizontal' && 'pl115']">
-          {{ $t('最多匹配') }}
-          <bk-form-item :rules="rules.maxLine" property="params.multiline_max_lines">
-            <bk-input
-              v-model="subFormData.params.multiline_max_lines"
-              data-test-id="sourceLogBox_input_mostMatches"
-              type="number"
-              :precision="0"
-              :show-controls="false">
-            </bk-input>
-          </bk-form-item>
-          {{ $t('行，最大耗时') }}
-          <bk-form-item :rules="rules.maxTimeout" property="params.multiline_timeout">
-            <bk-input
-              v-model="subFormData.params.multiline_timeout"
-              data-test-id="sourceLogBox_input_maximumTimeConsuming"
-              type="number"
-              :precision="0"
-              :show-controls="false">
-            </bk-input>
-          </bk-form-item>
-          {{ $t('秒') }}
+          <i18n path="最多匹配{0}行，最大耗时{1}秒" class="i18n-style">
+            <bk-form-item :rules="rules.maxLine" property="params.multiline_max_lines">
+              <bk-input
+                v-model="subFormData.params.multiline_max_lines"
+                data-test-id="sourceLogBox_input_mostMatches"
+                type="number"
+                :precision="0"
+                :show-controls="false">
+              </bk-input>
+            </bk-form-item>
+            <bk-form-item :rules="rules.maxTimeout" property="params.multiline_timeout">
+              <bk-input
+                v-model="subFormData.params.multiline_timeout"
+                data-test-id="sourceLogBox_input_maximumTimeConsuming"
+                type="number"
+                :precision="0"
+                :show-controls="false">
+              </bk-input>
+            </bk-form-item>
+          </i18n>
         </div>
         <multiline-reg-dialog
           :old-pattern.sync="subFormData.params.multiline_pattern"
@@ -212,7 +220,7 @@
       :model="subFormData"
       class="mt">
       <bk-form-item
-        :label="$t('configDetails.logSpecies')"
+        :label="$t('日志种类')"
         data-test-id="sourceLogBox_div_logSpecies"
         required>
         <bk-checkbox-group
@@ -228,6 +236,7 @@
             </bk-checkbox>
             <bk-tag-input
               v-model="otherSpeciesList"
+              free-paste
               :class="otherRules ? 'tagRulesColor' : ''"
               :allow-auto-match="true"
               :has-delete-icon="true"
@@ -240,16 +249,16 @@
       </bk-form-item>
     </bk-form>
     <!-- win-过滤内容 -->
-    <div :class="['config-item','mt', showType === 'horizontal' && 'win-content']">
-      <span v-bk-tooltips="$t('retrieve.suggest_clean')">
-        <span class="filter-title">{{$t('configDetails.filterContent')}}</span>
+    <div :class="['config-item','mt', showType === 'horizontal' && 'win-content', isEnLanguage && 'en-span']">
+      <span v-bk-tooltips="$t('为减少传输和存储成本，可以过滤掉部分内容,更复杂的可在“清洗”功能中完成')">
+        <span class="filter-title">{{$t('过滤内容')}}</span>
       </span>
       <div class="form-div win-filter" v-for="(item, index) in eventSettingList" :key="index">
         <bk-select
           class="select-div"
           v-model="item.type"
           :clearable="false"
-          @selected="tagBlurRules(item,index)">
+          @selected="tagBlurRules(item, index)">
           <bk-option
             v-for="option in selectEventList"
             :key="option.id"
@@ -261,12 +270,13 @@
         <bk-tag-input
           class="tag-input"
           v-model="item.list"
+          free-paste
           :class="item.isCorrect ? '' : 'tagRulesColor'"
           :allow-auto-match="true"
           :has-delete-icon="true"
           :allow-create="true"
-          @blur="tagBlurRules(item,index)"
-          @remove="tagBlurRules(item,index)">
+          @blur="tagBlurRules(item, index)"
+          @remove="tagBlurRules(item, index)">
         </bk-tag-input>
         <div class="ml9">
           <i :class="
@@ -398,13 +408,13 @@ export default {
       otherRules: false, // 是否有其他规则
       logSpeciesList: [{
         id: 'Application',
-        name: this.$t('应用程序'),
+        name: this.$t('应用程序(Application)'),
       }, {
         id: 'Security',
-        name: this.$t('安全'),
+        name: this.$t('安全(Security)'),
       }, {
         id: 'System',
-        name: this.$t('win系统'),
+        name: this.$t('系统(System)'),
       }, {
         id: 'Other',
         name: this.$t('其他'),
@@ -454,6 +464,10 @@ export default {
     isString() {
       return this.subFormData.params.conditions.type === 'match';
     },
+    // 是否点击过过滤内容单选框
+    isClickTypeRadio() {
+      return this.subFormData.params.conditions.type !== '';
+    },
     // 获取label宽度
     getLabelWidth() {
       return this.showType === 'horizontal' ? 115 : 200;
@@ -478,6 +492,9 @@ export default {
         winParams[el.type] = el.list;
       });
       return winParams;
+    },
+    isEnLanguage() {
+      return this.$store.state.isEnLanguage;
     },
   },
   watch: {
@@ -645,6 +662,10 @@ export default {
     top: 23px;
   }
 
+  &.en-span span {
+    left: -112px;
+  }
+
   .filter-select {
     margin-top: 11px;
   }
@@ -653,6 +674,11 @@ export default {
     width: 184px;
     height: 32px;
   }
+}
+
+.i18n-style {
+  display: flex;
+  align-items: center;
 }
 
 .filter-title {

@@ -71,6 +71,7 @@
             v-show="item.filterVisible"
             type="visible"
             :key="item.field_name"
+            :retrieve-params="retrieveParams"
             :field-alias-map="fieldAliasMap"
             :show-field-alias="showFieldAlias"
             :statistical-field-data="statisticalFieldsData[item.field_name]"
@@ -86,6 +87,7 @@
           <field-item
             v-show="item.filterVisible"
             type="hidden"
+            :retrieve-params="retrieveParams"
             :key="item.field_name"
             :field-alias-map="fieldAliasMap"
             :show-field-alias="showFieldAlias"
@@ -146,6 +148,10 @@ export default {
       type: Boolean,
       default: false,
     },
+    retrieveParams: {
+      type: Object,
+      required: true,
+    },
   },
   data() {
     return {
@@ -169,6 +175,9 @@ export default {
         count = count + 1;
       }
       return count;
+    },
+    filedSettingConfigID() { // 当前索引集的显示字段ID
+      return this.$store.state.retrieve.filedSettingConfigID;
     },
   },
   watch: {
@@ -229,14 +238,11 @@ export default {
       } else { // 需要显示字段
         displayFieldNames.push(fieldItem.field_name);
       }
-      this.$emit('fieldsUpdated', displayFieldNames);
-      this.$store.commit('updateClearTableWidth', 1);
-      if (!displayFieldNames.length) { // 可以设置为全部隐藏，但是不请求接口
-        return;
-      }
+      this.$emit('fieldsUpdated', displayFieldNames, undefined, false);
+      if (!displayFieldNames.length) return; // 可以设置为全部隐藏，但是不请求接口
       this.$http.request('retrieve/postFieldsConfig', {
         params: { index_set_id: this.$route.params.indexId },
-        data: { display_fields: displayFieldNames, sort_list: this.sortList },
+        data: { display_fields: displayFieldNames, sort_list: this.sortList, config_id: this.filedSettingConfigID },
       }).catch((e) => {
         console.warn(e);
       });
@@ -269,7 +275,7 @@ export default {
         margin: 0 16px;
       }
 
-      ::v-deep .bk-tooltip {
+      :deep(.bk-tooltip) {
         flex-shrink: 0;
       }
 

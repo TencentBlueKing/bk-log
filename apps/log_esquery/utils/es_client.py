@@ -19,9 +19,15 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import socket
+
+from django.utils.translation import ugettext_lazy as _
+
 from elasticsearch import Elasticsearch as Elasticsearch
 from elasticsearch5 import Elasticsearch as Elasticsearch5
 from elasticsearch6 import Elasticsearch as Elasticsearch6
+
+from apps.log_esquery.exceptions import EsClientSocketException, EsClientHostPortException
 
 
 def get_es_client(
@@ -43,7 +49,45 @@ def get_es_client(
     else:
         es_client = Elasticsearch
 
+    # 由于IPV6地址需要加[], 所以需要对hosts进行处理
+    new_hosts = []
+    for host in hosts:
+        if not host.startswith("["):
+            host = "[" + host
+        if not host.endswith("]"):
+            host += "]"
+        new_hosts.append(host)
+    hosts = new_hosts
+
     http_auth = (username, password) if password else None
     return es_client(
         hosts, http_auth=http_auth, port=port, sniffer_timeout=sniffer_timeout, verify_certs=verify_certs, **kwargs
     )
+
+
+def es_socket_ping(host: str, port: int):
+    """
+    ES ping by socket
+    """
+    if not host or not port:
+        raise EsClientHostPortException()
+
+    es_address: tuple = (host, port)
+    try:
+        # 先尝试ipv4
+        cs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        cs.settimeout(2)
+        status: int = cs.connect_ex(es_address)
+    except socket.gaierror:  # ip协议不匹配时, 会抛出gaierror
+        # ipv4失败，尝试ipv6
+        cs = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+        cs.settimeout(2)
+        status: int = cs.connect_ex(es_address)
+    except Exception as e:  # pylint: disable=broad-except
+        raise EsClientSocketException(
+            EsClientSocketException.MESSAGE.format(error=_("IP or PORT can not be reached, %s").format(e=e))
+        )
+
+    if status != 0:
+        raise EsClientSocketException(EsClientSocketException.MESSAGE.format(error=_("IP or PORT can not be reached")))
+    cs.close()

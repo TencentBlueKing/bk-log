@@ -23,23 +23,25 @@
 <template>
   <transition name="guide-fade">
     <div v-if="!isDone && stepList.length" ref="wraper" class="novice-guide">
-      <div
-        v-if="!isShowFinisheDialog && !isShowStopDialog"
+      <StepBox
         ref="tip"
-        class="step-box"
-        :class="placement"
-        :style="tipStyles">
-        <div class="step-title">{{ currentStep.title }}（{{ currentStepNum }}/{{ stepList.length }}）</div>
-        <div class="step-content">{{ currentStep.content }}</div>
-        <div class="step-action">
+        :placement="placement"
+        :tip-styles="tipStyles"
+        v-if="!isShowFinisheDialog && !isShowStopDialog"
+      >
+        <div slot="title">
+          {{ currentStep.title }}（{{ currentStepNum }}/{{ stepList.length }}）
+        </div>
+        <div slot="content">{{ currentStep.content }}</div>
+        <template slot="action">
           <template v-if="!isLast">
-            <div class="action-text" @click="handleStepChange('stop')">{{ $t('dataManage.skip') }}</div>
+            <div class="action-text" @click="handleStepChange('stop')">{{ $t('跳过') }}</div>
             <div class="action-btn" @click="handleStepChange('next')">{{ $t('下一步') }}</div>
           </template>
           <div v-else class="action-btn" @click="handleStepChange('finish')">{{ $t('完成') }}</div>
-        </div>
-        <div class="target-arrow"></div>
-      </div>
+        </template>
+      </StepBox>
+
       <!-- <div v-if="isShowFinisheDialog" class="guide-finished-box">
         <div class="wraper">
           <div class="flag">
@@ -80,12 +82,16 @@
 
 <script>
 import _ from 'lodash';
+import StepBox from '../step-box/index.vue';
 // import cookie from 'cookie';
 
 // const CACHE_KEY = 'lesscode_supermen';
 
 export default {
   name: '',
+  components: {
+    StepBox,
+  },
   props: {
     guidePage: {
       type: String,
@@ -192,7 +198,7 @@ export default {
           const {
             width,
             height,
-          } = this.$refs.tip.getBoundingClientRect();
+          } = this.$refs.tip.$el.getBoundingClientRect();
 
           let placement = 'left';
           if (width > height && targeBottom < 0.3 * windowHieght) {
@@ -350,84 +356,6 @@ export default {
     left: 0;
     z-index: 100000;
     background: rgba(0,0,0,.6);
-
-    .step-box {
-      position: absolute;
-      width: 270px;
-      min-height: 110px;
-      padding: 12px 10px 10px;
-      font-size: 12px;
-      color: #313238;
-      border-radius: 2px;
-      background: #fff;
-
-      &.right {
-        .target-arrow {
-          top: 30px;
-          left: -4px;
-        }
-      }
-
-      &.left {
-        .target-arrow {
-          top: 30px;
-          right: -4px;
-        }
-      }
-
-      &.bottom {
-        .target-arrow {
-          top: -4px;
-          left: 50%;
-        }
-      }
-
-      &.top {
-        .target-arrow {
-          bottom: -4px;
-          left: 50%;
-        }
-      }
-
-      .step-title {
-        font-weight: bold;
-        line-height: 16px;
-      }
-
-      .step-content {
-        margin-top: 7px;
-      }
-
-      .step-action {
-        display: flex;
-        justify-content: flex-end;
-        margin-top: 14px;
-
-        .action-text {
-          color: #3a84ff;
-          cursor: pointer;
-        }
-
-        .action-btn {
-          height: 20px;
-          padding: 0 8px;
-          margin-left: 14px;
-          line-height: 20px;
-          color: #fff;
-          border-radius: 10px;
-          background: #3a84ff;
-          cursor: pointer;
-        }
-      }
-
-      .target-arrow {
-        position: absolute;
-        width: 8px;
-        height: 8px;
-        background: inherit;
-        transform: rotateZ(45deg);
-      }
-    }
 
     .guide-finished-box {
       position: absolute;

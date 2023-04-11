@@ -64,7 +64,76 @@ export const fieldTypeMap = {
     icon: 'bk-icon icon-exclamation-triangle',
   },
   __virtual__: {
-    name: i18n.t('unKnowIconTips'),
+    name: i18n.t('该字段为平台补充 不可检索'),
     icon: 'log-icon icon-ext',
+  },
+};
+
+export const SPACE_TYPE_MAP = {
+  bkcc: {
+    name: i18n.t('业务'),
+    dark: {
+      color: '#478EFC',
+      backgroundColor: '#2B354D',
+    },
+    light: {
+      color: '#63656E',
+      backgroundColor: '#CDE8FB',
+    },
+  },
+  default: {
+    name: i18n.t('监控空间'),
+    dark: {
+      color: '#B3B3B3',
+      backgroundColor: '#333333',
+    },
+    light: {
+      color: '#63656E',
+      backgroundColor: '#DEDEDE',
+    },
+  },
+  bkci: {
+    name: i18n.t('研发项目'),
+    dark: {
+      color: '#F85959',
+      backgroundColor: '#4C3232',
+    },
+    light: {
+      color: '#63656E',
+      backgroundColor: '#F8D8D4',
+    },
+  },
+  bcs: {
+    name: i18n.t('容器项目'),
+    dark: {
+      color: '#FC943B',
+      backgroundColor: '#453921',
+    },
+    light: {
+      color: '#63656E',
+      backgroundColor: '#FFF2C9',
+    },
+  },
+  paas: {
+    name: i18n.t('PaaS应用'),
+    dark: {
+      color: '#2BB950',
+      backgroundColor: '#223B2B',
+    },
+    light: {
+      color: '#63656E',
+      backgroundColor: '#D8EDD9',
+    },
+  },
+  bksaas: {
+    name: i18n.tc('PaaS应用'),
+    dark: {
+      color: '#2BB950',
+      backgroundColor: '#223B2B',
+    },
+    light: {
+      color: '#63656E',
+      backgroundColor: '#D8EDD9',
+    },
   },
 };

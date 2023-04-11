@@ -33,6 +33,18 @@
       @blur="handleBlur"
       @keydown="handleKeydown"
     ></bk-input>
+    <div v-if="isKeywordsError" class="refresh-keywords">
+      <span class="error-message">{{$t('当前查询语句有语法错误')}}</span>
+      <span v-if="keywordIsResolved" @click="handleRefreshKeywords">
+        <span class="error-message">, {{$t('点击可进行')}}</span>
+        <span class="log-icon icon-refresh-icon"></span>
+        <span class="refresh-btn">{{$t('自动转换')}}</span>
+      </span>
+      <div v-if="!!keywordErrorMessage">
+        <span class="error-title">{{$t('错误原因')}}: </span>
+        <span class="error-message">{{keywordErrorMessage}}</span>
+      </div>
+    </div>
     <!-- 搜索提示 -->
     <ul
       v-if="renderDropdown"
@@ -53,7 +65,9 @@
             {{ item }}
           </div>
           <div v-bk-overflow-tips="{ placement: 'right' }" class="item-description text-overflow-hidden">
-            {{ $t('筛选包含') }}<span class="item-callout">{{ item }}</span>{{ $t('的结果') }}
+            <i18n path="筛选包含{0}的结果">
+              <span class="item-callout">{{ item }}</span>
+            </i18n>
           </div>
         </li>
       </template>
@@ -80,7 +94,9 @@
           </div>
           <div class="item-text">:</div>
           <div v-bk-overflow-tips="{ placement: 'right' }" class="item-description text-overflow-hidden">
-            <span class="item-callout">{{ $t('等于') }}</span>{{ $t('某一值') }}
+            <i18n path="{0}某一值">
+              <span class="item-callout">{{ $t('等于') }}</span>
+            </i18n>
           </div>
         </li>
         <li class="list-item colon-list-item" @click="handleClickColon(': *')">
@@ -89,7 +105,9 @@
           </div>
           <div class="item-text">:*</div>
           <div v-bk-overflow-tips="{ placement: 'right' }" class="item-description text-overflow-hidden">
-            <span class="item-callout">{{ $t('存在') }}</span>{{ $t('任意形式') }}
+            <i18n path="{0}任意形式">
+              <span class="item-callout">{{ $t('存在') }}</span>
+            </i18n>
           </div>
         </li>
       </template>
@@ -101,7 +119,9 @@
           </div>
           <div class="item-text">AND</div>
           <div v-bk-overflow-tips="{ placement: 'right' }" class="item-description text-overflow-hidden">
-            {{ $t('需要') }}<span class="item-callout">{{ $t('两个参数都') }}</span>{{ $t('为真') }}
+            <i18n path="需要{0}为真">
+              <span class="item-callout">{{ $t('两个参数都') }}</span>
+            </i18n>
           </div>
         </li>
         <li class="list-item continue-list-item" @click="handleClickContinue('OR')">
@@ -110,22 +130,9 @@
           </div>
           <div class="item-text">OR</div>
           <div v-bk-overflow-tips="{ placement: 'right' }" class="item-description text-overflow-hidden">
-            {{ $t('需要') }}<span class="item-callout">{{ $t('一个或多个参数') }}</span>{{ $t('为真') }}
-          </div>
-        </li>
-      </template>
-      <!-- 历史记录 -->
-      <template v-if="showSearchRecord">
-        <li class="list-item history-list-item history-title-item">
-          <div class="item-text">{{ $t('历史记录') }}</div>
-        </li>
-        <li
-          class="list-item history-list-item"
-          v-for="item in historyRecords"
-          :key="item.id"
-          @click="handleClickHistoty(item)">
-          <div v-bk-overflow-tips="{ placement: 'right' }" class="item-text text-overflow-hidden">
-            {{ item.query_string }}
+            <i18n path="需要{0}为真">
+              <span class="item-callout">{{ $t('一个或多个参数') }}</span>
+            </i18n>
           </div>
         </li>
       </template>
@@ -151,11 +158,11 @@ export default {
       type: Object,
       required: true,
     },
-    historyRecords: {
-      type: Array,
-      default: () => ([]),
-    },
     isAutoQuery: {
+      type: Boolean,
+      default: false,
+    },
+    isShowUiType: {
       type: Boolean,
       default: false,
     },
@@ -172,6 +179,10 @@ export default {
       showColon: false, // : :*
       showContinue: false, // AND OR
       isSearchRecord: false,
+      isKeywordsError: false, // 语句是否有误
+      keywordErrorMessage: '', // 无法修复的语句的原因
+      keywordIsResolved: false, // 语句是否可以被修复
+      resetKeyword: '', // 修复过后的语句
       originFieldList: [], // 所有字段列表 ['name', 'age']
       fieldList: [], // 显示字段列表，['name', 'age']
       valueList: [], // 字段可能的值 ['"arman"', '"xxx yyy"'] [18, 22]
@@ -183,11 +194,7 @@ export default {
              && (this.showFields
               || this.showValue
               || this.showColon
-              || this.showContinue
-              || this.showSearchRecord);
-    },
-    showSearchRecord() {
-      return this.historyRecords.length;
+              || this.showContinue);
     },
   },
   watch: {
@@ -231,6 +238,7 @@ export default {
       this.showDropdown = false;
     },
     handleFocus() {
+      this.$emit('isCanSearch', false);
       if (this.isSearchRecord) {
         this.inputElement.blur();
         this.isSearchRecord = false;
@@ -319,23 +327,60 @@ export default {
       });
     },
     handleBlur(val) {
-      if (this.isSearchRecord || !this.isAutoQuery) return;
+      setTimeout(() => {
+        this.$emit('isCanSearch', true);
+      }, 100);
+      // 非自动搜索时 鼠标失焦后 判断语句是否出错
+      this.blurTimer && clearTimeout(this.blurTimer);
+      this.blurTimer = setTimeout(() => {
+        if (this.shouldHandleBlur || this.isKeywordsError) this.handleCheckKeywords(val.trim()); // 检查语句是否有错误;
+      }, 200);
+      // 如果当前有点击收藏且有选择表单模式的key时 监听新输入的检索语句判断
+      if (this.isShowUiType) this.$emit('inputBlur', val);
 
+      if (this.isSearchRecord || !this.isAutoQuery) return;
       // blur 时检索
       // 下拉菜单 click 时也会触发 blur 事件，但是不执行检索相关逻辑
       // 下拉菜单 click 事件在 blur 事件触发后 100+ms 后触发
       // 所以 blur 事件回调延迟 200ms 执行，让 click 事件执行后才确认如何执行
       this.blurTimer && clearTimeout(this.blurTimer);
-      this.blurTimer = setTimeout(() => {
+      this.blurTimer = setTimeout(async () => {
         if (this.shouldHandleBlur) { // 非点击下拉触发的 blur 事件
           this.showDropdown = false;
-          if (this.retrievedKeyword !== val.trim()) {
-            this.$emit('retrieve');
+          // 自动搜索时 先判断语句是否出错 如果出错 则提示出错原因 且不进行请求
+          if (this.retrievedKeyword !== val.trim() || this.isKeywordsError) {
+            const isCanSearch = await this.handleCheckKeywords(val.trim());
+            if (isCanSearch) this.$emit('retrieve');
           }
         } else {
           // 点击了下拉菜单，会再次聚焦
         }
       }, 200);
+    },
+    handleRefreshKeywords() { // 替换语句
+      this.$emit('change', this.resetKeyword);
+      this.resetKeyword = '';
+      this.isKeywordsError = false;
+      this.keywordIsResolved = false;
+      this.keywordErrorMessage = '';
+      this.$emit('isCanSearch', true);
+      if (this.isAutoQuery) this.$emit('retrieve');
+    },
+    async handleCheckKeywords(keyword) { // 检查检索语句是否有误
+      if (keyword === '') keyword = '*';
+      try {
+        const { data } = await this.$http.request('favorite/checkKeywords', {
+          data: { keyword },
+        });
+        this.isKeywordsError = !data.is_legal;
+        this.keywordIsResolved = data.is_resolved;
+        this.keywordErrorMessage = data.message;
+        this.resetKeyword = data.keyword;
+        this.$emit('isCanSearch', data.is_legal);
+        return data.is_legal || data.is_resolved;
+      } catch (error) {
+        return true;
+      }
     },
     closeDropdown() {
       this.showDropdown = false;
@@ -484,15 +529,6 @@ export default {
       this.showWhichDropdown('Fields');
       this.fieldList = [...this.originFieldList];
     },
-    handleClickHistoty(item) {
-      this.$emit('change', item.params.keyword);
-      this.$emit('updateSearchParam', item.params.addition, item.params.host_scopes);
-      this.$nextTick(() => {
-        this.showDropdown = false;
-        this.isSearchRecord = true;
-        this.$emit('retrieve');
-      });
-    },
   },
 };
 </script>
@@ -503,9 +539,28 @@ export default {
   .retrieve-detail-input {
     position: relative;
 
+    .refresh-keywords {
+      margin-top: 4px;
+      font-size: 12px;
+
+      .error-message {
+        color: #ea3636;
+      }
+
+      .error-title {
+        color: #63656e;
+      }
+
+      .refresh-btn,
+      .icon-refresh-icon {
+        cursor: pointer;
+        color: #3a84ff;
+      }
+    }
+
     .king-input-retrieve {
-      ::v-deep .bk-form-input {
-        height: 64px;
+      :deep(.bk-form-textarea) {
+        resize: vertical;
       }
     }
 

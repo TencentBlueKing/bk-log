@@ -61,7 +61,11 @@ class CollectorScenario(object):
             )
             return collector_scenario()
         except ImportError as error:
-            raise NotImplementedError(f"{collector_scenario_id}场景对应的采集器功能暂未实现, error: {error}")
+            raise NotImplementedError(
+                _("{collector_scenario_id}场景对应的采集器功能暂未实现, error: {error}").format(
+                    collector_scenario_id=collector_scenario_id, error=error
+                )
+            )
 
     def get_subscription_steps(self, data_id, params):
         """
@@ -92,13 +96,14 @@ class CollectorScenario(object):
         change bk_data_id result_table_id
         :return:
         """
+        from apps.log_databus.handlers.collector import build_bk_data_name
+
         new_bk_data_id = cls.update_or_create_data_id(
             data_link_id=collector_config.data_link_id,
             mq_config={"topic": mq_topic, "partition": mq_partition},
-            data_name=f"{collector_config.bk_biz_id}"
-            f"_{settings.TABLE_ID_PREFIX}"
-            f"_clustering_"
-            f"{collector_config.collector_config_name_en}",
+            data_name=build_bk_data_name(
+                collector_config.bk_biz_id, f"clustering_{collector_config.collector_config_name_en}"
+            ),
             description=collector_config.description,
             encoding=META_DATA_ENCODING,
         )
@@ -260,7 +265,7 @@ class CollectorScenario(object):
                 "field_type": "string",
                 "tag": "dimension",
                 "alias_name": f"dist_{pattern_level}",
-                "description": f"聚类数字签名{pattern_level}",
+                "description": _("聚类数字签名{pattern_level}").format(pattern_level=pattern_level),
                 "option": build_es_option_type("keyword", es_version),
                 "is_built_in": False,
                 "is_time": False,
@@ -268,7 +273,7 @@ class CollectorScenario(object):
                 "is_dimension": False,
                 "is_delete": False,
             }
-            for pattern_level in PatternEnum.get_choices()
+            for pattern_level in PatternEnum.get_dict_choices().keys()
         ]
 
     @staticmethod

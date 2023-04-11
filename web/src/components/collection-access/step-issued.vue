@@ -33,7 +33,7 @@
     <template v-else>
       <div class="step-issued-notice notice-primary" v-if="!curCollect.table_id">
         <i class="bk-icon icon-info-circle-shape notice-icon"></i>
-        <span class="notice-text">{{ $t('dataManage.Within_stop') }}</span>
+        <span class="notice-text">{{ $t('采集完成后24小时内，没有配置第4步“存储”，任务会被强制停用。') }}</span>
       </div>
       <template v-if="!isShowStepInfo">
         <div class="step-issued-header">
@@ -54,9 +54,9 @@
             class="fr"
             icon="refresh"
             data-test-id="collectionDistribution_button_refresh"
-            :title="$t('configDetails.batchRetry')"
+            :title="$t('失败批量重试')"
             :disabled="hasRunning"
-            @click="issuedRetry">{{ $t('configDetails.batchRetry') }}
+            @click="issuedRetry">{{ $t('失败批量重试') }}
           </bk-button>
         </div>
         <section class="cluster-collaspse" v-if="tableList.length">
@@ -76,9 +76,9 @@
                 v-if="cluster.is_label && isEdit"
                 slot="pre-panel">
                 {{ cluster.label_name === 'add' ?
-                  $t('dataManage.add_btn') :
+                  $t('新增') :
                   (cluster.label_name === 'modify' ?
-                    $t('dataManage.amend') : $t('btn.delete')) }}
+                    $t('修改') : $t('删除')) }}
               </div>
               <div class="header-info" slot="title">
                 <div class="header-title fl">{{ cluster.node_path }}</div>
@@ -92,12 +92,16 @@
                   v-bkloading="{ isLoading: loading }"
                   class="cluster-table"
                   :resizable="true"
-                  :empty-text="$t('btn.vacancy')"
+                  :empty-text="$t('暂无内容')"
                   :data="cluster.child"
                   :size="size"
                   :pagination="pagination">
-                  <bk-table-column :label="$t('configDetails.goal')" prop="ip" width="180"></bk-table-column>
-                  <bk-table-column :label="$t('dataManage.es_host')" width="120">
+                  <bk-table-column :label="$t('目标')" width="180">
+                    <template slot-scope="props">
+                      <span>{{getShowIp(props.row)}}</span>
+                    </template>
+                  </bk-table-column>
+                  <bk-table-column :label="$t('运行状态')" width="120">
                     <template slot-scope="props">
                       <span :class="['status', 'status-' + props.row.status]">
                         <i
@@ -106,20 +110,20 @@
                           v-if="props.row.status !== 'success' && props.row.status !== 'failed'">
                         </i>
                         {{ props.row.status === 'success' ?
-                          $t('configDetails.success') :
+                          $t('成功') :
                           props.row.status === 'failed' ?
-                            $t('dataSource.failed') : $t('configDetails.Pending') }}
+                            $t('失败') : $t('执行中') }}
                       </span>
                     </template>
                   </bk-table-column>
                   <bk-table-column
                     :class-name="'row-detail'"
-                    :label="$t('monitors.detail')">
-                    <template slot-scope="props" class="row-detail">
+                    :label="$t('详情')">
+                    <template slot-scope="props">
                       <p>
-                        <span class="detail-text">{{ props.row.log }}</span>
+                        <span class="overflow-tips" v-bk-overflow-tips>{{ props.row.log }}</span>
                         <a href="javascript: ;" class="more" @click.stop="viewDetail(props.row)">
-                          {{ $t('dataManage.more') }}
+                          {{ $t('更多') }}
                         </a>
                       </p>
                     </template>
@@ -130,7 +134,7 @@
                         href="javascript: ;" class="retry"
                         v-if="props.row.status === 'failed'"
                         @click.stop="issuedRetry(props.row, cluster)">
-                        {{ $t('configDetails.retry') }}
+                        {{ $t('重试') }}
                       </a>
                     </template>
                   </bk-table-column>
@@ -143,7 +147,7 @@
       <template v-else>
         <div class="empty-view">
           <i class="bk-icon icon-info-circle-shape"></i>
-          <div class="hint-text">{{ $t('dataManage.StepInfo') }}</div>
+          <div class="hint-text">{{ $t('采集目标未变更，无需下发') }}</div>
         </div>
       </template>
     </template>
@@ -161,18 +165,18 @@
           data-test-id="collectionDistribution_button_previous"
           :disabled="hasRunning"
           @click="prevHandler"
-        >{{ $t('dataManage.last') }}</bk-button>
+        >{{ $t('上一步') }}</bk-button>
         <bk-button
           theme="primary"
           data-test-id="collectionDistribution_button_nextStep"
           :disabled="hasRunning"
           @click="nextHandler"
-        >{{ $t('dataManage.next') }}</bk-button>
+        >{{ $t('下一步') }}</bk-button>
       </template>
       <bk-button
         @click="cancel"
         data-test-id="collectionDistribution_button_cancel">
-        {{ $t('dataManage.Return_list') }}
+        {{ $t('返回列表') }}
       </bk-button>
     </div>
     <bk-sideslider
@@ -182,13 +186,21 @@
       :ext-cls="'issued-detail'"
       :is-show.sync="detail.isShow"
       @animation-end="closeSlider">
-      <div slot="header">{{ detail.title }}</div>
+      <div class="header" slot="header">
+        <span>{{ detail.title }}</span>
+        <bk-button
+          class="header-refresh"
+          theme="primary"
+          :loading="detail.loading"
+          @click="handleRefreshDetail">
+          {{$t('刷新')}}
+        </bk-button>
+      </div>
       <!-- eslint-disable-next-line vue/no-v-html -->
       <div v-html="detail.content"
            class="p20 detail-content"
            slot="content"
-           v-bkloading="{ isLoading: detail.loading }"
-      ></div>
+           v-bkloading="{ isLoading: detail.loading }"></div>
     </bk-sideslider>
   </div>
 </template>
@@ -214,11 +226,12 @@ export default {
       notReady: false, // 节点管理准备好了吗
       detail: {
         isShow: false,
-        title: this.$t('monitors.detail'),
-        loading: true,
+        title: this.$t('详情'),
+        loading: false,
         content: '',
         log: '',
       },
+      currentRow: null,
       timer: null,
       timerNum: 0,
       tableListAll: [],
@@ -228,22 +241,22 @@ export default {
       tabList: [
         {
           type: 'all',
-          name: this.$t('configDetails.all'),
+          name: this.$t('全部'),
           num: 0,
         },
         {
           type: 'success',
-          name: this.$t('configDetails.success'),
+          name: this.$t('成功'),
           num: 0,
         },
         {
           type: 'failed',
-          name: this.$t('configDetails.failed'),
+          name: this.$t('失败'),
           num: 0,
         },
         {
           type: 'running',
-          name: this.$t('configDetails.Pending'),
+          name: this.$t('执行中'),
           num: 0,
         },
       ],
@@ -274,9 +287,12 @@ export default {
       return this.curCollect.environment === 'container';
     },
     getNextPageStr() {
-      if (this.hasRunning) return this.$t('configDetails.Pending');
-      if (this.operateType === 'stop') return this.$t('btn.block');
-      return this.$t('dataManage.perform');
+      if (this.hasRunning) return this.$t('执行中');
+      if (this.operateType === 'stop') return this.$t('停用');
+      return this.$t('完成');
+    },
+    hostIdentifierPriority() {
+      return this.$store.getters['globals/globalsData']?.host_identifier_priority ?? ['ip', 'host_name', 'ipv6'];
     },
   },
   watch: {
@@ -341,6 +357,7 @@ export default {
     },
     prevHandler() {
       if (this.operateType === 'add') {
+        this.$store.commit('updateRouterLeaveTip', true);
         this.$router.replace({
           name: 'collectEdit',
           params: {
@@ -348,7 +365,7 @@ export default {
             notAdd: true,
           },
           query: {
-            projectId: window.localStorage.getItem('project_id'),
+            spaceUid: this.$store.state.spaceUid,
           },
         });
       }
@@ -380,14 +397,17 @@ export default {
       this.$router.push({
         name: 'collection-item',
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
     },
     viewDetail(row) {
       this.detail.isShow = true;
-      this.detail.loading = true;
+      this.currentRow = row;
       this.requestDetail(row);
+    },
+    handleRefreshDetail() {
+      this.requestDetail(this.currentRow);
     },
     closeSlider() {
       this.detail.content = '';
@@ -425,7 +445,7 @@ export default {
         //     running++
         // }
       });
-      return `<span class="success">${success}</span> ${this.$t('configDetails.successful')}，<span class="failed">${failed}</span> ${this.$t('configDetails.failure')}`;
+      return `<span class="success">${success}</span> ${this.$t('个成功')}，<span class="failed">${failed}</span> ${this.$t('个失败')}`;
     },
     startStatusPolling() {
       this.timerNum += 1;
@@ -561,7 +581,13 @@ export default {
         });
         if (cluster && cluster.child && cluster.child.length && table.child && table.child.length) {
           table.child.forEach((row) => {
-            const tarHost = cluster.child.find(item => item.bk_cloud_id === row.bk_cloud_id && item.ip === row.ip);
+            const tarHost = cluster.child.find((item) => {
+              // 优先判断host_id 若没找到对应的host_id则对比ip_host_name_ipv6的组成的字符串
+              const tableStrKey = `${item.ip}_${item.host_name}_${item.ipv6}`;
+              const childStrKey = `${row.ip}_${row.host_name}_${row.ipv6}`;
+              if (item?.host_id) return (item.host_id === row.host_id || tableStrKey === childStrKey);
+              return tableStrKey === childStrKey;
+            });
             if (tarHost) {
               row.status = tarHost.status === 'PENDING' ? 'running' : tarHost.status.toLowerCase(); // pending-等待状态，与running不做区分
               row.task_id = tarHost.task_id;
@@ -571,6 +597,7 @@ export default {
       });
     },
     requestDetail(row) {
+      this.detail.loading = true;
       this.$http.request('collect/executDetails', {
         params: {
           collector_id: this.curCollect.collector_config_id,
@@ -595,6 +622,9 @@ export default {
           this.detail.loading = false;
         });
     },
+    getShowIp(row) {
+      return row[this.hostIdentifierPriority.find(pItem => Boolean(row[pItem]))] ?? row.ip;
+    },
   },
 };
 </script>
@@ -603,6 +633,7 @@ export default {
   @import '@/scss/mixins/scroller.scss';
   @import '@/scss/mixins/clearfix';
   @import '@/scss/conf';
+  @import '@/scss/mixins/overflow-tips.scss';
 
   .step-issued-wrapper {
     position: relative;
@@ -840,7 +871,7 @@ export default {
     }
   }
 
-  ::v-deep .bk-sideslider-wrapper {
+  :deep(.bk-sideslider-wrapper) {
     padding-bottom: 0;
 
     .bk-sideslider-content {
@@ -848,9 +879,23 @@ export default {
       color: #c4c6cc;
     }
 
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header-refresh {
+      margin-right: 8px;
+    }
+
     .detail-content {
       min-height: calc(100vh - 60px);
       white-space: pre-wrap;
+      font-size: 12px;
+      a {
+        color: #3a84ff;
+      }
     }
   }
 </style>

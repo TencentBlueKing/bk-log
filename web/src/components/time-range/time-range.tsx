@@ -69,7 +69,7 @@ export default class TimeRange extends tsc<IProps, IEvents> {
       return map;
     }, new Map());
   }
-  
+
   mounted() {
     this.$store.commit('retrieve/updateCachePickerValue', this.value);
   }
@@ -103,7 +103,7 @@ export default class TimeRange extends tsc<IProps, IEvents> {
     this.handleTransformTime(this.timestamp);
     const value = this.isPanelTimeRange ? this.timestamp : this.formatTime(this.localValue);
     this.$store.commit('retrieve/updateCachePickerValue', value);
-    return value
+    return value;
   }
 
   /** 格式化绝对时间点 */
@@ -186,7 +186,7 @@ export default class TimeRange extends tsc<IProps, IEvents> {
               onShow: () => {
                 /** 防止代码自动格式化 */
                 this.handleTransformTime();
-              }
+              },
             }}
             theme="light time-range-tips">
             <div
@@ -209,9 +209,9 @@ export default class TimeRange extends tsc<IProps, IEvents> {
           <div
             slot="header"
             class="time-range-custom">
-            <span>{this.$t('retrieve.从')}</span>
+            <span>{this.$t('从')}</span>
             <bk-input class="custom-input" v-model={this.localValue[0]} onInput={() => this.isPanelTimeRange = false}/>
-            <span>{this.$t('retrieve.至')}</span>
+            <span>{this.$t('至')}</span>
             <bk-input class="custom-input" v-model={this.localValue[1]} onInput={() => this.isPanelTimeRange = false}/>
           </div>
           <div slot="footer" class="time-range-footer">
@@ -222,7 +222,7 @@ export default class TimeRange extends tsc<IProps, IEvents> {
             class="shortcuts-list">
             {
               this.shortcuts.map(item => (
-                <li class="shortcuts-item" onClick={() => this.handleShortcutChange(item)}>{item.text}</li>
+                <li class="shortcuts-item title-overflow" v-bk-overflow-tips onClick={() => this.handleShortcutChange(item)}>{item.text}</li>
               ))
             }
           </ul>

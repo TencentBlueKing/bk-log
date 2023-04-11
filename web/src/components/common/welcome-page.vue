@@ -45,17 +45,19 @@
         <template v-if="data.getAccess.url">
           <p class="card-detail">{{
             data.getAccess.businessName
-              ? $t('您当前没有业务') + data.getAccess.businessName + $t('的权限') + $t('请先申请吧')
+              ? $t('您当前没有业务--${n}的权限，请先申请吧！', { n: data.getAccess.businessName })
               : $t('您当前没有业务权限，请先申请吧！')
           }}</p>
           <bk-button class="king-button" @click="handleGetAccess">{{$t('权限申请')}}</bk-button>
         </template>
         <!-- 未接入权限中心带业务ID -->
         <p v-else-if="data.getAccess.businessName" class="card-detail">
-          {{$t('您当前没有业务') +
-            data.getAccess.businessName +
-            $t('的权限') + $t('请先联系运维同学') +
-            (data.getAccess.operatorId ? `(${data.getAccess.operatorId})` : '') + $t('进行角色的添加')}}
+          {{$t('您当前没有业务--${x}的权限，请先联系运维同学{n}进行角色的添加',
+               {
+                 x: data.getAccess.businessName,
+                 n: data.getAccess.operatorId ? `(${data.getAccess.operatorId})` : '',
+               }
+          )}}
         </p>
         <!-- 未接入权限中心不带业务ID -->
         <p v-else class="card-detail">{{$t('您当前没有业务权限，请先联系对应的业务运维同学进行添加!')}}</p>

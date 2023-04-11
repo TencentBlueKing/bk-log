@@ -75,7 +75,7 @@ export default {
   beforeRouteLeave(to, from, next) {
     if (!this.isSubmit && !this.showRouterLeaveTip) {
       this.$bkInfo({
-        title: this.$t('pageLeaveTips'),
+        title: this.$t('是否放弃本次操作？'),
         confirmFn: () => {
           next();
         },
@@ -93,7 +93,7 @@ export default {
         this.$router.push({
           name: 'log-clean-list',
           query: {
-            projectId: window.localStorage.getItem('project_id'),
+            spaceUid: this.$store.state.spaceUid,
           },
         });
         return;

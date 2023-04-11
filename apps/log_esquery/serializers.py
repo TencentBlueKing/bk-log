@@ -51,10 +51,7 @@ class EsQuerySearchAttrSerializer(serializers.Serializer):
     time_field_type = serializers.CharField(required=False, default="date", allow_blank=True, allow_null=True)
     time_field_unit = serializers.CharField(required=False, default="second", allow_blank=True, allow_null=True)
 
-    use_time_range = serializers.BooleanField(
-        default=True,
-        label=_("默认使用time_range的方式检索"),
-    )
+    use_time_range = serializers.BooleanField(default=True, label=_("默认使用time_range的方式检索"),)
     include_start_time = serializers.BooleanField(default=True, label=_("是否包含开始时间点(gte/gt)"))
     include_end_time = serializers.BooleanField(default=True, label=_("是否包含结束时间点(lte/lt)"))
     start_time = serializers.CharField(required=False, default="", allow_blank=True, allow_null=True)
@@ -97,7 +94,7 @@ class EsQuerySearchAttrSerializer(serializers.Serializer):
     scroll = serializers.CharField(required=False, allow_null=True, allow_blank=True)
 
     def validate(self, attrs):
-        super().validate(attrs)
+        attrs = super().validate(attrs)
 
         # index_set_id覆盖信息
         index_set_id = attrs.get("index_set_id")
@@ -111,7 +108,7 @@ class EsQuerySearchAttrSerializer(serializers.Serializer):
             attrs["indices"] = indices
             attrs["scenario_id"] = scenario_id
             attrs["storage_cluster_id"] = storage_cluster_id
-            attrs["time_field"] = time_field
+            attrs["time_field"] = attrs.get("time_field") or time_field
         else:
             scenario_id = attrs.get("scenario_id")
             if scenario_id in [Scenario.ES] and not attrs.get("storage_cluster_id"):
@@ -119,8 +116,8 @@ class EsQuerySearchAttrSerializer(serializers.Serializer):
 
             # time_field
             if scenario_id in [Scenario.BKDATA, Scenario.LOG]:
-                attrs["time_field"] = "dtEventTimeStamp"
-            elif not attrs["time_field"]:
+                attrs["time_field"] = attrs.get("time_field") or "dtEventTimeStamp"
+            elif not attrs.get("time_field"):
                 raise ValidationError(_("请提供时间字段"))
 
         new_filter: list = self.deal_filter(attrs)
@@ -201,7 +198,7 @@ class EsQueryIndicesAttrSerializer(serializers.Serializer):
     with_storage = serializers.BooleanField(default=False, required=False)
 
     def validate(self, attrs):
-        super().validate(attrs)
+        attrs = super().validate(attrs)
         bk_biz_id = attrs.get("bk_biz_id")
         scenario_id = attrs.get("scenario_id")
         storage_cluster_id = attrs.get("storage_cluster_id")
@@ -220,7 +217,7 @@ class EsQueryClusterInfoAttrSerializer(serializers.Serializer):
     storage_cluster_id = serializers.IntegerField(required=False)
 
     def validate(self, attrs):
-        super().validate(attrs)
+        attrs = super().validate(attrs)
         scenario_id = attrs.get("scenario_id")
         indices = attrs.get("indices")
         storage_cluster_id = attrs.get("storage_cluster_id")
@@ -239,7 +236,7 @@ class EsQueryClusterStatsSerializer(serializers.Serializer):
     storage_cluster_id = serializers.IntegerField(required=False)
 
     def validate(self, attrs):
-        super().validate(attrs)
+        attrs = super().validate(attrs)
         scenario_id = attrs.get("scenario_id")
         indices = attrs.get("indices")
         storage_cluster_id = attrs.get("storage_cluster_id")
@@ -273,7 +270,7 @@ class EsQueryCatIndicesSerializer(serializers.Serializer):
     bytes = serializers.CharField(required=False, default="mb")
 
     def validate(self, attrs):
-        super().validate(attrs)
+        attrs = super().validate(attrs)
         scenario_id = attrs.get("scenario_id")
         storage_cluster_id = attrs.get("storage_cluster_id")
         indices = attrs.get("indices")
@@ -291,7 +288,7 @@ class EsQueryClusterNodesStatsSerializer(serializers.Serializer):
     scenario_id = serializers.ChoiceField(choices=Scenario.CHOICES)
 
     def validate(self, attrs):
-        super().validate(attrs)
+        attrs = super().validate(attrs)
         scenario_id = attrs.get("scenario_id")
         indices = attrs.get("indices")
         storage_cluster_id = attrs.get("storage_cluster_id")
@@ -315,7 +312,7 @@ class EsQueryDslAttrSerializer(serializers.Serializer):
     bkdata_data_token = serializers.CharField(required=False)
 
     def validate(self, attrs):
-        super().validate(attrs)
+        attrs = super().validate(attrs)
         scenario_id = attrs.get("scenario_id")
         if scenario_id in [Scenario.ES] and not attrs.get("storage_cluster_id"):
             raise ValidationError(_("第三方ES需传集群ID：storage_cluster_id"))
@@ -340,7 +337,7 @@ class EsQueryMappingAttrSerializer(serializers.Serializer):
     time_zone = serializers.CharField(required=False, allow_blank=True, default=None, allow_null=True)
 
     def validate(self, attrs):
-        super().validate(attrs)
+        attrs = super().validate(attrs)
         # index_set_id覆盖信息
         index_set_id = attrs.get("index_set_id")
         if index_set_id:

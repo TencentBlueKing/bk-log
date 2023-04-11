@@ -70,26 +70,33 @@
         :name="item.indexName + item.lightenName"
         :data-test-id="`ul_li_${item.indexName}`">
         <div
-          v-if="!(item.permission && item.permission.search_log)"
+          v-if="!(item.permission && item.permission[authorityMap.SEARCH_LOG_AUTH])"
           class="option-slot-container no-authority" @click.stop>
           <span class="text">{{ item.indexName + item.lightenName }}</span>
           <span class="apply-text" @click="applySearchAccess(item)">{{$t('申请权限')}}</span>
         </div>
-        <div v-else v-bk-overflow-tips class="option-slot-container authority">
-          <div class="index-info">
+        <div v-else class="authority" style="padding: 9px 10px;">
+          <span class="index-info">
             <span
               :class="[item.is_favorite ? 'log-icon icon-star-shape' : 'bk-icon icon-star']"
               style="color: #fe9c00;"
               @click.stop="handleCollection(item)">
             </span>
-            <span>{{ item.indexName }}</span>
-            <span style="color: #979ba5;" :title="item.lightenName">{{ item.lightenName }}</span>
-          </div>
+            <span class="index-name" v-bk-overflow-tips>{{ item.indexName }}</span>
+            <span class="lighten-name" v-bk-overflow-tips>{{ item.lightenName }}</span>
+          </span>
           <div class="index-tags">
             <span
               v-for="(tag, tIndex) in item.tags"
               :key="tag.tag_id">
-              <span :class="['tag-card', `tag-card-${tag.color}`]" v-if="tIndex < 2">{{ tag.name }}</span>
+              <span
+                :class="['tag-card', `tag-card-${tag.color}`]"
+                v-if="tIndex < 2"
+                v-bk-tooltips.top="{
+                  content: `${$t('上次检测时间')}: ${item.no_data_check_time}`,
+                  disabled: tag.tag_id !== 4,
+                  delay: [300, 0]
+                }">{{ tag.name }}</span>
             </span>
           </div>
         </div>
@@ -99,6 +106,8 @@
 </template>
 
 <script>
+import * as authorityMap from '../../../common/authority-map';
+
 export default {
   props: {
     indexId: {
@@ -120,6 +129,9 @@ export default {
     };
   },
   computed: {
+    authorityMap() {
+      return authorityMap;
+    },
     selectedItem() {
       return this.indexSetList.find(item => item.index_set_id === this.indexId) || {};
     },
@@ -150,7 +162,7 @@ export default {
       try {
         this.$emit('update:basicLoading', true);
         const res = await this.$store.dispatch('getApplyData', {
-          action_ids: ['search_log'],
+          action_ids: [authorityMap.SEARCH_LOG_AUTH],
           resources: [{
             type: 'indices',
             id: item.index_set_id,
@@ -186,6 +198,8 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+  @import '@/scss/mixins/ellipsis.scss';
+
   .authority {
     display: flex;
     align-items: center;
@@ -238,9 +252,27 @@ export default {
 
     .index-info {
       flex: 1;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+
+      /* stylelint-disable-next-line declaration-no-important */
+      display: inline-flex !important;
+      flex-wrap: nowrap;
+      align-items: center;
+
+      @include ellipsis();
+
+      .index-name {
+        margin-left: 4px;
+
+        @include ellipsis();
+      }
+
+      .lighten-name {
+        color: #979ba5;
+        min-width: 100px;
+        margin-left: 4px;
+
+        @include ellipsis();
+      }
     }
   }
 </style>

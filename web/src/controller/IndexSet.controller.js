@@ -23,7 +23,7 @@
 import BaseController from './Base.controller';
 class IndexSetInfo extends BaseController {
   constructor(response) {
-    super(['index_set_name', 'source_id', 'view_roles', 'project_id', 'scenario_name', 'orders'], response);
+    super(['index_set_name', 'source_id', 'view_roles', 'space_uid', 'scenario_name', 'orders'], response);
   }
 }
 

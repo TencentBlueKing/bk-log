@@ -31,7 +31,7 @@ from apps.log_clustering.exceptions import ClusteringClosedException
 from apps.log_clustering.models import ClusteringConfig
 from apps.log_measure.events import NOTIFY_EVENT
 from apps.log_search.handlers.search.aggs_handlers import AggsViewAdapter
-from apps.log_search.models import LogIndexSet, ProjectInfo
+from apps.log_search.models import LogIndexSet, Space
 from apps.utils.local import set_local_param
 
 
@@ -40,19 +40,22 @@ def send(index_set_id):
     clustering_config = ClusteringConfig.objects.get(index_set_id=index_set_id)
     log_index_set = LogIndexSet.objects.get(index_set_id=index_set_id)
     doc_count = get_doc_count(index_set_id=index_set_id, bk_biz_id=clustering_config.bk_biz_id)
-    project = ProjectInfo.objects.get(bk_biz_id=clustering_config.bk_biz_id)
+    space = Space.objects.get(bk_biz_id=clustering_config.bk_biz_id)
 
     if not FeatureToggleObject.switch(BKDATA_CLUSTERING_TOGGLE):
         raise ClusteringClosedException()
     conf = FeatureToggleObject.toggle(BKDATA_CLUSTERING_TOGGLE).feature_config
 
-    if doc_count > conf.get("auto_approve_doc_count", 0):
-        # 千万级别的需要人工审批
+    # 若该配置小于0，则代表不需要审批
+    auto_approve_doc_count = conf.get("auto_approve_doc_count", -1)
+
+    if 0 <= auto_approve_doc_count < doc_count:
+        # auto_approve_doc_count 大于 0，且单日文档数量大于 auto_approve_doc_count，则需要进行审批
         msg = _("[待审批] 有新聚类创建，请关注！索引集id: {}, 索引集名称: {}, 业务id: {}, 业务名称: {}, 创建者: {}, 过去一天的数据量doc_count={}").format(
             index_set_id,
             log_index_set.index_set_name,
             clustering_config.bk_biz_id,
-            project.project_name,
+            space.space_name,
             clustering_config.created_by,
             doc_count,
         )
@@ -66,7 +69,7 @@ def send(index_set_id):
             index_set_id,
             log_index_set.index_set_name,
             clustering_config.bk_biz_id,
-            project.project_name,
+            space.space_name,
             clustering_config.created_by,
             doc_count,
             pipeline_id,

@@ -22,6 +22,8 @@ the project delivered to anyone in the future.
 import json
 
 from kafka import KafkaConsumer, TopicPartition
+
+from django.conf import settings
 from apps.log_databus.exceptions import KafkaPartitionException, KafkaConnectException
 
 
@@ -56,7 +58,7 @@ class KafkaConsumerHandle(object):
         :return:
         """
         message_count = 10
-        self.consumer.poll(10)
+        self.consumer.poll(settings.DEFAULT_KAFKA_POLL_TIMEOUT)
 
         # 获取topic分区信息
         topic_partitions = self.consumer.partitions_for_topic(self.topic)

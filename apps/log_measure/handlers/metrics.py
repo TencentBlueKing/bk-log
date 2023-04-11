@@ -21,21 +21,21 @@ the project delivered to anyone in the future.
 """
 from __future__ import absolute_import, unicode_literals
 
-import socket
 import time
 from functools import wraps
 
 import arrow
 from django.core.cache import cache
 from django.utils.translation import ugettext as _
-from elasticsearch import Elasticsearch
 
-from apps.api import TransferApi, NodeApi, CCApi
+from apps.api import TransferApi, NodeApi
+from apps.log_esquery.utils.es_client import es_socket_ping
 from apps.utils.log import logger
 from apps.log_databus.constants import STORAGE_CLUSTER_TYPE
 from apps.log_databus.models import CollectorConfig
 from apps.log_measure.exceptions import EsConnectFailException
-from apps.log_search.models import ProjectInfo
+from apps.log_search.models import Space
+from apps.log_esquery.utils.es_client import get_es_client
 
 
 class Metric(object):
@@ -95,14 +95,13 @@ def register_metric(namespace, description="", cache_time=0):
 
 class BaseMetricCollector(object):
     def __init__(self, collect_interval=300):
+        spaces = Space.objects.all()
         # 业务缓存
-        biz_list = CCApi.get_app_list({"fields": ["bk_biz_id", "bk_biz_name"], "no_request": True}).get("info", [])
-        self.biz_info = {int(business["bk_biz_id"]): business for business in biz_list}
+        self.biz_info = {
+            space.bk_biz_id: {"bk_biz_id": space.bk_biz_id, "bk_biz_name": space.space_name} for space in spaces
+        }
 
-        self.project_biz_info = {}
-
-        for project in ProjectInfo.objects.all():
-            self.project_biz_info[project.project_id] = self.biz_info.get(project.bk_biz_id)
+        self.space_info = {space.space_uid: space for space in spaces}
 
         # 上报时间
         self.collect_interval = collect_interval
@@ -243,20 +242,14 @@ class MetricCollector(BaseMetricCollector):
         username = auth_info.get("username")
         password = auth_info.get("password")
 
-        cs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        es_address: tuple = (str(domain_name), int(port))
-        cs.settimeout(2)
-        status: int = cs.connect_ex(es_address)
-        if status != 0:
-            raise EsConnectFailException()
-        cs.close()
-
-        http_auth = (username, password) if username and password else None
-        es_client = Elasticsearch(
+        es_socket_ping(host=domain_name, port=port)
+        es_client = get_es_client(
+            version="",  # 由于版本不确定，所以不传,
             hosts=[domain_name],
-            http_auth=http_auth,
-            scheme="http",
+            username=username,
+            password=password,
             port=port,
+            scheme="http",
             verify_certs=False,
             timeout=10,
         )
@@ -291,8 +284,8 @@ class MetricCollector(BaseMetricCollector):
                 metric_name="count",
                 metric_value=len(group["instances"]),
                 dimensions={
-                    "target_biz_id": biz_mapping[group["subscription_id"]]["bk_biz_id"],
-                    "target_biz_name": self.get_biz_name(biz_mapping[group["subscription_id"]]["bk_biz_id"]),
+                    "bk_biz_id": biz_mapping[group["subscription_id"]]["bk_biz_id"],
+                    "bk_biz_name": self.get_biz_name(biz_mapping[group["subscription_id"]]["bk_biz_id"]),
                     "category_id": biz_mapping[group["subscription_id"]]["category_id"],
                     "collector_config_id": biz_mapping[group["subscription_id"]]["collector_config_id"],
                 },

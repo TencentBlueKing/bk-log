@@ -60,12 +60,16 @@
       </svg>
       <span class="text">{{ $t('暂无数据') }}</span>
     </div>
-    <div class="converge-cycle" v-if="!isEmptyChart && !isFold">
-      <span>{{ $t('retrieve.convergeCycle') }}</span>
+    <div
+      class="converge-cycle"
+      v-if="!isEmptyChart && !isFold"
+      :style="convergeStyle">
+      <span>{{ $t('汇聚周期') }}</span>
       <bk-select
         style="width: 80px"
         v-model="chartInterval"
         :clearable="false"
+        behavior="simplicity"
         ext-cls="select-custom"
         size="small"
         data-test-id="generalTrendEcharts_div_selectCycle"
@@ -109,6 +113,7 @@ export default {
   },
   data() {
     return {
+      timeRange: [],
       isFold: localStorage.getItem('chartIsFold') === 'true',
       intervalArr: [
         { id: 'auto', name: 'auto' },
@@ -157,6 +162,9 @@ export default {
     chartKey() {
       this.getInterval();
       return this.$store.state.retrieve.chartKey;
+    },
+    convergeStyle() {
+      return `left: ${this.$store.state.isEnLanguage ? '110' : '80'}px`;
     },
     // chartInterval() {
     //   return this.retrieveParams.interval;
@@ -210,6 +218,7 @@ export default {
     // 需要更新图表数据
     async getSeriesData(startTime, endTime) {
       if (startTime && endTime) {
+        this.timeRange = [startTime, endTime];
         this.finishPolling = false;
         this.isStart = false;
         this.totalCount = 0;
@@ -257,36 +266,39 @@ export default {
         }
       }
 
-      const res = await this.$http.request('retrieve/getLogChartList', {
-        params: { index_set_id: this.$route.params.indexId },
-        data: {
-          ...this.retrieveParams,
-          time_range: 'customized',
-          interval: this.interval,
-          // 每次轮循的起始时间
-          start_time: formatDate(this.pollingStartTime),
-          end_time: formatDate(this.pollingEndTime),
-        },
-      });
+      if (!!this.$route.params?.indexId) { // 从检索切到其他页面时 表格初始化的时候路由中indexID可能拿不到 拿不到 则不请求图表
+        const res = await this.$http.request('retrieve/getLogChartList', {
+          params: { index_set_id: this.$route.params.indexId },
+          data: {
+            ...this.retrieveParams,
+            time_range: 'customized',
+            interval: this.interval,
+            // 每次轮循的起始时间
+            start_time: formatDate(this.pollingStartTime),
+            end_time: formatDate(this.pollingEndTime),
+          },
+        });
+        const originChartData = res.data.aggs?.group_by_histogram?.buckets || [];
+        const targetArr = originChartData.map((item) => {
+          this.totalCount = this.totalCount + item.doc_count;
+          return ([item.doc_count, item.key]);
+        });
 
-      const originChartData = res.data.aggs?.group_by_histogram?.buckets || [];
-      const targetArr = originChartData.map((item) => {
-        this.totalCount = this.totalCount + item.doc_count;
-        return ([item.doc_count, item.key]);
-      });
-
-      if (this.pollingStartTime <= Date.parse(this.retrieveParams.start_time)) {
+        if (this.pollingStartTime <= Date.parse(this.retrieveParams.start_time)) {
         // 轮询结束
-        this.finishPolling = true;
-      }
+          this.finishPolling = true;
+        }
 
-      for (let i = 0; i < targetArr.length; i++) {
-        for (let j = 0; j < this.optionData.length; j++) {
-          if (this.optionData[j][1] === targetArr[i][1] && targetArr[i][0] > 0) {
-            // 根据请求结果匹配对应时间下数量叠加
-            this.optionData[j][0] = this.optionData[j][0] + targetArr[i][0];
+        for (let i = 0; i < targetArr.length; i++) {
+          for (let j = 0; j < this.optionData.length; j++) {
+            if (this.optionData[j][1] === targetArr[i][1] && targetArr[i][0] > 0) {
+              // 根据请求结果匹配对应时间下数量叠加
+              this.optionData[j][0] = this.optionData[j][0] + targetArr[i][0];
+            }
           }
         }
+      } else {
+        this.finishPolling = true;
       }
 
       return [{
@@ -298,22 +310,19 @@ export default {
     // 双击回到初始化时间范围
     handleDbClick() {
       const { cacheDatePickerValue, cacheTimeRange } = this.$store.state.retrieve;
-      if (
-        cacheDatePickerValue[0] !== this.retrieveParams.start_time
-          || cacheDatePickerValue[1] !== this.retrieveParams.end_time
-          || cacheTimeRange !== this.retrieveParams.time_range
-      ) {
+
+      if (this.timeRange.length) {
+        this.timeRange = [];
         setTimeout(() => {
           window.bus.$emit('changeTimeByChart', cacheDatePickerValue, cacheTimeRange);
           this.finishPolling = true;
           this.totalCount = 0;
           this.$refs.chartRef.handleCloseTimer();
-          this.$nextTick(() => {
+          setTimeout(() => {
             this.finishPolling = false;
             this.isStart = false;
-            // this.$refs.chartRef.handleChangeInterval();
             this.$store.commit('retrieve/updateChartKey');
-          });
+          }, 100);
         }, 100);
       }
     },
@@ -332,10 +341,10 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
   .monitor-echarts-container {
     position: relative;
-    height: 200px;
+    height: 160px;
     background-color: #fff;
     overflow: hidden;
 
@@ -343,19 +352,19 @@ export default {
       height: 60px;
     }
 
-    ::v-deep .echart-legend {
+    :deep(.echart-legend) {
       display: flex;
       justify-content: center;
     }
 
     .converge-cycle {
       position: absolute;
-      top: 21px;
+      top: 17px;
       left: 80px;
       font-size: 12px;
       color: #63656e;
       display: inline-block;
-      margin-left: 32px;
+      margin-left: 24px;
 
       .select-custom {
         display: inline-block;
@@ -388,11 +397,21 @@ export default {
     }
 
     .title-wrapper {
-      padding: 18px 24px 0;
+      padding: 14px 24px 0;
     }
 
     .monitor-echart-wrap {
+      height: 106px;
       padding-top: 0;
+      padding-bottom: 0;
+
+      .chart-wrapper {
+        /* stylelint-disable-next-line declaration-no-important */
+        min-height: 116px !important;
+
+        /* stylelint-disable-next-line declaration-no-important */
+        max-height: 116px !important;
+      }
     }
   }
 </style>

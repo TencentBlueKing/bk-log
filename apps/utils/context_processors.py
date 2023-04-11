@@ -92,4 +92,5 @@ def mysetting(request):
         "BK_ARCHIVE_DOC_URL": settings.BK_ARCHIVE_DOC_URL,
         "BK_ASSESSMEN_HOST_COUNT": str(settings.BK_ASSESSMEN_HOST_COUNT),
         "BK_ETL_DOC_URL": settings.BK_ETL_DOC_URL,
+        "ENABLE_CHECK_COLLECTOR": "true" if settings.CHECK_COLLECTOR_SWITCH and request.user.is_superuser else "false",
     }

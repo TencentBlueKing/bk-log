@@ -149,9 +149,9 @@ export default {
       indexesData: [],
       // 健康状态，文案待定，先不国际化
       healthMap: {
-        green: '健康',
-        yellow: '部分故障',
-        red: '严重故障',
+        green: this.$t('健康'),
+        yellow: this.$t('部分故障'),
+        red: this.$t('严重故障'),
       },
       indexesPagination: {
         current: 1,
@@ -168,7 +168,7 @@ export default {
     };
   },
   computed: {
-    ...mapState(['projectId', 'bkBizId']),
+    ...mapState(['spaceUid', 'bkBizId']),
     ...mapState('collect', ['scenarioMap']),
     pagedIndexesList() {
       const start = (this.indexesPagination.current - 1) * this.indexesPagination.limit;
@@ -229,8 +229,7 @@ export default {
               category_id: this.indexSetData.category_id,
               indexes: this.indexSetData.indexes.filter(item => item.result_table_id !== row.result_table_id),
               view_roles: [], // 兼容后端历史遗留代码
-              project_id: this.projectId,
-              bk_biz_id: this.bkBizId,
+              space_uid: this.spaceUid,
             };
             if (this.$route.name.includes('track')) { // 全链路追踪
               requestBody.is_trace_log = true;
@@ -322,7 +321,7 @@ export default {
   }
 
   .king-table {
-    ::v-deep .cell {
+    :deep(.cell) {
       padding-top: 8px;
       padding-bottom: 8px;
     }

@@ -19,16 +19,14 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-import socket
-
 import arrow
 
-from elasticsearch import Elasticsearch
-
-from apps.api import CCApi, TransferApi
+from apps.api import TransferApi
 from apps.log_databus.constants import STORAGE_CLUSTER_TYPE
+from apps.log_esquery.utils.es_client import es_socket_ping
 from apps.log_measure.exceptions import EsConnectFailException
-from apps.log_search.models import ProjectInfo
+from apps.log_search.models import Space
+from apps.log_esquery.utils.es_client import get_es_client
 from apps.utils.cache import cache_one_hour
 from bk_monitor.utils.metric import Metric
 
@@ -38,14 +36,13 @@ class MetricUtils(object):
 
     def __init__(self, collect_interval=300):
         # 业务缓存
-        biz_list = CCApi.get_app_list({"fields": ["bk_biz_id", "bk_biz_name"], "no_request": True}).get("info", [])
-        self.biz_info = {int(business["bk_biz_id"]): business for business in biz_list}
+        spaces = Space.objects.all()
+        # 业务缓存
+        self.biz_info = {
+            space.bk_biz_id: {"bk_biz_id": space.bk_biz_id, "bk_biz_name": space.space_name} for space in spaces
+        }
 
-        self.project_biz_info = {}
-
-        for project in ProjectInfo.objects.all():
-            self.project_biz_info[project.project_id] = self.biz_info.get(project.bk_biz_id)
-
+        self.space_info = {space.space_uid: space for space in spaces}
         # 上报时间
         self.collect_interval = collect_interval
         timestamp = arrow.now().timestamp
@@ -108,20 +105,15 @@ class MetricUtils(object):
         username = auth_info.get("username")
         password = auth_info.get("password")
 
-        cs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        es_address: tuple = (str(domain_name), int(port))
-        cs.settimeout(2)
-        status: int = cs.connect_ex(es_address)
-        if status != 0:
-            raise EsConnectFailException()
-        cs.close()
+        es_socket_ping(host=domain_name, port=port)
 
-        http_auth = (username, password) if username and password else None
-        es_client = Elasticsearch(
+        es_client = get_es_client(
+            version="",
             hosts=[domain_name],
-            http_auth=http_auth,
-            scheme="http",
+            username=username,
+            password=password,
             port=port,
+            scheme="http",
             verify_certs=False,
             timeout=10,
         )
@@ -147,3 +139,11 @@ class MetricUtils(object):
     @classmethod
     def del_instance(cls):
         cls._instance = None
+
+
+def build_metric_id(data_name, namespace, prefix: str) -> str:
+    return f"{data_name}##{namespace}##{prefix}"
+
+
+def get_metric_id_info(metric_id: str) -> list:
+    return metric_id.split("##")

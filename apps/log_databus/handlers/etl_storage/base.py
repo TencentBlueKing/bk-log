@@ -28,7 +28,7 @@ from django.utils.module_loading import import_string
 from django.utils.translation import ugettext_lazy as _
 
 from apps.api import TransferApi
-from apps.exceptions import ValidationError
+from apps.exceptions import ValidationError, ApiResultError
 from apps.log_databus.constants import BKDATA_ES_TYPE_MAP, EtlConfig, FIELD_TEMPLATE, CACHE_KEY_CLUSTER_INFO
 from apps.log_databus.exceptions import EtlParseTimeFieldException, HotColdCheckException
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
@@ -64,16 +64,14 @@ class EtlStorage(object):
             raise NotImplementedError(f"{etl_config} not implement, error: {error}")
 
     @classmethod
-    def get_etl_config(cls, result_table_config):
+    def get_etl_config(cls, result_table_config, default="bk_log_text"):
         """
         根据RT表配置返回etl_config类型
         """
         separator_node_action = result_table_config.get("option", {}).get("separator_node_action")
-        return {
-            "regexp": "bk_log_regexp",
-            "delimiter": "bk_log_delimiter",
-            "json": "bk_log_json",
-        }.get(separator_node_action, "bk_log_text")
+        return {"regexp": "bk_log_regexp", "delimiter": "bk_log_delimiter", "json": "bk_log_json"}.get(
+            separator_node_action, default
+        )
 
     def etl_preview(self, data, etl_params) -> list:
         """
@@ -82,16 +80,16 @@ class EtlStorage(object):
         :param etl_params: 字段提取参数
         :return: 字段列表 list
         """
-        raise NotImplementedError("功能暂未实现")
+        raise NotImplementedError(_("功能暂未实现"))
 
     def get_bkdata_etl_config(self, fields, etl_params, built_in_config):
-        raise NotImplementedError("功能暂未实现")
+        raise NotImplementedError(_("功能暂未实现"))
 
     def get_result_table_config(self, fields, etl_params, built_in_config, es_version="5.X"):
         """
         配置清洗入库策略，需兼容新增、编辑
         """
-        raise NotImplementedError("功能暂未实现")
+        raise NotImplementedError(_("功能暂未实现"))
 
     def get_result_table_fields(self, fields, etl_params, built_in_config, es_version="5.X"):
         """
@@ -152,6 +150,8 @@ class EtlStorage(object):
             field_option["es_type"] = FieldDataTypeEnum.get_es_field_type(
                 field["field_type"], is_analyzed=field["is_analyzed"]
             )
+            if field["is_analyzed"] and field.get("option", {}).get("es_analyzer"):
+                field_option["es_analyzer"] = field["option"]["es_analyzer"]
 
             # ES_INCLUDE_IN_ALL
             if field["is_analyzed"] and es_version.startswith("5."):
@@ -201,6 +201,7 @@ class EtlStorage(object):
         es_version: str = "5.X",
         hot_warm_config: dict = None,
         es_shards: int = settings.ES_SHARDS,
+        index_settings: dict = None,
     ):
         """
         创建或更新结果表
@@ -215,7 +216,9 @@ class EtlStorage(object):
         :param es_version: es
         :param hot_warm_config: 冷热数据配置
         :param es_shards: es分片数
+        :param index_settings: 索引配置
         """
+        from apps.log_databus.handlers.collector import build_result_table_id
 
         # ES 配置
         es_config = get_es_config(instance.get_bk_biz_id())
@@ -255,7 +258,7 @@ class EtlStorage(object):
         params = {
             "bk_data_id": instance.bk_data_id,
             # 必须为 库名.表名
-            "table_id": f"{instance.get_bk_biz_id()}_{settings.TABLE_ID_PREFIX}.{table_id}",
+            "table_id": build_result_table_id(instance.get_bk_biz_id(), table_id),
             "is_enable": True,
             "table_name_zh": instance.get_name(),
             "is_custom_table": True,
@@ -281,7 +284,10 @@ class EtlStorage(object):
             "field_list": [],
             "warm_phase_days": 0,
             "warm_phase_settings": {},
+            "is_sync_db": False,  # ES的index创建，不做同步创建，走异步任务执行
         }
+        index_settings = index_settings or {}
+        params["default_storage_config"]["index_settings"].update(index_settings)
 
         # 是否启用冷热集群
         if allocation_min_days:
@@ -330,16 +336,26 @@ class EtlStorage(object):
         if "time_option" in params and "es_doc_values" in params["time_option"]:
             del params["time_option"]["es_doc_values"]
 
+        # 获取结果表是否已经创建，如果创建则选择更新
+        table_id = ""
+        try:
+            table_id = TransferApi.get_result_table({"table_id": params["table_id"]}).get("table_id")
+        except ApiResultError:
+            pass
+
         # 兼容插件与采集项
-        if not instance.table_id:
+        if not table_id:
             # 创建结果表
-            instance.table_id = TransferApi.create_result_table(params)["table_id"]
-            instance.save()
+            table_id = TransferApi.create_result_table(params)["table_id"]
         else:
             # 更新结果表
-            params["table_id"] = instance.table_id
+            params["table_id"] = table_id
             TransferApi.modify_result_table(params)
-            cache.delete(CACHE_KEY_CLUSTER_INFO.format(instance.table_id))
+            cache.delete(CACHE_KEY_CLUSTER_INFO.format(table_id))
+
+        if not instance.table_id:
+            instance.table_id = table_id
+            instance.save()
 
         return {"table_id": instance.table_id, "params": params}
 

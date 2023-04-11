@@ -43,7 +43,7 @@
       </div>
       <bk-table v-bkloading="{ isLoading: tableLoading1 }" :data="indexesData">
         <bk-table-column :label="$t('索引')" prop="index" min-width="180"></bk-table-column>
-        <bk-table-column :label="$t('运行状态')" prop="health">
+        <bk-table-column :label="$t('状态')" prop="health">
           <template slot-scope="{ row }">
             <div :class="['status-text', row.health]">
               {{ healthMap[row.health] }}
@@ -62,6 +62,9 @@
             {{ getFileSize(row['store.size']) }}
           </template>
         </bk-table-column>
+        <div slot="empty">
+          <empty-status empty-type="empty" />
+        </div>
       </bk-table>
     </section>
     <section class="partial-content">
@@ -86,6 +89,9 @@
             <span v-if="row.field_name === timeField" class="log-icon icon-date-picker"></span>
           </template>
         </bk-table-column>
+        <div slot="empty">
+          <empty-status empty-type="empty" />
+        </div>
       </bk-table>
     </section>
   </div>
@@ -93,7 +99,11 @@
 
 <script>
 import { formatFileSize } from '@/common/util';
+import EmptyStatus from '@/components/empty-status';
 export default {
+  components: {
+    EmptyStatus,
+  },
   props: {
     collectorData: {
       type: Object,
@@ -106,9 +116,9 @@ export default {
       indexesData: [],
       // 健康状态，文案待定，先不国际化
       healthMap: {
-        green: '健康',
-        yellow: '部分故障',
-        red: '严重故障',
+        green: this.$t('健康'),
+        yellow: this.$t('部分故障'),
+        red: this.$t('严重故障'),
       },
       tableLoading2: true,
       timeField: '',

@@ -67,7 +67,7 @@ FILTER_CONTENT = {
 
 CLONE_PARAM = {
     "preview_directory": "/data/",
-    "preview_ip": "1.23.1.1",
+    "preview_ip_list": [{"ip": "1.1.1.1", "bk_cloud_id": 0}],
     "preview_time_range": "1d",
     "preview_is_search_child": True,
 }

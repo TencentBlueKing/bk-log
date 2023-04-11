@@ -74,33 +74,14 @@ def gen_perms_apply_data(system, subject, action_to_resources_list):
 
             for resources in resources_list:
                 for resource in resources:
-                    inst_item = []
-                    topo_path = None
-
-                    if resource.attribute:
-                        topo_path = resource.attribute.get("_bk_iam_path_")
-
-                    if topo_path:
-                        for part in topo_path[1:-1].split("/"):
-                            rtype, rid = part.split(",")
-                            inst_item.append(
-                                {
-                                    "type": rtype,
-                                    "type_name": meta.get_resource_name(system_id, rtype),
-                                    "id": rid,
-                                    "name": part,
-                                }
-                            )
-
-                    inst_item.append(
+                    inst_item = [
                         {
                             "type": resource.type,
                             "type_name": meta.get_resource_name(system_id, resource.type),
                             "id": resource.id,
                             "name": resource.attribute.get("name", "") if resource.attribute else "",
                         }
-                    )
-
+                    ]
                     instances.append(inst_item)
 
             resource_types["instances"] = instances

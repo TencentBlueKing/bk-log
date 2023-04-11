@@ -21,23 +21,72 @@ the project delivered to anyone in the future.
 """
 import copy
 
+from collections import defaultdict
 from django.conf import settings
 
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.feature_toggle.plugins.constants import USER_GUIDE_CONFIG
 from apps.iam import Permission, ActionEnum
-from apps.log_search.constants import UserMetaConfType
+from apps.log_search.constants import UserMetaConfType, UserFunctionGuideType
+from apps.log_search.exceptions import FunctionGuideException
 from apps.utils import APIModel
-from apps.exceptions import BizNotExistError
-from apps.api import BKLoginApi, CmsiApi
-from apps.log_search.models import ProjectInfo, UserMetaConf
-from apps.utils.cache import cache_one_hour
+from apps.api import BKLoginApi, CmsiApi, TransferApi
+from apps.log_search.models import ProjectInfo, UserMetaConf, Space
 from apps.utils.local import get_request_username
 from apps.log_search import exceptions
 from apps.feature_toggle.handlers import toggle
+from apps.utils.log import logger
+from bkm_space.define import SpaceTypeEnum
 
 
 class MetaHandler(APIModel):
+    @classmethod
+    def get_user_spaces(cls, username):
+        spaces = Space.objects.all()
+        allowed_spaces = Permission(username).filter_space_list_by_action(ActionEnum.VIEW_BUSINESS, spaces)
+        allowed_space_mapping = {space.bk_biz_id for space in allowed_spaces}
+
+        # 获取置顶空间列表
+        # 返回格式： space_uid 的列表
+        try:
+            sticky_spaces = TransferApi.list_sticky_spaces({"username": username})
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error(f"Get sticky space by user({username}), error({e})")
+            sticky_spaces = []
+
+        spaces_by_type = defaultdict(list)
+        for space in spaces:
+            spaces_by_type[space.space_type_id].append(space)
+
+        # bkcc按照数字排序, 非bkcc按照字母排序
+        for space_type_id, _spaces in spaces_by_type.items():
+            if space_type_id == SpaceTypeEnum.BKCC.value:
+                _spaces.sort(key=lambda x: x.bk_biz_id)
+            else:
+                _spaces.sort(key=lambda x: x.space_id)
+        spaces = spaces_by_type[SpaceTypeEnum.BKCC.value]
+        spaces.extend(spaces_by_type[SpaceTypeEnum.BCS.value])
+        spaces.extend(spaces_by_type[SpaceTypeEnum.BKCI.value])
+
+        result = []
+        for space in spaces:
+            result.append(
+                {
+                    "id": space.id,
+                    "space_type_id": space.space_type_id,
+                    "space_type_name": space.space_type_name,
+                    "space_id": space.space_id,
+                    "space_name": space.space_name,
+                    "space_uid": space.space_uid,
+                    "space_code": space.space_code,
+                    "bk_biz_id": space.bk_biz_id,
+                    "time_zone": space.properties.get("time_zone", "Asia/Shanghai"),
+                    "is_sticky": space.space_uid in sticky_spaces,
+                    "permission": {ActionEnum.VIEW_BUSINESS.id: space.bk_biz_id in allowed_space_mapping},
+                }
+            )
+        return result
+
     @classmethod
     def get_projects(cls, project_ids=None):
         if not project_ids:
@@ -52,8 +101,7 @@ class MetaHandler(APIModel):
     def get_user_projects(cls, username):
         result = []
         business_list = MetaHandler.get_projects()
-        projects = Permission(username).filter_business_list_by_action(ActionEnum.VIEW_BUSINESS, business_list)
-        allowed_business_mapping = {project.bk_biz_id for project in projects}
+        allowed_business_mapping = {project.bk_biz_id for project in business_list}
 
         for project in business_list:
             result.append(
@@ -76,31 +124,9 @@ class MetaHandler(APIModel):
         return CmsiApi.get_msg_type()
 
     @classmethod
-    def get_project_info(cls, bk_biz_id):
-        return cls._cache_project_info(bk_biz_id=bk_biz_id)
-
-    @staticmethod
-    @cache_one_hour("meta_biz_to_project_{bk_biz_id}")
-    def _cache_project_info(*, bk_biz_id):
-        try:
-            project = ProjectInfo.objects.filter(bk_biz_id=bk_biz_id).first()
-            if not project:
-                raise ProjectInfo.DoesNotExist
-            project_info = {
-                "bk_biz_id": bk_biz_id,
-                "project_id": project.pk,
-                "project_name": project.project_name,
-            }
-            return project_info
-        except ProjectInfo.DoesNotExist:
-            raise BizNotExistError(BizNotExistError.MESSAGE.format(bk_biz_id=bk_biz_id))
-
-    @classmethod
-    def get_menus(cls, project_id, is_superuser):
-
-        project = ProjectInfo.objects.get(project_id=project_id)
+    def get_menus(cls, space_uid, is_superuser):
         modules = copy.deepcopy(settings.MENUS)
-        cls.get_present_menus(modules, is_superuser, project)
+        cls.get_present_menus(modules, is_superuser)
         return modules
 
     @classmethod
@@ -145,33 +171,22 @@ class MetaHandler(APIModel):
         }
 
     @classmethod
-    def get_biz_maintainer(cls, bk_biz_id, project_id):
+    def get_biz_maintainer(cls, space_uid):
         """
         @summary:查询业务运维列表
         """
-        if bk_biz_id:
-            project = ProjectInfo.objects.filter(bk_biz_id=bk_biz_id, is_deleted=False).first()
-        elif project_id:
-            project = ProjectInfo.objects.filter(project_id=project_id, is_deleted=False).first()
-        else:
-            return {}
-
-        if not project:
-            return {}
-        project_name = project.project_name
-        maintainer = []
-        data = {"bk_biz_name": project_name, "maintainer": list(maintainer)}
-        return data
+        # TODO: 确认改函数是否已被废弃
+        return {"bk_biz_name": space_uid, "maintainer": []}
 
     @classmethod
-    def get_present_menus(cls, child_modules, is_superuser, project):
+    def get_present_menus(cls, child_modules, is_superuser):
         if not isinstance(child_modules, list):
             raise exceptions.SettingMenuException
 
         for child_module in child_modules[:]:
             if "feature" not in child_module:
                 raise exceptions.SettingMenuException
-            if not cls.check_menu_feature(child_module, is_superuser, project):
+            if not cls.check_menu_feature(child_module, is_superuser):
                 child_modules.remove(child_module)
                 continue
             if "scenes" in child_module and not toggle.feature_switch(child_module["scenes"]):
@@ -179,20 +194,16 @@ class MetaHandler(APIModel):
                 continue
             child_module["project_manage"] = True
             if "children" in child_module:
-                cls.get_present_menus(child_module["children"], is_superuser, project)
+                cls.get_present_menus(child_module["children"], is_superuser)
 
     @classmethod
-    def check_menu_feature(cls, module, is_superuser, project):
+    def check_menu_feature(cls, module, is_superuser):
         toggle = module["feature"]
         if toggle == "off":
             return False
 
         if toggle == "debug":
-            if (
-                settings.ENVIRONMENT not in ["dev", "stag"]
-                and not is_superuser
-                and module["id"] not in project.feature_toggle
-            ):
+            if settings.ENVIRONMENT not in ["dev", "stag"] and not is_superuser:
                 return False
 
         if module["id"] in ["manage_data_link", "extract_link_manage", "manage_data_link_conf"]:
@@ -216,12 +227,38 @@ class MetaHandler(APIModel):
                 toggle_key: {**toggle_val, **{"current_step": user_meta_conf.conf.get(toggle_key, 0)}}
                 for toggle_key, toggle_val in feature_config.items()
             }
+        # 获取用户功能指引, 语义为 是否展示, 所以默认值为 True
+        user_function_guide, __ = UserMetaConf.objects.get_or_create(
+            username=username,
+            type=UserMetaConfType.FUNCTION_GUIDE,
+            defaults={"conf": {i: True for i in UserFunctionGuideType.get_keys()}},
+        )
+        meta_conf["function_guide"] = user_function_guide.conf
         return meta_conf
 
     @classmethod
     def update_user_guide(cls, username, user_guide_dict):
-        user_meta_conf = UserMetaConf.objects.filter(username=username, type=UserMetaConfType.USER_GUIDE).first()
-        if not user_meta_conf:
-            user_meta_conf = UserMetaConf.objects.create(username=username, type=UserMetaConfType.USER_GUIDE, conf={})
-        user_meta_conf.conf.update(user_guide_dict)
-        user_meta_conf.save()
+        # 更新顶级菜单指引, user_guide_dict的key为 default
+        if "default" in user_guide_dict.keys():
+            user_meta_conf = UserMetaConf.objects.filter(username=username, type=UserMetaConfType.USER_GUIDE).first()
+            if not user_meta_conf:
+                user_meta_conf = UserMetaConf.objects.create(
+                    username=username, type=UserMetaConfType.USER_GUIDE, conf={}
+                )
+            user_meta_conf.conf.update(user_guide_dict)
+            user_meta_conf.save()
+            return
+        # 更新新功能菜单指引, 和前端达成一致传入的是 {"function_guide": "search_favorite"}
+        update_function_guide = user_guide_dict["function_guide"]
+        if update_function_guide not in UserFunctionGuideType.get_keys():
+            raise FunctionGuideException()
+
+        user_function_guide = UserMetaConf.objects.filter(
+            username=username,
+            type=UserMetaConfType.FUNCTION_GUIDE,
+        ).first()
+        if not user_function_guide:
+            raise FunctionGuideException()
+        # 更新用户功能指引, 语义为 是否展示, 所以更新后的值为 False
+        user_function_guide.conf[update_function_guide] = False
+        user_function_guide.save()

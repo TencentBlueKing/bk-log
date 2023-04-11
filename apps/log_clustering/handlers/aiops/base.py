@@ -26,7 +26,7 @@ from apps.log_clustering.handlers.aiops.aiops_model.data_cls import AiopsRelease
 from apps.utils.log import logger
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.feature_toggle.plugins.constants import BKDATA_CLUSTERING_TOGGLE
-from apps.log_clustering.exceptions import ClusteringClosedException
+from apps.log_clustering.exceptions import ClusteringClosedException, ModelReleaseNotFoundException
 from apps.api import BkDataAIOPSApi
 
 
@@ -66,7 +66,7 @@ class BaseAiopsHandler(object):
             info["model_release_id"] for info in release_info if info.get("publish_status") == LATEST_PUBLISH_STATUS
         ]
         if not release_ids:
-            return None
+            raise ModelReleaseNotFoundException(ModelReleaseNotFoundException.MESSAGE.format(model_id=model_id))
         release_id, *_ = release_ids
         return release_id
 

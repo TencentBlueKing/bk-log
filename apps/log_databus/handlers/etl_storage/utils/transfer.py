@@ -41,7 +41,7 @@ def preview(separator_node_action, data, etl_only=False, **kwargs):
     try:
         sys_name = platform.system().lower()
         if sys_name not in ["darwin", "linux"]:
-            raise ValidationError(_(f"字段提取预览不支持当前操作系统类型({sys_name})"))
+            raise ValidationError(_("字段提取预览不支持当前操作系统类型({sys_name})").format(sys_name=sys_name))
 
         transfer_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), sys_name, "transfer-min")
         os.chmod(transfer_path, 0o755)

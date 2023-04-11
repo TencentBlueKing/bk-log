@@ -23,40 +23,40 @@
 <template>
   <div class="no-index-set-container">
     <span class="icon log-icon icon-index-set"></span>
-    <h2 class="main-tip">{{ $t('nav.notIndex') }}</h2>
+    <h2 class="main-tip">{{ $t('当前业务无数据可检索') }}</h2>
     <!-- 要使用检索功能，请先创建索引集 -->
-    <div class="index-manage-container" v-if="project.project_manage">
+    <div class="index-manage-container" v-if="space.project_manage">
       <!-- 日志数据已进入数据平台或ES 关联已入库的数据 -->
       <div class="index-manage">
         <div class="index-manage-tips">
-          <p>{{ $t('nav.addIndexTips1') }}</p>
-          <p>{{ $t('nav.addIndexTips2') }}</p>
+          <p>{{ $t('日志数据已进入数据平台或ES') }}</p>
+          <p>{{ $t('关联已入库的数据') }}</p>
         </div>
         <bk-button
           class="king-button"
           theme="primary"
           :outline="true"
           @click="goToCreateIndex">
-          {{ $t('nav.addIndexSet') }}
+          {{ $t('新建索引集') }}
         </bk-button>
       </div>
       <!-- 日志数据还在服务器上 需要采集日志，请先创建采集任务 -->
       <div class="index-manage">
         <div class="index-manage-tips">
-          <p>{{ $t('nav.addCollectTips1') }}</p>
-          <p>{{ $t('nav.addCollectTips2') }}</p>
+          <p>{{ $t('日志数据还在服务器上') }}</p>
+          <p>{{ $t('需要采集日志，请先创建采集任务') }}</p>
         </div>
         <bk-button
           class="king-button"
           theme="primary"
           :outline="true"
           @click="goToCreateCollection">
-          {{ $t('nav.addCollectAccess') }}
+          {{ $t('新建采集接入') }}
         </bk-button>
       </div>
     </div>
     <!-- 请联系业务运维配索引集 -->
-    <p class="side-tip" v-else>{{ $t('nav.notIndexAuth') }}</p>
+    <p class="side-tip" v-else>{{ $t('请联系业务运维配索引集') }}</p>
   </div>
 </template>
 
@@ -66,7 +66,7 @@ import { mapGetters } from 'vuex';
 export default {
   computed: {
     ...mapGetters({
-      project: 'project',
+      space: 'space',
     }),
   },
   methods: {
@@ -74,7 +74,7 @@ export default {
       this.$router.push({
         path: '/manage/log-collection/log-index-set',
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
     },
@@ -83,7 +83,7 @@ export default {
         this.$router.push({
           path: '/manage/log-collection',
           query: {
-            projectId: window.localStorage.getItem('project_id'),
+            spaceUid: this.$store.state.spaceUid,
           },
         });
       } else {

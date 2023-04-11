@@ -53,6 +53,7 @@
         },
         "output_config":{
             "output_node":{
+                "bk_biz_id":{{after_treat.bk_biz_id}},
                 "table_name":"{{after_treat.model.table_name}}",
                 "table_alias":"模型输出",
                 "fields": {{after_treat.model.output_fields}},
@@ -105,6 +106,7 @@
             }
         ],
         "node_type":"model_ts_custom",
+        {% if after_treat.is_flink_env %}"serving_env":"flink",{% endif %}
         "frontend_info":{
             "x":355,
             "y":171

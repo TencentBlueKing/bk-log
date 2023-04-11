@@ -38,9 +38,12 @@
         {{ $t('添加条件') }}
       </span>
       <div class="condition-item-container" v-else>
-        <div class="tag text-tag field-tag" v-bk-overflow-tips>
-          <!-- <span class="bk-icon icon-close-circle-shape" @click="removeFilterCondition(coreData.field)"></span> -->
-          {{ localData.field + (fieldAliasMap[localData.field] ? `(${fieldAliasMap[localData.field]})` : '')}}
+        <div
+          class="tag text-tag field-tag"
+          v-bk-tooltips.top="{
+            content: fieldAliasMap[localData.field] ? `${localData.field}(${fieldAliasMap[localData.field]})` : ''
+          }">
+          {{localData.field}}
         </div>
         <div class="tag symbol-tag">{{ localData.operator }}</div>
         <div class="tag text-tag" v-bk-overflow-tips>{{ formaterValue(localData.value) }}</div>
@@ -48,10 +51,10 @@
         <!-- <div class="tag symbol-tag" v-if="index !== filterCondition.length - 1">and</div> -->
       </div>
       <div class="add-condition-filter-popover" slot="content">
-        <div class="filter-title">{{ $t('retrieve.addFilter') }}</div>
+        <div class="filter-title">{{ $t('添加过滤条件') }}</div>
         <div class="add-filter-content">
           <div class="option-item">
-            <label>{{ $t('indexSetList.field_name') }}</label>
+            <label>{{ $t('字段') }}</label>
             <bk-select
               :value="coreData.field"
               style="width: 240px;"
@@ -65,7 +68,7 @@
             </bk-select>
           </div>
           <div class="option-item" style="margin-right: 0">
-            <label>{{ $t('indexSetList.operation') }}</label>
+            <label>{{ $t('操作') }}</label>
             <bk-select
               :value="coreData.operator"
               :clearable="false"
@@ -82,7 +85,7 @@
             </bk-select>
           </div>
           <div class="option-item" v-if="!isShowValue">
-            <label style="margin-left: 10px;">{{ $t('indexSetList.field_value') }}</label>
+            <label style="margin-left: 10px;">{{ $t('值') }}</label>
             <bk-tag-input
               v-model="coreData.value"
               style="width: 240px;"
@@ -93,14 +96,16 @@
               :placeholder="filterPlaceholder"
               :list="valueList"
               :content-width="232"
+              :max-data="getOperatorLength"
               @change="handleValueChange"
+              @blur="handleValueBlur"
               trigger="focus">
             </bk-tag-input>
           </div>
         </div>
         <div class="filter-footer">
-          <bk-button theme="primary" @click="handleConfirm">{{ $t('btn.confirm') }}</bk-button>
-          <bk-button @click="handleCancel">{{ $t('btn.cancel') }}</bk-button>
+          <bk-button theme="primary" @click="handleConfirm">{{ $t('确定') }}</bk-button>
+          <bk-button @click="handleCancel">{{ $t('取消') }}</bk-button>
         </div>
       </div>
     </bk-popover>
@@ -125,6 +130,10 @@ export default {
       },
     },
     statisticalFieldsData: { // 过滤条件字段可选值关系表
+      type: Object,
+      required: true,
+    },
+    filterAllOperators: {
       type: Object,
       required: true,
     },
@@ -153,19 +162,18 @@ export default {
         operator: '',
         value: [], // String or Array
       },
-      filterOperators: [], // 过滤条件操作符
       valueList: [{ id: '', name: `-${this.$t('空')}-` }], // 字段可选值列表
       filterPlaceholder: '',
+      isHaveCompared: false, // 是否有大小对比的值
       showFilterPopover: false,
       isShowValue: false,
-      isInit: true,
     };
   },
   computed: {
     filterFields() { // 剔除掉检索查询参数里面已有的过滤条件
       const result = [];
       this.totalFields.forEach((item) => {
-        if (item.field_type === '__virtual__') return;
+        if (!this.operatorsKeyList.includes(item.field_type)) return;
         const fieldName = item.field_name;
         // if (item.field_type !== 'text' && !this.filterCondition.some(filterItem => filterItem.field === fieldName)) {
         // if (item.field_type !== 'text') { // 允许重复选择相同字段筛选条件
@@ -187,15 +195,30 @@ export default {
           result.push({
             id: fieldName,
             name: `${fieldName}(${alias})`,
+            operatorKey: item.field_type,
           });
         } else {
           result.push({
             id: fieldName,
             name: fieldName,
+            operatorKey: item.field_type,
           });
         }
       });
       return result;
+    },
+    filterOperators() { // 过滤条件操作符
+      const fieldsItem = this.filterFields.find(item => item.id === this.coreData.field);
+      return this.filterAllOperators[fieldsItem?.operatorKey]?.map(item => ({
+        ...item,
+        operator: item.operator,
+      })) || [];
+    },
+    getOperatorLength() { // 是否是对比的操作 如果是 则值限制只能输入1个
+      return this.isHaveCompared ? 1 : -1;
+    },
+    operatorsKeyList() {  // 请求后的操作键名 用于过滤可选的字段
+      return Object.keys(this.filterAllOperators);
     },
   },
   watch: {
@@ -205,17 +228,8 @@ export default {
         this.resetData();
       }
     },
-    filterFields(val) {
-      this.handleFieldChange(val[0]?.id);
-    },
   },
   created() {
-    // 请求过滤条件符号
-    this.$http.request('retrieve/getOperators').then((res) => {
-      this.filterOperators = res.data;
-      this.handleOperatorChange(res.data?.[0].operator || 'is');
-    })
-      .catch(e => console.warn(e));
     this.setDefaultEditValue();
   },
   mounted() {
@@ -226,13 +240,8 @@ export default {
   },
   methods: {
     handlePopoverShow() {
-      if (this.isAdd && this.isInit) {
-        this.$http.request('retrieve/getOperators').then((res) => {
-          this.filterOperators = res.data;
-          this.handleOperatorChange(res.data?.[0].operator || 'is');
-        });
-      }
-      this.isInit = false;
+      const operatorsFirstItem = Object.values(this.filterAllOperators)[0]?.[0];
+      this.handleOperatorChange(operatorsFirstItem?.operator || '=');
       this.setDefaultEditValue();
       this.showFilterPopover = true;
     },
@@ -253,12 +262,8 @@ export default {
         ...this.editData,
         value: this.editData.value.toString().split(','),
       };
-      this.$http.request('retrieve/getOperators').then((res) => {
-        this.filterOperators = res.data;
-      })
-        .catch(e => console.warn(e));
-      this.localData = params;
       this.handleFieldChange(params.field);
+      this.localData = params;
       this.$nextTick(() => {
         Object.assign(this.coreData, params, {});
       });
@@ -272,14 +277,27 @@ export default {
     },
     // 字段改变
     handleFieldChange(field) {
+      const fieldItem = this.filterFields.find(item => item.id === field);
+      const isNotShowNull = !['text', 'keyword'].includes(fieldItem?.operatorKey);
       this.coreData.value = [];
-      this.valueList = [{ id: '', name: `-${this.$t('空')}-` }];
+      this.valueList = isNotShowNull ? [] : [{ id: '', name: `-${this.$t('空')}-` }];
       this.coreData.field = field || '';
+      this.handleOperatorChange(this.filterOperators[0]?.operator || 'is');
       if (field && this.statisticalFieldsData[field]) {
         const fieldValues = Object.keys(this.statisticalFieldsData[field]);
         if (fieldValues?.length) {
-          this.valueList = fieldValues.map(item => ({ id: item, name: item }));
-          this.valueList.unshift({ id: '', name: `-${this.$t('空')}-` });
+          this.valueList = fieldValues.map((item) => {
+            const markList = item.toString().match(/(<mark>).*?(<\/mark>)/g) || [];
+            if (markList.length) {
+              item = markList.map(item => item.replace(/<mark>/g, '')
+                .replace(/<\/mark>/g, '')).join(',');
+            }
+            return {
+              id: item,
+              name: item,
+            };
+          });
+          if (!isNotShowNull) this.valueList.unshift({ id: '', name: `-${this.$t('空')}-` });
         }
       }
     },
@@ -291,21 +309,29 @@ export default {
         this.valueList = [{ id: '', name: `-${this.$t('空')}-` }];
       }
       this.isShowValue = ['exists', 'does not exists'].includes(operator);
+      this.isHaveCompared = ['<', '<=', '>', '>='].includes(operator);
+      if (this.isHaveCompared) this.coreData.value = [this.coreData.value[0] || ''];
       for (const item of this.filterOperators) {
         if (item.operator === operator) {
-          this.filterPlaceholder = item.placeholder || this.$t('form.pleaseEnter');
+          this.filterPlaceholder = item.placeholder || this.$t('请输入');
           break;
         }
       }
     },
     // 值改变
     handleValueChange(val) {
+      if (!val.length) return;
       const newVal = val[val.length - 1];
       if (newVal === '') { // 选择了-空-过滤值
         this.coreData.value = [''];
       } else if (val.length && this.coreData.value.includes('')) { // 选择了有效值但已有选项中含有空值
         this.coreData.value = this.coreData.value.filter(item => item);
       }
+    },
+    // 当有对比的操作时 值改变
+    handleValueBlur(val) {
+      if (val === '' || !this.isHaveCompared) return;
+      this.coreData.value = [val];
     },
     // 粘贴过滤条件
     pasteFn(pasteValue) {

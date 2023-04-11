@@ -151,6 +151,7 @@ class CollectorPluginHandler:
             "etl_params": params.get("etl_params", {}),
             "fields": params.get("fields", []),
             "params": params.get("params", []),
+            "index_settings": params.get("index_settings", {}),
         }
 
         is_create_public_data_id = params.get("is_create_public_data_id", False)

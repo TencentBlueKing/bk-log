@@ -103,6 +103,7 @@ import watermarkMaker from './utils/watermark-maker'
 import ChartInView from './utils/chart-in-view'
 import { getValueFormat } from './value-formats-package'
 import ChartTitle from './components/chart-title-new.vue'
+import { Debounce } from '../../components/ip-selector/common/util'
 interface ICurValue {
   xAxis: string | number; yAxis: string | number;
   dataIndex: number, color: string; name: string, seriesIndex: number}
@@ -494,6 +495,7 @@ export default class MonitorEcharts extends Vue {
     }, 500);
   }
 
+  @Debounce(300)
   // 获取seriesData
   async handleSeriesData(startTime?: string, endTime?: string) {
     if (this.isFinish) this.loading = true
@@ -512,10 +514,8 @@ export default class MonitorEcharts extends Vue {
         // await this.handleSetChartData(data)
         this.chartData.splice(0, this.chartData.length, ...data);
         if (!this.isFold) this.handleSetChartData(this.chartData)
-      } else {
-        if (this.isFinish) {
-          this.noData = true
-        }
+      } else if (this.isFinish){
+        this.noData = true
       }
     } catch (e) {
       console.info(e)
@@ -574,7 +574,10 @@ export default class MonitorEcharts extends Vue {
           colors: this.colors,
           showExtremum: this.chartOption.legend.asTable,
           chartOption: this.chartOption })
-        const optionData = this.chartOptionInstance.getOptions(this.handleTransformSeries(series), {})
+        const optionData = this.chartOptionInstance.getOptions(this.handleTransformSeries(series), {})   
+        optionData.options.xAxis.axisLine.show = false;
+        optionData.options.xAxis.axisTick.show = false;
+        optionData.options.yAxis.axisLine.show = false;
         if (['bar', 'line'].includes(this.chartType)) {
           this.legend.show = hasSeries && optionData.legendData.length > 0
         } else {
@@ -970,9 +973,7 @@ export default class MonitorEcharts extends Vue {
     width: 100%;
     height: 100%;
     color: #63656e;
-    // padding-left: 10px;
     padding: 18px 24px 24px;
-    max-height: 153px;
 
     .echart-header {
       display: flex;
@@ -988,7 +989,7 @@ export default class MonitorEcharts extends Vue {
 
       .echart-instance {
         min-width: 100px;
-        height: 310px;
+        height: 260px;
         flex: 1;
         display: flex;
         overflow: hidden;

@@ -24,12 +24,17 @@
   <div class="access-manage-container" v-bkloading="{ isLoading: basicLoading }">
     <auth-container-page v-if="authPageInfo" :info="authPageInfo"></auth-container-page>
     <template v-if="!authPageInfo && !basicLoading && curIndexSet">
-      <bk-tab :active.sync="activePanel" type="border-card">
-        <bk-tab-panel
-          v-for="panel in panels"
-          v-bind="panel"
-          :key="panel.name"></bk-tab-panel>
-      </bk-tab>
+      <basic-tab :active.sync="activePanel" type="border-card">
+        <bk-tab-panel v-for="panel in panels" v-bind="panel" :key="panel.name"></bk-tab-panel>
+        <div class="go-search" slot="setting">
+          <div class="search-text">
+            <span class="bk-icon icon-info"></span>
+            <i18n path="数据采集好了，去 {0}">
+              <span class="search-button" @click="handleGoSearch">{{$t('查看数据')}}</span>
+            </i18n>
+          </div>
+        </div>
+      </basic-tab>
       <keep-alive>
         <component
           class="tab-content"
@@ -48,6 +53,8 @@ import AuthContainerPage from '@/components/common/auth-container-page';
 import BasicInfo from './basic-info';
 import FieldInfo from './field-info';
 import UsageDetails from '@/views/manage/manage-access/components/usage-details';
+import BasicTab from '@/components/basic-tab';
+import * as authorityMap from '../../../../../../common/authority-map';
 
 export default {
   name: 'IndexSetManage',
@@ -56,6 +63,7 @@ export default {
     BasicInfo,
     FieldInfo,
     UsageDetails,
+    BasicTab,
   },
   data() {
     const scenarioId = this.$route.name.split('-')[0];
@@ -65,7 +73,7 @@ export default {
       authPageInfo: null,
       activePanel: this.$route.query.type || 'basicInfo',
       panels: [
-        { name: 'basicInfo', label: this.$t('基本信息') },
+        { name: 'basicInfo', label: this.$t('配置信息') },
         { name: 'usageDetails', label: this.$t('使用详情') },
         { name: 'fieldInfo', label: this.$t('字段信息') },
       ],
@@ -91,7 +99,7 @@ export default {
       const indexSetId = this.$route.params.indexSetId.toString();
       try {
         const paramData = {
-          action_ids: ['manage_indices'],
+          action_ids: [authorityMap.MANAGE_INDICES_AUTH],
           resources: [{
             type: 'indices',
             id: indexSetId,
@@ -135,6 +143,20 @@ export default {
         });
         this.$store.commit('collect/updateScenarioMap', map);
       }
+    },
+    handleGoSearch() {
+      const params = {
+        indexId: this.curIndexSet.index_set_id
+          ? this.curIndexSet.index_set_id
+          : this.curIndexSet.bkdata_index_set_ids[0],
+      };
+      this.$router.push({
+        name: 'retrieve',
+        params,
+        query: {
+          spaceUid: this.$store.state.spaceUid,
+        },
+      });
     },
   },
 };

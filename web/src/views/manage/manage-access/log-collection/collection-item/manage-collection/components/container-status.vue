@@ -24,27 +24,32 @@
   <div class="container-status-container">
     <div class="nav-section">
       <div class="nav-btn-box">
-        <div v-for="item in navBtnList"
-             :key="item.id"
-             :class="`nav-btn ${item.id === navActive ? 'active' : ''}`"
-             @click="handleClickNav(item.id)">
+        <div
+          v-for="item in navBtnList"
+          :key="item.id"
+          :class="`nav-btn ${item.id === navActive ? 'active' : ''}`"
+          @click="handleClickNav(item.id)">
           <span
             v-if="item.id !== 'all'"
-            :class="['circle', item.id === 'running' ? 'rotate-icon' : 'nav-icon', colorClass[item.id]]"
+            :class="[
+              item.id !== 'running' && 'circle nav-icon',
+              isHaveRunning(item) && 'rotate-icon',
+              colorClass[item.id],
+            ]"
             v-bkloading="{
-              isLoading: item.id === 'running',
+              isLoading: isHaveRunning(item),
               opacity: 1,
               zIndex: 10,
               theme: 'primary',
               mode: 'spin',
               size: 'small'
             }"></span>
+          <span v-if="isHaveRunning(item)" class="running-circle"></span>
           <span>{{statusNameList[item.id]}} {{item.listNum}}</span>
         </div>
       </div>
       <bk-button @click.stop="issuedRetry()">
-        <!-- {{$t('复制目标')}} -->
-        {{$t('configDetails.batchRetry')}}
+        {{$t('失败批量重试')}}
       </bk-button>
     </div>
     <div class="table-section">
@@ -83,7 +88,7 @@
                   href="javascript: ;" class="retry"
                   v-if="row.status === 'failed'"
                   @click.stop="issuedRetry('alone', renderItem, row)">
-                  {{ $t('configDetails.retry') }}
+                  {{ $t('重试') }}
                 </a>
               </template>
             </bk-table-column>
@@ -129,10 +134,10 @@ export default {
         failed: 'circle-red',
       },
       statusNameList: { // 状态中文名
-        all: this.$t('configDetails.all'),
-        success: this.$t('configDetails.succeed'),
-        failed: this.$t('configDetails.failed'),
-        running: this.$t('configDetails.Pending'),
+        all: this.$t('全部'),
+        success: this.$t('正常'),
+        failed: this.$t('失败'),
+        running: this.$t('执行中'),
       },
       timer: null,
       renderTitleList: [], // 当前活跃的目标
@@ -248,6 +253,13 @@ export default {
           console.warn(e);
         });
     },
+    /**
+     * @desc: 是否有重试执行中的采集状态
+     * @param {Object} item
+     */
+    isHaveRunning(item) {
+      return item.id === 'running' && item.listNum !== 0;
+    },
   },
 };
 </script>
@@ -285,10 +297,6 @@ export default {
 
         &:not(:first-child) {
           margin-left: 12px;
-        }
-
-        &:last-child {
-          padding-left: 27px;
         }
 
         &:hover {
@@ -347,9 +355,15 @@ export default {
   .rotate-icon {
     position: absolute;
     top: -4px;
-    left: -4px;
+    left: 8px;
     display: inline-block;
     transform: scale(.6);
+  }
+
+  .running-circle {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
   }
 
   .table-section {

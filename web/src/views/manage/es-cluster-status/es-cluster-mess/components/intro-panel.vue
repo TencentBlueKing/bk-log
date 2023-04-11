@@ -74,7 +74,7 @@
           </div>
           <div class="hint">
             <p>{{$t('一键拉群功能')}}</p>
-            <p>{{$t('qwGroupTips')}}</p>
+            <p>{{$t('可以通过企业微信将需求的相关人员邀请到一个群里进行讨论')}}</p>
           </div>
         </div>
         <div class="group-body-container">
@@ -201,9 +201,8 @@ export default {
     .right-window {
       height: 100vh;
       background: #fff;
-      border: 1px solid #dcdee5;
+      border-left: 1px solid #dcdee5;
       position: absolute;
-      z-index: 99;
       color: #63656e;
       padding: 16px 0 0 24px;
 
@@ -260,7 +259,7 @@ export default {
         padding: 16px 0;
         border-bottom: 1px solid #eaebf0;
 
-        .help-md{
+        .help-md {
           a {
             display: inline-block;
             color: #3a84ff;

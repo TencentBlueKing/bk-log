@@ -211,7 +211,7 @@ class TestUserOperationRecord(TestCase):
             remark="",
             filter_content="",
             preview_directory="",
-            preview_ip="127.0.0.1",
+            preview_ip_list=[{"bk_cloud_id": 1, "ip": "127.0.0.1"}],
             preview_time_range="",
             preview_is_search_child=True,
             link_id=1,
@@ -240,7 +240,7 @@ class TestUserOperationRecord(TestCase):
                 }
             ],
             bk_app_code="bk-log-4",
-            project_id=1,
+            space_uid="bkcc__2",
         )
 
         IndexSetHandler.replace(
@@ -257,5 +257,5 @@ class TestUserOperationRecord(TestCase):
                 }
             ],
             bk_app_code="bk-log-4",
-            project_id=1,
+            space_uid="bkcc__2",
         )

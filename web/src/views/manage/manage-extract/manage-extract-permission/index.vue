@@ -39,39 +39,52 @@
       </bk-button>
     </div>
     <bk-table class="king-table" :data="strategyList" row-key="strategy_id">
-      <bk-table-column :label="$t('用户组')" min-width="100">
+      <bk-table-column :label="$t('名称')" :render-header="$renderHeader" min-width="100">
         <div class="table-ceil-container" slot-scope="{ row }">
           <span v-bk-overflow-tips>{{row.strategy_name}}</span>
         </div>
       </bk-table-column>
-      <bk-table-column :label="$t('授权目标')" min-width="100">
+      <bk-table-column :label="$t('授权目标')" :render-header="$renderHeader" min-width="100">
         <div class="table-ceil-container" slot-scope="{ row }">
           <span v-bk-overflow-tips>{{row.modules.map(item => item.bk_inst_name).join('; ')}}</span>
         </div>
       </bk-table-column>
-      <bk-table-column :label="$t('文件目录')" min-width="100">
+      <bk-table-column :label="$t('文件目录')" :render-header="$renderHeader" min-width="100">
         <div class="table-ceil-container" slot-scope="{ row }">
           <span v-bk-overflow-tips>{{row.visible_dir.join('; ')}}</span>
         </div>
       </bk-table-column>
-      <bk-table-column :label="$t('文件后缀')" min-width="100">
+      <bk-table-column :label="$t('文件后缀')" :render-header="$renderHeader" min-width="100">
         <div class="table-ceil-container" slot-scope="{ row }">
           <span v-bk-overflow-tips>{{row.file_type.join('; ')}}</span>
         </div>
       </bk-table-column>
-      <bk-table-column :label="$t('执行人')" min-width="100">
+      <bk-table-column :label="$t('执行人')" :render-header="$renderHeader" min-width="100">
         <div class="table-ceil-container" slot-scope="{ row }">
           <span v-bk-overflow-tips>{{row.operator || '--'}}</span>
         </div>
       </bk-table-column>
-      <bk-table-column :label="$t('创建时间')" prop="created_at" min-width="100"></bk-table-column>
-      <bk-table-column :label="$t('创建人')" prop="created_by" min-width="80"></bk-table-column>
-      <bk-table-column :label="$t('操作')" min-width="80">
+      <bk-table-column
+        :label="$t('创建时间')"
+        :render-header="$renderHeader"
+        prop="created_at"
+        min-width="100">
+      </bk-table-column>
+      <bk-table-column
+        :label="$t('创建人')"
+        :render-header="$renderHeader"
+        prop="created_by"
+        min-width="80">
+      </bk-table-column>
+      <bk-table-column :label="$t('操作')" min-width="80" :render-header="$renderHeader">
         <div slot-scope="{ row }" class="task-operation-container">
           <span class="task-operation" @click="handleEditStrategy(row)">{{$t('编辑')}}</span>
           <span class="task-operation" @click="handleDeleteStrategy(row)">{{$t('删除')}}</span>
         </div>
       </bk-table-column>
+      <div slot="empty">
+        <empty-status :empty-type="emptyType" @operation="handleOperation" />
+      </div>
     </bk-table>
 
     <bk-sideslider
@@ -93,12 +106,16 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
 import DirectoryManage from './directory-manage';
+import * as authorityMap from '../../../../common/authority-map';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   name: 'ManageExtract',
   components: {
     DirectoryManage,
+    EmptyStatus,
   },
   data() {
     return {
@@ -113,7 +130,11 @@ export default {
       type: '', // 新增或编辑策略
       strategyData: {}, // 新增或编辑策略时传递的数据
       userApi: '',
+      emptyType: 'empty',
     };
+  },
+  computed: {
+    ...mapGetters(['spaceUid']),
   },
   created() {
     this.checkManageAuth();
@@ -122,10 +143,10 @@ export default {
     async checkManageAuth() {
       try {
         const res = await this.$store.dispatch('checkAllowed', {
-          action_ids: ['manage_extract_config'],
+          action_ids: [authorityMap.MANAGE_EXTRACT_AUTH],
           resources: [{
-            type: 'biz',
-            id: this.$store.state.bkBizId,
+            type: 'space',
+            id: this.spaceUid,
           }],
         });
         this.isAllowedManage = res.isAllowed;
@@ -151,6 +172,7 @@ export default {
         this.strategyList = res.data;
       } catch (e) {
         console.warn(e);
+        this.emptyType = '500';
       } finally {
         this.isLoading = false;
       }
@@ -160,10 +182,10 @@ export default {
         try {
           this.isButtonLoading = true;
           const res = await this.$store.dispatch('getApplyData', {
-            action_ids: ['manage_extract_config'],
+            action_ids: [authorityMap.MANAGE_EXTRACT_AUTH],
             resources: [{
-              type: 'biz',
-              id: this.$store.state.bkBizId,
+              type: 'space',
+              id: this.spaceUid,
             }],
           });
           this.$store.commit('updateAuthDialogData', res.data);
@@ -270,7 +292,7 @@ export default {
       return new Promise((reject) => {
         this.$bkInfo({
           type: 'warning',
-          title: this.$t('pageLeaveTips'),
+          title: this.$t('是否放弃本次操作？'),
           confirmFn: () => {
             reject(true);
           },
@@ -279,6 +301,13 @@ export default {
           },
         });
       });
+    },
+    handleOperation(type) {
+      if (type === 'refresh') {
+        this.emptyType = 'empty';
+        this.initStrategyList();
+        return;
+      }
     },
   },
 };
@@ -289,7 +318,7 @@ export default {
     padding: 0 24px 20px;
 
     /*表格内容样式*/
-    ::v-deep .king-table {
+    :deep(.king-table) {
       .task-operation-container {
         display: flex;
         align-items: center;

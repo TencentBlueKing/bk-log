@@ -34,6 +34,7 @@ class ErrorCode(object):
     BKLOG_SEARCH = "24"
     BKLOG_TRACE = "25"
     BKLOG_EXTRACT = "26"
+    BKLOG_COMMONS = "30"
     BKLOG_COLLECTOR_CONFIG = "31"
     BKLOG_ESQUERY = "32"
     BKLOG_COLLECTOR_PLUGIN = "33"
@@ -119,3 +120,10 @@ class ApiRequestError(ApiError):
     # 属于严重的场景，一般为第三方服务挂了，ESB调用超时
     MESSAGE = _("服务不稳定，请检查组件健康状况")
     ERROR_CODE = "015"
+
+
+class UnknownLuceneOperatorException(BaseException):
+    """非法的lucene语法异常"""
+
+    ERROR_CODE = "500"
+    MESSAGE = _("非法的lucene语法")

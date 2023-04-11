@@ -65,7 +65,8 @@ class BKBaseCollectorPluginHandler(CollectorPluginHandler):
                 etl_params=self.collector_plugin.etl_params,
                 es_version=cluster_info["cluster_config"]["version"],
                 hot_warm_config=cluster_info["cluster_config"].get("custom_option", {}).get("hot_warm_config"),
-                es_shards=self.collector_plugin.storage_shards_nums
+                es_shards=self.collector_plugin.storage_shards_nums,
+                index_settings=self.collector_plugin.index_settings,
             )
 
     def _update_or_create_etl_storage(self, params: dict, is_create: bool) -> None:

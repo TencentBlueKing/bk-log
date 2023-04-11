@@ -40,7 +40,8 @@
         :left-icon="'bk-icon icon-search'"
         @clear="handleSearch"
         @left-icon-click="handleSearch"
-        @enter="handleSearch">
+        @enter="handleSearch"
+        @change="handleSearchChange">
       </bk-input>
     </div>
     <bk-table
@@ -50,32 +51,34 @@
       data-test-id="fromBox_table_tableBox"
       @page-change="handlePageChange"
       @page-limit-change="handlePageLimitChange">
-      <bk-table-column :label="$t('下载目标')" min-width="140">
+      <bk-table-column :label="$t('下载目标')" :render-header="$renderHeader" min-width="140">
         <div class="table-ceil-container" slot-scope="{ row }">
-          <span v-bk-overflow-tips>{{ ipList(row.ip_list) }}</span>
+          <span v-bk-overflow-tips>{{ getShowIpList(row) }}</span>
         </div>
       </bk-table-column>
-      <bk-table-column :label="$t('文件')" min-width="240">
+      <bk-table-column :label="$t('文件')" :render-header="$renderHeader" min-width="240">
         <div class="table-ceil-container" slot-scope="{ row }">
           <span v-bk-overflow-tips>{{ row.file_path.join('; ') }}</span>
         </div>
       </bk-table-column>
       <bk-table-column
         :label="$t('创建时间')"
+        :render-header="$renderHeader"
         prop="created_at"
         min-width="120">
       </bk-table-column>
-      <bk-table-column :label="$t('备注')" min-width="120">
+      <bk-table-column :label="$t('备注')" :render-header="$renderHeader" min-width="120">
         <div class="table-ceil-container" slot-scope="{ row }">
           <span v-bk-overflow-tips>{{ row.remark || '--' }}</span>
         </div>
       </bk-table-column>
       <bk-table-column
         :label="$t('创建人')"
+        :render-header="$renderHeader"
         prop="created_by"
         min-width="100">
       </bk-table-column>
-      <bk-table-column :label="$t('任务状态')" min-width="100">
+      <bk-table-column :label="$t('任务状态')" :render-header="$renderHeader" min-width="100">
         <div
           slot-scope="{ row }"
           :class="{
@@ -88,15 +91,24 @@
           <span
             class="log-icon icon-info-fill"
             v-if="row.download_status === 'failed'"
-            v-bk-tooltips="row.task_process_info"></span>
+            v-bk-tooltips="{
+              disabled: !row.task_process_info,
+              content: row.task_process_info
+            }"
+          />
         </div>
       </bk-table-column>
-      <bk-table-column :label="$t('操作')" min-width="100">
+      <bk-table-column :label="$t('操作')" :render-header="$renderHeader" min-width="140">
         <div slot-scope="{ row }" class="task-operation-container">
           <span class="task-operation" @click="viewDetail(row)">{{ $t('详情') }}</span>
           <span
-            class="task-operation"
-            v-if="row.preview_ip && row.preview_ip.indexOf(':') !== -1"
+            text
+            :class="['task-operation', !row.enable_clone && 'cannot-click']"
+            v-bk-tooltips.top="{
+              content: row.message,
+              disabled: row.enable_clone,
+              delay: 500,
+            }"
             @click="cloneTask(row)">
             {{ $t('克隆') }}
           </span>
@@ -110,10 +122,13 @@
             class="task-operation"
             v-if="row.download_status === 'redownloadable'"
             @click="reDownloadFile(row)">
-            {{ $t('重新下载') }}
+            {{ $t('重试') }}
           </span>
         </div>
       </bk-table-column>
+      <div slot="empty">
+        <empty-status :empty-type="emptyType" @operation="handleOperation" />
+      </div>
     </bk-table>
     <!-- 表格侧边栏 -->
     <bk-sideslider :is-show.sync="sideSlider.isShow" :quick-close="true" :title="$t('详情')" :width="660" transfer>
@@ -122,7 +137,7 @@
         <task-status-detail :status-data="sideSlider.data.task_step_status" />
         <download-url :task-id="sideSlider.data.task_id" />
         <list-box icon="bk-icon icon-sitemap" :title="$t('文件路径')" :list="sideSlider.data.preview_directory" />
-        <list-box icon="bk-icon icon-data" :title="$t('下载目标')" :list="sideSlider.data.ip_list" />
+        <list-box icon="bk-icon icon-data" :title="$t('下载目标')" :list="getDownloadTheTargetList(sideSlider.data)" />
         <list-box icon="bk-icon icon-file" :title="$t('文件列表')" :list="sideSlider.data.file_path" />
         <list-box icon="bk-icon icon-clock" :title="$t('过期时间')" :list="sideSlider.data.expiration_date" />
         <text-filter-detail v-if="sideSlider.data.filter_type" :data="sideSlider.data" />
@@ -136,6 +151,7 @@ import ListBox from './list-box';
 import DownloadUrl from './download-url';
 import TaskStatusDetail from './task-status-detail';
 import TextFilterDetail from './text-filter-detail';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   name: 'ExtractHome',
@@ -144,6 +160,7 @@ export default {
     DownloadUrl,
     TaskStatusDetail,
     TextFilterDetail,
+    EmptyStatus,
   },
   data() {
     return {
@@ -169,6 +186,8 @@ export default {
       notLoadingStatus: ['downloadable', 'redownloadable', 'expired', 'failed'],
       // 不需要轮询的状态
       doneStatus: ['redownloadable', 'expired', 'failed'],
+      emptyType: 'empty',
+      displayNameList: [],
     };
   },
   computed: {
@@ -192,6 +211,7 @@ export default {
       try {
         clearTimeout(this.timeoutID);
         this.isLoading = true;
+        this.emptyType = this.searchKeyword ? 'search-empty' : 'empty';
         const payload = {
           query: {
             bk_biz_id: this.$store.state.bkBizId,
@@ -204,13 +224,47 @@ export default {
         }
         const res = await this.$http.request('extract/getTaskList', payload);
         this.pagination.count = res.data.total;
+        // 获取请求displayName的 ipList参数列表
+        const allIpList = res.data.list.reduce((pre, cur) => {
+          if (!cur.enable_clone) return pre;
+          pre.push(...cur.ip_list.map((item) => {
+            if (item?.bk_host_id) {
+              return {
+                host_id: item.bk_host_id,
+              };
+            }
+            return {
+              ip: item.ip ?? '',
+              cloud_id: item.bk_cloud_id ?? '',
+            };
+          }));
+          return pre;
+        }, []);
+        // 获取displayName
+        await this.queryDisplayName(allIpList);
         this.taskList = res.data.list;
         this.timeout = res.data.timeout || 10;
         this.pollingTaskStatus();
       } catch (e) {
         console.warn(e);
+        this.emptyType = '500';
       } finally {
         this.isLoading = false;
+      }
+    },
+    async queryDisplayName(hostList) {
+      try {
+        const res = await this.$http.request('extract/getIpListDisplayName', {
+          data: {
+            host_list: hostList,
+          },
+          params: {
+            bk_biz_id: this.$store.state.bkBizId,
+          },
+        });
+        this.displayNameList = res.data;
+      } catch (error) {
+        this.displayNameList = [];
       }
     },
     pollingTaskStatus() {
@@ -285,6 +339,7 @@ export default {
     },
     // 克隆
     cloneTask(row) {
+      if (!row.enable_clone) return;
       sessionStorage.setItem('cloneData', JSON.stringify(row));
       this.$router.push({
         name: 'extract-clone',
@@ -315,13 +370,53 @@ export default {
         this.isLoading = false;
       }
     },
-    ipList(ipList) {
-      if (ipList[0].ip === undefined) {
-        return ipList.join('; ');
-      }
-      return ipList.map(item => `${item.bk_cloud_id}:${item.ip}`).join('; ');
+    // 列表的下载目标显示
+    getShowIpList(row) {
+      if (row.enable_clone) {
+        return this.getIPDisplayNameList(row.ip_list).join('; ');
+      };
+      return row.ip_list.join('; ');
     },
+    // 下载目标列表显示
+    getDownloadTheTargetList(targetItem) {
+      if (targetItem.enable_clone) {
+        return this.getIPDisplayNameList(targetItem.ip_list);
+      };
+      return targetItem.ip_list;
+    },
+    getIPDisplayNameList(ipList) { // 获取displayName字符串列表
+      if (ipList && ipList.length) {
+        return ipList.map((item) => {
+          return this.displayNameList.find((dItem) => {
+            const hostMatch = item.bk_host_id === dItem.bk_host_id;
+            const ipMatch = `${item.ip}_${item.bk_cloud_id}` === `${dItem.bk_host_innerip}_${dItem.bk_cloud_id}`;
+            if (item?.bk_host_id) return (hostMatch || ipMatch);
+            return ipMatch;
+          })?.display_name || '';
+        });
+      }
+      return [];
+    },
+    handleSearchChange(val) {
+      if (val === '' && !this.isLoading) {
+        this.initTaskList();
+      }
+    },
+    handleOperation(type) {
+      if (type === 'clear-filter') {
+        this.searchKeyword = '';
+        this.pagination.current = 1;
+        this.initTaskList();
+        return;
+      }
 
+      if (type === 'refresh') {
+        this.emptyType = 'empty';
+        this.pagination.current = 1;
+        this.initTaskList();
+        return;
+      }
+    },
   },
 };
 </script>
@@ -338,7 +433,7 @@ export default {
       .king-input-search {
         width: 486px;
 
-        ::v-deep .icon-search {
+        :deep(.icon-search) {
           &:hover {
             color: #3b84ff;
             cursor: pointer;
@@ -348,7 +443,7 @@ export default {
     }
 
     /*表格内容样式*/
-    ::v-deep .king-table {
+    :deep(.king-table) {
       background-color: #fff;
 
       /*分页下拉*/
@@ -365,6 +460,11 @@ export default {
           margin-right: 12px;
           color: #3a84ff;
           cursor: pointer;
+        }
+
+        .cannot-click {
+          color: #989dab;
+          cursor: no-drop;
         }
       }
 
@@ -406,7 +506,7 @@ export default {
     padding-bottom: 20px;
     overflow: auto;
 
-    ::v-deep .list-box-container {
+    :deep(.list-box-container) {
       padding: 14px 20px 10px;
       font-size: 15px;
       line-height: 40px;

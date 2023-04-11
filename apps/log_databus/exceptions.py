@@ -106,7 +106,7 @@ class CollectorCreateBkdataIdException(BaseCollectorConfigException):
 
 class CollectorIllegalIPException(BaseCollectorConfigException):
     ERROR_CODE = "111"
-    MESSAGE = _("采集项包含非该业务【{bk_biz_id}】IP，异常IP列表为: {illegal_ips}")
+    MESSAGE = _("采集项包含非该业务【{bk_biz_id}】IP或主机ID，异常列表为: {illegal_ips}")
 
 
 class CollectorConfigNameENDuplicateException(BaseCollectorConfigException):
@@ -147,6 +147,11 @@ class ModifyCollectorConfigException(BaseCollectorConfigException):
 class ResultTableNotExistException(BaseCollectorConfigException):
     ERROR_CODE = "119"
     MESSAGE = _("采集项{result_table_id}结果表ID不存在")
+
+
+class CollectorPluginNotImplemented(BaseCollectorPluginException):
+    ERROR_CODE = "120"
+    MESSAGE = _("采集插件无采集项实例")
 
 
 class StorageNotExistException(BaseCollectorConfigException):
@@ -207,6 +212,11 @@ class BKBaseStorageSyncFailed(BaseCollectorConfigException):
 class PublicESClusterNotExistException(BaseCollectorConfigException):
     ERROR_CODE = "212"
     MESSAGE = _("不存在公共ES集群")
+
+
+class ESClusterAlreadyExistException(BaseCollectorConfigException):
+    ERROR_CODE = "213"
+    MESSAGE = _("ES集群已存在")
 
 
 class EtlNotSupportedException(BaseCollectorConfigException):
@@ -271,7 +281,7 @@ class KafkaConnectException(BaseCollectorConfigException):
 
 class KafkaPartitionException(BaseCollectorConfigException):
     ERROR_CODE = "402"
-    MESSAGE = _("Partition信息获取失败")
+    MESSAGE = _("最新数据获取失败, 可刷新重试一下")
 
 
 class DataLinkConfigPartitionException(BaseCollectorConfigException):
@@ -362,3 +372,28 @@ class RuleCollectorException(BaseCollectorConfigException):
 class NeedBcsClusterIdException(BaseCollectorConfigException):
     ERROR_CODE = "904"
     MESSAGE = _("请求无bcs_cluster_id参数，请检查")
+
+
+class BcsClusterIdNotValidException(BaseCollectorConfigException):
+    ERROR_CODE = "905"
+    MESSAGE = _("bcs_cluster_id不合法，请检查")
+
+
+class NamespaceNotValidException(BaseCollectorConfigException):
+    ERROR_CODE = "906"
+    MESSAGE = _("namespace({namespaces})不合法，请检查")
+
+
+class AllNamespaceNotAllowedException(BaseCollectorConfigException):
+    ERROR_CODE = "907"
+    MESSAGE = _("共享集群下namespace不允许为空，或设置为all，请检查")
+
+
+class NodeNotAllowedException(BaseCollectorConfigException):
+    ERROR_CODE = "908"
+    MESSAGE = _("共享集群下不允许采集node的日志，请检查")
+
+
+class VclusterNodeNotAllowedException(BaseCollectorConfigException):
+    ERROR_CODE = "909"
+    MESSAGE = _("虚拟集群下不允许采集node的日志，请检查")

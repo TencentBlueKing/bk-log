@@ -23,9 +23,10 @@
 <template>
   <div class="field-data">
     <div class="title">
-      {{
-        statisticalFieldData.__validCount + '/' + statisticalFieldData.__totalCount + $t('条记录中数量排名前 5 的数据值')
-      }}
+      <i18n path="{0}/{1}条记录中数量排名前 5 的数据值">
+        <span>{{statisticalFieldData.__validCount}}</span>
+        <span>{{statisticalFieldData.__totalCount}}</span>
+      </i18n>
     </div>
     <ul class="chart-list">
       <template v-for="(item, index) in topFiveList">
@@ -41,13 +42,13 @@
           </div>
           <div class="operation-container">
             <span
-              v-bk-tooltips="'is'"
-              class="bk-icon icon-close-circle"
+              v-bk-tooltips="getIconPopover('=', item[0])"
+              :class="['bk-icon icon-enlarge-line', filterIsExist('is', item[0]) ? 'disable' : '']"
               @click="addCondition('is', item[0])">
             </span>
             <span
-              v-bk-tooltips="'not'"
-              class="bk-icon icon-minus-circle"
+              v-bk-tooltips="getIconPopover('!=', item[0])"
+              :class="['bk-icon icon-narrow-line', filterIsExist('is not', item[0]) ? 'disable' : '']"
               @click="addCondition('is not', item[0])">
             </span>
           </div>
@@ -56,7 +57,7 @@
       <li class="more-item" v-if="!showAllList && shouldShowMore">
         <span @click="() => {
           showAllList = !showAllList
-        }">{{$t('dataManage.more')}}</span>
+        }">{{$t('更多')}}</span>
       </li>
     </ul>
   </div>
@@ -75,21 +76,40 @@ export default {
       type: String,
       required: true,
     },
+    fieldType: {
+      type: String,
+      required: true,
+    },
     parentExpand: {
       type: Boolean,
       default: false,
+    },
+    retrieveParams: {
+      type: Object,
+      require: true,
     },
   },
   data() {
     return {
       showAllList: false,
       shouldShowMore: false,
+      mappingKay: { // is is not 值映射
+        is: '=',
+        'is not': '!=',
+      },
     };
   },
   computed: {
     topFiveList() {
       const totalList = Object.entries(this.statisticalFieldData);
       totalList.sort((a, b) => b[1] - a[1]);
+      totalList.forEach((item) => {
+        const markList = item[0].toString().match(/(<mark>).*?(<\/mark>)/g) || [];
+        if (markList.length) {
+          item[0] = markList.map(item => item.replace(/<mark>/g, '')
+            .replace(/<\/mark>/g, '')).join(',');
+        }
+      });
       this.shouldShowMore = totalList.length > 5;
       return this.showAllList ? totalList : totalList.filter((item, index) => index < 5);
     },
@@ -106,7 +126,25 @@ export default {
       return `${Math.round((count / this.statisticalFieldData.__validCount).toFixed(2) * 100)}%`;
     },
     addCondition(operator, value) {
+      if (this.fieldType === '__virtual__') return;
       this.addFilterCondition(this.fieldName, operator, value);
+    },
+    getIconPopover(operator, value) {
+      if (this.fieldType === '__virtual__') return this.$t('该字段为平台补充 不可检索');
+      if (this.filterIsExist(operator, value)) return this.$t('已添加过滤条件');
+      return operator;
+    },
+    filterIsExist(operator, value) {
+      if (this.fieldType === '__virtual__') return true;
+      if (this.retrieveParams?.addition.length) {
+        if (operator === 'not') operator = 'is not';
+        return this.retrieveParams.addition.some((addition) => {
+          return addition.field === this.fieldName
+        && addition.operator === (this.mappingKay[operator] ?? operator) // is is not 值映射
+        && addition.value.toString() === value.toString();
+        });
+      }
+      return false;
     },
   },
 };
@@ -119,6 +157,11 @@ export default {
     .title {
       padding: 8px 0 4px;
       color: #979ba5;
+    }
+
+    .disable {
+      /* stylelint-disable-next-line declaration-no-important */
+      color: #dcdee5 !important;
     }
 
     .chart-list {
@@ -168,11 +211,12 @@ export default {
           justify-content: space-between;
           width: 36px;
           margin-left: 10px;
+          transform: translateY(4px);
 
           .bk-icon {
-            font-size: 16px;
+            font-size: 18px;
             color: #3a84ff;
-            transform: rotate(45deg);
+            // transform: rotate(45deg);
             cursor: pointer;
 
             &:active {

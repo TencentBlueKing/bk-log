@@ -38,26 +38,26 @@
             >{{ val.content }}({{ val.dataList.totalLenght }})</span>
           </div>
           <div>
-            <span>{{$t('configDetails.text')}}</span>
-            <!-- <span class="bk-icon icon-question-circle" v-bk-tooltips="$t('configDetails.text')"></span> -->
+            <span>{{$t('每15分钟按照CMDB最新拓扑自动部署或取消采集')}}</span>
+            <!-- <span class="bk-icon icon-question-circle" v-bk-tooltips="$t('每15分钟按照CMDB最新拓扑自动部署或取消采集')"></span> -->
             <bk-button
               theme="default"
               icon="right-turn-line"
               :size="size"
               class="mr10"
-              :title="$t('configDetails.retry')"
+              :title="$t('重试')"
               :disabled="!collectProject"
               @click="retryClick(dataFal, dataFir.contents.length)"
-            >{{ $t('configDetails.batchRetry') }}
+            >{{ $t('失败批量重试') }}
             </bk-button>
           <!-- <bk-button
             :theme="'primary'"
-            :title="$t('configDetails.dataSampling')"
+            :title="$t('数据采样')"
             class="mr10"
             :size="size"
             :disabled="!collectProject"
             @click="jsonFormatClick">
-            {{$t('configDetails.dataSampling')}}
+            {{$t('数据采样')}}
           </bk-button> -->
           </div>
         </div>
@@ -73,19 +73,23 @@
                 :style="{ 'color': collapseColor }" ref="icon"></i>
               <span>{{ value.node_path }}</span>
               <span>{{ dataSec[i] ? dataSec[i].length : '' }}</span>
-              <span>{{ $t('configDetails.successful') }},</span>
+              <span>{{ $t('个成功') }},</span>
               <span>{{ dataFal[i] ? dataFal[i].length : '' }}</span>
-              <span>{{ $t('configDetails.failure') }}</span>
+              <span>{{ $t('个失败') }}</span>
             </div>
           </div>
           <div class="table-calc">
             <bk-table
-              :empty-text="$t('btn.vacancy')"
+              :empty-text="$t('暂无内容')"
               :data="clickSec.data[i]"
               size="small"
               v-bkloading="{ isLoading: reloadTable }">
-              <bk-table-column :label="$t('configDetails.goal')" prop="ip"></bk-table-column>
-              <bk-table-column :label="$t('alarmStrategy.active_name')">
+              <bk-table-column :label="$t('目标')">
+                <template slot-scope="props">
+                  <span>{{getShowIp(props.row)}}</span>
+                </template>
+              </bk-table-column>
+              <bk-table-column :label="$t('状态')">
                 <template slot-scope="props">
                   <span @click="reset(props.row)">
                     <i
@@ -95,24 +99,28 @@
                     <span
                       v-if="props.row.status === 'SUCCESS'"
                       class="SUCCESS">
-                      {{$t('configDetails.success')}}
+                      {{$t('成功')}}
                     </span>
                     <span
                       v-else-if="props.row.status === 'FAILED'"
                       class="FAILED">
-                      {{$t('configDetails.failed')}}
+                      {{$t('失败')}}
                     </span>
-                    <span v-else class="PENDING">{{$t('configDetails.Pending')}}</span>
+                    <span v-else class="PENDING">{{$t('执行中')}}</span>
                   </span>
                 </template>
               </bk-table-column>
-              <bk-table-column :label="$t('configDetails.updated_at')" prop="create_time"></bk-table-column>
-              <bk-table-column :label="$t('configDetails.plug_in')" prop="plugin_version"></bk-table-column>
-              <bk-table-column :label="$t('monitors.detail')">
+              <bk-table-column :label="$t('更新时间')" prop="create_time"></bk-table-column>
+              <bk-table-column :label="$t('插件版本')" prop="plugin_version"></bk-table-column>
+              <bk-table-column :label="$t('详情')" width="280">
                 <template slot-scope="props">
                   <div class="text-style">
-                    <span></span>
                     <span @click.stop="viewDetail(props.row)">{{ $t('部署详情') }}</span>
+                    <span
+                      v-if="enableCheckCollector && collectorData.environment === 'linux'"
+                      @click.stop="viewReport(props.row)">
+                      {{ $t('一键检测') }}
+                    </span>
                   </div>
                 </template>
               </bk-table-column>
@@ -123,10 +131,15 @@
                     text
                     @click="retryClick(props.row, 'odd')"
                     v-if="props.row.status === 'FAILED'">
-                    {{$t('configDetails.retry')}}
+                    {{$t('重试')}}
                   </bk-button>
                 </template>
               </bk-table-column>
+              <div slot="empty">
+                <empty-status empty-type="empty" :show-text="false">
+                  <span>{{$t('暂无内容')}}</span>
+                </empty-status>
+              </div>
             </bk-table>
           </div>
         </div>
@@ -149,16 +162,25 @@
         </bk-sideslider>
       </div>
     </template>
+    <collection-report-view
+      v-model="reportDetailShow"
+      :check-record-id="checkRecordId"
+      @closeReport="() => reportDetailShow = false"
+    />
   </div>
 </template>
 
 <script>
 import { projectManages } from '@/common/util';
 import containerStatus from './components/container-status.vue';
+import CollectionReportView from '../../../components/collection-report-view';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   components: {
     containerStatus,
+    CollectionReportView,
+    EmptyStatus,
   },
   props: {
     collectorData: {
@@ -190,7 +212,7 @@ export default {
       ],
       detail: {
         isShow: false,
-        title: this.$t('monitors.detail'),
+        title: this.$t('详情'),
         loading: true,
         content: '',
         log: '',
@@ -198,22 +220,22 @@ export default {
       dataButton: [
         {
           key: 'all',
-          content: this.$t('configDetails.all'),
+          content: this.$t('全部'),
           dataList: {},
         },
         {
           key: 'sec',
-          content: this.$t('configDetails.succeed'),
+          content: this.$t('正常'),
           dataList: {},
         },
         {
           key: 'fal',
-          content: this.$t('configDetails.failed'),
+          content: this.$t('失败'),
           dataList: {},
         },
         {
           key: 'pen',
-          content: this.$t('configDetails.Pending'),
+          content: this.$t('执行中'),
           dataList: {},
         },
       ],
@@ -233,6 +255,12 @@ export default {
       dataFal: {},
       dataPen: {},
       dataAll: {},
+      // 是否支持一键检测
+      enableCheckCollector: JSON.parse(window.ENABLE_CHECK_COLLECTOR),
+      // 一键检测弹窗配置
+      reportDetailShow: false,
+      // 一键检测采集项标识
+      checkRecordId: '',
     };
   },
   computed: {
@@ -241,6 +269,9 @@ export default {
     },
     isContainer() {
       return this.collectorData.environment === 'container';
+    },
+    hostIdentifierPriority() {
+      return this.$store.getters['globals/globalsData']?.host_identifier_priority ?? ['ip', 'host_name', 'ipv6'];
     },
   },
   created() {
@@ -483,9 +514,25 @@ export default {
       //     collectorId: this.config_id,
       //   },
       //   query: {
-      //     projectId: window.localStorage.getItem('project_id'),
+      //     spaceUid: this.$store.state.spaceUid,
       //   },
       // });
+    },
+    viewReport(row) {
+      this.$http.request('collect/runCheck', {
+        data: {
+          collector_config_id: this.$route.params.collectorId,
+          hosts: `${row.bk_cloud_id}:${row.ip}`,
+        },
+      }).then((res) => {
+        if (res.data?.check_record_id) {
+          this.reportDetailShow = true;
+          this.checkRecordId = res.data.check_record_id;
+        }
+      });
+    },
+    getShowIp(row) {
+      return row[this.hostIdentifierPriority.find(pItem => Boolean(row[pItem]))] ?? row.ip;
     },
   },
 };
@@ -513,7 +560,7 @@ export default {
         margin-right: 10px;
       }
 
-      ::v-deep .bk-button {
+      :deep(.bk-button) {
         font-size: 12px;
         padding: 0 10px;
 
@@ -563,14 +610,8 @@ export default {
     .text-style {
       display: flex;
 
-      :nth-child(1) {
-        display: inline-block;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      :nth-child(2) {
+      span {
+        margin-right: 12px;
         color: #3a84ff;
         cursor: pointer;
       }
@@ -664,12 +705,16 @@ export default {
       white-space: pre-wrap;
     }
 
-    ::v-deep .bk-sideslider-wrapper {
+    :deep(.bk-sideslider-wrapper) {
       padding-bottom: 0;
 
       .bk-sideslider-content {
         background-color: #313238;
         color: #c4c6cc;
+
+        a {
+          color: #3a84ff;
+        }
       }
     }
   }

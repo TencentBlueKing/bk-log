@@ -25,10 +25,12 @@ import os
 from dataclasses import asdict
 import arrow
 from django.conf import settings
+from django.utils.translation import ugettext as _
 from jinja2 import Environment, FileSystemLoader
 from retrying import retry
 
 from apps.log_search.models import LogIndexSet
+from apps.api.base import DataApiRetryClass, check_result_is_true
 from apps.api import BkDataDataFlowApi, BkDataAIOPSApi, BkDataMetaApi, BkDataDatabusApi
 from apps.log_clustering.constants import DEFAULT_NEW_CLS_HOURS, AGGS_FIELD_PREFIX, PatternEnum, NOT_NEED_EDIT_NODES
 from apps.log_clustering.exceptions import (
@@ -46,12 +48,11 @@ from apps.log_clustering.handlers.dataflow.constants import (
     FlowMode,
     NodeType,
     DEFAULT_SPARK_EXECUTOR_INSTANCES,
-    DEFAULT_PSEUDO_SHUFFLE,
+    DEFAULT_SPARK_PSEUDO_SHUFFLE,
     DEFAULT_SPARK_LOCALITY_WAIT,
     OPERATOR_AND,
     STREAM_SOURCE_NODE_TYPE,
     DIVERSION_NODE_NAME,
-    TSPIDER_STORAGE_NODE_NAME,
     TSPIDER_STORAGE_NODE_TYPE,
     TSPIDER_STORAGE_INDEX_FIELDS,
     SPLIT_TYPE,
@@ -61,6 +62,10 @@ from apps.log_clustering.handlers.dataflow.constants import (
     DIST_CLUSTERING_FIELDS,
     DEFAULT_MODEL_INPUT_FIELDS,
     DEFAULT_MODEL_OUTPUT_FIELDS,
+    DEFAULT_SPARK_EXECUTOR_CORES,
+    DEFAULT_FLINK_BATCH_SIZE,
+    DEFAULT_FLINK_CPU,
+    DEFAULT_FLINK_MEMORY,
 )
 from apps.log_clustering.handlers.dataflow.data_cls import (
     ExportFlowCls,
@@ -82,6 +87,7 @@ from apps.log_clustering.handlers.dataflow.data_cls import (
     SplitCls,
 )
 from apps.log_clustering.models import ClusteringConfig
+from apps.log_clustering.constants import MAX_FAILED_REQUEST_RETRY
 from apps.log_databus.models import CollectorConfig
 from apps.utils.log import logger
 
@@ -186,27 +192,31 @@ class DataFlowHandler(BaseAiopsHandler):
     @classmethod
     def _init_filter_rule(cls, filter_rules, all_fields_dict, clustering_field):
         default_filter_rule = cls._init_default_filter_rule(all_fields_dict.get(clustering_field))
-        filter_rule_list = ["where", default_filter_rule]
-        not_clustering_rule_list = ["where", "NOT", "(", default_filter_rule]
-        # 这里是因为默认连接符号需要
-        filter_rule_list.append(OPERATOR_AND)
-        not_clustering_rule_list.append(OPERATOR_AND)
-        for filter_rule in filter_rules:
+
+        rules = []
+        for index, filter_rule in enumerate(filter_rules):
             if not all_fields_dict.get(filter_rule.get("fields_name")):
                 continue
-            rule = [
-                f"`{all_fields_dict.get(filter_rule.get('fields_name'))}`",
-                cls.change_op(filter_rule.get("op")),
-                "'{}'".format(filter_rule.get("value")),
-                filter_rule.get("logic_operator"),
-            ]
-            filter_rule_list.extend(rule)
-            not_clustering_rule_list.extend(rule)
-        # 这里是因为需要去掉最后一个and（可能是前面添加的and）
-        filter_rule_list.pop(-1)
-        not_clustering_rule_list.pop(-1)
-        # 不参与聚类日志需要增加括号修改优先级
-        not_clustering_rule_list.append(")")
+
+            if index > 0:
+                # 如果不是第一个条件，则把运算符加进去
+                rules.append(filter_rule.get("logic_operator"))
+
+            rules.extend(
+                [
+                    f"`{all_fields_dict.get(filter_rule.get('fields_name'))}`",
+                    cls.change_op(filter_rule.get("op")),
+                    "'{}'".format(filter_rule.get("value")),
+                ]
+            )
+
+        if rules:
+            rules_str = " ".join([OPERATOR_AND, "(", *rules, ")"])
+        else:
+            rules_str = ""
+
+        filter_rule_list = ["where", default_filter_rule, rules_str]
+        not_clustering_rule_list = ["where", "NOT", "(", default_filter_rule, rules_str, ")"]
         return " ".join(filter_rule_list), " ".join(not_clustering_rule_list)
 
     @classmethod
@@ -400,12 +410,14 @@ class DataFlowHandler(BaseAiopsHandler):
         @param after_treat_flow_dict:
         @return:
         """
+        storage_type = self.conf.get("tspider_storage_type", TSPIDER_STORAGE_NODE_TYPE)
+
         for flow_obj in flow:
             if flow_obj["node_type"] == SPLIT_TYPE:
                 flow.remove(flow_obj)
                 flow.append(
                     {
-                        "name": "新类判断(tspider_storage)",
+                        "name": _("新类判断({})").format(storage_type),
                         "result_table_id": after_treat_flow_dict["judge_new_class"]["result_table_id"],
                         "bk_biz_id": after_treat_flow_dict["target_bk_biz_id"],
                         "indexed_fields": TSPIDER_STORAGE_INDEX_FIELDS,
@@ -420,7 +432,7 @@ class DataFlowHandler(BaseAiopsHandler):
                                 "from_result_table_ids": [after_treat_flow_dict["judge_new_class"]["result_table_id"]],
                             }
                         ],
-                        "node_type": TSPIDER_STORAGE_NODE_TYPE,
+                        "node_type": storage_type,
                         "frontend_info": {"x": 2231, "y": 73},
                     }
                 )
@@ -517,6 +529,7 @@ class DataFlowHandler(BaseAiopsHandler):
             queue_cluster=self.conf.get("queue_cluster"),
             bk_biz_id=bk_biz_id,
             target_bk_biz_id=target_bk_biz_id,
+            is_flink_env=self.conf.get("is_flink_env", False),
         )
         if not clustering_config.collector_config_id:
             es_storage = self.get_es_storage_fields(clustering_config.bkdata_etl_result_table_id)
@@ -527,12 +540,12 @@ class DataFlowHandler(BaseAiopsHandler):
 
             after_treat_flow.es_cluster = clustering_config.es_storage
             after_treat_flow.es.expires = es_storage["expires"]
-            after_treat_flow.es.has_replica = json.dumps(es_storage["has_replica"])
-            after_treat_flow.es.json_fields = json.dumps(es_storage["json_fields"])
-            after_treat_flow.es.analyzed_fields = json.dumps(es_storage["analyzed_fields"])
-            doc_values_fields = es_storage["doc_values_fields"]
+            after_treat_flow.es.has_replica = json.dumps(es_storage.get("has_replica", False))
+            after_treat_flow.es.json_fields = json.dumps(es_storage.get("json_fields", []))
+            after_treat_flow.es.analyzed_fields = json.dumps(es_storage.get("analyzed_fields", []))
+            doc_values_fields = es_storage.get("doc_values_fields", [])
             doc_values_fields.extend(
-                [f"{AGGS_FIELD_PREFIX}_{pattern_level}" for pattern_level in PatternEnum.get_choices()]
+                [f"{AGGS_FIELD_PREFIX}_{pattern_level}" for pattern_level in PatternEnum.get_dict_choices().keys()]
             )
             after_treat_flow.es.doc_values_fields = json.dumps(doc_values_fields)
             # 这里是为了避免计算平台数据源场景源索引命名重复导致创建有问题
@@ -655,11 +668,13 @@ class DataFlowHandler(BaseAiopsHandler):
         @param source_node_id:
         @return:
         """
+        storage_type = self.conf.get("tspider_storage_type", TSPIDER_STORAGE_NODE_TYPE)
+
         add_tspider_storage_request = AddFlowNodesCls(flow_id=flow_id, result_table_id=tspider_storage_table_id,)
         add_tspider_storage_request.config["bk_biz_id"] = target_bk_biz_id
         add_tspider_storage_request.config["from_result_table_ids"].append(tspider_storage_table_id)
         add_tspider_storage_request.config["result_table_id"] = tspider_storage_table_id
-        add_tspider_storage_request.config["name"] = TSPIDER_STORAGE_NODE_NAME
+        add_tspider_storage_request.config["name"] = _("回流数据({})").format(storage_type)
         add_tspider_storage_request.config["expires"] = expires
         add_tspider_storage_request.config["indexed_fields"] = TSPIDER_STORAGE_INDEX_FIELDS
         add_tspider_storage_request.config["cluster"] = cluster
@@ -673,7 +688,7 @@ class DataFlowHandler(BaseAiopsHandler):
                 },
             }
         )
-        add_tspider_storage_request.node_type = TSPIDER_STORAGE_NODE_TYPE
+        add_tspider_storage_request.node_type = storage_type
         request_dict = self._set_username(add_tspider_storage_request)
         return BkDataDataFlowApi.add_flow_nodes(request_dict)
 
@@ -728,7 +743,10 @@ class DataFlowHandler(BaseAiopsHandler):
         @return:
         """
         return BkDataDataFlowApi.get_latest_deploy_data(
-            params={"flow_id": flow_id, "bk_username": self.conf.get("bk_username")}
+            params={"flow_id": flow_id, "bk_username": self.conf.get("bk_username")},
+            data_api_retry_cls=DataApiRetryClass.create_retry_obj(
+                fail_check_functions=[check_result_is_true], stop_max_attempt_number=MAX_FAILED_REQUEST_RETRY
+            ),
         )
 
     def get_serving_data_processing_id_config(self, result_table_id):
@@ -764,13 +782,28 @@ class DataFlowHandler(BaseAiopsHandler):
         @param model_instance_id:
         @return:
         """
-        update_model_instance_request = UpdateModelInstanceCls(
-            filter_id=model_instance_id,
-            execute_config={
+        is_flink_env = self.conf.get("is_flink_env", False)
+
+        if is_flink_env:
+            execute_config = {
+                "batch_size": self.conf.get("flink.batch_size", DEFAULT_FLINK_BATCH_SIZE),
+                "job_configuration": {
+                    "kubernetes.taskmanager.cpu": self.conf.get("flink.cpu", DEFAULT_FLINK_CPU),
+                    "taskmanager.memory.process.size": self.conf.get("flink.memory", DEFAULT_FLINK_MEMORY),
+                },
+            }
+        else:
+            execute_config = {
                 "spark.executor.instances": self.conf.get("spark.executor.instances", DEFAULT_SPARK_EXECUTOR_INSTANCES),
-                "pseudo_shuffle": self.conf.get("pseudo_shuffle", DEFAULT_PSEUDO_SHUFFLE),
+                "spark.executor.cores": self.conf.get("spark.executor.cores", DEFAULT_SPARK_EXECUTOR_CORES),
                 "spark.locality.wait": self.conf.get("spark.locality.wait", DEFAULT_SPARK_LOCALITY_WAIT),
-            },
+                "pseudo_shuffle": self.conf.get("pseudo_shuffle", DEFAULT_SPARK_PSEUDO_SHUFFLE),
+            }
+
+        execute_config.update({"dropna_enabled": False})
+
+        update_model_instance_request = UpdateModelInstanceCls(
+            filter_id=model_instance_id, execute_config=execute_config,
         )
         request_dict = self._set_username(update_model_instance_request)
         return BkDataAIOPSApi.update_execute_config(request_dict)

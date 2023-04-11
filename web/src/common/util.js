@@ -557,13 +557,13 @@ export function bigNumberToString(value) {
 }
 
 export function formatBigNumListValue(value) {
-  if (typeof value === 'object' && value !== null && !value._isBigNumber) {
+  if (Object.prototype.toString.call(value) === '[object Object]' && value !== null && !value._isBigNumber) {
     const obj = {};
     if (value instanceof Array) {
       return obj[value] = parseBigNumberList(value);
     }
     Object.keys(value).forEach((opt) => {
-      obj[opt] = typeof obj[opt] === 'object' && obj[opt] !== null && !obj[opt]._isBigNumber
+      obj[opt] = Object.prototype.toString.call(obj[opt]) === '[object Object]' && obj[opt] !== null && !obj[opt]._isBigNumber
         ? formatBigNumListValue(obj[opt]) : bigNumberToString(value[opt] || '');
     });
     return obj;
@@ -630,4 +630,127 @@ export const base64Decode = (str) => {
   return decodeURIComponent(atob(str).split('')
     .map(c => `%${(`00${c.charCodeAt(0).toString(16)}`).slice(-2)}`)
     .join(''));
+};
+
+export const makeMessage = (message, traceId) => {
+  const resMsg = `
+    ${traceId || '--'} ：
+    ${message}
+  `;
+  message && console.log(`
+  ------------------【日志】------------------
+  【TraceID】：${traceId}
+  【Message】：${message}
+  ----------------------------------------------
+  `);
+  return resMsg;
+};
+
+export class Storage {
+  /** 过期时长 */
+  express = null;
+  constructor(express) {
+    this.express = express;
+  }
+  /** 设置缓存 */
+  set(key, value, express = this.express) {
+    const data = {
+      value,
+      updateTime: Date.now(),
+      express,
+    };
+    localStorage.setItem(key, JSON.stringify(data));
+  }
+  /** 获取缓存 */
+  get(key) {
+    const dataStr = localStorage.getItem(key);
+    if (!dataStr) return null;
+    const data = JSON.parse(dataStr);
+    const nowTime = Date.now();
+    if (data.express && data.express < (nowTime - data.updateTime)) {
+      this.remove(key);
+      return null;
+    }
+    return data.value;
+  }
+  /** 移除缓存 */
+  remove(key) {
+    localStorage.removeItem(key);
+  }
+}
+
+
+/**
+ * 深拷贝
+ * @param {Object} obj
+ * @param {Map} hash
+ */
+export const deepClone = (obj, hash = new WeakMap()) => {
+  if (Object(obj) !== obj) return obj;
+  if (obj instanceof Set) return new Set(obj);
+  if (hash.has(obj)) return hash.get(obj);
+  const result =    obj instanceof Date
+    ? new Date(obj)
+    : obj instanceof RegExp
+      ? new RegExp(obj.source, obj.flags)
+      : obj.constructor
+        ? new obj.constructor()
+        : Object.create(null);
+  hash.set(obj, result);
+  if (obj instanceof Map) {
+    Array.from(obj, ([key, val]) => result.set(key, deepClone(val, hash)));
+  }
+  return Object.assign(result, ...Object.keys(obj).map(key => ({ [key]: deepClone(obj[key], hash) })));
+};
+
+/**
+ * @desc: 清空bk-table表头的过滤条件
+ * @param {HTMLElement} refInstance ref实例
+ */
+export const clearTableFilter =  (refInstance) => {
+  if (refInstance.$refs.tableHeader.filterPanels) {
+    const filterPanels = refInstance.$refs.tableHeader.filterPanels;
+    for (const key in filterPanels) {
+      filterPanels[key].handleReset();
+    };
+  }
+};
+
+/**
+ * @desc: 适合未作处理的bk-table表头添加tips
+ */
+export const renderHeader = (h, { column }) => {
+  return h('p', { directives: [{ name: 'bk-overflow-tips' }], class: 'title-overflow' }, [column.label]);
+};
+
+/**
+ * @desc: 对象深度对比
+ * @param {Object} object1 对比对象A
+ * @param {Object} object2 对比对象B
+ * @param {Array<string>} ignoreArr 不对比的键名
+ * @returns {Boolean} 两个对象是否相同
+ */
+export const deepEqual = (object1, object2, ignoreArr = []) => {
+  const keys1Arr = Object.keys(object1);
+  const keys2Arr = Object.keys(object2);
+  if (keys1Arr.length !== keys2Arr.length) return false;
+
+  for (const key1 of keys1Arr) {
+    const val1 = object1[key1];
+    let val2;
+    if (keys2Arr.includes(key1)) {
+      val2 = object2[key1];
+      if (ignoreArr.includes(key1)) continue;
+    } else {
+      return false;
+    }
+    const areObjects = isObject(val1) && isObject(val2);
+    if ((areObjects && !deepEqual(val1, val2, ignoreArr)) || (!areObjects && val1 !== val2)) return false;
+  }
+  return true;
+};
+
+// 是否是ipv6
+export const isIPv6 = (str = '') => {
+  return /^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$/.test(str);
 };

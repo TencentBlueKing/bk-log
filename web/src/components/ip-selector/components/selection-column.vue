@@ -176,7 +176,7 @@ export default class SelectionColumn extends Vue {
 <style lang="scss" scoped>
   .selection-header {
     .all-check {
-      ::v-deep .bk-checkbox {
+      :deep(.bk-checkbox) {
         /* stylelint-disable-next-line declaration-no-important */
         background-color: #fff !important;
 
@@ -188,7 +188,7 @@ export default class SelectionColumn extends Vue {
     }
 
     .indeterminate {
-      ::v-deep .bk-checkbox {
+      :deep(.bk-checkbox) {
         &::after {
           /* stylelint-disable-next-line declaration-no-important */
           background: #3a84ff !important;

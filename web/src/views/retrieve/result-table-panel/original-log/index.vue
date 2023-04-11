@@ -45,6 +45,7 @@
         <time-formatter v-show="!showOriginalLog" />
         <div class="operation-icons">
           <export-log
+            v-bind="$attrs"
             :retrieve-params="retrieveParams"
             :total-count="totalCount"
             :queue-status="queueStatus"
@@ -70,8 +71,11 @@
             <div slot="content" class="fields-setting-container">
               <fields-setting
                 v-if="showFieldsSetting"
-                :field-alias-map="$attrs.fieldAliasMap"
+                v-on="$listeners"
+                :field-alias-map="$attrs['field-alias-map']"
                 :retrieve-params="retrieveParams"
+                @setPopperInstance="setPopperInstance"
+                @modifyFields="modifyFields"
                 @confirm="confirmModifyFields"
                 @cancel="closeDropdown" />
             </div>
@@ -145,12 +149,21 @@ export default {
       this.showFieldsSetting = false;
     },
     confirmModifyFields(displayFieldNames, showFieldAlias) {
-      this.$emit('fieldsUpdated', displayFieldNames, showFieldAlias);
+      this.modifyFields(displayFieldNames, showFieldAlias);
       this.closeDropdown();
+    },
+    /** 更新显示字段 */
+    modifyFields(displayFieldNames, showFieldAlias) {
+      this.$emit('fieldsUpdated', displayFieldNames, showFieldAlias);
     },
     closeDropdown() {
       this.showFieldsSetting = false;
       this.$refs.fieldsSettingPopper.instance.hide();
+    },
+    setPopperInstance(status = true) {
+      this.$refs.fieldsSettingPopper.instance.set({
+        hideOnClick: status,
+      });
     },
   },
 };

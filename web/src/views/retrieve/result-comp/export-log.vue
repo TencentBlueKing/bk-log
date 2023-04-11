@@ -26,7 +26,7 @@
       :class="{ 'operation-icon': true, 'disabled-icon': !queueStatus }"
       @click="exportLog"
       data-test-id="fieldForm_div_exportData"
-      v-bk-tooltips="queueStatus ? $t('btn.export') : undefined">
+      v-bk-tooltips="queueStatus ? $t('导出') : undefined">
       <span class="icon log-icon icon-xiazai"></span>
     </div> -->
     <div
@@ -38,8 +38,8 @@
 
     <div v-show="false">
       <div class="download-box" ref="downloadTips">
-        <span @click="exportLog">{{$t('exportHistory.downloadLog')}}</span>
-        <span @click="downloadTable">{{$t('exportHistory.downloadHistory')}}</span>
+        <span @click="exportLog">{{$t('下载日志')}}</span>
+        <span @click="downloadTable">{{$t('下载历史')}}</span>
       </div>
     </div>
 
@@ -49,27 +49,61 @@
 
     <!-- 导出弹窗提示 -->
     <bk-dialog
-      v-model="showAsyncExport"
+      v-model="isShowExportDialog"
       theme="primary"
+      header-position="left"
       ext-cls="async-export-dialog"
+      :title="getDialogTitle"
       :mask-close="false"
-      :show-footer="false">
+      :ok-text="$t('下载')"
+      :show-footer="!isShowAsyncDownload"
+      @confirm="handleClickSubmit"
+      @after-leave="closeExportDialog">
       <div class="export-container" v-bkloading="{ isLoading: exportLoading }">
-        <span class="bk-icon bk-dialog-warning icon-exclamation"></span>
-        <div class="header">
-          {{ totalCount > 2000000 ? $t('retrieve.dataMoreThanMillion') : $t('retrieve.dataMoreThan') }}
+        <template v-if="isShowAsyncDownload">
+          <span class="bk-icon bk-dialog-warning icon-exclamation"></span>
+          <div class="header">{{ getExportTitle }}</div>
+        </template>
+        <div class="filed-select-box">
+          <span v-if="isShowAsyncDownload">{{$t('下载范围选择')}}</span>
+          <bk-radio-group class="filed-radio-box" v-model="selectFiledType">
+            <bk-radio v-for="[key, val] in Object.entries(radioMap)" :key="key" :value="key">{{val}}</bk-radio>
+          </bk-radio-group>
+          <bk-select
+            v-if="selectFiledType === 'specify'"
+            v-model="selectFiledList"
+            searchable
+            display-tag
+            multiple
+            :placeholder="$t('未选择则默认为全部字段')">
+            <bk-option
+              v-for="option in totalFields"
+              :key="option.field_name"
+              :id="option.field_name"
+              :name="option.field_name">
+            </bk-option>
+          </bk-select>
+          <div v-if="asyncExportUsable && isShowAsyncDownload" class="style-line"></div>
         </div>
-        <div class="export-type immediate-export">
-          <span class="bk-icon icon-info-circle"></span>
-          <span class="export-text">{{ $t('retrieve.immediateExportDesc') }}</span>
-          <bk-button theme="primary" @click="openDownloadUrl">{{ $t('retrieve.immediateExport') }}</bk-button>
-        </div>
-        <div class="export-type async-export">
-          <span class="bk-icon icon-info-circle"></span>
-          <span v-if="totalCount > 2000000" class="export-text">{{ $t('retrieve.asyncExportMoreDesc') }}</span>
-          <span v-else class="export-text">{{ $t('retrieve.asyncExportDesc') }}</span>
-          <bk-button @click="downloadAsync">{{ $t('retrieve.asyncExport') }}</bk-button>
-        </div>
+        <template v-if="!asyncExportUsable">
+          <span>{{$t('当前因{n}导致无法进行异步下载， 可直接下载前1万条数据', { n: asyncExportUsableReason })}}</span>
+          <div class="cannot-async-btn">
+            <bk-button theme="primary" @click="openDownloadUrl">{{ $t('直接下载') }}</bk-button>
+            <bk-button style="margin-left: 10px;" @click="() => isShowExportDialog = false">{{ $t('取消') }}</bk-button>
+          </div>
+        </template>
+        <template v-if="asyncExportUsable && isShowAsyncDownload">
+          <div class="export-type immediate-export">
+            <span class="bk-icon icon-info-circle"></span>
+            <span class="export-text">{{ $t('直接下载仅下载前1万条数据') }}</span>
+            <bk-button theme="primary" @click="openDownloadUrl">{{ $t('直接下载') }}</bk-button>
+          </div>
+          <div class="export-type async-export">
+            <span class="bk-icon icon-info-circle"></span>
+            <span class="export-text">{{ getAsyncText }}</span>
+            <bk-button @click="downloadAsync">{{ $t('异步下载') }}</bk-button>
+          </div>
+        </template>
       </div>
     </bk-dialog>
   </div>
@@ -92,6 +126,10 @@ export default {
       type: Number,
       default: 0,
     },
+    visibleFields: {
+      type: Array,
+      require: true,
+    },
     queueStatus: {
       type: Boolean,
       default: true,
@@ -104,19 +142,51 @@ export default {
       type: String,
       default: '',
     },
+    totalFields: {
+      type: Array,
+      require: true,
+    },
   },
   data() {
     return {
-      showAsyncExport: false,
+      isShowExportDialog: false,
       exportLoading: false,
       showHistoryExport: false,
+      selectFiledList: [], // 手动选择字段列表
+      selectFiledType: 'all', // 字段下载类型
       popoverInstance: null,
+      exportFirstComparedSize: 10000, // 显示异步下载的临界值
+      exportSecondComparedSize: 2000000, // 可异步下载最大值
+      radioMap: {
+        all: this.$t('全部字段'),
+        show: this.$t('当前显示字段'),
+        specify: this.$t('指定字段'),
+      },
     };
   },
   computed: {
     ...mapGetters({
       bkBizId: 'bkBizId',
     }),
+    getAsyncText() { // 异步下载按钮前的文案
+      return this.totalCount > this.exportSecondComparedSize
+        ? this.$t('建议缩小查询范围，异步下载只能下载前200w条，注意查看邮件')
+        : this.$t('异步下载可打包下载所有数据，请注意查收下载通知邮件');
+    },
+    getExportTitle() { // 超过下载临界值，当前数据超过多少条文案
+      return this.$t('当前数据超过{n}万条', { n: this.totalCount > this.exportSecondComparedSize ? 200 : 1 });
+    },
+    getDialogTitle() { // 异步下载临界值，dialog标题
+      return this.totalCount < this.exportFirstComparedSize ? this.$t('下载范围选择') : '';
+    },
+    isShowAsyncDownload() { // 是否展示异步下载
+      return this.totalCount > this.exportFirstComparedSize;
+    },
+    submitSelectFiledList() { // 下载时提交的字段
+      if (this.selectFiledType === 'specify') return this.selectFiledList;
+      if (this.selectFiledType === 'show') return this.visibleFields.map(item => item.field_name);
+      return [];
+    },
   },
   beforeDestroy() {
     this.popoverInstance = null;
@@ -140,40 +210,22 @@ export default {
     exportLog() {
       if (!this.queueStatus) return;
       this.popoverInstance.hide(0);
-
       // 导出数据为空
       if (!this.totalCount) {
         const infoDialog = this.$bkInfo({
           type: 'error',
-          title: this.$t('retrieve.exportFailed'),
-          subTitle: this.$t('retrieve.dataNone'),
+          title: this.$t('导出失败'),
+          subTitle: this.$t('检索结果条数为0'),
           showFooter: false,
         });
         setTimeout(() => infoDialog.close(), 3000);
-      } else if (this.totalCount > 10000) {
-        // 导出数量大于1w且小于100w 可直接下载1w 或 异步全量下载全部
-        // 通过 field 判断是否支持异步下载
-        if (this.asyncExportUsable) {
-          this.showAsyncExport = true;
-        } else {
-          const h = this.$createElement;
-          this.$bkInfo({
-            type: 'warning',
-            title: this.$t('retrieve.dataMoreThan'),
-            subHeader: h('p', {
-              style: {
-                whiteSpace: 'normal',
-                padding: '0 20px',
-                wordBreak: 'break-all',
-              },
-            }, `${this.$t('retrieve.reasonFor')}${this.asyncExportUsableReason}${this.$t('retrieve.reasonDesc')}`),
-            okText: this.$t('retrieve.immediateExport'),
-            confirmFn: () => this.openDownloadUrl(),
-          });
-        }
-      } else {
-        this.openDownloadUrl();
+        return;
       }
+      this.isShowExportDialog = true;
+    },
+    handleClickSubmit() {
+      this.openDownloadUrl();
+      this.isShowExportDialog = false;
     },
     openDownloadUrl() {
       const params = Object.assign(this.retrieveParams, { begin: 0, bk_biz_id: this.bkBizId });
@@ -181,9 +233,12 @@ export default {
         ...params,
         size: this.totalCount,
         time_range: 'customized',
+        export_fields: this.submitSelectFiledList,
       }));
       // eslint-disable-next-line max-len
       const targetUrl = `${window.SITE_URL}api/v1/search/index_set/${this.$route.params.indexId}/export/?export_dict=${exportParams}`;
+      this.selectFiledList = [];
+      this.isShowExportDialog = false;
       window.open(targetUrl);
     },
     downloadAsync() {
@@ -191,6 +246,7 @@ export default {
       const data = { ...params };
       data.size = this.totalCount;
       data.time_range = 'customized';
+      data.export_fields = this.submitSelectFiledList;
 
       this.exportLoading = true;
       this.$http.request('retrieve/exportAsync', {
@@ -207,9 +263,14 @@ export default {
         }
       })
         .finally(() => {
-          this.showAsyncExport = false;
           this.exportLoading = false;
+          this.isShowExportDialog = false;
+          this.selectFiledList = [];
         });
+    },
+    closeExportDialog() {
+      this.selectFiledType = 'all';
+      this.selectFiledList = [];
     },
     downloadTable() {
       this.showHistoryExport = true;
@@ -253,6 +314,13 @@ export default {
     }
   }
 
+  .cannot-async-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+  }
+
   .disabled-icon {
     background-color: #fff;
     border-color: #dcdee5;
@@ -265,10 +333,37 @@ export default {
     }
   }
 
+  :deep(.bk-dialog-header-inner) {
+    /* stylelint-disable-next-line declaration-no-important */
+    color: #000 !important;
+  }
+
+  .filed-select-box {
+    text-align: left;
+    margin-bottom: 10px;
+
+    .filed-radio-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 8px 0 14px 0;
+    }
+
+    .style-line {
+      width: 100%;
+      height: 1px;
+      margin-top: 20px;
+      padding-bottom: 14px;
+      border-top: 1px solid #c4c6cc;
+    }
+  }
+
   .async-export-dialog {
     .header {
+      text-align: center;
+
       /* stylelint-disable-next-line declaration-no-important */
-      padding: 18px 0px 32px !important;
+      padding: 18px 0px 16px !important;
     }
 
     .export-container {
@@ -282,9 +377,9 @@ export default {
       height: 58px;
       line-height: 58px;
       font-size: 30px;
-      color: #fff;
+      color: #ff9c01;
       border-radius: 50%;
-      background-color: #ffb848;
+      background-color: #ffe8c3;
     }
 
     .header {

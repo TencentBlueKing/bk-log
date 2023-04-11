@@ -22,23 +22,23 @@
 
 <template>
   <div class="add-collection-container">
-    <bk-alert v-if="guideUrl" class="king-alert" type="info" closable>
+    <bk-alert class="king-alert" type="info" closable>
       <div slot="title" class="slot-title-container">
-        {{ $t('接入前请查看') }}
-        <a class="link" target="_blank" :href="guideUrl"> {{ $t('接入指引') }}</a>
-        {{ $t('，尤其是在日志量大的情况下请务必提前沟通。') }}
+        <i18n path="接入前请查看 {0} ，尤其是在日志量大的情况下请务必提前沟通。">
+          <a class="link" @click="handleGotoLink('logCollection')"> {{ $t('接入指引') }}</a>
+        </i18n>
       </div>
     </bk-alert>
     <bk-form
       :label-width="115"
       :model="formData"
       ref="validateForm"
-      data-test-id="addNewCollectionItem_form_acquisitionConfigur">
+      data-test-id="addNewCollectionItem_form_acquisitionConfig">
       <!-- 基础信息 -->
-      <div data-test-id="acquisitionConfigur_div_baseMessageBox">
-        <div class="add-collection-title">{{ $t('dataSource.basic_information') }}</div>
+      <div data-test-id="acquisitionConfig_div_baseMessageBox">
+        <div class="add-collection-title">{{ $t('基础信息') }}</div>
         <bk-form-item
-          :label="$t('dataSource.source_name')"
+          :label="$t('名称')"
           :required="true"
           :rules="rules.collector_config_name"
           :property="'collector_config_name'">
@@ -51,26 +51,32 @@
           </bk-input>
         </bk-form-item>
         <bk-form-item
-          :label="$t('dataSource.source_en_name')"
+          ext-cls="en-bk-form"
+          :label="$t('英文名')"
           :required="true"
           :rules="rules.collector_config_name_en"
+          :icon-offset="120"
           :property="'collector_config_name_en'">
-          <div class="config-enName-box">
-            <bk-input
-              class="w520"
-              v-model="formData.collector_config_name_en"
-              show-word-limit
-              maxlength="50"
-              data-test-id="baseMessage_input_fillEnglishName"
-              :disabled="isUpdate && !!(formData.collector_config_name_en)"
-              :placeholder="$t('dataSource.en_name_tips')"
-              @change="clearError">
-            </bk-input>
-            <p v-show="!configNameEnIsNotRepeat" class="repeat-message">{{$t('dataSource.en_name_repeat')}}</p>
+          <div class="en-name-box">
+            <div>
+              <bk-input
+                class="w520"
+                v-model="formData.collector_config_name_en"
+                show-word-limit
+                maxlength="50"
+                data-test-id="baseMessage_input_fillEnglishName"
+                :disabled="isUpdate && !!formData.collector_config_name_en"
+                :placeholder="$t('支持数字、字母、下划线，长短5～50字符')">
+              </bk-input>
+              <span v-if="!isTextValid" class="text-error">{{formData.collector_config_name_en}}</span>
+            </div>
+            <span v-bk-tooltips.top="$t('自动转换成正确的英文名格式')">
+              <bk-button v-if="!isTextValid" text @click="handleEnConvert">{{$t('自动转换')}}</bk-button>
+            </span>
           </div>
-          <p class="en-name-tips" slot="tip">{{ $t('dataSource.en_name_placeholder') }}</p>
+          <p class="en-name-tips" slot="tip">{{ $t('英文名用于索引和数据源') }}</p>
         </bk-form-item>
-        <bk-form-item :label="$t('configDetails.remarkExplain')">
+        <bk-form-item :label="$t('备注说明')">
           <bk-input
             class="w520"
             type="textarea"
@@ -82,8 +88,8 @@
       </div>
 
       <!-- 源日志信息 -->
-      <div data-test-id="acquisitionConfigur_div_sourceLogBox">
-        <div class="add-collection-title">{{ $t('dataSource.Source_log_information') }}</div>
+      <div data-test-id="acquisitionConfig_div_sourceLogBox">
+        <div class="add-collection-title">{{ $t('源日志信息') }}</div>
         <!-- 环境选择 -->
         <bk-form-item :label="$t('环境选择')" required>
           <div class="environment-box">
@@ -109,11 +115,11 @@
           </div>
         </bk-form-item>
         <!-- 物理环境 日志类型 -->
-        <bk-form-item v-if="isPhysicsEnvironment" :label="$t('configDetails.logType')" required>
+        <bk-form-item v-if="isPhysicsEnvironment" :label="$t('日志类型')" required>
           <div class="bk-button-group log-type">
             <bk-button
               v-for="(item, index) in getCollectorScenario"
-              :data-test-id="`sourceLogBox_buttom_checkoutType${item.id}`"
+              :data-test-id="`sourceLogBox_button_checkoutType${item.id}`"
               :key="index"
               :disabled="isUpdate"
               :class="{
@@ -129,7 +135,7 @@
         <!-- 数据分类 -->
         <bk-form-item
           required
-          :label="$t('configDetails.dataClassify')"
+          :label="$t('数据分类')"
           :rules="rules.category_id"
           :property="'category_id'">
           <bk-select
@@ -144,7 +150,8 @@
                   v-for="(option, key) in item.children"
                   :key="key"
                   :id="option.id"
-                  :name="`${item.name}-${option.name}`"> {{ option.name }}
+                  :name="`${item.name}-${option.name}`">
+                  {{ option.name }}
                 </bk-option>
               </bk-option-group>
             </template>
@@ -156,7 +163,7 @@
             class="item-target"
             ref="formItemTarget"
             required
-            :label="$t('configDetails.target')"
+            :label="$t('采集目标')"
             :rules="rules.nodes"
             :property="'target_nodes'">
             <bk-button
@@ -164,11 +171,11 @@
               icon="plus"
               style="font-size: 12px"
               data-test-id="sourceLogBox_button_addCollectionTarget"
-              :title="$t('configDetails.newly_increased')"
+              :title="$t('新增')"
               :class="colorRules ? 'rulesColor' : ''"
               :disabled="!formData.category_id"
               @click="showIpSelectorDialog = true">
-              {{ $t('retrieve.select_target') }}
+              {{ $t('选择目标') }}
             </bk-button>
             <input type="text" :value="formData.target_nodes" style="display: none">
           </bk-form-item>
@@ -177,13 +184,26 @@
             <span class="font-blue">{{ formData.target_nodes.length }}</span>
             <span>{{ collectTargetTarget[formData.target_node_type + '2'] }}</span>
           </div>
-          <ip-selector-dialog
+          <!-- 目标选择器 -->
+          <log-ip-selector
+            mode="dialog"
+            allow-host-list-miss-host-id
+            :key="bkBizId"
+            :height="670"
+            :show-dialog.sync="showIpSelectorDialog"
+            :value="selectorNodes"
+            :show-view-diff="isUpdate"
+            :original-value="ipSelectorOriginalValue"
+            :panel-list="ipSelectorPanelList"
+            @change="handleTargetChange"
+          />
+          <!-- <ip-selector-dialog
             :show-dialog.sync="showIpSelectorDialog"
             :target-object-type="formData.target_object_type"
             :target-node-type="formData.target_node_type"
             :target-nodes="formData.target_nodes"
             @target-change="targetChange">
-          </ip-selector-dialog>
+          </ip-selector-dialog> -->
         </div>
         <!-- 物理环境 配置项 -->
         <config-log-set-item
@@ -208,9 +228,10 @@
               v-model="formData.bcs_cluster_id"
               searchable
               :disabled="isUpdate"
-              :clearable="false">
+              :clearable="false"
+              @change="handelClusterChange">
               <bk-option
-                v-for="(cluItem,cluIndex) of clusterList"
+                v-for="(cluItem, cluIndex) of localClusterList"
                 :key="cluIndex"
                 :id="cluItem.id"
                 :name="cluItem.name">
@@ -230,10 +251,11 @@
           ref="yamlEditorRef"
           value-type="base64"
           :yaml-form-data.sync="yamlFormData"
+          :cluster-id="formData.bcs_cluster_id"
         ></yaml-editor>
         <template v-else>
           <!-- 容器环境 日志类型 -->
-          <bk-form-item v-if="!isPhysicsEnvironment" :label="$t('configDetails.logType')" required>
+          <bk-form-item v-if="!isPhysicsEnvironment" :label="$t('日志类型')" required>
             <div class="bk-button-group log-type">
               <bk-button
                 v-for="(item, index) in getCollectorScenario"
@@ -261,9 +283,10 @@
               <div class="config-container">
                 <div class="config-item container-select">
                   <span :class="{ 'none-hidden-dom': isNode }">{{$t('NameSpace选择')}}</span>
-                  <div v-bk-tooltips.top="{ content: $t('请先选择集群'), delay: 500 }"
-                       :class="{ 'none-hidden-dom': isNode }"
-                       :disabled="!!formData.bcs_cluster_id">
+                  <div
+                    v-bk-tooltips.top="{ content: $t('请先选择集群'), delay: 500 }"
+                    :class="{ 'none-hidden-dom': isNode }"
+                    :disabled="!!formData.bcs_cluster_id">
                     <bk-select
                       v-model="conItem.namespaces"
                       multiple
@@ -287,29 +310,33 @@
                       {{$t('所有容器')}}
                     </bk-checkbox>
                     <div class="justify-bt container-btn-container">
-                      <span v-if="!isContainerHaveValue(conItem.container)"
-                            :class="{ 'span-box': true, 'none-hidden-dom': isNode }"
-                            v-bk-tooltips.top="{ content: $t('请先选择集群'), delay: 500 }"
-                            :disabled="!!formData.bcs_cluster_id">
-                        <div :class="{
-                               'container-btn': true,
-                               'cluster-not-select': !formData.bcs_cluster_id ,
-                               disable: (isNode || conItem.isAllContainer)
-                             }"
-                             @click="handelShowDialog(conIndex, 'container',(isNode || conItem.isAllContainer))">
+                      <span
+                        v-if="!isContainerHaveValue(conItem.container)"
+                        v-bk-tooltips.top="{ content: $t('请先选择集群'), delay: 500 }"
+                        :class="{ 'span-box': true, 'none-hidden-dom': isNode }"
+                        :disabled="!!formData.bcs_cluster_id">
+                        <div
+                          :class="{
+                            'container-btn': true,
+                            'cluster-not-select': !formData.bcs_cluster_id ,
+                            disable: (isNode || conItem.isAllContainer)
+                          }"
+                          @click="handelShowDialog(conIndex, 'container',(isNode || conItem.isAllContainer))">
                           <span class="bk-icon icon-plus-circle-yuan"></span>
                           <span>{{$t('指定容器')}}</span>
                         </div>
                       </span>
-                      <span v-if="!isSelectorHaveValue(conItem.label_selector)" class="span-box"
-                            v-bk-tooltips.top="{ content: $t('请先选择集群'), delay: 500 }"
-                            :disabled="!!formData.bcs_cluster_id">
-                        <div :class="{
-                               'container-btn': true,
-                               'cluster-not-select': !formData.bcs_cluster_id ,
-                               disable: conItem.isAllContainer
-                             }"
-                             @click="handelShowDialog(conIndex, 'label', conItem.isAllContainer,conItem)">
+                      <span
+                        v-if="!isSelectorHaveValue(conItem.label_selector)" class="span-box"
+                        v-bk-tooltips.top="{ content: $t('请先选择集群'), delay: 500 }"
+                        :disabled="!!formData.bcs_cluster_id">
+                        <div
+                          :class="{
+                            'container-btn': true,
+                            'cluster-not-select': !formData.bcs_cluster_id ,
+                            disable: conItem.isAllContainer
+                          }"
+                          @click="handelShowDialog(conIndex, 'label', conItem.isAllContainer,conItem)">
                           <span class="bk-icon icon-plus-circle-yuan"></span>
                           <span>{{$t('指定标签')}}</span>
                         </div>
@@ -328,6 +355,7 @@
                     <div class="specify-box">
                       <div
                         class="specify-container"
+                        v-bk-overflow-tips
                         v-for="([speKey, speValue], speIndex) in Object.entries(conItem.container)"
                         :key="speIndex">
                         <span v-if="speValue">
@@ -349,11 +377,11 @@
                       <div class="specify-box"
                            v-for="(matchItem, matchKey) of labItem"
                            :key="`${labKey}_${matchKey}`">
-                        <div class="specify-container justify-bt">
+                        <div class="specify-container justify-bt" v-bk-overflow-tips>
                           <span>{{matchItem.key}}</span>
                           <div class="operator">{{matchItem.operator}}</div>
                         </div>
-                        <div class="specify-container">
+                        <div class="specify-container" v-bk-overflow-tips>
                           <span>{{matchItem.value}}</span>
                         </div>
                       </div>
@@ -363,7 +391,7 @@
 
                 <div
                   class="hight-setting"
-                  data-test-id="acquisitionConfigur_div_contentFiltering">
+                  data-test-id="acquisitionConfig_div_contentFiltering">
                   <!-- 容器环境 配置项 -->
                   <config-log-set-item
                     show-type="vertical"
@@ -414,10 +442,9 @@
                 <div class="ml9">
                   <i :class="['bk-icon icon-plus-circle-yuan icons']"
                      @click="handleAddExtraLabel"></i>
-                  <i
-                    :class="['bk-icon icon-minus-circle-shape icons ml9',
-                             { disable: formData.extra_labels.length === 1 }]"
-                    @click="handleDeleteExtraLabel(index)"></i>
+                  <i :class="['bk-icon icon-minus-circle-shape icons ml9',
+                              { disable: formData.extra_labels.length === 1 }]"
+                     @click="handleDeleteExtraLabel(index)"></i>
                 </div>
               </div>
               <bk-checkbox class="mt8" v-model="formData.add_pod_label">
@@ -430,10 +457,10 @@
 
       <!-- 上报链路配置 -->
       <template v-if="!isCloseDataLink">
-        <div class="add-collection-title">{{ $t('上报链路配置') }}</div>
+        <div class="add-collection-title">{{ $t('链路配置') }}</div>
         <bk-form-item required property="data_link_id" :label="$t('上报链路')" :rules="rules.linkConfig">
           <bk-select
-            data-test-id="acquisitionConfigur_div_selectReportLink"
+            data-test-id="acquisitionConfig_div_selectReportLink"
             class="w520"
             v-model="formData.data_link_id"
             :clearable="false"
@@ -471,20 +498,20 @@
       <div class="page-operate">
         <bk-button
           theme="primary"
-          data-test-id="acquisitionConfigur_div_nextPage"
-          :title="$t('retrieve.Start_collecting')"
+          data-test-id="acquisitionConfig_div_nextPage"
+          :title="$t('开始采集')"
           :loading="isHandle"
           :disabled="!collectProject"
           @click.stop.prevent="startCollect">
-          {{ $t('retrieve.next') }}
+          {{ $t('下一步') }}
         </bk-button>
         <bk-button
           theme="default"
-          data-test-id="acquisitionConfigur_div_cancel"
+          data-test-id="acquisitionConfig_div_cancel"
           class="ml10"
-          :title="$t('indexSetList.cancel')"
+          :title="$t('取消')"
           @click="cancel">
-          {{ $t('indexSetList.cancel') }}
+          {{ $t('取消') }}
         </bk-button>
       </div>
     </bk-form>
@@ -492,27 +519,35 @@
 </template>
 
 <script>
-// import ContainerSvg from '@/images/container-icons/Container.svg';
+import ContainerSvg from '@/images/container-icons/Container.svg';
 import LinuxSvg from '@/images/container-icons/Linux.svg';
-// import NodeSvg from '@/images/container-icons/Node.svg';
-// import StdoutSvg from '@/images/container-icons/Stdout.svg';
+import NodeSvg from '@/images/container-icons/Node.svg';
+import StdoutSvg from '@/images/container-icons/Stdout.svg';
 import WindowsSvg from '@/images/container-icons/Windows.svg';
-import ipSelectorDialog from './ip-selector-dialog';
+import LogIpSelector, { toTransformNode, toSelectorNode } from '@/components/log-ip-selector/log-ip-selector';
+// import ipSelectorDialog from './ip-selector-dialog';
 import configLogSetItem from './components/step-add/config-log-set-item';
 import labelTargetDialog from './components/step-add/label-target-dialog';
 import containerTargetDialog from './components/step-add/container-target-dialog';
 import yamlEditor from './components/step-add/yaml-editor';
-import { mapGetters, mapState } from 'vuex';
+import { mapGetters } from 'vuex';
 import { projectManages } from '@/common/util';
 import { deepClone } from '../monitor-echarts/utils';
 
 export default {
   components: {
-    ipSelectorDialog,
+    LogIpSelector,
+    // ipSelectorDialog,
     labelTargetDialog,
     configLogSetItem,
     containerTargetDialog,
     yamlEditor,
+  },
+  props: {
+    isUpdate: {
+      type: Boolean,
+      require: true,
+    },
   },
   data() {
     return {
@@ -540,7 +575,7 @@ export default {
             { value: '' },
           ],
           conditions: {
-            type: 'match', // 过滤方式类型
+            type: '', // 过滤方式类型 match separator
             match_type: 'include', // 过滤方式 可选字段 include, exclude
             match_content: '',
             separator: '|',
@@ -567,7 +602,7 @@ export default {
           {
             letterIndex: 0, // 配置项字母下标
             isAllContainer: false, // 是否选中所有容器
-            namespaces: ['*'],
+            namespaces: [],
             container: {
               workload_type: '',
               workload_name: '',
@@ -581,7 +616,7 @@ export default {
             params: {
               paths: [{ value: '' }], // 日志路径
               conditions: {
-                type: 'match', // 过滤方式类型
+                type: '', // 过滤方式类型 match separator
                 match_type: 'include',  // 过滤方式 可选字段 include, exclude
                 match_content: '',
                 separator: '|',
@@ -613,6 +648,7 @@ export default {
           },
           {
             max: 50,
+            message: this.$t('不能多于50个字符'),
             trigger: 'blur',
           },
         ],
@@ -623,19 +659,23 @@ export default {
           },
           {
             max: 50,
+            message: this.$t('不能多于50个字符'),
             trigger: 'blur',
           },
           {
             min: 5,
+            message: this.$t('不能少于5个字符'),
             trigger: 'blur',
           },
           {
-            regex: /^[A-Za-z0-9_]+$/,
+            validator: this.checkEnNameValidator,
+            message: this.$t('只支持输入字母，数字，下划线'),
             trigger: 'blur',
           },
           {
             // 检查英文名是否可用
-            validator: this.checkEnName,
+            validator: this.checkEnNameRepeat,
+            message: this.$t('该英文名已重复'),
             trigger: 'blur',
           },
         ],
@@ -659,46 +699,54 @@ export default {
           },
         ],
       },
-      isUpdate: false,
+      isTextValid: true,
       isHandle: false,
       isClone: false,
       globals: {},
       localParams: {}, // 缓存的初始数据 用于对比编辑时表单是否有属性更改
       showIpSelectorDialog: false,
       collectTargetTarget: { // 已(动态)选择 静态主机 节点 服务模板 集群模板
-        INSTANCE1: this.$t('configDetails.selected'),
-        INSTANCE2: this.$t('configDetails.staticHosts'),
-        TOPO1: this.$t('configDetails.Dynamic_selection'),
-        TOPO2: this.$t('configDetails.Been'),
-        SERVICE_TEMPLATE1: this.$t('configDetails.selected'),
-        SERVICE_TEMPLATE2: this.$t('configDetails.serviceTemplates'),
-        SET_TEMPLATE1: this.$t('configDetails.selected'),
-        SET_TEMPLATE2: this.$t('configDetails.setTemplates'),
+        INSTANCE1: this.$t('已选择'),
+        INSTANCE2: this.$t('个静态主机'),
+        TOPO1: this.$t('已动态选择'),
+        TOPO2: this.$t('个节点'),
+        SERVICE_TEMPLATE1: this.$t('已选择'),
+        SERVICE_TEMPLATE2: this.$t('个服务模板'),
+        SET_TEMPLATE1: this.$t('已选择'),
+        SET_TEMPLATE2: this.$t('个集群模板'),
       },
       configBaseObj: {}, // 新增配置项的基础对象
-      configNameEnIsNotRepeat: true, // 英文名没有重复
       isYaml: false, // 是否是yaml模式
       yamlFormData: {}, // yaml请求成功时的表格数据
       currentEnvironment: 'linux', // 当前选中的环境
       environmentList: [
-        { category: this.$t('物理环境'), btnList: [
-          { id: 'linux', img: LinuxSvg, name: 'Linux', isDisable: false },
-          { id: 'windows', img: WindowsSvg, name: 'Windows' }], isDisable: false },
-        // { category: this.$t('容器环境'), btnList: [
-        //   { id: 'container_log_config', img: ContainerSvg, name: 'Container', isDisable: false },
-        //   { id: 'node_log_config', img: NodeSvg, name: 'Node', isDisable: false },
-        //   { id: 'std_log_config', img: StdoutSvg, name: this.$t('标准输出'), isDisable: false }] },
+        {
+          category: this.$t('物理环境'),
+          btnList: [
+            { id: 'linux', img: LinuxSvg, name: 'Linux', isDisable: false },
+            { id: 'windows', img: WindowsSvg, name: 'Windows', isDisable: false },
+          ],
+        },
+        {
+          category: this.$t('容器环境'),
+          btnList: [
+            { id: 'container_log_config', img: ContainerSvg, name: 'Container', isDisable: false },
+            { id: 'node_log_config', img: NodeSvg, name: 'Node', isDisable: false },
+            { id: 'std_log_config', img: StdoutSvg, name: this.$t('标准输出'), isDisable: false },
+          ],
+        },
       ],
       specifyName: { // 指定容器中文名
         workload_type: this.$t('应用类型'),
         workload_name: this.$t('应用名称'),
         container_name: this.$t('容器名称'),
       },
+      isRequestCluster: false, // 集群列表是否正在请求
       isConfigConflict: false, // 配置项是否有冲突
       conflictList: [], // 冲突列表
       conflictMessage: '', // 冲突信息
       clusterList: [], // 集群列表
-      nameSpacesSelectList: [{ name: this.$t('所有'), id: '*' }], // namespace 列表
+      nameSpacesSelectList: [], // namespace 列表
       allContainer: { // 所有容器时指定容器默认传空
         workload_type: '',
         workload_name: '',
@@ -720,6 +768,16 @@ export default {
       isExtraError: false, // 附加标签是否有出错
       nameSpaceRequest: false, // 是否正在请求namespace接口
       uiconfigToYamlData: {}, // 切换成yaml时当前保存的ui配置
+      // ip选择器面板
+      ipSelectorPanelList: [
+        'staticTopo',
+        'dynamicTopo',
+        'serviceTemplate',
+        'setTemplate',
+        'manualInput',
+      ],
+      // 编辑态ip选择器初始值
+      ipSelectorOriginalValue: null,
     };
   },
   computed: {
@@ -728,9 +786,6 @@ export default {
     }),
     ...mapGetters('collect', ['curCollect']),
     ...mapGetters('globals', ['globalsData']),
-    ...mapState({
-      menuProject: state => state.menuProject,
-    }),
     collectProject() {
       return projectManages(this.$store.state.topMenu, 'collection-item');
     },
@@ -758,7 +813,7 @@ export default {
         this.formData.configs.forEach((item) => {
           item.isAllContainer = false; // node环境时 所有容器，指定容器禁用
           item.container = this.allContainer;
-          item.namespaces = ['*'];
+          item.namespaces = [];
         });
       }
       return this.currentEnvironment === 'node_log_config';
@@ -766,11 +821,11 @@ export default {
     // 获取日志类型列表
     getCollectorScenario() {
       try {
-        if (this.currentEnvironment === 'windows') return this.globalsData.collector_scenario;
-        const cloneList = JSON.parse(JSON.stringify(this.globalsData.collector_scenario));
-        const winIndex = cloneList.findIndex(item => item.id === 'wineventlog');
-        cloneList.splice(winIndex, 1);
-        return cloneList;
+        const activeScenario = this.globalsData.collector_scenario.filter(item => item.is_active);
+        if (this.currentEnvironment === 'windows') return activeScenario;
+        const winIndex = activeScenario.findIndex(item => item.id === 'wineventlog');
+        activeScenario.splice(winIndex, 1);
+        return activeScenario;
       } catch (error) {
         return [];
       }
@@ -778,6 +833,17 @@ export default {
     // 是否是编辑或者克隆
     isCloneOrUpdate() {
       return this.isUpdate || this.isClone;
+    },
+    localClusterList() {
+      return this.clusterList.filter(val => (this.isNode ? !val.is_shared : true));
+    },
+    // ip选择器选中节点
+    selectorNodes() {
+      return this.getSelectorNodes();
+    },
+    updateCollectorConfigID() { // 若是新增容器日志 返回上一步 则使用curCollect缓存的collector_config_id更新;
+      const { collectorId } = this.$route.params;
+      return !!collectorId ? Number(collectorId) : Number(this.curCollect.collector_config_id);
     },
   },
   watch: {
@@ -788,6 +854,9 @@ export default {
       if (['std_log_config', 'container_log_config', 'node_log_config'].includes(nVal)) {
         this.formData.environment = 'container';
         !this.clusterList.length && this.getBcsClusterList();
+        if (nVal === 'node_log_config' && this.getIsSharedCluster()) { // 选中node环境时 如果存在已选的共享集群 则清空
+          this.formData.bcs_cluster_id = '';
+        }
         return;
       };
       this.formData.environment = nVal;
@@ -808,10 +877,10 @@ export default {
     },
   },
   created() {
-    this.isUpdate = this.$route.name !== 'collectAdd';
     this.isClone = this.$route.query?.type === 'clone';
-    this.getLinkData();
+    this.$store.commit('updateRouterLeaveTip', false);
     this.configBaseObj = deepClone(this.formData.configs[0]); // 生成配置项的基础对象
+    this.getLinkData();
     // 克隆与编辑均进行数据回填
     if (this.isUpdate || this.isClone) {
       const cloneCollect = JSON.parse(JSON.stringify(this.curCollect));
@@ -828,8 +897,8 @@ export default {
       } else { // 物理环境
         this.currentEnvironment = cloneCollect.environment;
         Object.assign(this.formData, cloneCollect);
-        if (this.formData.target?.length) { // IP 选择器预览结果回填
-          this.formData.target_nodes = this.formData.target;
+        if (this.formData.target_nodes?.length) { // IP 选择器预览结果回填
+          this.ipSelectorOriginalValue = this.getSelectorNodes();
         }
         if (!this.formData.collector_config_name_en) { // 兼容旧数据英文名为空
           this.formData.collector_config_name_en = this.formData.table_id || '';
@@ -898,7 +967,6 @@ export default {
           label_selector: yamlSelector,
           collector_type,
         } = item;
-        let isAllContainer = false;
         const namespaces = item.any_namespace ? ['*'] : itemNamespace;
         const container =  {
           workload_type,
@@ -913,16 +981,15 @@ export default {
         if (isYamlData) {
           Object.assign(container, yamlContainer);
           Object.assign(label_selector, yamlSelector);
-          item.params.paths = item.params.paths.length ? item.paths.map(item => ({ value: item })) : [];
+          params.paths = params.paths.length ? item.paths.map(item => ({ value: item })) : [{ value: '' }];
         } else {
           if (!params.conditions?.separator_filters) {
             params.conditions.separator_filters = [{ fieldindex: '', word: '', op: '=', logic_op: 'and' }];
           }
         }
-        if (JSON.stringify(container) === JSON.stringify(this.allContainer)
-        && JSON.stringify(label_selector) === JSON.stringify(this.allLabelSelector)) {
-          isAllContainer = true;
-        }
+        const conCompare = this.objCompare(container, this.allContainer);
+        const labelCompare = this.objCompare(label_selector, this.allLabelSelector);
+        const isAllContainer = (conCompare && labelCompare);
         return {
           letterIndex: index,
           isAllContainer,
@@ -942,7 +1009,7 @@ export default {
       const isCanSubmit = await this.submitDataValidate();
       if (!isCanSubmit) return;
       const params = this.handleParams();
-      if (JSON.stringify(this.localParams) === JSON.stringify(params)) {
+      if (this.objCompare(this.localParams, params)) {
         // 未修改表单 直接跳转下一步
         this.$emit('stepChange');
         this.isHandle = false;
@@ -955,7 +1022,7 @@ export default {
     },
     /**
      * @desc: 提交表格时验证是否通过
-     * @returns { Boolean } // 是否可以提交
+     * @return { Boolean } 是否可以提交
      */
     async submitDataValidate() {
       try { // 基础信息表格验证
@@ -1030,6 +1097,11 @@ export default {
           return extraFillLength === 1;
         });
         if (!containerConfigValidate || !containerValidate || this.isExtraError) return false;
+        if (this.getIsSharedCluster() && this.formData.configs.some(conf => !conf.namespaces.length)) {
+          // 容器环境下选择了共享集群 但NameSpace为空
+          this.$bkMessage({ theme: 'error', message: this.$t('配置项命名空间不能为空') });
+          return false;
+        }
       }
       return true;
     },
@@ -1039,7 +1111,7 @@ export default {
       const urlParams = {};
       let requestUrl;
       if (this.isUpdate) {
-        urlParams.collector_config_id = Number(this.$route.params.collectorId);
+        urlParams.collector_config_id = this.updateCollectorConfigID;
         requestUrl = 'collect/updateCollection';
       } else {
         requestUrl = 'collect/addCollection';
@@ -1049,6 +1121,7 @@ export default {
         if (res.code === 0) {
           this.$store.commit(`collect/${this.isUpdate ? 'updateCurCollect' : 'setCurCollect'}`, Object.assign({}, this.formData, params, res.data));
           this.$emit('stepChange');
+          this.$emit('update:is-update', true); // 新建成功,更新是否是编辑状态
           this.setDetail(res.data.collector_config_id);
         }
       })
@@ -1063,7 +1136,7 @@ export default {
       const urlParams = {};
       let requestUrl;
       if (this.isUpdate) {
-        urlParams.collector_config_id = Number(this.$route.params.collectorId);
+        urlParams.collector_config_id = this.updateCollectorConfigID;
         requestUrl = 'container/update';
       } else {
         requestUrl = 'container/create';
@@ -1074,6 +1147,7 @@ export default {
         if (res.code === 0) {
           this.$store.commit(`collect/${this.isUpdate ? 'updateCurCollect' : 'setCurCollect'}`,
             Object.assign({}, this.formData, params, res.data));
+          this.$emit('update:is-update', true); // 新建成功,更新是否是编辑状态
           this.$emit('stepChange');
           this.setDetail(res.data.collector_config_id);
         }
@@ -1141,10 +1215,7 @@ export default {
           item.params = this.filterParams(item.params, item.collector_type);
         });
         containerFromData.extra_labels = extra_labels.filter(item => !(item.key === '' && item.value === ''));
-        if (this.isUpdate) {
-          return containerFromData;
-        } // 容器环境新增
-        return Object.assign(containerFromData, {
+        return Object.assign(containerFromData, { // 容器环境更新
           bk_biz_id: this.bkBizId,
         });
       }
@@ -1158,10 +1229,12 @@ export default {
         params: physicsParams,
       });
       if (this.isUpdate) { // 物理环境编辑
-        physicsFromData.collector_config_id = Number(this.$route.params.collectorId);
+        physicsFromData.collector_config_id = this.updateCollectorConfigID;
         delete physicsFromData.category_id;
         delete physicsFromData.collector_scenario_id;
-        return physicsFromData;
+        return Object.assign(physicsFromData, {
+          bk_biz_id: this.bkBizId,
+        });
       } // 物理环境新增
       return Object.assign(physicsFromData, {
         bk_biz_id: this.bkBizId,
@@ -1181,14 +1254,20 @@ export default {
           delete params.multiline_timeout;
         }
         const { match_type, match_content, separator, separator_filters, type } = params.conditions;
-        let finallyType = type; // 如果是分隔符过滤，都没有填写或只填写一半的值，若过滤数组为空变成match不传过滤内容
+        let finallyType = !type ? 'match' : type ; // 如果是分隔符过滤，都没有填写或只填写一半的值，若过滤数组为空变成match不传过滤内容
         const separatorEffectiveArr = separator_filters.filter(item => item.fieldindex && item.word);
         !separatorEffectiveArr.length && (finallyType = 'match');
-        params.conditions = finallyType === 'match' ? { type, match_type, match_content } : {
-          type,
-          separator,
-          separator_filters: separatorEffectiveArr,
-        };
+        params.conditions = finallyType === 'match'
+          ? {
+            type: finallyType,
+            match_type,
+            match_content,
+          }
+          : {
+            type: finallyType,
+            separator,
+            separator_filters: separatorEffectiveArr,
+          };
         if (!separatorEffectiveArr.length && type === 'separator') {  // 当前是分隔符过滤但内容都没有填写则传默认的字符串类型
           Object.assign(params.conditions, {
             type: 'match',
@@ -1227,7 +1306,7 @@ export default {
       this.$router.push({
         name: 'collection-item',
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
     },
@@ -1237,6 +1316,39 @@ export default {
       this.formData.target_node_type = params.target_node_type;
       this.formData.target_nodes = params.target_nodes;
       this.showIpSelectorDialog = false;
+      // 触发 bk-form 的表单验证
+      this.$refs.formItemTarget.validate('change');
+    },
+    // 采集目标选择内容变更
+    handleTargetChange(value) {
+      const {
+        host_list: hostList,
+        node_list: nodeList,
+        service_template_list: serviceTemplateList,
+        set_template_list: setTemplateList,
+      } = value;
+      let type = '';
+      let nodes = [];
+      if (nodeList?.length) {
+        type = 'TOPO';
+        nodes = nodeList;
+      }
+      if (hostList?.length) {
+        type = 'INSTANCE';
+        nodes = hostList;
+      }
+      if (serviceTemplateList?.length) {
+        type = 'SERVICE_TEMPLATE';
+        nodes = serviceTemplateList;
+      }
+      if (setTemplateList?.length) {
+        type = 'SET_TEMPLATE';
+        nodes = setTemplateList;
+      }
+      if (!type) return;
+
+      this.formData.target_node_type = type;
+      this.formData.target_nodes = toTransformNode(nodes, type);
       // 触发 bk-form 的表单验证
       this.$refs.formItemTarget.validate('change');
     },
@@ -1254,7 +1366,7 @@ export default {
         }
       });
     },
-    async checkEnName(val) {
+    async checkEnNameRepeat(val) {
       if (this.isUpdate) return true;
       const result = await this.getEnNameIsRepeat(val);
       return result;
@@ -1265,17 +1377,10 @@ export default {
         const res =  await this.$http.request('collect/getPreCheck', {
           params: { collector_config_name_en: val, bk_biz_id: this.$store.state.bkBizId },
         });
-        if (res.data) {
-          this.configNameEnIsNotRepeat = res.data.allowed;
-          return res.data.allowed;
-        }
+        if (res.data) return res.data.allowed;
       } catch (error) {
-        this.configNameEnIsNotRepeat = true;
         return false;
       }
-    },
-    clearError() {
-      if (!this.configNameEnIsNotRepeat) this.configNameEnIsNotRepeat = true;
     },
     /**
      * @desc: 环境选择
@@ -1361,7 +1466,7 @@ export default {
     },
     handleDeleteConfig(index, letterIndex) { // 删除配置项
       this.$bkInfo({
-        subTitle: `${this.$t('确定要删除配置项')}${this.getFromCharCode(letterIndex)}?`,
+        subTitle: this.$t('确定要删除配置项{n}？', { n: this.getFromCharCode(letterIndex) }),
         type: 'warning',
         confirmFn: () => {
           this.formData.configs.splice(index, 1);
@@ -1372,14 +1477,12 @@ export default {
       // 所有容器 指定容器 指定标签 三选一
       return this.formData.configs.every((item) => {
         if (item.isAllContainer) return true;
-        let showContainerError = false;
-        let showLabelError = false;
-        JSON.stringify(item.container) === JSON.stringify(this.allContainer) && (showContainerError = true);
-        JSON.stringify(item.label_selector) === JSON.stringify(this.allLabelSelector) && (showLabelError = true);
+        const showContainerError = this.objCompare(item.container, this.allContainer);
+        const showLabelError = this.objCompare(item.label_selector, this.allLabelSelector);
         if (showContainerError && showLabelError) {
           this.$bkMessage({
             theme: 'error',
-            message: `${this.$t('配置项')}${this.getFromCharCode(item.letterIndex)}${this.$t('未选择指定容器或指定标签')}.`,
+            message: this.$t('配置项{n}未选择指定容器或指定标签。', { n: this.getFromCharCode(item.letterIndex) }),
           });
         }
         return !showContainerError || !showLabelError;
@@ -1396,9 +1499,13 @@ export default {
         this.formData.configs[index].namespaces.splice(allIndex, 1);
       }
     },
+    // 当前所选集群是否共享集群
+    getIsSharedCluster() {
+      return this.clusterList?.find(cluster => cluster.id === this.formData.bcs_cluster_id)?.is_shared ?? false;
+    },
     getNameSpaceList(clusterID, isFirstUpdateSelect = false) {
       if (!clusterID || (this.isPhysicsEnvironment && this.isUpdate)) return;
-      const query = { cluster_id: clusterID, bk_biz_id: this.bkBizId };
+      const query = { bcs_cluster_id: clusterID, bk_biz_id: this.bkBizId };
       this.nameSpaceRequest = true;
       this.$http.request('container/getNameSpace', { query }).then((res) => {
         // 判断是否是第一次切换集群 如果是 则进行详情页namespace数据回显
@@ -1411,10 +1518,16 @@ export default {
           const setList = new Set([...namespaceList, ...resIDList]);
           setList.delete('*');
           const allList = [...setList].map(item => ({ id: item, name: item }));
-          this.nameSpacesSelectList = [{ name: this.$t('所有'), id: '*' }, ...allList];
+          this.nameSpacesSelectList = [...allList];
+          if (!this.getIsSharedCluster()) {
+            this.nameSpacesSelectList.unshift({ name: this.$t('所有'), id: '*' });
+          }
           return;
         }
-        this.nameSpacesSelectList = [{ name: this.$t('所有'), id: '*' }, ...res.data];
+        this.nameSpacesSelectList = [...res.data];
+        if (!this.getIsSharedCluster()) {
+          this.nameSpacesSelectList.unshift({ name: this.$t('所有'), id: '*' });
+        }
       })
         .catch((err) => {
           console.warn(err);
@@ -1423,7 +1536,12 @@ export default {
           this.nameSpaceRequest = false;
         });
     },
+    /**
+     * @desc: 获取bcs集群列表
+     */
     getBcsClusterList() {
+      if (this.isRequestCluster) return;
+      this.isRequestCluster = true;
       const query = { bk_biz_id: this.bkBizId };
       this.$http.request('container/getBcsList', { query }).then((res) => {
         if (res.code === 0) {
@@ -1432,6 +1550,9 @@ export default {
       })
         .catch((err) => {
           console.warn(err);
+        })
+        .finally(() => {
+          this.isRequestCluster = false;
         });
     },
     /**
@@ -1479,8 +1600,8 @@ export default {
      * @desc: 编进进入时判断当前环境 禁用另一边环境选择
      */
     initBtnListDisable() {
-      // const operateIndex = ['linux', 'windows'].includes(this.currentEnvironment) ? 1 : 0;
-      this.environmentList[0].btnList.forEach(item => item.isDisable = true);
+      const operateIndex = ['linux', 'windows'].includes(this.currentEnvironment) ? 1 : 0;
+      this.environmentList[operateIndex].btnList.forEach(item => item.isDisable = true);
     },
     getFromCharCode(index) {
       return String.fromCharCode(index + 65);
@@ -1490,6 +1611,47 @@ export default {
     },
     isContainerHaveValue(container) {
       return Object.values(container)?.some(Boolean) || false;
+    },
+    handelClusterChange() {
+      // 切换集群清空 namespaces
+      this.formData.configs = this.formData.configs.map((conf) => {
+        return {
+          ...conf,
+          namespaces: [],
+        };
+      });
+    },
+    checkEnNameValidator(val) {
+      this.isTextValid = new RegExp(/^[A-Za-z0-9_]+$/).test(val);
+      return this.isTextValid;
+    },
+    objCompare(objectA = {}, objectB = {}) {
+      return JSON.stringify(objectA) === JSON.stringify(objectB);
+    },
+    handleEnConvert() {
+      const str = this.formData.collector_config_name_en;
+      const convertStr = str.split('').reduce((pre, cur) => {
+        if (cur === '-') cur = '_'; // 中划线转化成下划线
+        if (!/\w/.test(cur)) cur = ''; // 不符合的值去掉
+        return pre += cur;
+      }, '');
+      this.formData.collector_config_name_en = convertStr;
+      this.$refs.validateForm.validate().then(() => {
+        this.isTextValid = true;
+      })
+        .catch(() => {
+          if (convertStr.length < 5) this.isTextValid = true;
+        });
+    },
+    getSelectorNodes() {
+      const { target_node_type: type, target_nodes: nodes } = this.formData;
+      const targetList = toSelectorNode(nodes, type);
+      return {
+        host_list: type === 'INSTANCE' ? targetList : [],
+        node_list: type === 'TOPO' ? targetList : [],
+        service_template_list: type === 'SERVICE_TEMPLATE' ? targetList : [],
+        set_template_list: type === 'SET_TEMPLATE' ? targetList : [],
+      };
     },
   },
 };
@@ -1504,6 +1666,29 @@ export default {
   padding: 0 42px 42px;
   overflow: auto;
 
+  .en-bk-form {
+    width: 710px;
+
+    .en-name-box {
+      align-items: center;
+
+      @include flex-justify(space-between);
+    }
+
+    .text-error {
+      display: inline-block;
+      position: absolute;
+      top: 6px;
+      left: 12px;
+      font-size: 12px;
+      color: transparent;
+      pointer-events: none;
+
+      /* stylelint-disable-next-line declaration-no-important */
+      text-decoration: red wavy underline !important;
+    }
+  }
+
   .bk-form-content {
     line-height: 20px;
   }
@@ -1513,6 +1698,7 @@ export default {
 
     .link {
       color: #3a84ff;
+      cursor: pointer;
     }
   }
 
@@ -1585,7 +1771,7 @@ export default {
   }
 
   .multiline-log-container {
-    margin-top: 20px;
+    margin-top: 4px;
 
     .row-container {
       display: flex;
@@ -1823,6 +2009,8 @@ export default {
   }
 
   .species-item {
+    margin-bottom: -30px;
+
     .bk-form-checkbox {
       height: 30px;
       width: 320px;
@@ -1831,10 +2019,8 @@ export default {
     }
 
     .bk-tag-selector {
-      position: absolute;
-      top: 89px;
-      left: 65px;
       width: 320px;
+      transform: translate3d(66px, -30px, 0);
     }
   }
 
@@ -1872,10 +2058,6 @@ export default {
     z-index: 2 !important;
   }
 
-  .bk-form .bk-form-content .tooltips-icon {
-    left: 330px;
-  }
-
   .rulesColor {
     /* stylelint-disable-next-line declaration-no-important */
     border-color: #ff5656 !important;
@@ -1888,15 +2070,6 @@ export default {
     }
   }
 
-  .config-enName-box {
-    display: flex;
-
-    .repeat-message {
-      font-size: 14px;
-      margin-left: 6px;
-      color: #ff5656;
-    }
-  }
 
   .win-content {
     padding-bottom: 20px;
@@ -1910,6 +2083,10 @@ export default {
       position: absolute;
       left: -80px;
       top: 6px;
+    }
+
+    &.en-span span {
+      left: -112px;
     }
 
     .filter-select {

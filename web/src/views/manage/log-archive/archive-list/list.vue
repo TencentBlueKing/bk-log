@@ -28,7 +28,7 @@
         theme="primary"
         data-test-id="archiveList_button_newArchive"
         @click="handleCreate">
-        {{ $t('logArchive.archive') }}
+        {{ $t('归档') }}
       </bk-button>
       <div class="list-search fr">
         <bk-input
@@ -36,7 +36,8 @@
           :right-icon="'bk-icon icon-search'"
           v-model="keyword"
           data-test-id="archiveList_input_searchListItem"
-          @enter="search">
+          @enter="search"
+          @change="handleSearchChange">
         </bk-input>
       </div>
     </section>
@@ -63,51 +64,56 @@
             {{ props.row.archive_config_id }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('logArchive.collectName')">
+        <bk-table-column :label="$t('名称')" :render-header="$renderHeader">
           <template slot-scope="props">
-            {{ props.row.collector_config_name }}
+            {{ props.row.instance_name }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('logArchive.expired')">
+        <bk-table-column :label="$t('过期设置')" :render-header="$renderHeader">
           <template slot-scope="props">
             <!-- `${props.row.snapshot_days}天` -->
             {{ getExpiredDays(props) }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('logArchive.totalSize')">
+        <bk-table-column :label="$t('总大小')" :render-header="$renderHeader">
           <template slot-scope="props">
             {{ getFileSize(props.row.store_size) }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('logArchive.indexCount')">
+        <bk-table-column :label="$t('索引数量')" :render-header="$renderHeader">
           <template slot-scope="props">
             {{ props.row.index_count }}
           </template>
         </bk-table-column>
         <bk-table-column
-          :label="$t('logArchive.archiveRepository')"
+          :label="$t('归档仓库')"
+          :render-header="$renderHeader"
           prop="target_snapshot_repository_name">
           <template slot-scope="props">
             {{ props.row.target_snapshot_repository_name }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('dataSource.operation')" width="200">
+        <bk-table-column :label="$t('操作')" :render-header="$renderHeader" width="200">
           <div class="collect-table-operate" slot-scope="props">
             <!-- 回溯 -->
             <bk-button
               theme="primary"
               text
               class="mr10 king-button"
-              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+              v-cursor="{
+                active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
+              }"
               @click.stop="operateHandler(props.row, 'restore')">
-              {{ $t('logArchive.restore') }}
+              {{ $t('回溯') }}
             </bk-button>
             <!-- 编辑 -->
             <bk-button
               theme="primary"
               text
               class="mr10 king-button"
-              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+              v-cursor="{
+                active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
+              }"
               @click.stop="operateHandler(props.row, 'edit')">
               {{ $t('编辑') }}
             </bk-button>
@@ -116,12 +122,17 @@
               theme="primary"
               text
               class="mr10 king-button"
-              v-cursor="{ active: !(props.row.permission && props.row.permission.manage_collection) }"
+              v-cursor="{
+                active: !(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])
+              }"
               @click.stop="operateHandler(props.row, 'delete')">
-              {{ $t('btn.delete') }}
+              {{ $t('删除') }}
             </bk-button>
           </div>
         </bk-table-column>
+        <div slot="empty">
+          <empty-status :empty-type="emptyType" @operation="handleOperation" />
+        </div>
       </bk-table>
     </section>
     <!-- 新增/编辑归档 -->
@@ -132,7 +143,7 @@
       @updated="handleUpdated"
     />
 
-    <!-- 新增回溯 -->
+    <!-- 新建回溯 -->
     <restore-slider
       :show-slider.sync="showRestoreSlider"
       :archive-id="editArchiveId"
@@ -146,7 +157,9 @@ import { mapGetters } from 'vuex';
 import StateTable from './components/state-table.vue';
 import ArchiveSlider from './components/archive-slider';
 import RestoreSlider from '../archive-restore/restore-slider.vue';
-import { formatFileSize } from '@/common/util';
+import { formatFileSize, clearTableFilter } from '@/common/util';
+import * as authorityMap from '../../../../common/authority-map';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
   name: 'ArchiveList',
@@ -154,6 +167,7 @@ export default {
     StateTable,
     ArchiveSlider,
     RestoreSlider,
+    EmptyStatus,
   },
   data() {
     return {
@@ -178,6 +192,9 @@ export default {
     ...mapGetters({
       bkBizId: 'bkBizId',
     }),
+    authorityMap() {
+      return authorityMap;
+    },
     repositoryFilters() {
       return [];
     },
@@ -220,6 +237,7 @@ export default {
     },
     requestData() {
       this.isTableLoading = true;
+      this.emptyType = this.keyword ? 'search-empty' : 'empty';
       this.$http.request('archive/getArchiveList', {
         query: {
           ...this.params,
@@ -249,12 +267,12 @@ export default {
       this.editArchiveId = null;
     },
     operateHandler(row, operateType) {
-      if (!(row.permission?.manage_collection)) {
+      if (!(row.permission?.[authorityMap.MANAGE_COLLECTION_AUTH])) {
         return this.getOptionApplyData({
-          action_ids: ['manage_collection'],
+          action_ids: [authorityMap.MANAGE_COLLECTION_AUTH],
           resources: [{
             type: 'collection',
-            id: row.collector_config_id,
+            id: row.instance_id,
           }],
         });
       }
@@ -273,7 +291,7 @@ export default {
       if (operateType === 'delete') {
         this.$bkInfo({
           type: 'warning',
-          subTitle: `${this.$t('当前归档ID为')} ${row.archive_config_id}，${this.$t('确认要删除')}`,
+          subTitle: this.$t('当前归档ID为{n}，确认要删除？', { n: row.archive_config_id }),
           confirmFn: () => {
             this.requestDelete(row);
           },
@@ -316,6 +334,25 @@ export default {
     },
     getExpiredDays(props) {
       return props.row.snapshot_days ? `${props.row.snapshot_days}天` : this.$t('永久');
+    },
+    handleSearchChange(val) {
+      if (val === '' && !this.isTableLoading) {
+        this.search();
+      }
+    },
+    handleOperation(type) {
+      if (type === 'clear-filter') {
+        this.keyword = '';
+        clearTableFilter(this.$refs.cleanTable);
+        this.search();
+        return;
+      }
+
+      if (type === 'refresh') {
+        this.emptyType = 'empty';
+        this.search();
+        return;
+      }
     },
   },
 };

@@ -441,7 +441,7 @@ export default {
       this.$router.push({
         name: 'collection-item',
         query: {
-          projectId: window.localStorage.getItem('project_id'),
+          spaceUid: this.$store.state.spaceUid,
         },
       });
     },
@@ -467,7 +467,7 @@ export default {
           margin: 0;
         }
 
-        ::v-deep .bk-date-picker {
+        :deep(.bk-date-picker) {
           width: 100%;
         }
       }

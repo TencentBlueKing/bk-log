@@ -19,13 +19,13 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import os
 import sys
 
-from django.http import HttpResponseRedirect
-from django.utils.translation import ugettext_lazy as _
-from django.urls import reverse
-
 from blueapps.conf.default_settings import *  # noqa
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+from django.utils.translation import ugettext_lazy as _
 
 from config.log import get_logging_config_dict
 
@@ -59,6 +59,7 @@ INSTALLED_APPS += (
     "django_dbconn_retry",
     "apps.iam",
     "apps.api",
+    "apps.log_commons",
     "apps.log_search",
     "apps.log_audit",
     "apps.log_databus",
@@ -81,6 +82,8 @@ INSTALLED_APPS += (
     "apps.log_extract",
     "apps.feature_toggle",
     "apps.log_clustering",
+    "bkm_space",
+    "bkm_ipchooser",
 )
 
 # BKLOG后台接口：默认否，后台接口session不写入本地数据库
@@ -122,6 +125,8 @@ MIDDLEWARE = (
     "apps.middlewares.CommonMid",
     "apps.middleware.user_middleware.UserLocalMiddleware",
     "apps.middleware.user_middleware.BkLogMetricsAfterMiddleware",
+    # 项目空间参数注入
+    "bkm_space.middleware.ParamInjectMiddleware",
 )
 
 # 所有环境的日志级别可以在这里配置
@@ -166,6 +171,14 @@ if SENTRY_DSN:
 # 不使用时，请修改为 False，并删除项目目录下的 Procfile 文件中 celery 配置
 IS_USE_CELERY = True
 
+IS_CELERY = False
+IS_CELERY_BEAT = False
+if "celery" in sys.argv:
+    IS_CELERY = True
+    if "beat" in sys.argv:
+        IS_CELERY_BEAT = True
+
+
 # CELERY 并发数，默认为 2，可以通过环境变量或者 Procfile 设置
 CELERYD_CONCURRENCY = os.getenv("BK_CELERYD_CONCURRENCY", 2)
 
@@ -178,6 +191,7 @@ CELERY_IMPORTS = (
     "apps.log_search.tasks.bkdata",
     "apps.log_search.tasks.async_export",
     "apps.log_search.tasks.project",
+    "apps.log_search.tasks.space",
     "apps.log_search.tasks.cmdb",
     "apps.log_search.handlers.index_set",
     "apps.log_search.tasks.mapping",
@@ -189,8 +203,20 @@ CELERY_IMPORTS = (
     "apps.log_measure.tasks.report",
     "apps.log_extract.tasks",
     "apps.log_clustering.tasks.sync_pattern",
+    "apps.log_clustering.tasks.subscription",
     "apps.log_extract.tasks.extract",
 )
+
+
+# OTLP Service Name
+SERVICE_NAME = APP_CODE
+if BKAPP_IS_BKLOG_API:
+    SERVICE_NAME = APP_CODE + "_api"
+if IS_CELERY:
+    SERVICE_NAME = APP_CODE + "_worker"
+if IS_CELERY_BEAT:
+    SERVICE_NAME = APP_CODE + "_beat"
+
 
 # load logging settings
 if RUN_VER != "open":
@@ -221,33 +247,73 @@ if IS_K8S_DEPLOY_MODE:
                     "%(funcName)s %(process)d %(thread)d %(message)s "
                     "$(otelTraceID)s $(otelSpanID)s %(otelServiceName)s"
                 ),
-            }
+            },
         },
-        "handlers": {"stdout": {"class": "logging.StreamHandler", "formatter": "json", "stream": sys.stdout,},},
+        "handlers": {
+            "stdout": {
+                "class": "logging.StreamHandler",
+                "formatter": "json",
+                "stream": sys.stdout,
+            },
+        },
         "loggers": {
             "django": {"handlers": ["stdout"], "level": "INFO", "propagate": True},
-            "django.server": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True,},
-            "django.request": {"handlers": ["stdout"], "level": "ERROR", "propagate": True,},
-            "django.db.backends": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True,},
+            "django.server": {
+                "handlers": ["stdout"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
+            "django.request": {
+                "handlers": ["stdout"],
+                "level": "ERROR",
+                "propagate": True,
+            },
+            "django.db.backends": {
+                "handlers": ["stdout"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
             # the root logger ,用于整个project的logger
             "root": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
             # 组件调用日志
-            "component": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True,},
+            "component": {
+                "handlers": ["stdout"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
             "celery": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
             # other loggers...
             # blueapps
-            "blueapps": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True,},
+            "blueapps": {
+                "handlers": ["stdout"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
             # 普通app日志
             "app": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
             "bk_dataview": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
-            "iam": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True,},
+            "iam": {
+                "handlers": ["stdout"],
+                "level": LOG_LEVEL,
+                "propagate": True,
+            },
             "bk_monitor": {"handlers": ["stdout"], "level": LOG_LEVEL, "propagate": True},
         },
     }
+    #
+    # 可选，开启OT日志上报
+    if os.getenv("BKAPP_OTLP_LOG", "off") == "on":
+        LOGGING["handlers"]["otlp"] = {
+            "class": "apps.utils.log.OTLPLogHandler",
+        }
+        for v in LOGGING["loggers"].values():
+            v["handlers"].append("otlp")
 
 OTLP_TRACE = os.getenv("BKAPP_OTLP_TRACE", "off") == "on"
 OTLP_GRPC_HOST = os.getenv("BKAPP_OTLP_GRPC_HOST", "http://localhost:4317")
 OTLP_BK_DATA_ID = int(os.getenv("BKAPP_OTLP_BK_DATA_ID", -1))
+OTLP_BK_DATA_TOKEN = os.getenv("BKAPP_OTLP_BK_DATA_TOKEN", "")
+OTLP_BK_LOG_TOKEN = os.getenv("BKAPP_OTLP_BK_LOG_TOKEN", "")
 # ===============================================================================
 # 项目配置
 # ===============================================================================
@@ -255,12 +321,18 @@ BK_PAAS_HOST = os.environ.get("BK_PAAS_HOST", "")
 # ESB API调用前辍
 BK_PAAS_INNER_HOST = os.environ.get("BK_PAAS_INNER_HOST", BK_PAAS_HOST)
 PAAS_API_HOST = os.environ.get("BK_COMPONENT_API_URL") or BK_PAAS_INNER_HOST
-BK_CC_HOST = BK_PAAS_HOST.replace("paas", "cmdb")
+if "paas" in BK_PAAS_HOST:
+    BK_CC_HOST = BK_PAAS_HOST.replace("paas", "cmdb")
+else:
+    BK_CC_HOST = "://cmdb.".join(BK_PAAS_HOST.split("://"))
 BKDATA_URL = BK_PAAS_HOST
 MONITOR_URL = ""
 BK_DOC_URL = "https://bk.tencent.com/docs/"
 BK_DOC_QUERY_URL = "https://bk.tencent.com/docs/document/5.1/90/3822/"
 BK_FAQ_URL = "https://bk.tencent.com/s-mart/community"
+
+# SaaS访问域名
+BK_BKLOG_HOST = os.environ.get("BK_BKLOG_HOST", BK_PAAS_HOST)
 
 # 日志归档文档
 BK_ARCHIVE_DOC_URL = os.getenv("BKAPP_ARCHIVE_DOC_URL", "")
@@ -279,7 +351,6 @@ BK_HOT_WARM_CONFIG_URL = (
 )
 BK_COMPONENT_API_URL = os.environ.get("BK_COMPONENT_API_URL")
 DEPLOY_MODE = os.environ.get("DEPLOY_MODE", "")
-
 
 # ===============================================================================
 # 企业版登录重定向
@@ -334,19 +405,19 @@ META_ESB_FORWARD_CONFIG = {
     "create_es_snapshot_repository": {
         "iam_key": "cluster_id",
         "target_call": "create_es_snapshot_repository",
-        "iam_actions": ["manage_es_source"],
+        "iam_actions": ["manage_es_source_v2"],
         "iam_resource": "es_source",
     },
     "modify_es_snapshot_repository": {
         "iam_key": "cluster_id",
         "target_call": "modify_es_snapshot_repository",
-        "iam_actions": ["manage_es_source"],
+        "iam_actions": ["manage_es_source_v2"],
         "iam_resource": "es_source",
     },
     "delete_es_snapshot_repository": {
         "iam_key": "cluster_id",
         "target_call": "delete_es_snapshot_repository",
-        "iam_actions": ["manage_es_source"],
+        "iam_actions": ["manage_es_source_v2"],
         "iam_resource": "es_source",
     },
     "verify_es_snapshot_repository": {"is_view_permission": True, "target_call": "verify_es_snapshot_repository"},
@@ -384,7 +455,7 @@ USE_L10N = True
 LANGUAGE_CODE = "zh-cn"
 LOCALEURL_USE_ACCEPT_LANGUAGE = True
 
-LANGUAGES = (("en", "English"), ("zh-cn", "简体中文"))
+LANGUAGES = (("en", "English"), ("zh-cn", _("简体中文")))
 LANGUAGE_SESSION_KEY = "blueking_language"
 LANGUAGE_COOKIE_NAME = "blueking_language"
 
@@ -451,6 +522,8 @@ FEATURE_TOGGLE = {
     # 自定义指标上报
     "monitor_report": os.environ.get("BKAPP_MONITOR_REPORT", "on"),
     "bklog_es_config": "on",
+    # 一键检测工具自定义配置
+    "check_collector_custom_config": "",
 }
 
 SAAS_MONITOR = "bk_monitorv3"
@@ -490,7 +563,7 @@ MENUS = [
                 "name": _("仪表盘"),
                 "feature": "on",
                 "icon": "",
-                "keyword": _("仪表"),
+                "keyword": _("仪表盘"),
                 "children": [
                     {"id": "default_dashboard", "name": _("默认仪表盘"), "feature": "on", "icon": "block-shape"},
                     {"id": "create_dashboard", "name": _("新建仪表盘"), "feature": "on", "icon": "plus-circle-shape"},
@@ -551,7 +624,12 @@ MENUS = [
                         "scenes": "scenario_log",
                         "icon": "info-fill--2",
                     },
-                    {"id": "clean_templates", "name": _("清洗模板"), "feature": "on", "icon": "moban",},
+                    {
+                        "id": "clean_templates",
+                        "name": _("清洗模板"),
+                        "feature": "on",
+                        "icon": "moban",
+                    },
                 ],
             },
             {
@@ -559,11 +637,26 @@ MENUS = [
                 "name": _("日志归档"),
                 "feature": "on",
                 "icon": "",
-                "keyword": "归档",
+                "keyword": _("归档"),
                 "children": [
-                    {"id": "archive_repository", "name": _("归档仓库"), "feature": "on", "icon": "new-_empty-fill",},
-                    {"id": "archive_list", "name": _("归档列表"), "feature": "on", "icon": "audit-fill",},
-                    {"id": "archive_restore", "name": _("归档回溯"), "feature": "on", "icon": "withdraw-fill",},
+                    {
+                        "id": "archive_repository",
+                        "name": _("归档仓库"),
+                        "feature": "on",
+                        "icon": "new-_empty-fill",
+                    },
+                    {
+                        "id": "archive_list",
+                        "name": _("归档列表"),
+                        "feature": "on",
+                        "icon": "audit-fill",
+                    },
+                    {
+                        "id": "archive_restore",
+                        "name": _("归档回溯"),
+                        "feature": "on",
+                        "icon": "withdraw-fill",
+                    },
                 ],
             },
             {
@@ -588,7 +681,7 @@ MENUS = [
             {
                 "id": "trace_track",
                 "name": _("全链路追踪"),
-                "feature": os.environ.get("BKAPP_FEATURE_TRACE", "on"),
+                "feature": os.environ.get("BKAPP_FEATURE_TRACE", "off"),
                 "icon": "",
                 "keyword": "trace",
                 "children": [
@@ -606,7 +699,13 @@ MENUS = [
                         "scenes": "scenario_bkdata",
                         "icon": "cc-cabinet",
                     },
-                    {"id": "bk_data_track", "name": _("第三方ES"), "feature": "off", "scenes": "scenario_es", "icon": ""},
+                    {
+                        "id": "third_party_es_trace",
+                        "name": _("第三方ES"),
+                        "feature": "off",
+                        "scenes": "scenario_es",
+                        "icon": "",
+                    },
                     {"id": "sdk_track", "name": _("SDK接入"), "feature": "off", "icon": ""},
                 ],
             },
@@ -670,6 +769,7 @@ CELERY_QUEUES = PIPELINE_CELERY_QUEUES
 # databus
 # ===============================================================================
 TABLE_ID_PREFIX = "bklog"
+TABLE_SPACE_PREFIX = "space"
 
 DEFAULT_OPERATOR = os.environ.get("BKAPP_ES_OPERATOR", "admin")
 ES_DATE_FORMAT = os.environ.get("BKAPP_ES_DATE_FORMAT", "%Y%m%d")
@@ -693,7 +793,7 @@ FEATURE_EXPORT_SCROLL = os.environ.get("BKAPP_FEATURE_EXPORT_SCROLL", False)
 
 # BCS
 BCS_API_GATEWAY_TOKEN = os.getenv("BKAPP_BCS_API_GATEWAY_TOKEN", "")
-BCS_CC_SSM_SWITCH = os.getenv("BKAPP_BCS_CC_SSM_SWITCH", "off") == "on"
+BCS_CC_SSM_SWITCH = os.getenv("BKAPP_BCS_CC_SSM_SWITCH", "off")
 BCS_APIGATEWAY_HOST = os.getenv("BKAPP_BCS_APIGATEWAY_HOST", "")
 BCS_CC_APIGATEWAY_HOST = os.getenv("BKAPP_BCS_CC_APIGATEWAY_HOST", "")
 SSM_HOST = os.getenv("BKAPP_SSM_HOST", "")
@@ -713,7 +813,7 @@ COLLECTOR_ROW_PACKAGE_COUNT = 100
 # 段日志一次上报条数
 COLLECTOR_SECTION_PACKAGE_COUNT = 10
 # 系统支持的清洗类型
-COLLECTOR_SCENARIOS = os.environ.get("BKAPP_COLLECTOR_SCENARIOS", "row,section").split(",")
+COLLECTOR_SCENARIOS = os.environ.get("BKAPP_COLLECTOR_SCENARIOS", "row,section,wineventlog").split(",")
 # 接入指引
 COLLECTOR_GUIDE_URL = os.environ.get("BKAPP_COLLECTOR_GUIDE_URL", "")
 # ITSM接入服务ID
@@ -795,6 +895,7 @@ CONSUL_HTTPS_PORT = os.getenv("CONSUL_HTTPS_PORT")
 # 默认kafka域名，若提供了，则不再使用metadata返回的域名。
 # 用于 SaaS 没有 consul 域名解析的情况。需要手动给出
 DEFAULT_KAFKA_HOST = os.getenv("BKAPP_DEFAULT_KAFKA_HOST")
+DEFAULT_KAFKA_POLL_TIMEOUT = int(os.getenv("BKAPP_DEFAULT_KAFKA_POLL_TIMEOUT", 1000))
 
 # ==============================================================================
 # redis
@@ -836,6 +937,23 @@ BKLOG_QOS_LIMIT_TIME = int(os.getenv("BK_BKLOG_QOS_LIMIT_TIME", 5))
 
 # ajax请求401返回plain信息
 IS_AJAX_PLAIN_MODE = True
+
+# ===============
+# 项目空间配置
+# ===============
+BKM_SPACE_API_CLASS = "apps.log_search.models.SpaceApi"
+
+# ===============
+# IP选择器配置
+# ===============
+BKM_IPCHOOSER_BKAPI_CLASS = "apps.utils.ipchooser.BkApi"
+# 是否开启动态主机配置协议适配
+ENABLE_DHCP = bool(os.getenv("BKAPP_ENABLE_DHCP", False))
+# 如果手动设置了GSE版本，则使用手动设置的版本, 否则根据ENABLE_DHCP来判断, True->v2, False->v1
+if os.getenv("BKAPP_GSE_VERSION"):
+    GSE_VERSION = os.getenv("BKAPP_GSE_VERSION", "v1")
+else:
+    GSE_VERSION = "v2" if ENABLE_DHCP else "v1"
 
 # ==============================================================================
 # Templates
@@ -916,7 +1034,12 @@ if BKAPP_IS_BKLOG_API and REDIS_MODE == "sentinel" and USE_REDIS:
         "OPTIONS": {
             "CLIENT_CLASS": "apps.utils.sentinel.SentinelClient",
             "PASSWORD": REDIS_PASSWD,
-            "SENTINELS": [(REDIS_SENTINEL_HOST, REDIS_SENTINEL_PORT,)],
+            "SENTINELS": [
+                (
+                    REDIS_SENTINEL_HOST,
+                    REDIS_SENTINEL_PORT,
+                )
+            ],
             "SENTINEL_KWARGS": {"password": REDIS_SENTINEL_PASSWORD},
         },
         "KEY_PREFIX": APP_CODE,
@@ -934,15 +1057,20 @@ PROMETHEUS_METRICS_TOKEN = os.environ.get("PROMETHEUS_METRICS_TOKEN", "")
 SERVICE_LISTENING_DOMAIN = os.environ.get("SERVICE_LISTENING_DOMAIN", "")
 # ==============================================================================
 
+# ==============================================================================
+# 主机标识优先级, 填入CC的标准字段, 默认 bk_host_innerip,bk_host_name,bk_host_innerip_v6
+HOST_IDENTIFIER_PRIORITY = os.environ.get("HOST_IDENTIFIER_PRIORITY", "bk_host_innerip,bk_host_name,bk_host_innerip_v6")
+# ==============================================================================
+
+# ==============================================================================
+# 一键检测工具开关, 默认为关
+CHECK_COLLECTOR_SWITCH: bool = os.getenv("CHECK_COLLECTOR_SWITCH", "off") == "on"
+# ==============================================================================
+
+
 """
 以下为框架代码 请勿修改
 """
-IS_CELERY = False
-IS_CELERY_BEAT = False
-if "celery" in sys.argv:
-    IS_CELERY = True
-    if "beat" in sys.argv:
-        IS_CELERY_BEAT = True
 
 # celery settings
 if IS_USE_CELERY:

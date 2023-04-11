@@ -38,14 +38,15 @@
             data-test-id="addIndex_select_selectIndex"
             @selected="handleCollectionSelected">
             <bk-option
-              v-for="item in collectionList"
+              v-for="item in getShowCollectionList"
               class="custom-no-padding-option"
               :disabled="parentData.indexes.some(selectedItem => item.result_table_id === selectedItem.result_table_id)"
               :key="item.result_table_id"
               :id="item.result_table_id"
               :name="`${item.result_table_name_alias}(${item.result_table_id})`">
               <div
-                v-if="scenarioId === 'log' && !(item.permission && item.permission.manage_collection)"
+                v-if="scenarioId === 'log'
+                  && !(item.permission && item.permission[authorityMap.MANAGE_COLLECTION_AUTH])"
                 class="option-slot-container no-authority" @click.stop>
                 <span class="text">{{ item.result_table_name_alias }}</span>
                 <span class="apply-text" @click="applyCollectorAccess(item)">{{ $t('申请权限') }}</span>
@@ -58,9 +59,20 @@
           <bk-table
             v-bkloading="{ isLoading: tableLoading }"
             :data="tableData"
-            max-height="259">
-            <bk-table-column :label="$t('字段')" prop="field_name" min-width="240"></bk-table-column>
-            <bk-table-column :label="$t('类型')" prop="field_type" min-width="250"></bk-table-column>
+            max-height="400">
+            <bk-table-column :label="$t('字段')" prop="field_name" min-width="240">
+              <template slot-scope="props">
+                <span v-bk-overflow-tips class="overflow-tips">{{props.row.field_name}}</span>
+              </template>
+            </bk-table-column>
+            <bk-table-column :label="$t('类型')" prop="field_type" min-width="250">
+              <template slot-scope="props">
+                <span v-bk-overflow-tips class="overflow-tips">{{props.row.field_type}}</span>
+              </template>
+            </bk-table-column>
+            <div slot="empty">
+              <empty-status empty-type="empty" />
+            </div>
           </bk-table>
         </bk-form-item>
       </bk-form>
@@ -81,8 +93,13 @@
 
 <script>
 import { mapState } from 'vuex';
+import * as authorityMap from '../../../../../../common/authority-map';
+import EmptyStatus from '@/components/empty-status';
 
 export default {
+  components: {
+    EmptyStatus,
+  },
   props: {
     parentData: {
       type: Object,
@@ -111,7 +128,16 @@ export default {
     };
   },
   computed: {
-    ...mapState(['projectId', 'bkBizId']),
+    ...mapState(['spaceUid', 'bkBizId']),
+    authorityMap() {
+      return authorityMap;
+    },
+    getShowCollectionList() {
+      if (this.parentData.storage_cluster_id) {
+        return this.collectionList.filter(item => item.storage_cluster_id === this.parentData.storage_cluster_id);
+      }
+      return this.collectionList;
+    },
   },
   mounted() {
     this.fetchCollectionList();
@@ -175,7 +201,7 @@ export default {
         this.$el.click(); // 因为下拉在loading上面所以需要关闭下拉
         this.basicLoading = true;
         const res = await this.$store.dispatch('getApplyData', {
-          action_ids: ['manage_collection'],
+          action_ids: [authorityMap.MANAGE_COLLECTION_AUTH],
           resources: [{
             type: 'collection',
             id: option.collector_config_id,
@@ -219,27 +245,33 @@ export default {
 </script>
 
 <style scoped lang="scss">
-  .slot-container {
-    min-height: 363px;
-    padding-right: 40px;
+@import '@/scss/mixins/overflow-tips.scss';
 
-    ::v-deep .bk-form {
-      .bk-label {
-        text-align: left;
-      }
+.slot-container {
+  min-height: 363px;
+  padding-right: 40px;
+
+  :deep(.bk-form) {
+    .bk-label {
+      text-align: left;
     }
+  }
 
-    .button-footer {
-      text-align: right;
-      margin-top: 20px;
+  .button-footer {
+    text-align: right;
+    margin-top: 20px;
 
-      .king-button {
-        width: 86px;
+    .king-button {
+      width: 86px;
 
-        &:first-child {
-          margin-right: 8px;
-        }
+      &:first-child {
+        margin-right: 8px;
       }
     }
   }
+}
+
+.overflow-tips {
+  @include overflow-tips;
+}
 </style>

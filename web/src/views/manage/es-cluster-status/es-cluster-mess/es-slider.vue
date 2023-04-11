@@ -35,12 +35,12 @@
         <bk-form
           v-if="!sliderLoading"
           :model="basicFormData"
-          :label-width="150"
+          :label-width="170"
           :rules="basicRules"
           form-type="vertical"
           ref="validateForm"
           class="king-form">
-          <div class="add-collection-title">{{ $t('dataSource.basic_information') }}</div>
+          <div class="add-collection-title">{{ $t('基础信息') }}</div>
           <bk-form-item :label="$t('数据源名称')" required property="cluster_name">
             <bk-input
               data-test-id="esAccessFromBox_input_fillName"
@@ -181,12 +181,25 @@
                   </div>
                 </template>
                 <bk-option
-                  v-for="item in myProjectList"
-                  :key="item.project_id"
+                  v-for="item in mySpaceList"
+                  :key="item.bk_biz_id"
                   :id="item.bk_biz_id"
-                  :name="item.project_name">
-                  <!-- eslint-disable-next-line vue/no-v-html -->
-                  <div class="project-option" v-html="getProjectOption(item)"></div>
+                  :name="item.space_full_code_name">
+                  <div class="space-code-option">
+                    <div>
+                      <span :class="['identify-icon', item.is_use ? 'is-use' : 'not-use']"></span>
+                      <span class="code-name">
+                        {{item.space_full_code_name}}
+                        {{item.is_use ? `（${$t('正在使用')}）` : ''}}
+                      </span>
+                    </div>
+                    <div class="list-item-right">
+                      <span :class="['list-item-tag', 'light-theme', item.space_type_id || 'other-type']">
+                        {{item.space_type_name}}
+                      </span>
+                      <span :class="visibleBkBiz.includes(item.bk_biz_id) && 'bk-icon icon-check-1'"></span>
+                    </div>
+                  </div>
                 </bk-option>
               </bk-select>
               <bk-search-select
@@ -211,7 +224,6 @@
                 <div class="flex-space-item">
                   <div class="space-item-label">{{$t('默认')}}</div>
                   <bk-select
-                    style="width: 320px;"
                     v-model="formData.setup_config.retention_days_default"
                     :clearable="false"
                     data-test-id="storageBox_select_selectExpiration">
@@ -231,7 +243,7 @@
                         v-model="customRetentionDay"
                         size="small"
                         type="number"
-                        :placeholder="$t('输入自定义天数')"
+                        :placeholder="$t('输入自定义天数，按 Enter 确认')"
                         :show-controls="false"
                         @enter="enterCustomDay($event, 'retention')"
                       ></bk-input>
@@ -241,7 +253,6 @@
                 <div class="flex-space-item">
                   <div class="space-item-label">{{$t('最大')}}</div>
                   <bk-select
-                    style="width: 320px;"
                     v-model="formData.setup_config.retention_days_max"
                     :clearable="false"
                     data-test-id="storageBox_select_selectExpiration">
@@ -261,7 +272,7 @@
                         v-model="customMaxDay"
                         size="small"
                         type="number"
-                        :placeholder="$t('输入自定义天数')"
+                        :placeholder="$t('输入自定义天数，按 Enter 确认')"
                         :show-controls="false"
                         @enter="enterCustomDay($event, 'max')"
                       ></bk-input>
@@ -381,7 +392,7 @@
                   <bk-switcher v-model="formData.enable_archive" size="large" theme="primary"></bk-switcher>
                   <div class="check-document button-text"
                        v-if="archiveDocUrl"
-                       @click="handleOpenDocument">
+                       @click="handleGotoLink('logArchive')">
                     <span class="bk-icon icon-text-file"></span>
                     <a>{{$t('查看说明文档')}}</a>
                   </div>
@@ -392,7 +403,7 @@
               </bk-form-item>
             </div>
             <!-- 集群负责人 -->
-            <bk-form-item :label="$t('集群负责人')" :desc="$t('集群负责人Tips')" required>
+            <bk-form-item :label="$t('集群负责人')" :desc="$t('集群负责人可以用于容量审核等')" required>
               <div class="principal">
                 <bk-user-selector
                   :class="isAdminError && 'is-error'"
@@ -404,7 +415,7 @@
               </div>
             </bk-form-item>
             <!-- 集群说明 -->
-            <bk-form-item :label="$t('集群说明')" class="illustrate">
+            <bk-form-item :label="$t('说明')" class="illustrate">
               <bk-input
                 type="textarea"
                 :rows="3"
@@ -543,10 +554,10 @@ export default {
       showInstanceDialog: false, // 查看实例列表
       viewInstanceType: '', // hot、cold 查看热数据/冷数据实例列表
       visibleScopeSelectList: [ // 可见范围单选列表
-        { id: 'current_biz', name: this.$t('当前业务可见') },
-        { id: 'multi_biz', name: this.$t('多业务选择') },
+        { id: 'current_biz', name: this.$t('当前空间可见') },
+        { id: 'multi_biz', name: this.$t('多空间选择') },
         { id: 'all_biz', name: this.$t('全平台') },
-        { id: 'biz_attr', name: this.$t('按照业务属性选择') },
+        { id: 'biz_attr', name: this.$t('按照空间属性选择') },
       ],
       visibleBkBiz: [], // 下拉框选中的值列表
       visibleList: [], // 多业务选择下拉框
@@ -570,7 +581,7 @@ export default {
   },
   computed: {
     ...mapState({
-      myProjectList: state => state.myProjectList,
+      mySpaceList: state => state.mySpaceList,
       userMeta: state => state.userMeta,
     }),
     ...mapGetters({
@@ -714,7 +725,7 @@ export default {
     inUseProjectPopover(isUse) {
       return {
         theme: 'light',
-        content: this.$t('inUseProjectTip'),
+        content: this.$t('该业务已有采集使用，无法取消可见'),
         disabled: !isUse,
       };
     },
@@ -731,10 +742,10 @@ export default {
       if (!data) {
         this.visibleBkBiz.forEach((val) => {
           if (!this.visibleList.some(item => String(item.id) === val)) {
-            const target = this.myProjectList.find(project => project.bk_biz_id === val);
+            const target = this.mySpaceList.find(project => project.bk_biz_id === val);
             this.visibleList.push({
               id: val,
-              name: target.project_name,
+              name: target.space_full_code_name,
               is_use: false,
             });
           }
@@ -780,12 +791,12 @@ export default {
         };
         Object.assign(this.formData, this.basicFormData);
         res.data.cluster_config.custom_option.visible_config?.visible_bk_biz.forEach((val) => {
-          const target = this.myProjectList.find(project => project.bk_biz_id === String(val.bk_biz_id));
+          const target = this.mySpaceList.find(project => project.bk_biz_id === String(val.bk_biz_id));
           if (target) {
             target.is_use = val.is_use;
             const targetObj = {
               id: String(val.bk_biz_id),
-              name: target.project_name,
+              name: target.space_full_code_name,
               is_use: val.is_use,
             };
             this.visibleList.push(targetObj);
@@ -1020,24 +1031,6 @@ export default {
       this.retentionDaysList.forEach(el => el.disabled = Number(maxDays) < Number(el.id));
       this.maxDaysList.forEach(el => el.disabled = Number(defaultDays) > Number(el.id));
     },
-    /**
-     * @desc: 多业务选择下拉列表
-     * @param { Object } item // 当前元素
-     */
-    getProjectOption(item) {
-      const isSelect = this.visibleBkBiz.includes(item.bk_biz_id);
-      const backgroundStr = `background: ${!!item.is_use ? '#2dcb56' : '#699df4'}`;
-      const styleStr = `display: inline-block; width: 4px; height: 4px; border-radius: 50%; margin-right: 4px; ${backgroundStr}; transform: translateY(-2px);`;
-      const styleContainer = 'display:flex; align-items: center; justify-content: space-between; width: 100%;';
-      const styleIcon = 'font-size: 20px';
-      return `<div style="${styleContainer}">
-      <div>
-        <span style="${styleStr}"></span> 
-        <span>${item.project_name}${item.is_use ? `（${this.$t('正在使用')}）` : ''}<span>
-      </div>
-      ${isSelect ? `<span class="bk-icon icon-check-1" style="${styleIcon}"></span>` : ''}
-      </div>`;
-    },
     handleChangePrincipal(val) {
       // 集群负责人为空时报错警告
       const realVal = val.filter(item => item !== undefined);
@@ -1141,8 +1134,8 @@ export default {
     checkSelectItem() {
       let messageType;
       const { visible_type: visibleType } = this.formData.visible_config;
-      visibleType === 'multi_biz' && !this.visibleList.length && (messageType = this.$t('multiBizTip'));
-      visibleType === 'biz_attr' && !this.bkBizLabelsList.length && (messageType = this.$t('bizAttrTip'));
+      visibleType === 'multi_biz' && !this.visibleList.length && (messageType = this.$t('可见类型为业务属性时，业务标签不能为空'));
+      visibleType === 'biz_attr' && !this.bkBizLabelsList.length && (messageType = this.$t('可见类型为多业务时，可见业务范围不能为空'));
       if (!!messageType) {
         this.$bkMessage({
           theme: 'error',
@@ -1163,7 +1156,7 @@ export default {
       return new Promise((reject) => {
         this.$bkInfo({
           type: 'warning',
-          title: this.$t('pageLeaveTips'),
+          title: this.$t('是否放弃本次操作？'),
           confirmFn: () => {
             reject(true);
           },
@@ -1179,6 +1172,7 @@ export default {
 
 <style lang="scss" scoped>
 @import '@/scss/mixins/flex.scss';
+@import '@/scss/space-tag-option';
 
 .king-slider-content {
   min-height: 394px;
@@ -1305,7 +1299,6 @@ export default {
     }
 
     .es-cluster-management {
-      max-width: 120px;
       font-size: 14px;
       display: flex;
       align-items: center;
@@ -1351,7 +1344,7 @@ export default {
       width: 100%;
     }
 
-    ::v-deep .is-error .user-selector-container {
+    :deep(.is-error .user-selector-container) {
       border-color: #ff5656;
     }
   }
@@ -1419,13 +1412,19 @@ export default {
 
     @include flex-justify(space-between);
 
-    ::v-deep .bk-form-input {
+    .bk-select,
+    .bk-form-control {
+      flex: 1;
+    }
+
+    :deep(.bk-form-input) {
       height: 34px;
     }
   }
 
   .space-item-label {
     min-width: 48px;
+    padding: 0 2px;
     font-size: 12px;
     color: #63656e;
     background: #fafbfd;

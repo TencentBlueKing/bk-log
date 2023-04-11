@@ -19,6 +19,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+
+
 from django.conf import settings
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
@@ -29,7 +31,6 @@ from blueapps.account.decorators import login_exempt
 # 装饰器引入 from blueapps.account.decorators import login_exempt
 from apps.utils.db import get_toggle_data
 from home_application.constants import API_FORMAT_CONTENT_TYPE
-from home_application.handlers.check_collector import CollectorCheckHandler
 from home_application.handlers.healthz import HealthzHandler
 
 
@@ -85,24 +86,6 @@ def healthz(request):
         response["Content-Type"] = "application/json"
     else:
         response["Content-Type"] = API_FORMAT_CONTENT_TYPE
-
-    return response
-
-
-@login_exempt
-def collector_check(request):
-    """
-    collector_config_id: 采集项id, int
-    hosts: 指定检查某些主机, 格式: "0:ip1,0:ip2,1:ip3"
-    debug: 是否开启DEBUG
-    """
-    collector_config_id = request.GET.get("collector_config_id")
-    hosts = request.GET.get("hosts", "")
-    debug = request.GET.get("debug", False)
-    c = CollectorCheckHandler(collector_config_id=collector_config_id, hosts=hosts, debug=debug)
-    c.run()
-    response = HttpResponse(content=c.api_format())
-    response["Content-Type"] = API_FORMAT_CONTENT_TYPE
 
     return response
 

@@ -21,6 +21,7 @@ the project delivered to anyone in the future.
 """
 import copy
 import json
+from django.utils.translation import ugettext_lazy as _
 
 import settings
 from apps.api import BkDataDatabusApi, BkDataMetaApi, BkDataAccessApi, BkDataResourceCenterApi, BkDataAuthApi
@@ -69,7 +70,7 @@ class DataAccessHandler(BaseAiopsHandler):
                 "data_source": "kafka",
                 "data_encoding": "UTF-8",
                 "sensitivity": "private",
-                "description": f"接入配置 ({collector_config.description})",
+                "description": _("接入配置 ({description})").format(description=collector_config.description),
                 "tags": [],
                 "data_source_tags": ["src_kafka"],
             },
@@ -154,6 +155,7 @@ class DataAccessHandler(BaseAiopsHandler):
             "json_config": json.dumps(bkdata_json_config),
             "bk_username": self.conf.get("bk_username"),
             "operator": self.conf.get("bk_username"),
+            "no_request": True,
         }
 
         if not clustering_config.bkdata_etl_processing_id:
@@ -177,6 +179,7 @@ class DataAccessHandler(BaseAiopsHandler):
                 "result_table_id": bkdata_result_table_id,
                 "bk_username": self.conf.get("bk_username"),
                 "operator": self.conf.get("bk_username"),
+                "no_request": True,
             }
         )
 
@@ -187,6 +190,7 @@ class DataAccessHandler(BaseAiopsHandler):
                 "storages": ["kafka"],
                 "bk_username": self.conf.get("bk_username"),
                 "operator": self.conf.get("bk_username"),
+                "no_request": True,
             }
         )
 

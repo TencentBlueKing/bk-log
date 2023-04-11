@@ -41,6 +41,30 @@ def bk_monitor_report():
 
     # 这里是为了兼容调度器由于beat与worker时间差异导致的微小调度异常
     time.sleep(2)
+    bk_monitor_client = BKMonitor(
+        app_id=settings.APP_CODE,
+        app_token=settings.SECRET_KEY,
+        monitor_host=MONITOR_APIGATEWAY_ROOT,
+        report_host=f"{settings.BKMONITOR_CUSTOM_PROXY_IP}/",
+        bk_username="admin",
+        bk_biz_id=settings.BLUEKING_BK_BIZ_ID,
+    )
+    bk_monitor_client.custom_metric().report(collector_import_paths=COLLECTOR_IMPORT_PATHS)
+    # 此处是为了释放对应util资源 非必须
+    MetricUtils.del_instance()
+
+    # 清理注册表里的内容，下一次运行的时候重新注册
+    clear_registered_metrics()
+
+
+@periodic_task(run_every=crontab(minute="*/1"))
+def bk_monitor_collect():
+    # todo 由于与菜单修改有相关性 暂时先改成跟原本monitor开关做联动
+    if settings.FEATURE_TOGGLE["monitor_report"] == "off":
+        return
+
+    # 这里是为了兼容调度器由于beat与worker时间差异导致的微小调度异常
+    time.sleep(2)
     for import_path in COLLECTOR_IMPORT_PATHS:
         report_path.delay(import_path)
 
@@ -56,7 +80,7 @@ def report_path(import_path: str):
         bk_username="admin",
         bk_biz_id=settings.BLUEKING_BK_BIZ_ID,
     )
-    bk_monitor_client.custom_metric().report(collector_import_paths=[import_path])
+    bk_monitor_client.custom_metric().collect(collector_import_paths=[import_path])
     # 此处是为了释放对应util资源 非必须
     MetricUtils.del_instance()
 

@@ -49,6 +49,7 @@ from apps.log_search.constants import (
     ASYNC_EXPORT_EMAIL_ERR_TEMPLATE,
     ExportStatus,
 )
+from apps.log_search.exceptions import PreCheckAsyncExportException
 from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler
 from apps.log_search.models import Scenario, AsyncTask, LogIndexSet
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
@@ -81,7 +82,10 @@ def async_export(
     tar_file_name = f"{file_name}.tar.gz"
     async_task = AsyncTask.objects.filter(id=async_task_id).first()
     async_export_util = AsyncExportUtils(
-        search_handler=search_handler, sorted_fields=sorted_fields, file_name=file_name, tar_file_name=tar_file_name
+        search_handler=search_handler,
+        sorted_fields=sorted_fields,
+        file_name=file_name,
+        tar_file_name=tar_file_name,
     )
     try:
         if not async_task:
@@ -226,6 +230,10 @@ class AsyncExportUtils(object):
             os.makedirs(ASYNC_DIR)
 
         result = self.search_handler.pre_get_result(sorted_fields=self.sorted_fields, size=MAX_RESULT_WINDOW)
+        # 判断是否成功
+        if result["_shards"]["total"] != result["_shards"]["successful"]:
+            logger.error("can not create async_export task, reason: {}".format(result["_shards"]["failures"]))
+            raise PreCheckAsyncExportException()
         with open(self.file_path, "a+", encoding="utf-8") as f:
             result_list = self.search_handler._deal_query_result(result_dict=result).get("origin_log_list")
             for item in result_list:

@@ -22,6 +22,22 @@
 
 module.exports = {
   root: true,
+  parser: 'vue-eslint-parser',
+  parserOptions: {
+    parser: {
+      js: '@typescript-eslint/parser',
+      ts: '@typescript-eslint/parser',
+      '<template>': 'espree',
+    },
+    ecmaVersion: 2018,
+    sourceType: 'module',
+    extraFileExtensions: ['.vue'],
+    ecmaFeatures: {
+      globalReturn: false,
+      impliedStrict: false,
+      jsx: true,
+    },
+  },
   extends: ['@blueking/eslint-config-bk/vue'],
   globals: {
     NODE_ENV: false,

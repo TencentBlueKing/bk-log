@@ -51,7 +51,7 @@
             style="width: 380px;"></bk-input>
         </bk-form-item>
         <bk-form-item
-          :label="$t('允许的业务')"
+          :label="$t('允许的空间')"
           required
           property="bk_biz_id"
           error-display-type="normal">
@@ -65,7 +65,15 @@
               <bk-option
                 :key="item.bk_biz_id"
                 :id="item.bk_biz_id"
-                :name="item.project_name">
+                :name="item.space_full_code_name">
+                <div class="space-code-option">
+                  <span class="code-name" :title="item.space_full_code_name">{{item.space_full_code_name}}</span>
+                  <div v-if="item.space_type_id" class="list-item-right">
+                    <span :class="['list-item-tag', 'light-theme', item.space_type_id || 'other-type']">
+                      {{item.space_type_name}}
+                    </span>
+                  </div>
+                </div>
               </bk-option>
             </template>
           </bk-select>
@@ -264,8 +272,10 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+  @import '@/scss/space-tag-option';
+
   .link-config-form {
-    ::v-deep .bk-form-content {
+    :deep(.bk-form-content) {
       position: relative;
 
       .form-error-tip {

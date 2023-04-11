@@ -24,16 +24,20 @@
   <div class="result-scroll-container" ref="scrollContainer" @scroll.passive="handleScroll">
     <!-- 检索结果 -->
     <div class="result-text">
-      {{ $t('retrieve.result1') }}
-      <span class="total-count">{{ totalCount }}</span>
-      {{ $t('retrieve.result2') + tookTime + $t('retrieve.ms') }}
-      <template v-if="showAddMonitor">
-        <span>{{ $t('retrieve.result3') }}</span>
-        <a href="javascript:void(0);" class="monitor-link" @click="jumpMonitor">
-          {{ $t('retrieve.result4') }}
-          <span class="log-icon icon-lianjie"></span>
-        </a>
-      </template>
+      <i18n path="检索结果（找到 {0} 条结果，用时{1}毫秒) {2}">
+        <span class="total-count">{{ totalCount }}</span>
+        <span>{{tookTime}}</span>
+        <template v-if="showAddMonitor">
+          <span>
+            , <i18n path="将搜索条件 {0}">
+              <a href="javascript:void(0);" class="monitor-link" @click="jumpMonitor">
+                {{ $t('添加为监控') }}
+                <span class="log-icon icon-lianjie"></span>
+              </a>
+            </i18n>
+          </span>
+        </template>
+      </i18n>
     </div>
     <div class="result-main">
       <result-chart
@@ -230,14 +234,30 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-  @import '../../../scss/mixins/scroller.scss';
+  // @import '../../../scss/mixins/scroller.scss';
 
   .result-scroll-container {
-    margin-top: 52px;
-    height: calc(100% - 52px);
+    height: 100%;
     overflow: auto;
 
-    @include scroller;
+    &::-webkit-scrollbar {
+      width: 10px;
+      height: 4px;
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      border-radius: 5px;
+      border-style: dashed;
+      border-left-width: 3px;
+      border-color: transparent;
+      background-color: #ddd;
+      background-clip: padding-box;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+      background: #ddd;
+    }
   }
 
   .result-text {

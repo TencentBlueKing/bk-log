@@ -21,12 +21,12 @@
   -->
 
 <template>
+  <!-- :empty-text="$t('未查询到数据')" -->
   <bk-table
     ref="resultTable"
     :class="['king-table', { 'is-wrap': isWrap }]"
     :data="tableList"
     :key="tableRandomKey"
-    :empty-text="$t('retrieve.notData')"
     :show-header="!tableLoading"
     @row-click="tableRowClick"
     @row-mouse-enter="handleMouseEnter"
@@ -42,8 +42,10 @@
         <expand-view
           v-bind="$attrs"
           :data="originTableList[$index]"
+          :list-data="tableList[$index]"
           :total-fields="totalFields"
           :visible-fields="visibleFields"
+          :retrieve-params="retrieveParams"
           @menuClick="handleMenuClick">
         </expand-view>
       </template>
@@ -61,7 +63,9 @@
         <!-- eslint-disable-next-line -->
         <template slot-scope="{ row, column, $index }">
           <keep-alive>
-            <div :class="['str-content', { 'is-limit': !cacheExpandStr.includes($index) }]">
+            <div
+              :class="['str-content', { 'is-limit': !cacheExpandStr.includes($index) }]"
+              :title="isWrap ? '' : tableRowDeepView(row, field.field_name, field.field_type)">
               <table-column
                 :is-wrap="isWrap"
                 :content="tableRowDeepView(row, field.field_name, field.field_type)"
@@ -88,7 +92,7 @@
     <!-- 操作按钮 -->
     <bk-table-column
       v-if="showHandleOption"
-      :label="$t('retrieve.operate')"
+      :label="$t('操作')"
       :width="84"
       align="right"
       :resizable="false">
@@ -109,6 +113,9 @@
         :visible-fields="visibleFields">
       </retrieve-loader>
     </bk-table-column>
+    <template v-else slot="empty">
+      <empty-view v-bind="$attrs" v-on="$listeners" />
+    </template>
     <!-- 下拉刷新骨架屏loading -->
     <template slot="append" v-if="tableList.length && visibleFields.length && isPageOver">
       <retrieve-loader

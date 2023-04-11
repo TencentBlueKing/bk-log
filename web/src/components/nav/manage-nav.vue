@@ -29,6 +29,10 @@
       <span class="bk-icon icon-arrows-left"></span>
     </div>
     <div class="main-title">{{ $route.meta.needBack ? getTitleName() : activeManageNav.name }}</div>
+    <div v-if="isShowDetailName" class="collect-link">
+      <span class="bk-icon log-icon icon-position"></span>
+      {{ getBaseName() }}
+    </div>
     <ul
       class="sub-nav-list"
       v-if="activeManageNav.children && !$route.meta.needBack"
@@ -59,8 +63,36 @@ export default {
       default: null,
     },
   },
+  data() {
+    return {
+      baseRouteNameList: [ // 展示详情名称的路由列表
+        'log-index-set-manage',
+        'manage-collection',
+        'bkdata-index-set-manage',
+        'custom-report-detail',
+        'es-index-set-manage',
+        'bkdata-track-manage',
+        'custom-report-edit',
+        'es-index-set-edit',
+        'bkdata-index-set-edit',
+        'collectEdit',
+        'collectField',
+        'collectStorage',
+        'collectStart',
+        'collectStop',
+        'log-index-set-edit',
+        'bkdata-track-edit',
+        'extract-link-edit',
+        'clean-edit',
+        'clean-template-edit',
+      ],
+    };
+  },
   computed: {
     ...mapState(['activeManageNav', 'activeManageSubNav']),
+    isShowDetailName() { // 是否需要展示详情名称
+      return this.baseRouteNameList.includes(this.$route.name);
+    },
   },
   methods: {
     handleClickSubNav(id) {
@@ -68,7 +100,7 @@ export default {
         this.$router.push({
           name: id,
           query: {
-            projectId: window.localStorage.getItem('project_id'),
+            spaceUid: this.$store.state.spaceUid,
           },
         });
       }
@@ -79,47 +111,73 @@ export default {
         this.$router.push({
           name: !!backRoute ? backRoute : this.$route.meta.backName,
           query: {
-            projectId: window.localStorage.getItem('project_id'),
+            spaceUid: this.$store.state.spaceUid,
           },
         });
       }
     },
     // 根据路由名获取菜单名称
     getTitleName() {
-      const collectionName = this.$store.state.collect.curCollect?.collector_config_name;
       const map = {
-        collectAdd: this.$t('新建采集项'),
+        collectAdd: this.$t('route-新建采集项').replace('route-', ''),
+        collectEdit: this.$t('route-编辑采集项').replace('route-', ''),
+        collectField: this.$t('route-编辑采集项').replace('route-', ''),
+        collectStorage: this.$t('route-编辑采集项').replace('route-', ''),
+        collectStart: this.$t('route-编辑采集项').replace('route-', ''),
+        collectStop: this.$t('route-编辑采集项').replace('route-', ''),
+        'manage-collection': this.$t('route-采集详情').replace('route-', ''),
+        'log-index-set-create': this.$t('route-新建索引集').replace('route-', ''),
+        'log-index-set-edit': this.$t('route-编辑索引集').replace('route-', ''),
+        'log-index-set-manage': this.$t('route-采集详情').replace('route-', ''),
+        'bkdata-index-set-create': this.$t('route-新建索引集').replace('route-', ''),
+        'bkdata-index-set-edit': this.$t('route-编辑索引集').replace('route-', ''),
+        'bkdata-index-set-manage': this.$t('route-采集详情').replace('route-', ''),
+        'es-index-set-create': this.$t('route-新建索引集').replace('route-', ''),
+        'es-index-set-edit': this.$t('route-编辑索引集').replace('route-', ''),
+        'es-index-set-manage': this.$t('route-采集详情').replace('route-', ''),
+        'bkdata-track-create': this.$t('route-新建索引集').replace('route-', ''),
+        'bkdata-track-edit': this.$t('route-编辑索引集').replace('route-', ''),
+        'bkdata-track-manage': this.$t('route-采集详情').replace('route-', ''),
+        'extract-link-create': this.$t('route-新建提取链路').replace('route-', ''),
+        'extract-link-edit': this.$t('route-编辑提取链路').replace('route-', ''),
+        'clean-create': this.$t('route-新建清洗').replace('route-', ''),
+        'clean-edit': this.$t('route-编辑清洗').replace('route-', ''),
+        'clean-template-create': this.$t('route-新建清洗模板').replace('route-', ''),
+        'clean-template-edit': this.$t('route-编辑清洗模板').replace('route-', ''),
+        'extract-create': this.$t('route-新建日志提取任务').replace('route-', ''),
+        'extract-clone': this.$t('route-克隆日志提取任务').replace('route-', ''),
+        'custom-report-create': this.$t('route-新建自定义上报').replace('route-', ''),
+        'custom-report-edit': this.$t('route-编辑自定义上报').replace('route-', ''),
+        'custom-report-detail': this.$t('route-采集详情').replace('route-', ''),
+      };
+      return map[this.$route.name];
+    },
+    getBaseName() {
+      const collectionName = this.$store.state.collect.curCollect?.collector_config_name ?? '';
+      const routerEditName = this.$route.query.editName ?? '';
+      const storeIndexSetName = this.$store.state.collect.curIndexSet?.index_set_name ?? '';
+      const map = {
+        'log-index-set-manage': storeIndexSetName,
+        'bkdata-index-set-manage': storeIndexSetName,
+        'bkdata-track-manage': storeIndexSetName,
+        'es-index-set-manage': storeIndexSetName,
+        'custom-report-edit': routerEditName,
+        'es-index-set-edit': routerEditName,
+        'bkdata-index-set-edit': routerEditName,
+        'log-index-set-edit': routerEditName,
+        'bkdata-track-edit': routerEditName,
+        'extract-link-edit': routerEditName,
+        'clean-edit': routerEditName,
+        'clean-template-edit': routerEditName,
+        'manage-collection': collectionName,
+        'custom-report-detail': collectionName,
         collectEdit: collectionName,
         collectField: collectionName,
         collectStorage: collectionName,
         collectStart: collectionName,
         collectStop: collectionName,
-        'manage-collection': collectionName,
-        'log-index-set-create': this.$t('新建索引集'),
-        'log-index-set-edit': this.$t('编辑索引集'),
-        'log-index-set-manage': this.$store.state.collect.curIndexSet?.index_set_name,
-        'bkdata-index-set-create': this.$t('新建索引集'),
-        'bkdata-index-set-edit': this.$t('编辑索引集'),
-        'bkdata-index-set-manage': this.$store.state.collect.curIndexSet?.index_set_name,
-        'es-index-set-create': this.$t('新建索引集'),
-        'es-index-set-edit': this.$t('编辑索引集'),
-        'es-index-set-manage': this.$store.state.collect.curIndexSet?.index_set_name,
-        'bkdata-track-create': this.$t('新建索引集'),
-        'bkdata-track-edit': this.$t('编辑索引集'),
-        'bkdata-track-manage': this.$store.state.collect.curIndexSet?.index_set_name,
-        'extract-link-create': this.$t('新建') + this.$t('提取链路'),
-        'extract-link-edit': this.$t('编辑') + this.$t('提取链路'),
-        'clean-create': this.$t('logClean.新增清洗'),
-        'clean-edit': this.$t('logClean.编辑清洗'),
-        'clean-template-create': this.$t('新建') + this.$t('logClean.清洗模板'),
-        'clean-template-edit': this.$t('编辑') + this.$t('logClean.清洗模板'),
-        'extract-create': this.$t('新建') + this.$t('日志提取任务'),
-        'extract-clone': this.$t('克隆') + this.$t('日志提取任务'),
-        'custom-report-create': this.$t('customReport.reportCreate'),
-        'custom-report-edit': this.$t('customReport.reportEdit'),
-        'custom-report-detail': collectionName,
       };
-      return map[this.$route.name];
+      return map[this.$route.name] ?? '';
     },
   },
 };
@@ -130,7 +188,7 @@ export default {
     display: flex;
     align-items: center;
     width: 100%;
-    height: 52px;
+    height: 48px;
     padding: 0 20px;
     line-height: 24px;
     background-color: #fff;
@@ -177,6 +235,20 @@ export default {
           border-bottom: 3px solid #3a84ff;
           transition: color, border-color .3s;
         }
+      }
+    }
+
+    .collect-link {
+      margin-left: 12px;
+      font-size: 12px;
+      border-radius: 2px;
+      padding: 0 9px;
+      color: #63656e;
+      background: #f0f1f5;
+
+      .icon-position {
+        font-size: 14px;
+        color: #c4c6cc;
       }
     }
   }

@@ -1,6 +1,6 @@
 <template>
   <div class="filter-bar">
-    <span>{{ $t('configDetails.filterContent') }}</span>
+    <span>{{ $t('过滤内容') }}</span>
     <bk-select
       style="width: 100px;"
       v-model="filterType"
@@ -17,7 +17,7 @@
       :style="{ width: isScreenFull ? '500px' : '260px', margin: '0 10px' }"
       :clearable="true"
       :right-icon="'bk-icon icon-search'"
-      :placeholder="$t('retrieve.filterPlaceholder')"
+      :placeholder="$t('输入关键字进行过滤')"
       v-model="filterKey"
       @enter="filterLog"
       @clear="filterLog"
@@ -29,30 +29,32 @@
       :false-value="false"
       v-model="ignoreCase">
     </bk-checkbox>
-    <span>{{ $t('retrieve.ignoreCase') }}</span>
+    <span>{{ $t('大小写敏感') }}</span>
     <div
       class="filter-bar"
       v-if="filterType === 'include'"
       style="margin-left: 20px">
-      <span>{{ $t('retrieve.showPrev') }}</span>
-      <bk-tag-input
+      <span>{{ $t('显示前') }}</span>
+      <bk-input
         style="width: 74px;margin-right: 10px"
         v-model="interval.prev"
-        placeholder="请输入"
-        :list="lineList"
-        :max-data="1"
-        :allow-create="false">
-      </bk-tag-input>
+        type="number"
+        :show-controls="false"
+        :max="100"
+        :min="0"
+        placeholder="请输入">
+      </bk-input>
       <span style="margin-right: 20px">{{ $t('行') }}</span>
-      <span>{{ $t('retrieve.showNext') }}</span>
-      <bk-tag-input
+      <span>{{ $t('显示后') }}</span>
+      <bk-input
         style="width: 74px;margin-right: 10px"
         v-model="interval.next"
-        placeholder="请输入"
-        :list="lineList"
-        :max-data="1"
-        :allow-create="false">
-      </bk-tag-input>
+        type="number"
+        :show-controls="false"
+        :max="100"
+        :min="0"
+        placeholder="请输入">
+      </bk-input>
       <span>{{ $t('行') }}</span>
     </div>
   </div>
@@ -69,12 +71,12 @@ export default {
       filterKey: '',
       ignoreCase: false,
       filterTypeList: [
-        { id: 'include', name: this.$t('retrieve.include') },
-        { id: 'uninclude', name: this.$t('retrieve.uninclude') },
+        { id: 'include', name: this.$t('包含') },
+        { id: 'uninclude', name: this.$t('不包含') },
       ],
       interval: {
-        prev: [0],
-        next: [0],
+        prev: 0,
+        next: 0,
       },
     };
   },
@@ -88,12 +90,6 @@ export default {
         this.$emit('handle-filter', 'interval', val);
       },
     },
-  },
-  created() {
-    this.lineList = Array.from({ length: 101 }, (v, k) => ({
-      id: k,
-      name: k.toString(),
-    }));
   },
   methods: {
     filterLog() {

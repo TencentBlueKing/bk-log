@@ -70,3 +70,9 @@ BK_URL = os.getenv("BKPAAS_URL", None)  # noqa
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# read VERSION file
+try:
+    VERSION = open(os.path.join(BASE_DIR, "VERSION"), "r", encoding="utf-8").read().strip()
+except:  # noqa
+    VERSION = "Unknown version"

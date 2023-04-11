@@ -30,20 +30,22 @@
       <!-- IP -->
       <span style="margin-right: 10px;">IP: {{params.ip || params.serverIp}}</span>
       <!-- 日志路径 -->
-      <span>{{ $t('retrieve.logPath') + ': ' + (params.path || params.logfile) }}</span>
+      <span>{{ $t('日志路径') + ': ' + (params.path || params.logfile) }}</span>
     </div>
     <div class="dialog-bars">
       <log-filter :is-screen-full="isScreenFull" @handle-filter="handleFilter" />
       <!-- 暂停、复制、全屏 -->
       <div class="dialog-bar controls">
-        <div class="control-icon" @click="togglePolling">
+        <div v-bk-tooltips.top="{ content: isPolling ? $t('暂停') : $t('启动'), delay: 300 }"
+             class="control-icon"
+             @click="togglePolling">
           <span class="icon log-icon icon-stop-log" v-if="isPolling"></span>
           <span class="icon log-icon icon-play-log" v-else></span>
         </div>
-        <div class="control-icon" @click="copyLogText">
+        <div v-bk-tooltips.top="{ content: $t('复制'), delay: 300 }" class="control-icon" @click="copyLogText">
           <span class="icon log-icon icon-copy"></span>
         </div>
-        <div class="control-icon" @click="toggleScreenFull">
+        <div v-bk-tooltips.top="{ content: $t('全屏'), delay: 300 }" class="control-icon" @click="toggleScreenFull">
           <span class="icon log-icon icon-full-screen-log"></span>
         </div>
       </div>
@@ -59,7 +61,7 @@
         :ignore-case="ignoreCase"
         :interval="interval" />
     </div>
-    <p class="handle-tips">{{ $t('retrieve.quickOperation') }}</p>
+    <p class="handle-tips">{{ $t('快捷键  Esc:退出; PageUp: 向上翻页; PageDn: 向下翻页') }}</p>
   </section>
 </template>
 
@@ -103,8 +105,8 @@ export default {
       flipScreen: '',
       flipScreenList: [],
       interval: {
-        prev: [0],
-        next: [0],
+        prev: 0,
+        next: 0,
       },
     };
   },
@@ -239,7 +241,7 @@ export default {
       }
       this.$bkMessage({
         theme: 'success',
-        message: this.$t('retrieve.copySuccess'),
+        message: this.$t('复制成功'),
       });
     },
     filterLog(value) {

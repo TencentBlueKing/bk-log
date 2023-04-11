@@ -20,15 +20,18 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import copy
+import typing
 from collections import defaultdict, namedtuple
 from inspect import signature
 from typing import List
+
 from pypinyin import lazy_pinyin
 
 from django.core.cache import cache
 from django.utils.translation import ugettext_lazy as _
 
 from apps.api import CCApi, GseApi
+from apps.constants import DEFAULT_MAX_WORKERS
 from apps.log_search.constants import (
     AgentStatusEnum,
     AgentStatusTranslationEnum,
@@ -45,9 +48,12 @@ from apps.log_search.constants import (
 )
 from apps.utils import APIModel
 from apps.utils.cache import cache_five_minute, cache_one_hour, cache_half_hour
-from apps.log_search.models import ProjectInfo, BizProperty
+from apps.log_search.models import BizProperty, Space
 from apps.utils.db import array_hash, array_chunk
 from apps.utils.function import ignored
+from apps.utils.ipchooser import IPChooser
+from apps.utils.thread import MultiExecuteFunc
+from apps.api.modules.utils import get_non_bkcc_space_related_bkcc_biz_id
 
 
 class BizHandler(APIModel):
@@ -55,6 +61,15 @@ class BizHandler(APIModel):
 
     def __init__(self, bk_biz_id=None):
         super().__init__()
+
+        if bk_biz_id and int(bk_biz_id) < 0:
+            related_bk_biz_id = get_non_bkcc_space_related_bkcc_biz_id(bk_biz_id)
+            if related_bk_biz_id and int(related_bk_biz_id) > 0:
+                bk_biz_id = related_bk_biz_id
+            else:
+                # 也不存在关联CC业务时, 直接raise
+                raise ValueError(_("当前空间类型不支持查询业务资源"))
+
         self.bk_biz_id = bk_biz_id
 
     @classmethod
@@ -79,6 +94,9 @@ class BizHandler(APIModel):
                 item[field] = biz.get(field, None)
             business.append(item)
         return business
+
+    def get_display_name(self, host_list: typing.List[str]):
+        return IPChooser(bk_biz_id=self.bk_biz_id).get_host_display_name(host_list)
 
     @classmethod
     def list_clouds(cls):
@@ -137,11 +155,6 @@ class BizHandler(APIModel):
         """
         获取CC各个层级构成TOPO，不仅仅支持 set、moudlehas_auth
         """
-        # 根据biz id取得拓扑开关
-        project_info = ProjectInfo.objects.filter(bk_biz_id=self.bk_biz_id).first()
-        if project_info and not project_info.ip_topo_switch and not is_inner:
-            return []
-
         # 缓存
         if not params:
             params = {}
@@ -264,7 +277,6 @@ class BizHandler(APIModel):
                 )
             else:
                 filtered_host_list.extend([item for item in host_info_list if item["bk_host_innerip"] == ip["ip"]])
-
         biz_to_host = defaultdict(list)
         for host in filtered_host_list:
             biz_to_host[self.bk_biz_id].append(host)
@@ -433,6 +445,7 @@ class BizHandler(APIModel):
                 "bk_cloud_id": host["bk_cloud_id"],
                 "parent_inst_id": host["parent_inst_id"],
                 "bk_obj_id": bk_obj_id,
+                "bk_host_id": host["bk_host_id"],
             }
             for host in hosts
         ]
@@ -460,13 +473,13 @@ class BizHandler(APIModel):
         if free_set:
             free_set = dict(
                 bk_obj_id="set",
-                bk_obj_name="集群",
+                bk_obj_name=_("集群"),
                 bk_inst_id=free_set["bk_set_id"],
                 bk_inst_name=free_set["bk_set_name"],
                 child=[
                     dict(
                         bk_obj_id="module",
-                        bk_obj_name="模块",
+                        bk_obj_name=_("模块"),
                         bk_inst_id=m["bk_module_id"],
                         bk_inst_name=m["bk_module_name"],
                         child=[],
@@ -590,51 +603,78 @@ class BizHandler(APIModel):
         node_service_category_id = self.get_service_category_id(node_and_bk_set_id_list)
         return self.get_service_category(node_service_instance, node_service_category_id)
 
+    def batch_get_hosts_by_inst_id(self, params):
+        return self.get_hosts_by_inst_id(*params)
+
+    def batch_get_agent_status(self, params):
+        host_list, node, node_mapping = params
+        map_key = "{}|{}".format(str(node[1]), str(node[2]))
+        node_path = "/".join(
+            [
+                node_mapping.get(node, {}).get("bk_inst_name")
+                for node in node_mapping.get(map_key, {}).get("node_link", [])
+            ]
+        )
+        agent_error_count = 0
+        if host_list:
+            agent_status_dict = self.get_agent_status(host_list)
+            agent_error_count = len(
+                [status for status in list(agent_status_dict.values()) if status != AgentStatusEnum.ON.value]
+            )
+        return {
+            "bk_obj_id": node.bk_obj_id,
+            "bk_inst_id": node.bk_inst_id,
+            "bk_inst_name": node.bk_inst_name,
+            "count": len(host_list),
+            "agent_error_count": agent_error_count,
+            "bk_biz_id": node.bk_biz_id,
+            "node_path": node_path,
+        }
+
     def get_host_info(self, node_list):
         """
         获取主机信息
         :param node_list:
         :return:
         """
-        result_dict = {}
+
+        # 获取业务拓扑信息
         biz_topo = CCApi.search_biz_inst_topo({"bk_biz_id": self.bk_biz_id, "level": -1})
+        # 获取业务模块信息
         if biz_topo:
             internal_topo = self.get_biz_internal_module()
             biz_topo[0]["child"].insert(0, internal_topo)
+        # 节点Mapping
         node_mapping = self.get_node_mapping(biz_topo)
-        for node in node_list:
-            result_dict[self.Node(node["bk_biz_id"], node["bk_obj_id"], node["bk_inst_id"], node["bk_inst_name"])] = []
+        # 构造结果
+        result_dict = {
+            self.Node(node["bk_biz_id"], node["bk_obj_id"], node["bk_inst_id"], node["bk_inst_name"]): []
+            for node in node_list
+        }
+
+        # 获取节点主机信息
+        host_multi_execute = MultiExecuteFunc(DEFAULT_MAX_WORKERS)
         for bk_biz_id, bk_obj_id, bk_inst_id, bk_inst_name in result_dict.keys():
-            hosts_in_node = self.get_hosts_by_inst_id(bk_obj_id, bk_inst_id)
-            result_dict[(bk_biz_id, bk_obj_id, bk_inst_id, bk_inst_name)].extend(hosts_in_node)
-
-        result = {}
-        for node, host_list in result_dict.items():
-            map_key = "{}|{}".format(str(node[1]), str(node[2]))
-            node_path = "/".join(
-                [
-                    node_mapping.get(node).get("bk_inst_name")
-                    for node in node_mapping.get(map_key, {}).get("node_link", [])
-                ]
+            host_multi_execute.append(
+                result_key=(bk_biz_id, bk_obj_id, bk_inst_id, bk_inst_name),
+                func=self.batch_get_hosts_by_inst_id,
+                params=(bk_obj_id, bk_inst_id),
             )
-            agent_error_count = 0
-            if host_list:
-                agent_status_dict = self.get_agent_status(host_list)
-                agent_error_count = len(
-                    [status for status in list(agent_status_dict.values()) if status != AgentStatusEnum.ON.value]
-                )
+        host_result_dict = host_multi_execute.run()
+        for key, host_result in host_result_dict.items():
+            result_dict[key].extend(host_result)
 
-            result[(node.bk_biz_id, node.bk_obj_id, node.bk_inst_id)] = {
-                "bk_obj_id": node.bk_obj_id,
-                "bk_inst_id": node.bk_inst_id,
-                "bk_inst_name": node.bk_inst_name,
-                "count": len(host_list),
-                "agent_error_count": agent_error_count,
-                "bk_biz_id": node.bk_biz_id,
-                "node_path": node_path,
-            }
+        # 获取节点Agent状态
+        agent_multi_execute = MultiExecuteFunc(DEFAULT_MAX_WORKERS)
+        for node, host_list in result_dict.items():
+            agent_multi_execute.append(
+                result_key=(node.bk_biz_id, node.bk_obj_id, node.bk_inst_id),
+                func=self.batch_get_agent_status,
+                params=(host_list, node, node_mapping),
+            )
+        results = agent_multi_execute.run()
 
-        return result
+        return results
 
     def get_node_path(self, node_list):
         """
@@ -903,7 +943,11 @@ class BizHandler(APIModel):
         """
         host_list = []
         for host in hosts_info:
-            tmp_host = {"bk_host_innerip": host["host"]["bk_host_innerip"], "bk_cloud_id": host["host"]["bk_cloud_id"]}
+            tmp_host = {
+                "bk_host_innerip": host["host"]["bk_host_innerip"],
+                "bk_cloud_id": host["host"]["bk_cloud_id"],
+                "bk_host_id": host["host"]["bk_host_id"],
+            }
             if bk_obj_id in (CCInstanceType.BUSINESS.value):
                 tmp_host["parent_inst_id"] = [self.bk_biz_id]
             if bk_obj_id in (
@@ -1076,11 +1120,11 @@ class BizHandler(APIModel):
             response_data = CCApi.list_service_template.bulk_request(params)
         if template_type == TemplateType.SET_TEMPLATE.value:
             response_data = CCApi.list_set_template.bulk_request(params)
-        project = ProjectInfo.objects.filter(bk_biz_id=self.bk_biz_id).first()
+        space = Space.objects.get(bk_biz_id=self.bk_biz_id)
         response_data = sorted(response_data, key=lambda e: lazy_pinyin(e.get("name", "")))
         result = {
             "bk_biz_id": self.bk_biz_id,
-            "bk_biz_name": project.project_name,
+            "bk_biz_name": space.space_name,
             "children": [
                 {
                     "bk_biz_id": self.bk_biz_id,

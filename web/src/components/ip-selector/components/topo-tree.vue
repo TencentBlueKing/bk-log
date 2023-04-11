@@ -49,7 +49,7 @@
 
 <script lang="ts">
 /* eslint-disable @typescript-eslint/member-ordering */
-import { Vue, Component, Prop, Emit, Ref } from 'vue-property-decorator'
+import { Vue, Component, Prop, Emit, Ref, Watch } from 'vue-property-decorator'
 import { ITreeNode } from '../types/selector-type'
 
 @Component({ name: 'topo-tree' })
@@ -97,6 +97,14 @@ export default class StaticTopo extends Vue {
     return treeNode
   }
 
+  @Watch('nodes', { immediate: true })
+  public handleNodesChange(val) {
+    this.$nextTick(() => {
+      // 默认选中根节点
+      this.treeRef.setSelected('0', { emitEvent: true })
+    })
+  }
+
   public handleSetChecked(id: string | string[]) {
     if (this.treeRef) {
       this.treeRef.removeChecked()
@@ -124,7 +132,7 @@ export default class StaticTopo extends Vue {
 </script>
 
 <style lang="scss" scoped>
-  ::v-deep .bk-big-tree-node {
+  :deep(.bk-big-tree-node) {
     &.is-checked {
       background: #f5f6fa;
     }
