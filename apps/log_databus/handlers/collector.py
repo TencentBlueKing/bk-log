@@ -3808,7 +3808,7 @@ class CollectorHandler(object):
         self.create_or_update_subscription(params)
 
         params["table_id"] = params["collector_config_name_en"]
-        self.create_or_update_clean_config(params)
+        self.create_or_update_clean_config(False, params)
 
         return {
             "collector_config_id": self.data.collector_config_id,
@@ -3894,29 +3894,7 @@ class CollectorHandler(object):
                 async_create_bkdata_data_id.delay(self.data.collector_config_id)
 
         params["table_id"] = self.data.collector_config_name_en
-
-        from apps.log_databus.handlers.etl import EtlHandler
-
-        result_table_info = TransferApi.get_result_table_storage(
-            {"result_table_list": self.data.table_id, "storage_type": "elasticsearch"}
-        )
-        result_table = result_table_info.get(self.data.table_id, {})
-        if not result_table:
-            raise ResultTableNotExistException(ResultTableNotExistException.MESSAGE.format(self.data.table_id))
-
-        default_etl_params = {
-            "etl_config": self.data.etl_config,
-            "es_shards": result_table["storage_config"]["index_settings"]["number_of_shards"],
-            "storage_replies": result_table["storage_config"]["index_settings"]["number_of_replicas"],
-            "storage_cluster_id": result_table["cluster_config"]["cluster_id"],
-            "retention": result_table["storage_config"]["retention"],
-            "allocation_min_days": params.get("allocation_min_days", 0),
-        }
-        default_etl_params.update(params)
-        params = default_etl_params
-
-        etl_handler = EtlHandler.get_instance(self.data.collector_config_id)
-        etl_handler.update_or_create(**params)
+        self.create_or_update_clean_config(True, params)
 
         return {"collector_config_id": self.data.collector_config_id}
 
@@ -3936,7 +3914,27 @@ class CollectorHandler(object):
                 # 创建数据平台data_id
                 async_create_bkdata_data_id.delay(self.data.collector_config_id)
 
-    def create_or_update_clean_config(self, params):
+    def create_or_update_clean_config(self, is_update, params):
+        table_id = params["table_id"]
+        if is_update:
+            # 更新场景，需要把之前的存储设置拿出来，和更新的配置合并一下
+            result_table_info = TransferApi.get_result_table_storage(
+                {"result_table_list": table_id, "storage_type": "elasticsearch"}
+            )
+            result_table = result_table_info.get(table_id, {})
+            if not result_table:
+                raise ResultTableNotExistException(ResultTableNotExistException.MESSAGE.format(table_id))
+
+            default_etl_params = {
+                "es_shards": result_table["storage_config"]["index_settings"]["number_of_shards"],
+                "storage_replies": result_table["storage_config"]["index_settings"]["number_of_replicas"],
+                "storage_cluster_id": result_table["cluster_config"]["cluster_id"],
+                "retention": result_table["storage_config"]["retention"],
+                "allocation_min_days": params.get("allocation_min_days", 0),
+            }
+            default_etl_params.update(params)
+            params = default_etl_params
+
         from apps.log_databus.handlers.etl import EtlHandler
 
         etl_handler = EtlHandler.get_instance(self.data.collector_config_id)
