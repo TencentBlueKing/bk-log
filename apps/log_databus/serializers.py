@@ -236,60 +236,6 @@ class BcsContainerConfigSerializer(serializers.Serializer):
     enable_stdout = serializers.BooleanField(required=False, label=_("是否采集标准输出"), default=False)
 
 
-class CustomCollectorBaseSerializer(serializers.Serializer):
-    collector_config_name = serializers.CharField(label=_("采集名称"), max_length=50)
-    category_id = serializers.CharField(label=_("分类ID"))
-    storage_cluster_id = serializers.IntegerField(label=_("集群ID"), required=False)
-    retention = serializers.IntegerField(label=_("有效时间"), required=False)
-    allocation_min_days = serializers.IntegerField(label=_("冷热数据生效时间"), required=False)
-    storage_replies = serializers.IntegerField(
-        label=_("ES副本数量"), required=False, default=settings.ES_REPLICAS, min_value=0, max_value=3
-    )
-    es_shards = serializers.IntegerField(
-        label=_("ES分片数量"), required=False, default=settings.ES_SHARDS, min_value=1, max_value=64
-    )
-    description = serializers.CharField(
-        label=_("备注说明"), max_length=64, required=False, allow_null=True, allow_blank=True
-    )
-    is_display = serializers.BooleanField(label=_("是否展示"), default=True, required=False)
-
-    def validate(self, attrs: dict) -> dict:
-        # 先进行校验
-        attrs = super().validate(attrs)
-        # 在传入集群ID时校验其他参数
-        keys = attrs.keys()
-        if "storage_cluster_id" in keys:
-            if "retention" not in keys:
-                raise serializers.ValidationError(ugettext("有效时间不能为空"))
-            if "allocation_min_days" not in keys:
-                raise serializers.ValidationError(ugettext("冷热数据生效时间不能为空"))
-        return attrs
-
-
-class CustomCreateSerializer(CustomCollectorBaseSerializer):
-    bk_biz_id = serializers.IntegerField(label=_("业务ID"), required=False)
-    space_uid = SpaceUIDField(label=_("空间唯一标识"), required=False)
-
-    collector_config_name_en = serializers.RegexField(
-        label=_("采集英文名称"), min_length=5, max_length=50, regex=COLLECTOR_CONFIG_NAME_EN_REGEX
-    )
-    data_link_id = serializers.CharField(label=_("数据链路id"), required=False, allow_blank=True, allow_null=True)
-    custom_type = serializers.ChoiceField(label=_("日志类型"), choices=CustomTypeEnum.get_choices())
-
-    def validate(self, attrs: dict) -> dict:
-        attrs = super().validate(attrs)
-        if attrs.get("space_uid", ""):
-            attrs["bk_biz_id"] = space_uid_to_bk_biz_id(attrs["space_uid"])
-        elif not attrs.get("bk_biz_id", ""):
-            raise ValueError("bk_biz_id or space_uid not found")
-
-        return attrs
-
-
-class CustomUpdateSerializer(CustomCollectorBaseSerializer):
-    ...
-
-
 class CollectorCreateSerializer(serializers.Serializer):
     """
     创建采集项序列化
@@ -1245,6 +1191,60 @@ class ContainerCollectorYamlSerializer(serializers.Serializer):
         if attrs["logConfigType"] != ContainerCollectorType.STDOUT and not attrs.get("path"):
             raise SlzValidationError(_("当日志类型不为标准输出时，日志采集路径为必填项"))
         return attrs
+
+
+class CustomCollectorBaseSerializer(serializers.Serializer):
+    collector_config_name = serializers.CharField(label=_("采集名称"), max_length=50)
+    category_id = serializers.CharField(label=_("分类ID"))
+    storage_cluster_id = serializers.IntegerField(label=_("集群ID"), required=False)
+    retention = serializers.IntegerField(label=_("有效时间"), required=False)
+    allocation_min_days = serializers.IntegerField(label=_("冷热数据生效时间"), required=False)
+    storage_replies = serializers.IntegerField(
+        label=_("ES副本数量"), required=False, default=settings.ES_REPLICAS, min_value=0, max_value=3
+    )
+    es_shards = serializers.IntegerField(
+        label=_("ES分片数量"), required=False, default=settings.ES_SHARDS, min_value=1, max_value=64
+    )
+    description = serializers.CharField(
+        label=_("备注说明"), max_length=64, required=False, allow_null=True, allow_blank=True
+    )
+    is_display = serializers.BooleanField(label=_("是否展示"), default=True, required=False)
+
+    def validate(self, attrs: dict) -> dict:
+        # 先进行校验
+        attrs = super().validate(attrs)
+        # 在传入集群ID时校验其他参数
+        keys = attrs.keys()
+        if "storage_cluster_id" in keys:
+            if "retention" not in keys:
+                raise serializers.ValidationError(ugettext("有效时间不能为空"))
+            if "allocation_min_days" not in keys:
+                raise serializers.ValidationError(ugettext("冷热数据生效时间不能为空"))
+        return attrs
+
+
+class CustomCreateSerializer(CustomCollectorBaseSerializer):
+    bk_biz_id = serializers.IntegerField(label=_("业务ID"), required=False)
+    space_uid = SpaceUIDField(label=_("空间唯一标识"), required=False)
+
+    collector_config_name_en = serializers.RegexField(
+        label=_("采集英文名称"), min_length=5, max_length=50, regex=COLLECTOR_CONFIG_NAME_EN_REGEX
+    )
+    data_link_id = serializers.CharField(label=_("数据链路id"), required=False, allow_blank=True, allow_null=True)
+    custom_type = serializers.ChoiceField(label=_("日志类型"), choices=CustomTypeEnum.get_choices())
+
+    def validate(self, attrs: dict) -> dict:
+        attrs = super().validate(attrs)
+        if attrs.get("space_uid", ""):
+            attrs["bk_biz_id"] = space_uid_to_bk_biz_id(attrs["space_uid"])
+        elif not attrs.get("bk_biz_id", ""):
+            raise ValueError("bk_biz_id or space_uid not found")
+
+        return attrs
+
+
+class CustomUpdateSerializer(CustomCollectorBaseSerializer):
+    ...
 
 
 class FastCollectorCreateSerializer(serializers.Serializer):
