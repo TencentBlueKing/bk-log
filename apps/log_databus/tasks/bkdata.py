@@ -116,8 +116,10 @@ def review_bkdata_data_id():
     for collector_config in collector_configs:
         if collector_config.bkdata_data_id_sync_times >= MAX_CREATE_BKDATA_DATA_ID_FAIL_COUNT:
             logger.error(
-                f"{collector_config.collector_config_name} "
-                + f"创建bkdata_data_id超过最大重试次数: {MAX_CREATE_BKDATA_DATA_ID_FAIL_COUNT}"
+                "{collector_config_name} Creating bkdata_data_id exceeded the maximum number of retries: {cnt}".format(
+                    collector_config_name=collector_config.collector_config_name,
+                    cnt=MAX_CREATE_BKDATA_DATA_ID_FAIL_COUNT,
+                )
             )
             continue
 

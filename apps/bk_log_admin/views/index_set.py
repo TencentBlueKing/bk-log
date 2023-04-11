@@ -193,7 +193,7 @@ class IndexSetViewSet(APIViewSet):
         start_time = arrow.get(data["start_time"])
         end_time = arrow.get(data["end_time"])
         if (end_time - start_time).days >= constants.HISTORY_MAX_DAYS:
-            raise ValidationError(_(f"查询时间段目前只支持{constants.HISTORY_MAX_DAYS}天"))
+            raise ValidationError(_("查询时间段目前只支持{day}天").format(day=constants.HISTORY_MAX_DAYS))
         return IndexSetHandler().list_user_set_history(
             start_time=start_time, end_time=end_time, request=request, view=self, index_set_id=pk
         )

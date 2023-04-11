@@ -31,7 +31,7 @@ from apps.api.base import DataAPI  # noqa
 
 
 class _MonitorApi(object):
-    MODULE = _("MONITOR")
+    MODULE = _("Monitor监控平台")
 
     def __init__(self):
         self.save_alarm_strategy = DataAPI(

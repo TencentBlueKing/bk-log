@@ -428,8 +428,8 @@ API 频率限制 5w/s
 
 安装依赖
 
-    $ pip install "opentelemetry-api>=1.7.1,<1.13.0"
-    $ pip install "opentelemetry-sdk>=1.7.1,<1.13.0" "opentelemetry-exporter-otlp>=1.7.1,<1.13.0"
+    $ pip install "opentelemetry-api>=1.7.1,<1.13.0" "opentelemetry-sdk>=1.7.1,<1.13.0"
+    $ pip install "opentelemetry-exporter-otlp>=1.7.1,<1.13.0"
 
     # 依赖版本
     # Package                                Version
@@ -641,13 +641,13 @@ class GlobalCategoriesEnum(ChoicesEnum):
 
     APPLICATIONS = {
         "id": "applications",
-        "name": "应用",
+        "name": _("应用"),
         "children": [
             {"id": "application_check", "name": _("业务应用"), "children": []},
         ],
     }
 
-    OTHER = {"id": "others", "name": "其他", "children": [{"id": "other_rt", "name": _("其他"), "children": []}]}
+    OTHER = {"id": "others", "name": _("其他"), "children": [{"id": "other_rt", "name": _("其他"), "children": []}]}
 
     @classmethod
     def get_init_categories(cls):

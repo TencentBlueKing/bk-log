@@ -831,7 +831,7 @@ class MappingHandlers(object):
                 if x["field_type"] in fields_type.get(field_name):
                     continue
                 type_msg = str(_("或者")).join(fields_type.get(x["field_name"]))
-                return _(f"{field_name}必须为{type_msg}类型")
+                return _("{field_name}必须为{type_msg}类型").format(field_name=field_name, type_msg=type_msg)
         return None
 
     @classmethod
@@ -955,7 +955,7 @@ class MappingHandlers(object):
             result["async_export_fields"] = scenario_fields
             result["async_export_usable"] = True
         else:
-            result["async_export_usable_reason"] = "检查{}字段是否为聚合字段".format(",".join(scenario_fields))
+            result["async_export_usable_reason"] = _("检查{}字段是否为聚合字段").format(",".join(scenario_fields))
         return result
 
     @classmethod

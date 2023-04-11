@@ -13,6 +13,7 @@ from bkm_space.api import SpaceApi
 from bkm_space.define import SpaceTypeEnum
 from bkm_space.errors import NoRelatedResourceError
 from bkm_space.utils import bk_biz_id_to_space_uid
+from django.utils.translation import ugettext_lazy as _
 
 
 def validate_bk_biz_id(bk_biz_id: int) -> int:
@@ -31,4 +32,6 @@ def validate_bk_biz_id(bk_biz_id: int) -> int:
         return space.bk_biz_id
     # 无业务关联的空间，不允许查询cmdb相关接口
     # 当前抛出异常
-    raise NoRelatedResourceError(f"当前空间{space_uid}无关联{SpaceTypeEnum.BKCC.value}资源")
+    raise NoRelatedResourceError(
+        _("当前空间{space_uid}无关联{space_type}资源").format(space_uid=space_uid, space_type=SpaceTypeEnum.BKCC.value)
+    )

@@ -30,6 +30,7 @@ from typing import List, Union
 import arrow
 from django.conf import settings
 from django.db.models import Q, Sum
+from django.utils.translation import ugettext as _
 
 from apps.api import BkDataResourceCenterApi, BkLogApi, TransferApi
 from apps.constants import UserOperationActionEnum, UserOperationTypeEnum
@@ -560,7 +561,7 @@ class StorageHandler(object):
             "geog_area_code": "inland",
             "category": "es",
             "provider": "user",
-            "purpose": "BKLog集群同步",
+            "purpose": _("BKLog集群同步"),
             "share": False,
             "admin": admin,
             "tag": params.get("bkbase_tags", []) or DEFAULT_ES_TAGS,

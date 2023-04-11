@@ -2,6 +2,7 @@
 
 from unittest.mock import patch
 from django.test import TestCase
+from django.utils.translation import ugettext_lazy as _
 
 from bk_monitor.handler import monitor
 from bk_monitor.models import MonitorReportConfig
@@ -90,7 +91,7 @@ DATA_ID_RESPONSE_DEMO_1 = {
                     "tag": "timestamp",
                     "default_value": "",
                     "is_config_by_user": True,
-                    "description": "数据上报时间",
+                    "description": _("数据上报时间"),
                     "unit": "",
                     "alias_name": "",
                     "option": {},
@@ -183,7 +184,7 @@ DATA_ID_RESPONSE_DEMO_4 = {
                     "tag": "timestamp",
                     "default_value": "",
                     "is_config_by_user": True,
-                    "description": "数据上报时间",
+                    "description": _("数据上报时间"),
                     "unit": "",
                     "alias_name": "",
                     "option": {},

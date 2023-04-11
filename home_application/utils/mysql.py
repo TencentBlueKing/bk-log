@@ -21,6 +21,7 @@ the project delivered to anyone in the future.
 """
 import time
 import logging
+from django.utils.translation import ugettext_lazy as _
 
 import pymysql
 
@@ -95,12 +96,12 @@ class MySQLClient(object):
         result = {"status": False, "data": None, "message": "", "suggestion": ""}
         start_time = time.time()
         try:
-            _ = self.db.ping()
+            self.db.ping()
             result["status"] = True
         except Exception as e:  # pylint: disable=broad-except
             logger.error("failed to ping MySQL, err: {e}")
             result["message"] = str(e)
-            result["suggestion"] = "确认MySQL连接是否可用"
+            result["suggestion"] = _("确认MySQL连接是否可用")
 
         spend_time = time.time() - start_time
         result["data"] = "{}ms".format(int(spend_time * 1000))

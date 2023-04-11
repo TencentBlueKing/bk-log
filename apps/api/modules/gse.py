@@ -48,7 +48,7 @@ def get_agent_status_after(response_result):
 
 
 class _GseApi:
-    MODULE = _("GSE")
+    MODULE = _("GSE管控平台")
 
     def __init__(self):
         self.get_agent_status_raw = DataAPI(
