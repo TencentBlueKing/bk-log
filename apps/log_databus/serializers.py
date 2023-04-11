@@ -466,7 +466,7 @@ class TaskDetailSerializer(serializers.Serializer):
 
     def validate_task_id(self, value):
         if not value.isdigit():
-            raise ValidationError("task_id请填写合法的整数值")
+            raise ValidationError(_("task_id请填写合法的整数值"))
         return int(value)
 
 

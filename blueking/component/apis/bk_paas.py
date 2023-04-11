@@ -32,5 +32,5 @@ class CollectionsBkPaas(object):
             client=self.client,
             method="GET",
             path="/api/c/compapi{bk_api_ver}/bk_paas/get_app_info/",
-            description=u"获取应用信息",
+            description="获取应用信息",
         )

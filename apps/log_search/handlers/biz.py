@@ -467,13 +467,13 @@ class BizHandler(APIModel):
         if free_set:
             free_set = dict(
                 bk_obj_id="set",
-                bk_obj_name="集群",
+                bk_obj_name=_("集群"),
                 bk_inst_id=free_set["bk_set_id"],
                 bk_inst_name=free_set["bk_set_name"],
                 child=[
                     dict(
                         bk_obj_id="module",
-                        bk_obj_name="模块",
+                        bk_obj_name=_("模块"),
                         bk_inst_id=m["bk_module_id"],
                         bk_inst_name=m["bk_module_name"],
                         child=[],

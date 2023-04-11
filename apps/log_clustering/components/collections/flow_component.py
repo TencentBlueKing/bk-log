@@ -117,7 +117,7 @@ class CreateAfterTreatFlowService(BaseService):
             with ignored(Exception):
                 send_params = {
                     "receivers": clustering_config.created_by,
-                    "content": "聚类流程已经完成",
+                    "content": _("聚类流程已经完成"),
                     "title": str(_("【日志平台】")),
                 }
                 CmsiApi.send_mail(send_params)
