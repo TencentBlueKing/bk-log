@@ -1364,7 +1364,7 @@ class CollectorHandler(object):
                 {
                     "is_label": False,
                     "label_name": "",
-                    "bk_obj_name": "主机",
+                    "bk_obj_name": _("主机"),
                     "node_path": "主机",
                     "bk_obj_id": "host",
                     "bk_inst_id": "",
@@ -1864,7 +1864,7 @@ class CollectorHandler(object):
                     {
                         "is_label": False,
                         "label_name": "",
-                        "bk_obj_name": "主机",
+                        "bk_obj_name": _("主机"),
                         "node_path": "主机",
                         "bk_obj_id": "host",
                         "bk_inst_id": "",
@@ -1874,7 +1874,7 @@ class CollectorHandler(object):
                 ]
             }
         param = {"subscription_id_list": [self.data.subscription_id]}
-        status_result, *_ = NodeApi.get_subscription_instance_status(param)
+        status_result, *__ = NodeApi.get_subscription_instance_status(param)
         instance_status = self.format_subscription_instance_status(status_result)
 
         # 如果采集目标是HOST-INSTANCE
@@ -1883,7 +1883,7 @@ class CollectorHandler(object):
                 {
                     "is_label": False,
                     "label_name": "",
-                    "bk_obj_name": "主机",
+                    "bk_obj_name": _("主机"),
                     "node_path": "主机",
                     "bk_obj_id": "host",
                     "bk_inst_id": "",

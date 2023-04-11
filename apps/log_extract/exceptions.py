@@ -236,7 +236,7 @@ class FileServerExecuteFailed(BaseExtractException):
 
 class PipelineApiFailed(BaseExtractException):
     ErrorCode = "402"
-    MESSAGE = _(" {message}")
+    MESSAGE = _("{message}")
 
 
 class PipelineRevoked(BaseExtractException):

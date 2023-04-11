@@ -28,7 +28,7 @@ from config.domains import ITSM_APIGATEWAY_ROOT_V2
 
 
 class _BkItsm(object):
-    MODULE = _("ITSM")
+    MODULE = _("ITSM服务流程管理")
 
     def __init__(self):
         self.create_ticket = DataAPI(

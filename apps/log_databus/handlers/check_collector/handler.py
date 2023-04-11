@@ -20,6 +20,7 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import os
+from django.utils.translation import ugettext_lazy as _
 
 from celery.task import task
 
@@ -35,7 +36,7 @@ from apps.log_databus.models import CollectorConfig
 
 
 class CheckCollectorHandler:
-    HANDLER_NAME = "启动入口"
+    HANDLER_NAME = _("启动入口")
 
     def __init__(self, collector_config_id: int, hosts: str = None, gse_path=None, ipc_path=None):
         self.collector_config_id = collector_config_id
@@ -66,7 +67,7 @@ class CheckCollectorHandler:
         try:
             self.collector_config = CollectorConfig.objects.get(collector_config_id=self.collector_config_id)
         except CollectorConfig.DoesNotExist:
-            self.record.append_error_info("采集项ID查找失败", "pre-run")
+            self.record.append_error_info(_("采集项ID查找失败"), "pre-run")
             return
 
         # 快速脚本执行的参数target_server
@@ -87,7 +88,9 @@ class CheckCollectorHandler:
                     ip_list.append({"bk_cloud_id": int(host.split(":")[0]), "ip": host.split(":")[1]})
                 self.target_server = {"ip_list": ip_list}
             except Exception as e:  # pylint: disable=broad-except
-                self.record.append_error_info(f"输入合法的hosts, err: {e}, 参考: 0:ip1,0:ip2,1:ip3", self.HANDLER_NAME)
+                self.record.append_error_info(
+                    _("输入合法的hosts, err: {e}, 参考: 0:ip1,0:ip2,1:ip3").format(e=e), self.HANDLER_NAME
+                )
                 return
         else:
             # 不同的target_node_type
@@ -103,9 +106,12 @@ class CheckCollectorHandler:
             elif target_node_type == TargetNodeTypeEnum.DYNAMIC_GROUP.value:
                 self.target_server = {"dynamic_group_list": self.collector_config.target_nodes}
             else:
-                self.record.append_error_info(f"暂不支持该target_node_type: {target_node_type}", self.HANDLER_NAME)
+                self.record.append_error_info(
+                    _("暂不支持该target_node_type: {target_node_type}").format(target_node_type=target_node_type),
+                    self.HANDLER_NAME,
+                )
         if not self.story_report:
-            self.record.append_normal_info("初始化检查成功", self.HANDLER_NAME)
+            self.record.append_normal_info(_("初始化检查成功"), self.HANDLER_NAME)
 
     def run(self):
         self.pre_run()

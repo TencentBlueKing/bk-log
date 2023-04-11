@@ -91,7 +91,7 @@ class RedisMetric(object):
                 HealthzMetric(
                     status=True,
                     metric_value=None,
-                    message=_("broker is not set to redis, skip this check"),
+                    message=_("没有使用redis作为broker, 跳过该检查"),
                     metric_name="queue_len",
                 )
             )

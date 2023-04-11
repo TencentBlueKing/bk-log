@@ -177,9 +177,9 @@ class Tasks(OperateRecordModel):
         all_file_num = sum(int(ip.get("file_count", 0)) for ip in self.ex_data.values())
         all_pack_file_size = sum(int(ip.get("all_pack_file_size", 0)) for ip in self.ex_data.values())
         ret = [
-            f"{_('下载文件总大小')}: {all_pack_file_size}kb",
-            f"{_('下载原始文件原始总大小')}: {all_file_size}kb",
-            f"{_('下载文件总数量')}: {all_file_num}",
+            _("下载文件总大小: {all_pack_file_size}kb").format(all_pack_file_size=all_pack_file_size),
+            _("下载原始文件原始总大小: {all_file_size}kb").format(all_file_size=all_file_size),
+            _("下载文件总数量: {all_file_num}kb").format(all_file_num=all_file_num),
         ]
 
         return " ".join(ret)

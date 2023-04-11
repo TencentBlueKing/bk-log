@@ -53,14 +53,14 @@ def get_user_after(response_result):
 
 
 class _BKLoginApi:
-    MODULE = _(u"PaaS平台登录模块")
+    MODULE = _("PaaS平台登录模块")
 
     def __init__(self):
         self.get_user = DataAPI(
             method="GET",
             url=USER_MANAGE_APIGATEWAY_ROOT + "retrieve_user/",
             module=self.MODULE,
-            description=u"获取单个用户",
+            description="获取单个用户",
             before_request=get_user_before,
             after_request=get_user_after,
         )

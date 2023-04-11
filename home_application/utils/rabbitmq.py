@@ -24,6 +24,7 @@ import logging
 import pika
 from pika.exceptions import ChannelClosedByBroker
 from kombu.utils.url import url_to_parts
+from django.utils.translation import ugettext_lazy as _
 
 import settings
 from home_application.constants import ALARM_QUEUE_LEN
@@ -73,7 +74,7 @@ class RabbitMQClient(object):
         except Exception as e:  # pylint: disable=broad-except
             logger.error(f"failed to ping rabbitmq, msg: {e}")
             result["message"] = str(e)
-            result["suggestion"] = "确认RabbitMQ是否可用"
+            result["suggestion"] = _("确认RabbitMQ是否可用")
         spend_time = time.time() - start_time
         result["data"] = "{}ms".format(int(spend_time * 1000))
         return result

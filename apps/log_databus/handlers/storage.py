@@ -561,7 +561,7 @@ class StorageHandler(object):
             "geog_area_code": "inland",
             "category": "es",
             "provider": "user",
-            "purpose": "BKLog集群同步",
+            "purpose": _("BKLog集群同步"),
             "share": False,
             "admin": admin,
             "tag": params.get("bkbase_tags", []) or DEFAULT_ES_TAGS,
@@ -914,11 +914,11 @@ class StorageHandler(object):
             # this status is returnback from tcpserver
             if status != 0:
                 raise StorageConnectInfoException(
-                    StorageConnectInfoException.MESSAGE.format(info=_("IP or PORT can not be reached"))
+                    StorageConnectInfoException.MESSAGE.format(info=_("主机不可达, 请检查IP或端口是否正确"))
                 )
         except Exception as e:  # pylint: disable=broad-except
             raise StorageConnectInfoException(
-                StorageConnectInfoException.MESSAGE.format(info=_("IP or PORT can not be reached, %s" % e))
+                StorageConnectInfoException.MESSAGE.format(info=_("主机不可达, 请检查IP或端口是否正确, %s" % e))
             )
         cs.close()
         http_auth = (username, password) if username and password else None
