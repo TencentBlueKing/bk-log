@@ -26,6 +26,7 @@ from collections import defaultdict
 import pytz
 from celery.schedules import crontab
 from celery.task import periodic_task, task
+from django.utils.translation import ugettext as _
 
 from apps.api import BkLogApi, TransferApi
 from apps.api.modules.bkdata_databus import BkDataDatabusApi
@@ -230,16 +231,17 @@ def get_biz_storage_capacity(bk_biz_id, cluster):
 def create_container_release(bcs_cluster_id: str, container_config_id: int, config_name: str, config_params: dict):
     container_config = ContainerCollectorConfig.objects.get(pk=container_config_id)
     container_config.status = ContainerCollectStatus.RUNNING.value
+    container_config.status_detail = _("配置下发中")
     container_config.save()
 
     try:
-        result = Bcs(bcs_cluster_id).save_bklog_config(bklog_config_name=config_name, bklog_config=config_params)
-        container_config.status = (
-            ContainerCollectStatus.SUCCESS.value if result else ContainerCollectStatus.FAILED.value
-        )
+        Bcs(bcs_cluster_id).save_bklog_config(bklog_config_name=config_name, bklog_config=config_params)
+        container_config.status = ContainerCollectStatus.SUCCESS.value
+        container_config.status_detail = _("配置下发成功")
     except Exception as e:  # pylint: disable=broad-except
         logger.exception("[create_container_release] save bklog config failed: %s", e)
         container_config.status = ContainerCollectStatus.FAILED.value
+        container_config.status_detail = _("配置下发失败: {reason}").format(reason=e)
     container_config.save()
 
 
@@ -282,7 +284,7 @@ def create_custom_log_group():
             logger.info(
                 "[CreateCustomLogGroupSuccess] Collector => %s; LogGroupID => %s",
                 log.collector_config_id,
-                log.log_group_id
+                log.log_group_id,
             )
         except Exception as err:
             msg = traceback.format_exc()
@@ -290,5 +292,5 @@ def create_custom_log_group():
                 "[CreateCustomLogGroupFailed] Collector => %s; Error => %s ; Detail => %s",
                 log.collector_config_id,
                 str(err),
-                msg
+                msg,
             )
