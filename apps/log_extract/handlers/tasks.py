@@ -27,7 +27,7 @@ from django.utils import timezone
 from rest_framework.response import Response
 
 from django.conf import settings
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 from pipeline.engine.exceptions import InvalidOperationException
 from pipeline.service import task_service
 

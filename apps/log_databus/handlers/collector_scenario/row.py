@@ -25,7 +25,7 @@ from apps.utils.log import logger
 from apps.log_databus.handlers.collector_scenario.base import CollectorScenario
 from apps.log_databus.handlers.collector_scenario.utils import deal_collector_scenario_param
 from apps.log_databus.constants import LogPluginInfo
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
 
 class RowCollectorScenario(CollectorScenario):

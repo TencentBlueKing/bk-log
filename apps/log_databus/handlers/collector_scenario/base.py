@@ -24,7 +24,7 @@ from typing import Optional
 
 from django.conf import settings
 from django.utils.module_loading import import_string
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
 from apps.api import TransferApi, NodeApi
 from apps.exceptions import ApiResultError

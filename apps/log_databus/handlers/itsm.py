@@ -20,7 +20,7 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import json
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
 from django.conf import settings
 from django.db import transaction
