@@ -25,7 +25,6 @@ from typing import Optional
 from django.conf import settings
 from django.utils.module_loading import import_string
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy as _lazy
 
 from apps.api import TransferApi, NodeApi
 from apps.exceptions import ApiResultError
@@ -63,7 +62,7 @@ class CollectorScenario(object):
             return collector_scenario()
         except ImportError as error:
             raise NotImplementedError(
-                _lazy("{collector_scenario_id}场景对应的采集器功能暂未实现, error: {error}").format(
+                _("{collector_scenario_id}场景对应的采集器功能暂未实现, error: {error}").format(
                     collector_scenario_id=collector_scenario_id, error=error
                 )
             )
@@ -161,7 +160,7 @@ class CollectorScenario(object):
         if not bk_data_id:
             # 创建数据源，创建时一定是BK_LOG_TEXT这种直接入库的方式，后面进行字段提取时再根据情况变更清洗方式
             if not data_name:
-                raise BaseCollectorConfigException(_lazy("创建采集项时名称不能为空"))
+                raise BaseCollectorConfigException(_("创建采集项时名称不能为空"))
             if not mq_config:
                 mq_config = {}
 

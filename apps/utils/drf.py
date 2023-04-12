@@ -23,7 +23,6 @@ import json
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy as _lazy
 import six
 from django.db import models
 
@@ -106,7 +105,7 @@ def custom_params_valid(serializer, params, many=False):
         try:
             message = format_serializer_errors(_serializer.errors, _serializer.fields, params)
         except Exception as e:  # pylint: disable=broad-except
-            message = _lazy("参数校验失败: {err}").format(err=e)
+            message = _("参数校验失败: {err}").format(err=e)
         raise ValidationError(message)
     if many:
         return list(_serializer.data)

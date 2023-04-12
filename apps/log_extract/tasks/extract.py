@@ -26,7 +26,6 @@ import time
 from celery.task import task as celery_task
 
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy as _lazy
 from django.conf import settings
 
 from apps.log_extract import constants
@@ -219,7 +218,7 @@ class LogExtractUtils(object):
                 job_message = FileServer.get_job_tag(item)
 
         if not has_success:
-            raise Exception(_lazy("任务打包异常: {}").format(job_message))
+            raise Exception(_("任务打包异常: {}").format(job_message))
 
         ip_list_group = array_chunk(
             [
@@ -273,7 +272,7 @@ class LogExtractUtils(object):
             )
         hosts = extract_link.extractlinkhost_set.all()
         if not hosts:
-            raise Exception(_lazy("请配置链路中转服务器"))
+            raise Exception(_("请配置链路中转服务器"))
         return (
             [TransitServer(ip=host.ip, target_dir=host.target_dir, bk_cloud_id=host.bk_cloud_id) for host in hosts],
             constants.TRANSIT_SERVER_PACKING_PATH,
@@ -333,7 +332,7 @@ class LogExtractUtils(object):
         # 判断文件分发是否成功
         ip_status = FileServer.get_job_instance_status(query_result)
         if ip_status != constants.JOB_SUCCESS_STATUS:
-            raise Exception(_lazy("文件分发异常({})".format(ip_status)))
+            raise Exception(_("文件分发异常({})".format(ip_status)))
 
         return ScheduleStatus.SUCCESS
 
@@ -392,7 +391,7 @@ class LogExtractUtils(object):
 
         for item in FileServer.get_detail_for_ips(query_result):
             if item["exit_code"] != 0:
-                raise Exception(_lazy("上传网盘异常: {}").format(FileServer.get_job_tag(query_result)))
+                raise Exception(_("上传网盘异常: {}").format(FileServer.get_job_tag(query_result)))
 
         task.download_status = DownloadStatus.DOWNLOADABLE.value
         task.cos_file_name = self.pack_file_name
@@ -420,7 +419,7 @@ class LogExtractUtils(object):
                     logger.info(_("文件打包成功: {}").format(self.task_id))
                     break
             else:
-                raise Exception(_lazy("文件打包异常(超出设定次数: {})").format(self.task_polling_interval))
+                raise Exception(_("文件打包异常(超出设定次数: {})").format(self.task_polling_interval))
 
             logger.info(_("文件分发中: {}").format(self.task_id))
             self._distribution()
@@ -432,7 +431,7 @@ class LogExtractUtils(object):
                     logger.info(_("文件分发成功: {}").format(self.task_id))
                     break
             else:
-                raise Exception(_lazy("文件分发异常(超出设定次数: {})").format(self.task_polling_interval))
+                raise Exception(_("文件分发异常(超出设定次数: {})").format(self.task_polling_interval))
 
             logger.info(_("文件上传至cos中: {}").format(self.task_id))
             self._cos_upload()
@@ -444,7 +443,7 @@ class LogExtractUtils(object):
                     logger.info(_("文件上传至cos成功: {}").format(self.task_id))
                     break
             else:
-                raise Exception(_lazy("文件上传至cos异常(超出设定次数: {})").format(self.task_polling_interval))
+                raise Exception(_("文件上传至cos异常(超出设定次数: {})").format(self.task_polling_interval))
 
             task = Tasks.objects.get(task_id=self.task_id)
             extract_link: ExtractLink = task.get_link()

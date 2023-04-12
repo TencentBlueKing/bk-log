@@ -22,7 +22,6 @@ the project delivered to anyone in the future.
 import html
 
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy as _lazy
 from pipeline.component_framework.component import Component
 from pipeline.core.flow.activity import Service, StaticIntervalGenerator
 from apps.log_extract import constants
@@ -174,7 +173,7 @@ class FilePackingService(BaseService):
                 job_message = FileServer.get_job_tag(item)
 
         if not has_success:
-            raise Exception(_lazy("任务打包异常: {}").format(job_message))
+            raise Exception(_("任务打包异常: {}").format(job_message))
 
         host_list_group = array_chunk(
             [

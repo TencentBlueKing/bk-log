@@ -27,7 +27,6 @@ from typing import List, Dict, Any, Union
 from django.core.cache import cache
 from django.conf import settings
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy as _lazy
 
 from apps.api import MonitorApi
 from apps.api.base import DataApiRetryClass
@@ -453,7 +452,7 @@ class SearchHandler(object):
                 }
             )
         except ApiResultError as e:
-            raise ApiResultError(_lazy("搜索出错，请检查查询语句是否正确"), code=e.code, errors=e.errors)
+            raise ApiResultError(_("搜索出错，请检查查询语句是否正确"), code=e.code, errors=e.errors)
 
         # 需要scroll滚动查询：is_scroll为True，size超出单次最大查询限制，total大于MAX_RESULT_WINDOW
         # @TODO bkdata暂不支持scroll查询
