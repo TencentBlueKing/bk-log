@@ -29,7 +29,8 @@ from django.utils import timezone
 from six import StringIO
 from django.conf import settings
 from django.http import HttpResponse
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _lazy
 from rest_framework import serializers
 from rest_framework.response import Response
 from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
@@ -687,7 +688,7 @@ class SearchViewSet(APIViewSet):
         scope = request.GET.get("scope", "default")
         is_realtime = bool(request.GET.get("is_realtime", False))
         if scope is not None and scope not in SEARCH_SCOPE_VALUE:
-            raise ValidationError(_("scope取值范围：default、search_context"))
+            raise ValidationError(_lazy("scope取值范围：default、search_context"))
 
         start_time = request.GET.get("start_time", "")
         end_time = request.GET.get("end_time", "")

@@ -23,7 +23,8 @@ import os
 import random
 
 from django.conf import settings
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _lazy
 from pipeline.component_framework.component import Component
 from pipeline.core.flow.activity import Service, StaticIntervalGenerator
 
@@ -78,7 +79,7 @@ class FileDistributionService(BaseService):
             )
         hosts = extract_link.extractlinkhost_set.all()
         if not hosts:
-            raise Exception(_("请配置链路中转服务器"))
+            raise Exception(_lazy("请配置链路中转服务器"))
         return (
             [TransitServer(ip=host.ip, target_dir=host.target_dir, bk_cloud_id=host.bk_cloud_id) for host in hosts],
             constants.TRANSIT_SERVER_PACKING_PATH,
@@ -139,7 +140,7 @@ class FileDistributionService(BaseService):
         # 判断文件分发是否成功
         job_status = FileServer.get_job_instance_status(query_result)
         if job_status != constants.JOB_SUCCESS_STATUS:
-            raise Exception(_("文件分发异常({})".format(job_status)))
+            raise Exception(_lazy("文件分发异常({})".format(job_status)))
 
         self.finish_schedule()
         return True

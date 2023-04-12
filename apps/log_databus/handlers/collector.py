@@ -29,7 +29,8 @@ import yaml
 from django.conf import settings
 from django.db import IntegrityError
 from django.db import transaction
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _lazy
 from rest_framework.exceptions import ErrorDetail, ValidationError
 
 from apps.api import BkDataAccessApi, CCApi, BcsCcApi
@@ -3660,7 +3661,7 @@ class CollectorHandler(object):
             slz.is_valid(raise_exception=True)
 
             if not slz.validated_data:
-                raise ValueError(_("配置项不能为空"))
+                raise ValueError(_lazy("配置项不能为空"))
         except ValidationError as err:
 
             def error_msg(value, results):

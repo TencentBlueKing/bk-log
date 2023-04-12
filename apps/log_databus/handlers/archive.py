@@ -20,7 +20,7 @@ the project delivered to anyone in the future.
 """
 from django.db.transaction import atomic
 from django.forms import model_to_dict
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
 from apps.api import TransferApi
 from apps.log_databus.constants import ArchiveInstanceType, RESTORE_INDEX_SET_PREFIX
@@ -217,7 +217,7 @@ class ArchiveHandler:
                 "archive_config_id": archive.archive_config_id,
                 "instance_name": archive.instance_name,
                 "instance_id": archive.instance_id,
-                "_collector_config_id": archive.collector_config_id
+                "_collector_config_id": archive.collector_config_id,
             }
             for archive in ArchiveConfig.objects.filter(bk_biz_id=bk_biz_id)
         ]

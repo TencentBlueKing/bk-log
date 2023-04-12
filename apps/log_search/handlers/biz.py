@@ -28,7 +28,8 @@ from typing import List
 from pypinyin import lazy_pinyin
 
 from django.core.cache import cache
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _lazy
 
 from apps.api import CCApi, GseApi
 from apps.constants import DEFAULT_MAX_WORKERS
@@ -68,7 +69,7 @@ class BizHandler(APIModel):
                 bk_biz_id = related_bk_biz_id
             else:
                 # 也不存在关联CC业务时, 直接raise
-                raise ValueError(_("当前空间类型不支持查询业务资源"))
+                raise ValueError(_lazy("当前空间类型不支持查询业务资源"))
 
         self.bk_biz_id = bk_biz_id
 

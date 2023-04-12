@@ -25,7 +25,7 @@ from apps.log_databus.constants import LogPluginInfo
 from apps.log_databus.handlers.collector_scenario import CollectorScenario
 from apps.log_databus.handlers.collector_scenario.utils import build_es_option_type
 from apps.utils.log import logger
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
 
 class WinEventLogScenario(CollectorScenario):

@@ -24,7 +24,7 @@ import arrow
 from django.conf import settings
 from django.db import transaction
 from django.utils.module_loading import import_string
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
 from apps.api import TransferApi
 from apps.constants import UserOperationTypeEnum, UserOperationActionEnum

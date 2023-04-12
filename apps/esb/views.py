@@ -32,7 +32,7 @@ from apps.iam.handlers.drf import ViewBusinessPermission, BusinessActionPermissi
 from apps.iam.handlers.actions import _all_actions
 from apps.iam.handlers.resources import _all_resources
 from apps.utils.drf import list_route
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
 
 class WeWorkViewSet(APIViewSet):

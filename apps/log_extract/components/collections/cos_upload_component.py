@@ -22,7 +22,8 @@ the project delivered to anyone in the future.
 import os
 
 from django.conf import settings
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _lazy
 from pipeline.component_framework.component import Component
 from pipeline.core.flow import StaticIntervalGenerator, Service
 from apps.log_extract.constants import DownloadStatus, ExtractLinkType
@@ -103,7 +104,7 @@ class CosUploadService(BaseService):
         for item in FileServer.get_detail_for_ips(query_result):
             if item["exit_code"] != 0:
                 raise Exception(
-                    _("上传网盘异常: {}, status: {}").format(FileServer.get_job_tag(item), item.get("status", ""))
+                    _lazy("上传网盘异常: {}, status: {}").format(FileServer.get_job_tag(item), item.get("status", ""))
                 )
 
         # 如果是提取链路bkrepo类型 需要上传bkrepo

@@ -23,7 +23,8 @@ import base64
 
 from django.conf import settings
 from django.db.models import Q
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _lazy
 from rest_framework import serializers
 from rest_framework.response import Response
 
@@ -312,7 +313,7 @@ class CollectorViewSet(ModelViewSet):
         # 强制前端必须传分页参数
 
         if not request.GET.get("page") or not request.GET.get("pagesize"):
-            raise ValidationError(_("分页参数不能为空"))
+            raise ValidationError(_lazy("分页参数不能为空"))
         if request.GET.get("space_uid", ""):
             request.GET["bk_biz_id"] = space_uid_to_bk_biz_id(request.GET["space_uid"])
 
