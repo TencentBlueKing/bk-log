@@ -77,6 +77,29 @@ const getExtractLinkList = {
   method: 'get',
 };
 
+// 获取下载目标主机数量的拓扑树
+const trees = {
+  url: '/log_extract/explorer/trees/',
+  method: 'post',
+};
+
+// 根据多个拓扑节点与搜索条件批量分页查询所包含的主机信息
+const queryHosts = {
+  url: '/log_extract/explorer/query_hosts/',
+  method: 'post',
+};
+
+// 根据多个拓扑节点与搜索条件批量分页查询所包含的主机ID信息
+const queryHostIdInfos = {
+  url: '/log_extract/explorer/query_host_id_infos/',
+  method: 'post',
+};
+
+const getIpListDisplayName = {
+  url: '/bizs/:bk_biz_id/get_display_name/',
+  method: 'post',
+};
+
 export {
   getTaskList,
   getTaskDetail,
@@ -88,4 +111,8 @@ export {
   pollingTaskStatus,
   getDownloadUrl,
   getExtractLinkList,
+  trees,
+  queryHosts,
+  queryHostIdInfos,
+  getIpListDisplayName,
 };

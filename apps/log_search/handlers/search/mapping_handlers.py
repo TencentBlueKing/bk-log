@@ -175,6 +175,19 @@ class MappingHandlers(object):
                     "is_analyzed": False,
                 }
             )
+        if "bk_host_id" in fields:
+            field_list.append(
+                {
+                    "field_type": "__virtual__",
+                    "field_name": "__ipv6__",
+                    "field_alias": "IPv6",
+                    "is_display": False,
+                    "is_editable": True,
+                    "tag": "dimension",
+                    "es_doc_values": False,
+                    "is_analyzed": False,
+                }
+            )
         return field_list
 
     def get_final_fields(self):
@@ -779,6 +792,8 @@ class MappingHandlers(object):
 
             analyze_fields_type_result = cls._analyze_fields_type(final_fields_list)
             if analyze_fields_type_result:
+                if "bk_host_id" in fields_list:
+                    judge.add("bk_host_id")
                 return {
                     "context_search_usable": context_search_usable,
                     "realtime_search_usable": realtime_search_usable,
@@ -787,6 +802,8 @@ class MappingHandlers(object):
                 }
             context_search_usable = True
             realtime_search_usable = True
+            if "bk_host_id" in fields_list:
+                judge.add("bk_host_id")
             return {
                 "context_search_usable": context_search_usable,
                 "realtime_search_usable": realtime_search_usable,
@@ -814,7 +831,7 @@ class MappingHandlers(object):
                 if x["field_type"] in fields_type.get(field_name):
                     continue
                 type_msg = str(_("或者")).join(fields_type.get(x["field_name"]))
-                return _(f"{field_name}必须为{type_msg}类型")
+                return _("{field_name}必须为{type_msg}类型").format(field_name=field_name, type_msg=type_msg)
         return None
 
     @classmethod
@@ -938,7 +955,7 @@ class MappingHandlers(object):
             result["async_export_fields"] = scenario_fields
             result["async_export_usable"] = True
         else:
-            result["async_export_usable_reason"] = "检查{}字段是否为聚合字段".format(",".join(scenario_fields))
+            result["async_export_usable_reason"] = _("检查{}字段是否为聚合字段").format(",".join(scenario_fields))
         return result
 
     @classmethod

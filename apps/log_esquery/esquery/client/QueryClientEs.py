@@ -20,7 +20,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-import socket
 from typing import Any, Dict
 
 from django.conf import settings
@@ -35,15 +34,13 @@ from apps.log_esquery.exceptions import (
     BaseSearchFieldsException,
     EsClientAliasException,
     EsClientCatIndicesException,
-    EsClientConnectInfoException,
     EsClientMetaInfoException,
     EsClientScrollException,
     EsClientSearchException,
-    EsClientSocketException,
     EsException,
 )
 from apps.log_esquery.type_constants import type_mapping_dict
-from apps.log_esquery.utils.es_client import get_es_client
+from apps.log_esquery.utils.es_client import get_es_client, es_socket_ping
 
 
 class QueryClientEs(QueryClientTemplate):  # pylint: disable=invalid-name
@@ -132,20 +129,8 @@ class QueryClientEs(QueryClientTemplate):  # pylint: disable=invalid-name
         )
         self._active: bool = False
 
-        if not self.host or not self.port:
-            raise EsClientConnectInfoException()
-
-        cs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        es_address: tuple = (str(self.host), int(self.port))
-        cs.settimeout(2)
-        try:
-            status: int = cs.connect_ex(es_address)
-            # this status is returnback from tcpserver
-            if status != 0:
-                raise EsClientSocketException(EsClientSocketException.MESSAGE.format(error=""))
-        except Exception as e:  # pylint: disable=broad-except
-            raise EsClientSocketException(EsClientSocketException.MESSAGE.format(error=e))
-        cs.close()
+        # es socket ping
+        es_socket_ping(host=self.host, port=self.port)
 
         self._client: Elasticsearch = get_es_client(
             version=self.version,

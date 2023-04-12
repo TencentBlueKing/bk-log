@@ -67,7 +67,7 @@
         </template>
         <!-- 检测请求参数 -->
         <bk-table-column
-          :label="$t('检测请求参数')"
+          :label="$t('检索请求参数')"
           width="180">
           <template slot-scope="{ row }">
             <bk-popover placement="top" theme="light">
@@ -190,13 +190,16 @@
             <span v-if="isShowRetry(row)" style="margin-right: 10px;">
               <bk-button
                 text
-                v-if="row.retry_able"
+                v-if="row.retry_able && row.export_status !== 'success'"
                 @click="retryExport(row)">
                 {{$t('重试')}}
               </bk-button>
               <span
                 v-else
-                v-bk-tooltips="$t('数据源过期')"
+                v-bk-tooltips="{
+                  content: $t('数据源过期'),
+                  disabled: row.export_status === 'success'
+                }"
                 class="top-start">
                 <bk-button text disabled>
                   {{$t('重试')}}

@@ -54,12 +54,12 @@
       <div ref="moreTools" class="event-icons">
         <span
           class="icon bk-icon icon-close-circle"
-          v-bk-tooltips.top="{ content: $t('添加 {n} 过滤项', { n: 'is' }), delay: 300 }"
+          v-bk-tooltips.top="{ content: $t('添加 {n} 过滤项', { n: '=' }), delay: 300 }"
           @click="handleMenuClick('is')">
         </span>
         <span
           class="icon bk-icon icon-minus-circle"
-          v-bk-tooltips.top="{ content: $t('添加 {n} 过滤项', { n: 'is not' }), delay: 300 }"
+          v-bk-tooltips.top="{ content: $t('添加 {n} 过滤项', { n: '!=' }), delay: 300 }"
           @click="handleMenuClick('not')">
         </span>
         <span
@@ -96,6 +96,7 @@ export default {
       segmentReg: /([,&*+:;?^=!$<>'"{}()|[\]/\\|\s\r\n\t]|[-])/,
       segmentLimitIndex: 0, // 分词超出最大数量边界下标
       limitCount: 256, // 支持分词最大数量
+      currentEvent: null,
     };
   },
   computed: {
@@ -162,7 +163,6 @@ export default {
     },
     handleClick(e, value) {
       this.handleDestroy();
-
       this.curValue = value;
       this.popoverInstance = this.$bkPopover(e.target, {
         content: this.$refs.moreTools,
@@ -175,6 +175,11 @@ export default {
         onHidden: () => {
           this.popoverInstance && this.popoverInstance.destroy();
           this.popoverInstance = null;
+          this.currentEvent.classList.remove('focus-text');
+        },
+        onShow: () => {
+          this.currentEvent = e.target;
+          this.currentEvent.classList.add('focus-text');
         },
       });
       this.popoverInstance && this.popoverInstance.show(10);
@@ -247,6 +252,7 @@ export default {
     .valid-text {
       cursor: pointer;
 
+      &.focus-text,
       &:hover {
         color: #3a84ff;
       }

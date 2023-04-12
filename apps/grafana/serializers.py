@@ -94,11 +94,11 @@ class DimensionSerializer(serializers.Serializer):
 
 
 class TracesSerializer(serializers.Serializer):
-    operation = serializers.CharField(label=_("operation"), required=False)
-    service = serializers.CharField(label=_("service"), required=False)
-    tags = serializers.CharField(label=_("tags"), required=False)
-    minDuration = serializers.IntegerField(label=_("minDuration"), required=False)
-    maxDuration = serializers.IntegerField(label=_("maxDuration"), required=False)
-    limit = serializers.IntegerField(label=_("limit"), default=20)
+    operation = serializers.CharField(label=_("操作"), required=False)
+    service = serializers.CharField(label=_("服务"), required=False)
+    tags = serializers.CharField(label=_("标签"), required=False)
+    minDuration = serializers.IntegerField(label=_("最小时间间隔"), required=False)
+    maxDuration = serializers.IntegerField(label=_("最大时间间隔"), required=False)
+    limit = serializers.IntegerField(label=_("分页"), default=20)
     start = serializers.IntegerField(label=_("开始时间"), required=False)
     end = serializers.IntegerField(label=_("结束时间"), required=False)

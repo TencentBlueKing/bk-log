@@ -84,7 +84,11 @@
               :data="clickSec.data[i]"
               size="small"
               v-bkloading="{ isLoading: reloadTable }">
-              <bk-table-column :label="$t('目标')" prop="ip"></bk-table-column>
+              <bk-table-column :label="$t('目标')">
+                <template slot-scope="props">
+                  <span>{{getShowIp(props.row)}}</span>
+                </template>
+              </bk-table-column>
               <bk-table-column :label="$t('状态')">
                 <template slot-scope="props">
                   <span @click="reset(props.row)">
@@ -108,7 +112,7 @@
               </bk-table-column>
               <bk-table-column :label="$t('更新时间')" prop="create_time"></bk-table-column>
               <bk-table-column :label="$t('插件版本')" prop="plugin_version"></bk-table-column>
-              <bk-table-column :label="$t('详情')">
+              <bk-table-column :label="$t('详情')" width="280">
                 <template slot-scope="props">
                   <div class="text-style">
                     <span @click.stop="viewDetail(props.row)">{{ $t('部署详情') }}</span>
@@ -252,7 +256,7 @@ export default {
       dataPen: {},
       dataAll: {},
       // 是否支持一键检测
-      enableCheckCollector: window.ENABLE_CHECK_COLLECTOR,
+      enableCheckCollector: JSON.parse(window.ENABLE_CHECK_COLLECTOR),
       // 一键检测弹窗配置
       reportDetailShow: false,
       // 一键检测采集项标识
@@ -265,6 +269,9 @@ export default {
     },
     isContainer() {
       return this.collectorData.environment === 'container';
+    },
+    hostIdentifierPriority() {
+      return this.$store.getters['globals/globalsData']?.host_identifier_priority ?? ['ip', 'host_name', 'ipv6'];
     },
   },
   created() {
@@ -524,6 +531,9 @@ export default {
         }
       });
     },
+    getShowIp(row) {
+      return row[this.hostIdentifierPriority.find(pItem => Boolean(row[pItem]))] ?? row.ip;
+    },
   },
 };
 </script>
@@ -701,6 +711,10 @@ export default {
       .bk-sideslider-content {
         background-color: #313238;
         color: #c4c6cc;
+
+        a {
+          color: #3a84ff;
+        }
       }
     }
   }

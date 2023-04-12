@@ -19,6 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import typing
 import copy
 import re
 import time
@@ -34,12 +35,13 @@ from apps.grafana.constants import TIME_SERIES_FIELD_TYPE, LOG_SEARCH_DIMENSION_
 from apps.iam import Permission, ActionEnum, ResourceEnum
 from apps.log_search.constants import GlobalCategoriesEnum
 from apps.log_search.exceptions import BaseSearchIndexSetDataDoseNotExists
-from apps.log_search.handlers.biz import BizHandler
 from apps.log_search.handlers.search.aggs_handlers import AggsViewAdapter
 from apps.log_search.handlers.search.search_handlers_esquery import SearchHandler
 from apps.log_search.models import LogIndexSet, Scenario
 from bk_dataview.grafana import client
 from bkm_space.utils import bk_biz_id_to_space_uid
+from bkm_ipchooser.handlers.base import BaseHandler
+from bkm_ipchooser.constants import ObjectType
 
 
 class GrafanaQueryHandler:
@@ -183,7 +185,7 @@ class GrafanaQueryHandler:
         org_id = self._get_org_id(self.bk_biz_id)
         resp = client.search_dashboard(org_id, dashboard_id)
 
-        if not resp.status_code == 200 or resp.json():
+        if not resp.status_code == 200 or not resp.json():
             # 仪表盘找不到，校验失败
             return False
         dashboards = resp.json()
@@ -228,6 +230,33 @@ class GrafanaQueryHandler:
             raise_exception=True,
         )
 
+    def build_ipchooser_params(self, query_dict: dict) -> typing.Dict[str, typing.Any]:
+        """
+        构建透传到检索模块ip选择器的参数
+        """
+        ip_chooser = defaultdict(list)
+        if not query_dict.get("target", []):
+            return ip_chooser
+
+        for _target in query_dict.get("target", []):
+            object_id = _target.get("bk_obj_id", "host")
+            if object_id in ["set", "module"]:
+                ip_chooser["node_list"].append(
+                    {
+                        "object_id": object_id,
+                        "instance_id": int(_target["bk_inst_id"]),
+                        "meta": BaseHandler.get_meta_data(self.bk_biz_id),
+                    }
+                )
+                continue
+            ip_chooser["host_list"].append(
+                {
+                    "cloud_area": {"id": int(_target["bk_target_cloud_id"])},
+                    "ip": _target["bk_target_ip"],
+                }
+            )
+        return ip_chooser
+
     def query(self, query_dict: dict):
         """
         数据查询
@@ -250,10 +279,7 @@ class GrafanaQueryHandler:
         search_dict = {
             "start_time": query_dict["start_time"],
             "end_time": query_dict["end_time"],
-            "host_scopes": {
-                "modules": [],
-                "ips": ",".join([host["bk_target_ip"] for host in query_dict.get("target", [])]),
-            },
+            "ip_chooser": self.build_ipchooser_params(query_dict),
             "addition": [
                 {
                     "field": cond["key"],
@@ -297,10 +323,7 @@ class GrafanaQueryHandler:
         search_dict = {
             "start_time": query_dict["start_time"],
             "end_time": query_dict["end_time"],
-            "host_scopes": {
-                "modules": [],
-                "ips": ",".join([host["bk_target_ip"] for host in query_dict.get("target", [])]),
-            },
+            "ip_chooser": self.build_ipchooser_params(query_dict),
             "addition": [
                 {
                     "field": cond["key"],
@@ -436,7 +459,7 @@ class GrafanaQueryHandler:
         """
         校验单个条件匹配
         """
-        field_name = condition_item["field"]
+        field_name = condition_item["key"]
         method = condition_item.get("method", "eq")
         field_values = condition_item["value"]
 
@@ -460,7 +483,8 @@ class GrafanaQueryHandler:
         if method == "eq":
             # 当前等于任一字符串即匹配
             for value in field_values:
-                if instance_value == value:
+                # 因为上面field_values统一转换为str，所以这里也要转换
+                if str(instance_value) == value:
                     return True
             else:
                 return False
@@ -468,7 +492,8 @@ class GrafanaQueryHandler:
         if method == "neq":
             # 当前值等于任一字符串即不匹配
             for value in field_values:
-                if instance_value == value:
+                # 因为上面field_values统一转换为str，所以这里也要转换
+                if str(instance_value) == value:
                     return False
             else:
                 return True
@@ -527,26 +552,42 @@ class GrafanaQueryHandler:
         # 当所有条件组都不满足时，则返回不匹配
         return False
 
+    def _get_seperator(self, field_name):
+        """获取label_field和value_field的分隔符"""
+        supported_seperator = ["|", ","]
+        for _s in supported_seperator:
+            if _s in field_name:
+                return _s
+        return ","
+
     def _query_cmdb(self, variable_type, params):
         label_field = params["label_field"]
         value_field = params["value_field"]
+        label_seperator = self._get_seperator(label_field)
+        value_seperator = self._get_seperator(value_field)
+
+        # get_variable_value中多个value会以通过分隔符的形式拼接
+        if label_seperator in label_field:
+            label_field = label_field.split(label_seperator)
+        if value_seperator in value_field:
+            value_field = value_field.split(value_seperator)
         conditions_config = params.get("where", [])
+        params = {"bk_biz_id": self.bk_biz_id}
 
-        biz_handler = BizHandler(bk_biz_id=self.bk_biz_id)
+        for _condition in conditions_config:
+            # 这里的key为单数形式是因为is_match_condition里会根据key取值来判断是否匹配
+            # _condition里的集群ID和模块ID可能是字符串
+            if _condition["key"] == "bk_set_id":
+                params["bk_set_ids"] = [int(i) for i in _condition["value"]]
+            if _condition["key"] == "bk_moduls_id":
+                params["bk_module_ids"] = [int(i) for i in _condition["value"]]
 
-        if variable_type == "host":
-            host_fields = [c["key"] for c in conditions_config] + [label_field, value_field]
-            if "bk_host_innerip" not in host_fields:
-                host_fields.append("bk_host_innerip")
-            instances = biz_handler.get_hosts(host_fields)
-            for instance in instances:
-                instance.update(instance["host"])
-                instance["bk_set_ids"] = [s["id"] for s in instance["set"]]
-                instance["bk_module_ids"] = [m["id"] for m in instance["module"]]
-        elif variable_type == "module":
-            instances = biz_handler.list_module()
-        elif variable_type == "set":
-            instances = biz_handler.list_set()
+        if variable_type == ObjectType.HOST.value:
+            instances = BaseHandler.query_hosts_by_set_and_module(**params)
+        elif variable_type == ObjectType.MODULE.value:
+            instances = BaseHandler.query_modules_by_set(**params)
+        elif variable_type == ObjectType.SET.value:
+            instances = BaseHandler.query_sets(**params)
         else:
             return []
 
@@ -557,21 +598,34 @@ class GrafanaQueryHandler:
             if not self.is_match_condition(instance, conditions_config):
                 continue
 
-            label = instance.get(label_field, None)
-            value = instance.get(value_field, None)
+            if isinstance(label_field, list):
+                label = []
+                for _field in label_field:
+                    if instance.get(_field, None) is not None:
+                        label.append(instance[_field])
+            else:
+                label = instance.get(label_field, None)
+
+            if isinstance(value_field, list):
+                value = []
+                for _field in value_field:
+                    if instance.get(_field, None) is not None:
+                        value.append(instance[_field])
+            else:
+                value = instance.get(value_field, None)
 
             if not value and value != 0:
                 continue
 
             if isinstance(value, list):
-                value = ",".join([str(x) for x in value])
+                value = value_seperator.join([str(x) for x in value])
             else:
                 value = str(value)
 
             if not label:
                 label = value
             elif isinstance(label, list):
-                label = ",".join([str(x) for x in label])
+                label = label_seperator.join([str(x) for x in label])
             else:
                 label = str(label)
 
@@ -611,7 +665,6 @@ class GrafanaQueryHandler:
             "host": query_cmdb,
             "module": query_cmdb,
             "set": query_cmdb,
-            "service_instance": query_cmdb,
             "dimension": self._query_dimension,
         }
 

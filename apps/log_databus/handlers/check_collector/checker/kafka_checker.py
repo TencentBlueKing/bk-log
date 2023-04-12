@@ -21,6 +21,7 @@ the project delivered to anyone in the future.
 """
 import json
 import logging
+from django.utils.translation import ugettext_lazy as _
 
 from django.conf import settings
 from kafka import KafkaConsumer, TopicPartition
@@ -48,7 +49,7 @@ class KafkaChecker(Checker):
 
     def _run(self):
         if not self.kafka_info_list:
-            self.append_normal_info("没有kafka, 跳过检查")
+            self.append_normal_info(_("没有kafka, 跳过检查"))
             return
         for kafka_info in self.kafka_info_list:
             self.get_kafka_test_group_latest_log(kafka_info)
@@ -80,7 +81,7 @@ class KafkaChecker(Checker):
             # 获取topic分区信息
             topic_partitions = consumer.partitions_for_topic(topic)
             if not topic_partitions:
-                self.append_error_info(f"获取topic[{topic}] partition信息失败")
+                self.append_error_info(_("获取topic[{topic}] partition信息失败").format(topic=topic))
                 return
 
             for _partition in topic_partitions:
@@ -112,11 +113,11 @@ class KafkaChecker(Checker):
             consumer.close()
 
         except Exception as e:  # pylint: disable=broad-except
-            message = f"创建kafka消费者失败, err: {str(e)}"
+            message = _("创建kafka消费者失败, err: {e}").format(e=e)
             logger.error(message)
             self.append_error_info(message)
 
         if not log_content:
-            self.append_error_info(f"{host}:{port}, topic: {topic}, 无数据")
+            self.append_error_info(_("{host}:{port}, topic: {topic}, 无数据").format(host=host, port=port, topic=topic))
         else:
-            self.append_normal_info(f"{host}:{port}, topic: {topic}, 有数据")
+            self.append_normal_info(_("{host}:{port}, topic: {topic}, 有数据").format(host=host, port=port, topic=topic))

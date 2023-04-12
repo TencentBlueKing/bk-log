@@ -226,6 +226,7 @@ export default {
           },
           query: {
             spaceUid: this.$store.state.spaceUid,
+            editName: row.name,
           },
         });
         return;

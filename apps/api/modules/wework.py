@@ -26,7 +26,7 @@ from config.domains import WEWORK_APIGATEWAY_ROOT
 
 
 class _WeWork(object):
-    MODULE = _("Wework")
+    MODULE = _("Wework企业微信")
 
     def __init__(self):
         self.create_appchat = DataAPI(

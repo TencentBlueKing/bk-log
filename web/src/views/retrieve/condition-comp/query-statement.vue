@@ -108,7 +108,8 @@ export default {
   methods: {
     handleClickHistory(item) {
       this.$emit('change', item.params.keyword);
-      this.$emit('updateSearchParam', item.params.addition, item.params.host_scopes);
+      // this.$emit('updateSearchParam', item.params.addition, item.params.host_scopes);
+      this.$emit('updateSearchParam', item.params.addition, item.params.ip_chooser);
       this.$nextTick(() => {
         this.showDropdown = false;
         this.isSearchRecord = true;

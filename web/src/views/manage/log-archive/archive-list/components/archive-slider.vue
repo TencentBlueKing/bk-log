@@ -24,7 +24,7 @@
   <div class="archive-slider-container">
     <bk-sideslider
       transfer
-      :title="isEdit ? $t('编辑归档') : $t('新增归档')"
+      :title="isEdit ? $t('编辑归档') : $t('新建归档')"
       :is-show="showSlider"
       :width="676"
       :quick-close="true"
@@ -36,7 +36,7 @@
           v-if="!sliderLoading"
           data-test-id="addNewArchive_div_formContainer"
           :model="formData"
-          :label-width="160"
+          :label-width="350"
           :rules="basicRules"
           form-type="vertical"
           ref="validateForm"

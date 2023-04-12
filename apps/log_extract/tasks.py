@@ -20,6 +20,7 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import os
+from django.utils.translation import ugettext_lazy as _
 
 from celery.schedules import crontab
 from celery.task import periodic_task
@@ -68,7 +69,7 @@ def periodic_clear_timeout_pipeline_task():
             task_service.revoke_pipeline(task["pipeline_id"])
         except InvalidOperationException as e:
             logger.exception(
-                "[periodic_clear_timeout_pipeline_task]撤销超时pipeline任务失败：{}, task_id=>{}, pipeline_id=>{}".format(
+                _("[periodic_clear_timeout_pipeline_task]撤销超时pipeline任务失败：{}, task_id=>{}, pipeline_id=>{}").format(
                     e, task["task_id"], task["pipeline_id"]
                 )
             )

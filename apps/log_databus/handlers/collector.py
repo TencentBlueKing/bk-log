@@ -1118,10 +1118,10 @@ class CollectorHandler(object):
             if data_items:
                 etl_message.update(
                     {
-                        "data": data_items[0]["data"],
-                        "log": data_items[0]["data"],
-                        "iterationindex": data_items[0]["iterationindex"],
-                        "batch": [_item["data"] for _item in data_items],
+                        "data": data_items[0].get("data", ""),
+                        "log": data_items[0].get("data", ""),
+                        "iterationindex": data_items[0].get("iterationindex", ""),
+                        "batch": [_item.get("data", "") for _item in data_items],
                     }
                 )
             else:
@@ -1316,6 +1316,7 @@ class CollectorHandler(object):
                 "bk_inst_name": "adminserver",
                 "child": [
                     {
+                        "bk_host_id": 1,
                         "status": "FAILED",
                         "ip": "127.0.0.1",
                         "bk_cloud_id": 0,
@@ -1364,7 +1365,7 @@ class CollectorHandler(object):
                 {
                     "is_label": False,
                     "label_name": "",
-                    "bk_obj_name": "主机",
+                    "bk_obj_name": _("主机"),
                     "node_path": "主机",
                     "bk_obj_id": "host",
                     "bk_inst_id": "",
@@ -1405,8 +1406,10 @@ class CollectorHandler(object):
                 # delete 标签如果订阅任务状态action不为UNINSTALL
                 if label_name == "delete" and instance_obj["steps"].get(LogPluginInfo.NAME) != "UNINSTALL":
                     continue
-                host_key = {"bk_host_innerip": instance_obj["ip"], "bk_cloud_id": instance_obj["bk_cloud_id"]}
-                if host_key in host_result:
+                # 因为instance_obj兼容新版IP选择器的字段名, 所以这里的bk_cloud_id->cloud_id, bk_host_id->host_id
+                if (instance_obj["ip"], instance_obj["cloud_id"]) in host_result or instance_obj[
+                    "host_id"
+                ] in host_result:
                     content_obj["child"].append(instance_obj)
             content_data.append(content_obj)
         return {"task_ready": task_ready, "contents": content_data}
@@ -1447,9 +1450,8 @@ class CollectorHandler(object):
         for host in host_result:
             for inst_id in host["parent_inst_id"]:
                 key = "{}|{}".format(str(host["bk_obj_id"]), str(inst_id))
-                host_result_dict[key].append(
-                    {"bk_host_innerip": host["bk_host_innerip"], "bk_cloud_id": host["bk_cloud_id"]}
-                )
+                host_result_dict[key].append((host["bk_host_innerip"], host["bk_cloud_id"]))
+                host_result_dict[key].append(host["bk_host_id"])
         return host_result_dict
 
     def _get_mapping(self, node_collect):
@@ -1557,26 +1559,34 @@ class CollectorHandler(object):
         host_list = list()
         latest_id = self.data.task_id_list[-1]
         if self.data.target_node_type == TargetNodeTypeEnum.INSTANCE.value:
-            host_list = [(_node["ip"], _node["bk_cloud_id"]) for _node in self.data.target_nodes]
+            for node in self.data.target_nodes:
+                if "bk_host_id" in node:
+                    host_list.append(node["bk_host_id"])
+                else:
+                    host_list.append((node["ip"], node["bk_cloud_id"]))
 
         for instance_obj in instance_data:
             bk_cloud_id = instance_obj["instance_info"]["host"]["bk_cloud_id"]
             if isinstance(bk_cloud_id, list):
                 bk_cloud_id = bk_cloud_id[0]["bk_inst_id"]
             bk_host_innerip = instance_obj["instance_info"]["host"]["bk_host_innerip"]
+            bk_host_id = instance_obj["instance_info"]["host"]["bk_host_id"]
 
             # 静态节点：排除订阅任务历史IP（不是最新订阅且不在当前节点范围的ip）
             if (
                 self.data.target_node_type == TargetNodeTypeEnum.INSTANCE.value
                 and str(instance_obj["task_id"]) != latest_id
-                and (bk_host_innerip, bk_cloud_id) not in host_list
+                and ((bk_host_innerip, bk_cloud_id) not in host_list and bk_host_id not in host_list)
             ):
                 continue
             instance_list.append(
                 {
+                    "host_id": bk_host_id,
                     "status": instance_obj["status"],
                     "ip": bk_host_innerip,
-                    "bk_cloud_id": bk_cloud_id,
+                    "ipv6": instance_obj["instance_info"]["host"].get("bk_host_innerip_v6", ""),
+                    "host_name": instance_obj["instance_info"]["host"]["bk_host_name"],
+                    "cloud_id": bk_cloud_id,
                     "log": self.get_instance_log(instance_obj),
                     "instance_id": instance_obj["instance_id"],
                     "instance_name": bk_host_innerip,
@@ -1864,7 +1874,7 @@ class CollectorHandler(object):
                     {
                         "is_label": False,
                         "label_name": "",
-                        "bk_obj_name": "主机",
+                        "bk_obj_name": _("主机"),
                         "node_path": "主机",
                         "bk_obj_id": "host",
                         "bk_inst_id": "",
@@ -1874,7 +1884,7 @@ class CollectorHandler(object):
                 ]
             }
         param = {"subscription_id_list": [self.data.subscription_id]}
-        status_result, *_ = NodeApi.get_subscription_instance_status(param)
+        status_result, *__ = NodeApi.get_subscription_instance_status(param)
         instance_status = self.format_subscription_instance_status(status_result)
 
         # 如果采集目标是HOST-INSTANCE
@@ -1883,7 +1893,7 @@ class CollectorHandler(object):
                 {
                     "is_label": False,
                     "label_name": "",
-                    "bk_obj_name": "主机",
+                    "bk_obj_name": _("主机"),
                     "node_path": "主机",
                     "bk_obj_id": "host",
                     "bk_inst_id": "",
@@ -1921,8 +1931,10 @@ class CollectorHandler(object):
             }
 
             for instance_obj in instance_status:
-                host_key = {"bk_host_innerip": instance_obj["ip"], "bk_cloud_id": instance_obj["bk_cloud_id"]}
-                if host_key in host_result:
+                # 因为instance_obj兼容新版IP选择器的字段名, 所以这里的bk_cloud_id->cloud_id, bk_host_id->host_id
+                if (instance_obj["ip"], instance_obj["cloud_id"]) in host_result or instance_obj[
+                    "host_id"
+                ] in host_result:
                     content_obj["child"].append(instance_obj)
             content_data.append(content_obj)
         return {"contents": content_data}
@@ -1966,8 +1978,11 @@ class CollectorHandler(object):
             status_obj = {
                 "status": status,
                 "status_name": status_name,
+                "host_id": instance_obj["instance_info"]["host"]["bk_host_id"],
                 "ip": instance_obj["instance_info"]["host"]["bk_host_innerip"],
-                "bk_cloud_id": bk_cloud_id,
+                "ipv6": instance_obj["instance_info"]["host"].get("bk_host_innerip_v6", ""),
+                "cloud_id": bk_cloud_id,
+                "host_name": instance_obj["instance_info"]["host"]["bk_host_name"],
                 "instance_id": instance_obj["instance_id"],
                 "instance_name": instance_obj["instance_info"]["host"]["bk_host_innerip"],
                 "plugin_name": host_statuses.get("name"),
@@ -2094,36 +2109,47 @@ class CollectorHandler(object):
         target_nodes = params.get("target_nodes", [])
         bk_biz_id = params["bk_biz_id"] if not self.data else self.data.bk_biz_id
         if target_node_type and target_node_type == TargetNodeTypeEnum.INSTANCE.value:
-            illegal_ips = self._filter_illegal_ips(
-                bk_biz_id=bk_biz_id, ip_list=[target_node["ip"] for target_node in target_nodes]
+            illegal_ips, illegal_bk_host_ids = self._filter_illegal_ip_and_host_id(
+                bk_biz_id=bk_biz_id,
+                ips=[target_node["ip"] for target_node in target_nodes if "ip" in target_node],
+                bk_host_ids=[target_node["bk_host_id"] for target_node in target_nodes if "bk_host_id" in target_node],
             )
-            if illegal_ips:
-                logger.error("cat illegal IPs: {illegal_ips}".format(illegal_ips=illegal_ips))
+            if illegal_ips or illegal_bk_host_ids:
+                illegal_items = [str(item) for item in (illegal_ips + illegal_bk_host_ids)]
+                logger.error("cat illegal ip or bk_host_id: {illegal_ips}".format(illegal_ips=illegal_items))
                 raise CollectorIllegalIPException(
-                    CollectorIllegalIPException.MESSAGE.format(bk_biz_id=bk_biz_id, illegal_ips=illegal_ips)
+                    CollectorIllegalIPException.MESSAGE.format(bk_biz_id=bk_biz_id, illegal_ips=illegal_items)
                 )
 
     @classmethod
-    def _filter_illegal_ips(cls, bk_biz_id: int, ip_list: list):
+    def _filter_illegal_ip_and_host_id(cls, bk_biz_id: int, ips: list = None, bk_host_ids: list = None):
         """
         过滤出非法ip列表
         @param bk_biz_id [Int] 业务id
-        @param ip_list [List] ip列表
+        @param ips [List] ip列表
         """
-        legal_ip_list = CCApi.list_biz_hosts.bulk_request(
+        ips = ips or []
+        bk_host_ids = bk_host_ids or []
+        legal_host_list = CCApi.list_biz_hosts.bulk_request(
             {
                 "bk_biz_id": bk_biz_id,
                 "host_property_filter": {
                     "condition": "OR",
-                    "rules": [{"field": "bk_host_innerip", "operator": "in", "value": [host for host in ip_list]}],
+                    "rules": [
+                        {"field": "bk_host_innerip", "operator": "in", "value": ips},
+                        {"field": "bk_host_id", "operator": "in", "value": bk_host_ids},
+                    ],
                 },
                 "fields": CMDB_HOST_SEARCH_FIELDS,
             }
         )
 
-        legal_ip_set = {legal_ip["bk_host_innerip"] for legal_ip in legal_ip_list}
+        legal_ip_set = {legal_host["bk_host_innerip"] for legal_host in legal_host_list}
+        legal_host_id_set = {legal_host["bk_host_id"] for legal_host in legal_host_list}
 
-        return [ip for ip in ip_list if ip not in legal_ip_set]
+        illegal_ips = [ip for ip in ips if ip not in legal_ip_set]
+        illegal_bk_host_ids = [host_id for host_id in bk_host_ids if host_id not in legal_host_id_set]
+        return illegal_ips, illegal_bk_host_ids
 
     def get_clean_stash(self):
         clean_stash = CleanStash.objects.filter(collector_config_id=self.collector_config_id).first()

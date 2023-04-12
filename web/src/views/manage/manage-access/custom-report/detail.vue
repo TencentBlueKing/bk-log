@@ -28,9 +28,17 @@
     class="custom-report-detail-container access-manage-container">
     <auth-container-page v-if="authPageInfo" :info="authPageInfo"></auth-container-page>
     <template v-if="!authPageInfo && !basicLoading && reportDetail">
-      <bk-tab :active.sync="activePanel" type="border-card">
+      <basic-tab :active.sync="activePanel" type="border-card">
         <bk-tab-panel v-for="panel in panels" v-bind="panel" :key="panel.name"></bk-tab-panel>
-      </bk-tab>
+        <div class="go-search" slot="setting">
+          <div class="search-text">
+            <span class="bk-icon icon-info"></span>
+            <i18n path="数据采集好了，去 {0}">
+              <span class="search-button" @click="handleGoSearch">{{$t('查看数据')}}</span>
+            </i18n>
+          </div>
+        </div>
+      </basic-tab>
       <keep-alive>
         <component
           class="tab-content"
@@ -65,6 +73,7 @@ import DataStatus from '../log-collection/collection-item/manage-collection/data
 import UsageDetails from '@/views/manage/manage-access/components/usage-details';
 import dragMixin from '@/mixins/drag-mixin';
 import IntroPanel from './components/intro-panel';
+import BasicTab from '@/components/basic-tab';
 import * as authorityMap from '../../../../common/authority-map';
 
 export default {
@@ -76,6 +85,7 @@ export default {
     DataStatus,
     UsageDetails,
     IntroPanel,
+    BasicTab,
   },
   mixins: [dragMixin],
   data() {
@@ -146,6 +156,20 @@ export default {
     handleActiveDetails(state) {
       this.isOpenWindow = state;
       this.introWidth = state ? 360 : 0;
+    },
+    handleGoSearch() {
+      const params = {
+        indexId: this.reportDetail.index_set_id
+          ? this.reportDetail.index_set_id
+          : this.reportDetail.bkdata_index_set_ids[0],
+      };
+      this.$router.push({
+        name: 'retrieve',
+        params,
+        query: {
+          spaceUid: this.$store.state.spaceUid,
+        },
+      });
     },
   },
 };

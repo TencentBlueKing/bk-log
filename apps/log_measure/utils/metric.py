@@ -19,16 +19,14 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
-import socket
-
 import arrow
-
-from elasticsearch import Elasticsearch
 
 from apps.api import TransferApi
 from apps.log_databus.constants import STORAGE_CLUSTER_TYPE
+from apps.log_esquery.utils.es_client import es_socket_ping
 from apps.log_measure.exceptions import EsConnectFailException
 from apps.log_search.models import Space
+from apps.log_esquery.utils.es_client import get_es_client
 from apps.utils.cache import cache_one_hour
 from bk_monitor.utils.metric import Metric
 
@@ -107,17 +105,17 @@ class MetricUtils(object):
         username = auth_info.get("username")
         password = auth_info.get("password")
 
-        cs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        es_address: tuple = (str(domain_name), int(port))
-        cs.settimeout(2)
-        status: int = cs.connect_ex(es_address)
-        if status != 0:
-            raise EsConnectFailException()
-        cs.close()
+        es_socket_ping(host=domain_name, port=port)
 
-        http_auth = (username, password) if username and password else None
-        es_client = Elasticsearch(
-            hosts=[domain_name], http_auth=http_auth, scheme="http", port=port, verify_certs=False, timeout=10,
+        es_client = get_es_client(
+            version="",
+            hosts=[domain_name],
+            username=username,
+            password=password,
+            port=port,
+            scheme="http",
+            verify_certs=False,
+            timeout=10,
         )
         if not es_client.ping(params={"request_timeout": 10}):
             raise EsConnectFailException()

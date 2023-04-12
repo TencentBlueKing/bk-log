@@ -21,6 +21,7 @@ the project delivered to anyone in the future.
 """
 import time
 import logging
+from django.utils.translation import ugettext_lazy as _
 
 import redis
 
@@ -87,7 +88,7 @@ class RedisClient(object):
         except Exception as e:  # pylint: disable=broad-except
             logger.error(f"failed to ping redis, err: {e}")
             result["message"] = str(e)
-            result["suggestion"] = "确认Redis是否可用"
+            result["suggestion"] = _("确认Redis是否可用")
         spend_time = time.time() - start_time
         result["data"] = "{}ms".format(int(spend_time * 1000))
         return result

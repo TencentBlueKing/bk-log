@@ -61,7 +61,7 @@
         @filter-change="handleFilterChange"
         @page-change="handlePageChange"
         @page-limit-change="handleLimitChange">
-        <bk-table-column :label="$t('采集项名称')" :render-header="$renderHeader">
+        <bk-table-column :label="$t('名称')" :render-header="$renderHeader">
           <template slot-scope="props">
             {{ props.row.collector_config_name }}
           </template>
@@ -135,7 +135,7 @@
               ext-cls="mr10 king-button"
               :tips-conf="''"
               :button-text="$t('删除')"
-              :disabled="props.row.etl_config !== 'bkdata_clean'"
+              :disabled="props.row.etl_config === 'bkdata_clean'"
               :cursor-active="!(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])"
               @on-click="operateHandler(props.row, 'delete')">
             </log-button>
@@ -336,6 +336,7 @@ export default {
       if (operateType === 'edit') {
         routeName = 'clean-edit';
         query.spaceUid = this.$store.state.spaceUid;
+        query.editName = row.collector_config_name;
         params.collectorId = row.collector_config_id;
       } else if (operateType === 'search') {
         routeName = 'retrieve';

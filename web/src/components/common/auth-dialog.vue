@@ -27,7 +27,7 @@
       :mask-close="false"
       :close-icon="false"
       :width="740"
-      :ok-text="$t('去申请')"
+      :ok-text="$t('申请')"
       @confirm="confirmSourceApply"
       @cancel="closeAuth">
       <div class="apply-authority-dialog-container">

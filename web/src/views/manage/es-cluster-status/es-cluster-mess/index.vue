@@ -171,7 +171,7 @@
               text
               class="mr10"
               :tips-conf="props.row.is_platform ? $t('公共集群，禁止创建自定义索引集') : $t('平台默认的集群不允许编辑和删除，请联系管理员。')"
-              :button-text="$t('建索引集')"
+              :button-text="$t('新建索引集')"
               :disabled="!props.row.is_editable || props.row.is_platform"
               @on-click="createIndexSet(props.row)">>
             </log-button>
@@ -240,7 +240,7 @@ import { mapGetters } from 'vuex';
 import EsSlider from './es-slider';
 import IntroPanel from './components/intro-panel.vue';
 import dragMixin from '@/mixins/drag-mixin';
-import { formatFileSize, clearTableFilter } from '../../../../common/util';
+import { formatFileSize, clearTableFilter, isIPv6 } from '../../../../common/util';
 import * as authorityMap from '../../../../common/authority-map';
 import EmptyStatus from '@/components/empty-status';
 
@@ -407,9 +407,7 @@ export default {
         });
         this.tableLoading = false;
         const list = tableRes.data;
-        if (!list.length) {
-          return;
-        }
+        if (!list.length) return;
         this.tableDataOrigin = list;
         this.tableDataSearched = list;
         this.pagination.count = list.length;
@@ -470,14 +468,19 @@ export default {
       return row[property] === value;
     },
     searchCallback() {
-      if (this.params.keyword) {
+      const keyword = this.params.keyword.trim();
+      if (keyword) {
         this.tableDataSearched = this.tableDataOrigin.filter((item) => {
+          // 若是ipv6 则拿补全后的keyword与补全后的原地址对比
+          if (isIPv6(keyword)) {
+            return this.completeIPv6Address(item.cluster_config.domain_name) === this.completeIPv6Address(keyword);
+          };
           if (item.cluster_config.cluster_name) {
             return (item.cluster_config.cluster_name
                       + item.cluster_config.creator
-                      + item.cluster_config.es_host).includes(this.params.keyword);
+                      + item.cluster_config.domain_name).includes(keyword);
           }
-          return (item.source_name + item.updated_by).includes(this.params.keyword);
+          return (item.source_name + item.updated_by).includes(keyword);
         });
       } else {
         this.tableDataSearched = this.tableDataOrigin;
@@ -486,6 +489,22 @@ export default {
       this.pagination.current = 1;
       this.pagination.count = this.tableDataSearched.length;
       this.computePageData();
+    },
+    // ipv6补全
+    completeIPv6Address(address) {
+      const sections = address.split(':');
+      const missingSections = 8 - sections.length;
+
+      for (let i = 0; i < missingSections; i++) {
+        sections.splice(sections.indexOf(''), 1, '0000');
+      }
+
+      return sections.map((section) => {
+        if (section.length < 4) {
+          section = '0'.repeat(4 - section.length) + section;
+        }
+        return section;
+      }).join(':');
     },
     // 根据分页数据过滤表格
     computePageData() {

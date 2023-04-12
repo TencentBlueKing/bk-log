@@ -36,7 +36,7 @@
           :data="tableList"
           :max-height="254"
           @row-click="handleSelectCluster">
-          <bk-table-column :label="$t('集群名')" min-width="240">
+          <bk-table-column :label="$t('集群名')" :render-header="$renderHeader" min-width="240">
             <template slot-scope="{ row }">
               <bk-radio :checked="clusterSelect === row.storage_cluster_id">
                 <div class="overflow-tips" v-bk-overflow-tips>
@@ -45,12 +45,12 @@
               </bk-radio>
             </template>
           </bk-table-column>
-          <bk-table-column :label="$t('总量')" min-width="100">
+          <bk-table-column :label="$t('总量')" :render-header="$renderHeader" min-width="100">
             <template slot-scope="{ row }">
               <span>{{formatFileSize(row.storage_total)}}</span>
             </template>
           </bk-table-column>
-          <bk-table-column min-width="110" :label="$t('空闲率')">
+          <bk-table-column min-width="110" :render-header="$renderHeader" :label="$t('空闲率')">
             <template slot-scope="{ row }">
               <div class="percent">
                 <div class="percent-progress">
@@ -60,12 +60,17 @@
               </div>
             </template>
           </bk-table-column>
-          <bk-table-column :label="$t('索引数')" prop="index_count"></bk-table-column>
-          <bk-table-column v-if="tableShowType" :label="$t('业务数')" prop="biz_count"></bk-table-column>
+          <bk-table-column :label="$t('索引数')" :render-header="$renderHeader" prop="index_count"></bk-table-column>
+          <bk-table-column
+            v-if="tableShowType"
+            :label="$t('业务数')"
+            :render-header="$renderHeader"
+            prop="biz_count">
+          </bk-table-column>
         </bk-table>
         <div class="cluster-illustrate" v-show="!!activeItem">
-          <p class="illustrate-title">{{$t('集群说明')}}</p>
-          <div class="illustrate-container">
+          <p class="illustrate-title">{{$t('说明')}}</p>
+          <div :class="`illustrate-container ${getIsEnLanguage && 'en-div'}`">
             <div v-for="[key, value] of Object.entries(illustrateLabelData)" :key="key">
               <span class="illustrate-label">{{key}}：</span>
               <span class="illustrate-value">{{value}}</span>
@@ -140,6 +145,9 @@ export default {
     }),
     tableShowType() {
       return this.tableType !== 'exclusive';
+    },
+    getIsEnLanguage() {
+      return this.$store.getters.isEnLanguage;
     },
   },
   watch: {
@@ -282,6 +290,11 @@ export default {
         border-bottom: 1px solid #eee;
 
         @include flex-justify(space-between);
+
+        &.en-div div {
+          display: flex;
+          flex-direction: column;
+        }
       }
 
       .illustrate-label {

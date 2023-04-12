@@ -43,11 +43,11 @@ class ESMetric(object):
         namespace_data.data.extend(ping_result)
         if not ping_result:
             namespace_data.status = True
-            namespace_data.message = _("no pubilc es config")
+            namespace_data.message = _("没有公共ES集群")
             return namespace_data
         namespace_data.status = [i.status for i in ping_result].count(True) == len(ping_result)
         if not namespace_data.status:
-            namespace_data.message = "see details"
+            namespace_data.message = _("查看详情")
         namespace_data.data.extend(ping_result)
 
         return namespace_data
@@ -82,7 +82,7 @@ class ESMetric(object):
             except (EsConnectFailException, gaierror) as e:
                 logger.error(f"failed to get es client, err: {e}")
                 result.message = str(e)
-                result.suggestion = f"确认ES集群[{cluster_name}]是否可用"
+                result.suggestion = _("确认ES集群[{cluster_name}]是否可用").format(cluster_name=cluster_name)
 
             spend_time = time.time() - start_time
             result.metric_value = "{}ms".format(int(spend_time * 1000))

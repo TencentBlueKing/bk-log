@@ -43,7 +43,7 @@
       </div>
       <bk-table v-bkloading="{ isLoading: tableLoading1 }" :data="indexesData">
         <bk-table-column :label="$t('索引')" prop="index" min-width="180"></bk-table-column>
-        <bk-table-column :label="$t('运行状态')" prop="health">
+        <bk-table-column :label="$t('状态')" prop="health">
           <template slot-scope="{ row }">
             <div :class="['status-text', row.health]">
               {{ healthMap[row.health] }}

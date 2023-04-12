@@ -212,7 +212,7 @@
           <!-- 调试设置字段 -->
           <div class="field-step field-method-step" data-test-id="fieldExtraction_div_debugSetField">
             <div class="step-head">
-              <span class="step-text">{{ $t('调试设置字段') }}</span>
+              <span class="step-text">{{ $t('调试') }}</span>
               <div class="">
                 <bk-button
                   class="fl debug-btn"
@@ -1752,7 +1752,6 @@ export default {
     }
 
     .step-head {
-      width: 242px;
       display: flex;
       align-items: center;
 

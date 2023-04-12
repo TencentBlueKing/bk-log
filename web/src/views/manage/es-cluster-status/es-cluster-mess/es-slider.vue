@@ -35,7 +35,7 @@
         <bk-form
           v-if="!sliderLoading"
           :model="basicFormData"
-          :label-width="150"
+          :label-width="170"
           :rules="basicRules"
           form-type="vertical"
           ref="validateForm"
@@ -224,7 +224,6 @@
                 <div class="flex-space-item">
                   <div class="space-item-label">{{$t('默认')}}</div>
                   <bk-select
-                    style="width: 320px;"
                     v-model="formData.setup_config.retention_days_default"
                     :clearable="false"
                     data-test-id="storageBox_select_selectExpiration">
@@ -254,7 +253,6 @@
                 <div class="flex-space-item">
                   <div class="space-item-label">{{$t('最大')}}</div>
                   <bk-select
-                    style="width: 320px;"
                     v-model="formData.setup_config.retention_days_max"
                     :clearable="false"
                     data-test-id="storageBox_select_selectExpiration">
@@ -417,7 +415,7 @@
               </div>
             </bk-form-item>
             <!-- 集群说明 -->
-            <bk-form-item :label="$t('集群说明')" class="illustrate">
+            <bk-form-item :label="$t('说明')" class="illustrate">
               <bk-input
                 type="textarea"
                 :rows="3"
@@ -1301,7 +1299,6 @@ export default {
     }
 
     .es-cluster-management {
-      max-width: 120px;
       font-size: 14px;
       display: flex;
       align-items: center;
@@ -1415,6 +1412,11 @@ export default {
 
     @include flex-justify(space-between);
 
+    .bk-select,
+    .bk-form-control {
+      flex: 1;
+    }
+
     :deep(.bk-form-input) {
       height: 34px;
     }
@@ -1422,6 +1424,7 @@ export default {
 
   .space-item-label {
     min-width: 48px;
+    padding: 0 2px;
     font-size: 12px;
     color: #63656e;
     background: #fafbfd;

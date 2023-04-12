@@ -25,12 +25,11 @@ from unittest.mock import MagicMock
 from django.test import TestCase
 from django.utils import timezone
 
-from apps.log_extract.constants import DownloadStatus, ExtractLinkType, TransitServer
+from apps.log_extract.constants import DownloadStatus, ExtractLinkType
 from apps.log_extract.models import Tasks
 from apps.log_extract.utils.packing import get_packed_dir_name
-from apps.log_extract.components.collections.distribution_component import (
-    FileDistributionComponent,
-)
+from apps.log_extract.utils.transit_server import TransitServer
+from apps.log_extract.components.collections.distribution_component import FileDistributionComponent
 from pipeline.component_framework.test import (
     ComponentTestMixin,
     ComponentTestCase,
@@ -72,33 +71,36 @@ class FileDistributionComponentTest(TestCase, ComponentTestMixin):
         }
 
         QUERY_TASK_RESULT = BASE_URL + ".FileServer.query_task_result"
-        success_task_result = [
-            {
-                "status": 3,
-                "step_results": [
-                    {
-                        "tag": "",
-                        "ip_logs": [
-                            {
-                                "total_time": 2.63,
-                                "ip": "127.0.0.1",
-                                "start_time": "2021-01-06 11:32:00",
-                                "log_content": "",
-                                "exit_code": None,
-                                "bk_cloud_id": 0,
-                                "end_time": "2021-01-06 11:32:02",
-                                "execute_count": 0,
-                                "error_code": 0,
-                            }
-                        ],
-                        "ip_status": 9,
-                    }
-                ],
-                "is_finished": True,
-                "step_instance_id": 20036358108,
-                "name": "[BKLOG] File Distribution By admin",
-            }
-        ]
+        success_task_result = {
+            "finished": True,
+            "job_instance": {"status": 3},
+            "step_instance_list": [
+                {
+                    "status": 3,
+                    "total_time": 1000,
+                    "name": "API Quick execution scriptxxx",
+                    "step_instance_id": 75,
+                    "execute_count": 0,
+                    "create_time": 1605064271000,
+                    "end_time": 1605064272000,
+                    "type": 1,
+                    "start_time": 1605064271000,
+                    "step_ip_result_list": [
+                        {
+                            "ip": "127.0.0.1",
+                            "bk_cloud_id": 0,
+                            "status": 9,
+                            "tag": "",
+                            "exit_code": 0,
+                            "error_code": 0,
+                            "start_time": 1605064271000,
+                            "end_time": 1605064272000,
+                            "total_time": 1000,
+                        }
+                    ],
+                }
+            ],
+        }
 
         params = {
             "task_id": 123,

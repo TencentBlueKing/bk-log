@@ -52,7 +52,7 @@
         @filter-change="handleFilterChange"
         @page-change="handlePageChange"
         @page-limit-change="handleLimitChange">
-        <bk-table-column :label="$t('ES集群ID')" :render-header="$renderHeader" width="120">
+        <bk-table-column :label="$t('集群ID')" :render-header="$renderHeader" width="120">
           <template slot-scope="props">
             {{ props.row.cluster_id }}
           </template>
@@ -68,7 +68,7 @@
           </template>
         </bk-table-column>
         <bk-table-column
-          :label="$t('仓库类型')"
+          :label="$t('类型')"
           :render-header="$renderHeader"
           prop="type"
           class-name="filter-column"
