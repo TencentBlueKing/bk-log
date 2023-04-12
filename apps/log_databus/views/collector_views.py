@@ -1934,6 +1934,7 @@ class CollectorViewSet(ModelViewSet):
         auth_info = Permission.get_auth_info(request, raise_exception=False)
         if auth_info:
             data["bk_app_code"] = auth_info["bk_app_code"]
+        data.pop("space_uid", "")  # 移除space_uid，在serializer已经转换为了bk_biz_id
         return Response(CollectorHandler().custom_create(**data))
 
     @detail_route(methods=["POST"])
