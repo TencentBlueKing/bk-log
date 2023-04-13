@@ -22,7 +22,7 @@ the project delivered to anyone in the future.
 import os
 
 from django.conf import settings
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 from pipeline.component_framework.component import Component
 from pipeline.core.flow import StaticIntervalGenerator, Service
 from apps.log_extract.constants import DownloadStatus, ExtractLinkType

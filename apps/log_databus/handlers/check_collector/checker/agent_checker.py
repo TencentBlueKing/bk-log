@@ -24,7 +24,7 @@ import json
 import os
 import time
 from collections import defaultdict
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
 from apps.api import JobApi
 from apps.log_databus.constants import (

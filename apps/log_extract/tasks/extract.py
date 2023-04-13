@@ -25,7 +25,7 @@ import random
 import time
 from celery.task import task as celery_task
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 from django.conf import settings
 
 from apps.log_extract import constants
