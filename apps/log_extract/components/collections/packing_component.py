@@ -21,7 +21,7 @@ the project delivered to anyone in the future.
 """
 import html
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 from pipeline.component_framework.component import Component
 from pipeline.core.flow.activity import Service, StaticIntervalGenerator
 from apps.log_extract import constants

@@ -22,7 +22,7 @@ the project delivered to anyone in the future.
 
 from django.core.management.base import BaseCommand
 from django.db.models import Q
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
 from apps.api import TransferApi
 from apps.log_databus.models import DataLinkConfig, CollectorConfig
