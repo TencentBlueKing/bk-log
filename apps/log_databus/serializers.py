@@ -168,6 +168,10 @@ class PluginParamSerializer(serializers.Serializer):
     winlog_event_id = serializers.ListField(
         label=_("windows事件ID"), child=serializers.CharField(max_length=255), required=False
     )
+    redis_hosts = serializers.ListField(
+        label=_("redis目标"), child=serializers.CharField(max_length=255), required=False, default=[]
+    )
+    redis_password = serializers.CharField(label=_("redis密码"), required=False, allow_blank=True)
 
 
 class DataLinkListSerializer(serializers.Serializer):

@@ -40,7 +40,7 @@ from apps.utils.log import logger
 
 class CollectorScenario(object):
     """
-    采集场景：行日志、段日志、window event
+    采集场景：行日志、段日志、window event, Redis慢日志
     1. 根据采集场景加载具体实现的类
     2.
     """
@@ -52,6 +52,7 @@ class CollectorScenario(object):
             CollectorScenarioEnum.SECTION.value: "SectionCollectorScenario",
             CollectorScenarioEnum.WIN_EVENT.value: "WinEventLogScenario",
             CollectorScenarioEnum.CUSTOM.value: "CustomCollectorScenario",
+            CollectorScenarioEnum.REDIS_SLOWLOG.value: "RedisSlowLogCollectorScenario",
         }
         try:
             collector_scenario = import_string(
