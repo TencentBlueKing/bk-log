@@ -82,6 +82,7 @@
                 </div>
               </template>
             </bk-table-column>
+            <bk-table-column :label="$t('详情')" prop="message"></bk-table-column>
             <bk-table-column width="80">
               <template slot-scope="{ row }">
                 <a

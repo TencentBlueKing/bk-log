@@ -857,13 +857,7 @@ def get_url(version):
 def query(cluster_id):
     def get(url):
         try:
-            return BkLogApi.es_route(
-                {
-                    "scenario_id": "es",
-                    "storage_cluster_id": cluster_id,
-                    "url": url,
-                }
-            )
+            return BkLogApi.es_route({"scenario_id": "es", "storage_cluster_id": cluster_id, "url": url})
         except Exception as e:  # pylint:disable=broad-except
             logger.exception(f"request es info error {e}")
             return None
@@ -959,7 +953,7 @@ def process_pshard_stats_data(metrics, pshard_url, get, version, base_dimensions
         if not index_match:
             continue
         result_table_id = index_match.groupdict()["result_table_id"]
-        dimensions = {**base_dimensions, "result_table_id": result_table_id}
+        dimensions = {**base_dimensions, "result_table_id": result_table_id, "index_name": index_name}
         for metric, value in pshard_stats_metrics.items():
             result_metric = process_metric({"_all": index_data}, metric, *value, dimensions=dimensions)
             if result_metric:
@@ -1040,7 +1034,7 @@ def get_index_metrics(metrics, get, version, base_dimensions):
         if not re_result:
             continue
         result_table_id = re_result.groupdict()["result_table_id"]
-        dimensions = {**base_dimensions, "result_table_id": result_table_id}
+        dimensions = {**base_dimensions, "result_table_id": result_table_id, "index_name": idx["index"]}
 
         # we need to remap metric names because the ones from elastic
         # contain dots and that would confuse `_process_metric()` (sic)
