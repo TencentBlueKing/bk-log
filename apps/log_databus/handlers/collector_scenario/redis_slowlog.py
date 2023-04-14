@@ -114,7 +114,7 @@ class RedisSlowLogCollectorScenario(CollectorScenario):
         """
         return {
             "option": {
-                "es_unique_field_list": ["cloudId", "serverIp", "redis_host"],
+                "es_unique_field_list": ["cloudId", "serverIp"],
                 "separator_node_source": "",
                 "separator_node_action": "",
                 "separator_node_name": "",
