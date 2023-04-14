@@ -20,6 +20,7 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import copy
+import typing
 from collections import defaultdict, namedtuple
 from inspect import signature
 from typing import List
@@ -27,7 +28,7 @@ from typing import List
 from pypinyin import lazy_pinyin
 
 from django.core.cache import cache
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
 from apps.api import CCApi, GseApi
 from apps.constants import DEFAULT_MAX_WORKERS
@@ -50,6 +51,7 @@ from apps.utils.cache import cache_five_minute, cache_one_hour, cache_half_hour
 from apps.log_search.models import BizProperty, Space
 from apps.utils.db import array_hash, array_chunk
 from apps.utils.function import ignored
+from apps.utils.ipchooser import IPChooser
 from apps.utils.thread import MultiExecuteFunc
 from apps.api.modules.utils import get_non_bkcc_space_related_bkcc_biz_id
 
@@ -92,6 +94,9 @@ class BizHandler(APIModel):
                 item[field] = biz.get(field, None)
             business.append(item)
         return business
+
+    def get_display_name(self, host_list: typing.List[str]):
+        return IPChooser(bk_biz_id=self.bk_biz_id).get_host_display_name(host_list)
 
     @classmethod
     def list_clouds(cls):
@@ -440,6 +445,7 @@ class BizHandler(APIModel):
                 "bk_cloud_id": host["bk_cloud_id"],
                 "parent_inst_id": host["parent_inst_id"],
                 "bk_obj_id": bk_obj_id,
+                "bk_host_id": host["bk_host_id"],
             }
             for host in hosts
         ]
@@ -937,7 +943,11 @@ class BizHandler(APIModel):
         """
         host_list = []
         for host in hosts_info:
-            tmp_host = {"bk_host_innerip": host["host"]["bk_host_innerip"], "bk_cloud_id": host["host"]["bk_cloud_id"]}
+            tmp_host = {
+                "bk_host_innerip": host["host"]["bk_host_innerip"],
+                "bk_cloud_id": host["host"]["bk_cloud_id"],
+                "bk_host_id": host["host"]["bk_host_id"],
+            }
             if bk_obj_id in (CCInstanceType.BUSINESS.value):
                 tmp_host["parent_inst_id"] = [self.bk_biz_id]
             if bk_obj_id in (

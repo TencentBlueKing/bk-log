@@ -184,13 +184,26 @@
             <span class="font-blue">{{ formData.target_nodes.length }}</span>
             <span>{{ collectTargetTarget[formData.target_node_type + '2'] }}</span>
           </div>
-          <ip-selector-dialog
+          <!-- 目标选择器 -->
+          <log-ip-selector
+            mode="dialog"
+            allow-host-list-miss-host-id
+            :key="bkBizId"
+            :height="670"
+            :show-dialog.sync="showIpSelectorDialog"
+            :value="selectorNodes"
+            :show-view-diff="isUpdate"
+            :original-value="ipSelectorOriginalValue"
+            :panel-list="ipSelectorPanelList"
+            @change="handleTargetChange"
+          />
+          <!-- <ip-selector-dialog
             :show-dialog.sync="showIpSelectorDialog"
             :target-object-type="formData.target_object_type"
             :target-node-type="formData.target_node_type"
             :target-nodes="formData.target_nodes"
             @target-change="targetChange">
-          </ip-selector-dialog>
+          </ip-selector-dialog> -->
         </div>
         <!-- 物理环境 配置项 -->
         <config-log-set-item
@@ -270,9 +283,10 @@
               <div class="config-container">
                 <div class="config-item container-select">
                   <span :class="{ 'none-hidden-dom': isNode }">{{$t('NameSpace选择')}}</span>
-                  <div v-bk-tooltips.top="{ content: $t('请先选择集群'), delay: 500 }"
-                       :class="{ 'none-hidden-dom': isNode }"
-                       :disabled="!!formData.bcs_cluster_id">
+                  <div
+                    v-bk-tooltips.top="{ content: $t('请先选择集群'), delay: 500 }"
+                    :class="{ 'none-hidden-dom': isNode }"
+                    :disabled="!!formData.bcs_cluster_id">
                     <bk-select
                       v-model="conItem.namespaces"
                       multiple
@@ -510,7 +524,8 @@ import LinuxSvg from '@/images/container-icons/Linux.svg';
 import NodeSvg from '@/images/container-icons/Node.svg';
 import StdoutSvg from '@/images/container-icons/Stdout.svg';
 import WindowsSvg from '@/images/container-icons/Windows.svg';
-import ipSelectorDialog from './ip-selector-dialog';
+import LogIpSelector, { toTransformNode, toSelectorNode } from '@/components/log-ip-selector/log-ip-selector';
+// import ipSelectorDialog from './ip-selector-dialog';
 import configLogSetItem from './components/step-add/config-log-set-item';
 import labelTargetDialog from './components/step-add/label-target-dialog';
 import containerTargetDialog from './components/step-add/container-target-dialog';
@@ -521,7 +536,8 @@ import { deepClone } from '../monitor-echarts/utils';
 
 export default {
   components: {
-    ipSelectorDialog,
+    LogIpSelector,
+    // ipSelectorDialog,
     labelTargetDialog,
     configLogSetItem,
     containerTargetDialog,
@@ -752,6 +768,16 @@ export default {
       isExtraError: false, // 附加标签是否有出错
       nameSpaceRequest: false, // 是否正在请求namespace接口
       uiconfigToYamlData: {}, // 切换成yaml时当前保存的ui配置
+      // ip选择器面板
+      ipSelectorPanelList: [
+        'staticTopo',
+        'dynamicTopo',
+        'serviceTemplate',
+        'setTemplate',
+        'manualInput',
+      ],
+      // 编辑态ip选择器初始值
+      ipSelectorOriginalValue: null,
     };
   },
   computed: {
@@ -811,6 +837,14 @@ export default {
     localClusterList() {
       return this.clusterList.filter(val => (this.isNode ? !val.is_shared : true));
     },
+    // ip选择器选中节点
+    selectorNodes() {
+      return this.getSelectorNodes();
+    },
+    updateCollectorConfigID() { // 若是新增容器日志 返回上一步 则使用curCollect缓存的collector_config_id更新;
+      const { collectorId } = this.$route.params;
+      return !!collectorId ? Number(collectorId) : Number(this.curCollect.collector_config_id);
+    },
   },
   watch: {
     currentEnvironment(nVal, oVal) {
@@ -863,8 +897,8 @@ export default {
       } else { // 物理环境
         this.currentEnvironment = cloneCollect.environment;
         Object.assign(this.formData, cloneCollect);
-        if (this.formData.target?.length) { // IP 选择器预览结果回填
-          this.formData.target_nodes = this.formData.target;
+        if (this.formData.target_nodes?.length) { // IP 选择器预览结果回填
+          this.ipSelectorOriginalValue = this.getSelectorNodes();
         }
         if (!this.formData.collector_config_name_en) { // 兼容旧数据英文名为空
           this.formData.collector_config_name_en = this.formData.table_id || '';
@@ -988,7 +1022,7 @@ export default {
     },
     /**
      * @desc: 提交表格时验证是否通过
-    // 是否可以提交
+     * @return { Boolean } 是否可以提交
      */
     async submitDataValidate() {
       try { // 基础信息表格验证
@@ -1077,7 +1111,7 @@ export default {
       const urlParams = {};
       let requestUrl;
       if (this.isUpdate) {
-        urlParams.collector_config_id = Number(this.$route.params.collectorId);
+        urlParams.collector_config_id = this.updateCollectorConfigID;
         requestUrl = 'collect/updateCollection';
       } else {
         requestUrl = 'collect/addCollection';
@@ -1102,7 +1136,7 @@ export default {
       const urlParams = {};
       let requestUrl;
       if (this.isUpdate) {
-        urlParams.collector_config_id = Number(this.$route.params.collectorId);
+        urlParams.collector_config_id = this.updateCollectorConfigID;
         requestUrl = 'container/update';
       } else {
         requestUrl = 'container/create';
@@ -1195,7 +1229,7 @@ export default {
         params: physicsParams,
       });
       if (this.isUpdate) { // 物理环境编辑
-        physicsFromData.collector_config_id = Number(this.$route.params.collectorId);
+        physicsFromData.collector_config_id = this.updateCollectorConfigID;
         delete physicsFromData.category_id;
         delete physicsFromData.collector_scenario_id;
         return Object.assign(physicsFromData, {
@@ -1282,6 +1316,39 @@ export default {
       this.formData.target_node_type = params.target_node_type;
       this.formData.target_nodes = params.target_nodes;
       this.showIpSelectorDialog = false;
+      // 触发 bk-form 的表单验证
+      this.$refs.formItemTarget.validate('change');
+    },
+    // 采集目标选择内容变更
+    handleTargetChange(value) {
+      const {
+        host_list: hostList,
+        node_list: nodeList,
+        service_template_list: serviceTemplateList,
+        set_template_list: setTemplateList,
+      } = value;
+      let type = '';
+      let nodes = [];
+      if (nodeList?.length) {
+        type = 'TOPO';
+        nodes = nodeList;
+      }
+      if (hostList?.length) {
+        type = 'INSTANCE';
+        nodes = hostList;
+      }
+      if (serviceTemplateList?.length) {
+        type = 'SERVICE_TEMPLATE';
+        nodes = serviceTemplateList;
+      }
+      if (setTemplateList?.length) {
+        type = 'SET_TEMPLATE';
+        nodes = setTemplateList;
+      }
+      if (!type) return;
+
+      this.formData.target_node_type = type;
+      this.formData.target_nodes = toTransformNode(nodes, type);
       // 触发 bk-form 的表单验证
       this.$refs.formItemTarget.validate('change');
     },
@@ -1575,6 +1642,16 @@ export default {
         .catch(() => {
           if (convertStr.length < 5) this.isTextValid = true;
         });
+    },
+    getSelectorNodes() {
+      const { target_node_type: type, target_nodes: nodes } = this.formData;
+      const targetList = toSelectorNode(nodes, type);
+      return {
+        host_list: type === 'INSTANCE' ? targetList : [],
+        node_list: type === 'TOPO' ? targetList : [],
+        service_template_list: type === 'SERVICE_TEMPLATE' ? targetList : [],
+        set_template_list: type === 'SET_TEMPLATE' ? targetList : [],
+      };
     },
   },
 };

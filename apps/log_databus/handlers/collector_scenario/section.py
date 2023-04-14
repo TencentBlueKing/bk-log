@@ -25,7 +25,7 @@ from apps.utils.log import logger
 from apps.log_databus.handlers.collector_scenario.base import CollectorScenario
 from apps.log_databus.handlers.collector_scenario.utils import deal_collector_scenario_param
 from apps.log_databus.constants import LogPluginInfo
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
 
 class SectionCollectorScenario(CollectorScenario):
@@ -78,12 +78,7 @@ class SectionCollectorScenario(CollectorScenario):
                     "plugin_version": self.PLUGIN_VERSION,
                     "config_templates": [{"name": f"{self.PLUGIN_NAME}.conf", "version": "latest"}],
                 },
-                "params": {
-                    "context": {
-                        "dataid": data_id,
-                        "local": [local_params],
-                    }
-                },
+                "params": {"context": {"dataid": data_id, "local": [local_params]}},
             },
         ]
 
@@ -220,12 +215,22 @@ class SectionCollectorScenario(CollectorScenario):
         """
         return {
             "option": {
-                "es_unique_field_list": ["cloudId", "serverIp", "path", "gseIndex", "iterationIndex"],
+                "es_unique_field_list": ["cloudId", "serverIp", "path", "gseIndex", "iterationIndex", "bk_host_id"],
                 "separator_node_source": "",
                 "separator_node_action": "",
                 "separator_node_name": "",
             },
             "fields": [
+                {
+                    "field_name": "bk_host_id",
+                    "field_type": "float",
+                    "tag": "dimension",
+                    "alias_name": "bk_host_id",
+                    "description": "主机ID",
+                    "option": {"es_type": "integer", "es_include_in_all": False}
+                    if es_version.startswith("5.")
+                    else {"es_type": "integer"},
+                },
                 {
                     "field_name": "__ext",
                     "field_type": "object",

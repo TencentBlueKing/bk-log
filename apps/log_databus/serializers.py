@@ -92,6 +92,7 @@ class TargetNodeSerializer(serializers.Serializer):
     id = serializers.IntegerField(label=_("服务实例id"), required=False)
     bk_inst_id = serializers.IntegerField(label=_("节点实例id"), required=False)
     bk_obj_id = serializers.CharField(label=_("节点对象"), max_length=64, required=False)
+    bk_host_id = serializers.IntegerField(label=_("主机ID"), required=False)
     ip = serializers.CharField(label=_("主机实例ip"), max_length=15, required=False)
     bk_cloud_id = serializers.IntegerField(label=_("蓝鲸云区域id"), required=False)
     bk_supplier_id = serializers.CharField(label=_("供应商id"), required=False)
@@ -428,6 +429,7 @@ class RunSubscriptionSerializer(serializers.Serializer):
     """
 
     class InstanceObjectSerializer(serializers.Serializer):
+        bk_host_id = serializers.IntegerField(label=_("主机ID"), required=False)
         ip = serializers.CharField(label=_("主机实例ip"), required=True)
         bk_cloud_id = serializers.IntegerField(label=_("蓝鲸云区域id"), required=True)
         bk_supplier_id = serializers.CharField(label=_("供应商id"), required=False)

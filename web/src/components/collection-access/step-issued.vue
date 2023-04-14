@@ -96,7 +96,11 @@
                   :data="cluster.child"
                   :size="size"
                   :pagination="pagination">
-                  <bk-table-column :label="$t('目标')" prop="ip" width="180"></bk-table-column>
+                  <bk-table-column :label="$t('目标')" width="180">
+                    <template slot-scope="props">
+                      <span>{{getShowIp(props.row)}}</span>
+                    </template>
+                  </bk-table-column>
                   <bk-table-column :label="$t('运行状态')" width="120">
                     <template slot-scope="props">
                       <span :class="['status', 'status-' + props.row.status]">
@@ -286,6 +290,9 @@ export default {
       if (this.hasRunning) return this.$t('执行中');
       if (this.operateType === 'stop') return this.$t('停用');
       return this.$t('完成');
+    },
+    hostIdentifierPriority() {
+      return this.$store.getters['globals/globalsData']?.host_identifier_priority ?? ['ip', 'host_name', 'ipv6'];
     },
   },
   watch: {
@@ -574,7 +581,13 @@ export default {
         });
         if (cluster && cluster.child && cluster.child.length && table.child && table.child.length) {
           table.child.forEach((row) => {
-            const tarHost = cluster.child.find(item => item.bk_cloud_id === row.bk_cloud_id && item.ip === row.ip);
+            const tarHost = cluster.child.find((item) => {
+              // 优先判断host_id 若没找到对应的host_id则对比ip_host_name_ipv6的组成的字符串
+              const tableStrKey = `${item.ip}_${item.host_name}_${item.ipv6}`;
+              const childStrKey = `${row.ip}_${row.host_name}_${row.ipv6}`;
+              if (item?.host_id) return (item.host_id === row.host_id || tableStrKey === childStrKey);
+              return tableStrKey === childStrKey;
+            });
             if (tarHost) {
               row.status = tarHost.status === 'PENDING' ? 'running' : tarHost.status.toLowerCase(); // pending-等待状态，与running不做区分
               row.task_id = tarHost.task_id;
@@ -608,6 +621,9 @@ export default {
         .finally(() => {
           this.detail.loading = false;
         });
+    },
+    getShowIp(row) {
+      return row[this.hostIdentifierPriority.find(pItem => Boolean(row[pItem]))] ?? row.ip;
     },
   },
 };
@@ -877,6 +893,9 @@ export default {
       min-height: calc(100vh - 60px);
       white-space: pre-wrap;
       font-size: 12px;
+      a {
+        color: #3a84ff;
+      }
     }
   }
 </style>

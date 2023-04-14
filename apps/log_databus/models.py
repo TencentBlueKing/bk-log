@@ -357,6 +357,7 @@ class ContainerCollectorConfig(SoftDeleteModel):
     status = models.CharField(
         _("下发状态"), null=True, blank=True, max_length=30, choices=ContainerCollectStatus.get_choices()
     )
+    status_detail = models.TextField("状态详情", default="", blank=True)
     raw_config = models.JSONField(_("原始配置"), null=True, blank=True)
     parent_container_config_id = models.IntegerField(_("父配置id"), default=0)
     rule_id = models.IntegerField(_("bcs规则集id"), default=0)

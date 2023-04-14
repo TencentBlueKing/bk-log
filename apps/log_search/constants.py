@@ -312,6 +312,8 @@ class GlobalTypeEnum(ChoicesEnum):
     LOG_CLUSTERING_LEVEL = "log_clustering_level"
     LOG_CLUSTERING_YEAR_ON_YEAR = "log_clustering_level_year_on_year"
     DATABUS_CUSTOM = "databus_custom"
+    HOST_IDENTIFIER_PRIORITY = "host_identifier_priority"
+    IS_K8S_DEPLOY = "is_k8s_deploy"
 
     _choices_labels = (
         (CATEGORY, _("数据分类")),
@@ -329,6 +331,8 @@ class GlobalTypeEnum(ChoicesEnum):
         (LOG_CLUSTERING_LEVEL, _("日志聚类敏感度")),
         (LOG_CLUSTERING_YEAR_ON_YEAR, _("日志聚类同比配置")),
         (DATABUS_CUSTOM, _("自定义上报")),
+        (HOST_IDENTIFIER_PRIORITY, _("主机标识优先级")),
+        (IS_K8S_DEPLOY, _("是否容器化部署")),
     )
 
 
@@ -1078,6 +1082,7 @@ RT_RESERVED_WORD_EXAC = [
     "TIME",
     # 内置字段
     "BK_BIZ_ID",
+    "BK_HOST_ID",
     "IP",
     "PLAT_ID",
     "BK_CLOUD_ID",
@@ -1271,7 +1276,7 @@ class OperatorEnum:
 
 OPERATORS = {
     "keyword": [OperatorEnum.EQ, OperatorEnum.NE, OperatorEnum.EXISTS, OperatorEnum.NOT_EXISTS],
-    "text": [OperatorEnum.EXISTS, OperatorEnum.NOT_EXISTS],
+    "text": [OperatorEnum.EQ, OperatorEnum.NE, OperatorEnum.EXISTS, OperatorEnum.NOT_EXISTS],
     "integer": [
         OperatorEnum.EQ,
         OperatorEnum.NE,

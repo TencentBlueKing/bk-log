@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /*
  * Tencent is pleased to support the open source community by making BK-LOG 蓝鲸日志平台 available.
  * Copyright (C) 2021 THL A29 Limited, a Tencent company.  All rights reserved.
@@ -100,7 +101,7 @@ export default class RequestQueue {
       cancelQueue.forEach((request) => {
         const { requestId } = request;
         this.delete(requestId);
-        request.cancelExcutor(`${msg}: ${requestId}`);
+        // request.cancelExcutor(`${msg}: ${requestId}`);
       });
       return Promise.resolve(requestIds || cancelQueue.map(request => request.requestId));
     } catch (error) {

@@ -83,6 +83,7 @@ INSTALLED_APPS += (
     "apps.feature_toggle",
     "apps.log_clustering",
     "bkm_space",
+    "bkm_ipchooser",
 )
 
 # BKLOG后台接口：默认否，后台接口session不写入本地数据库
@@ -320,7 +321,10 @@ BK_PAAS_HOST = os.environ.get("BK_PAAS_HOST", "")
 # ESB API调用前辍
 BK_PAAS_INNER_HOST = os.environ.get("BK_PAAS_INNER_HOST", BK_PAAS_HOST)
 PAAS_API_HOST = os.environ.get("BK_COMPONENT_API_URL") or BK_PAAS_INNER_HOST
-BK_CC_HOST = BK_PAAS_HOST.replace("paas", "cmdb")
+if "paas" in BK_PAAS_HOST:
+    BK_CC_HOST = BK_PAAS_HOST.replace("paas", "cmdb")
+else:
+    BK_CC_HOST = "://cmdb.".join(BK_PAAS_HOST.split("://"))
 BKDATA_URL = BK_PAAS_HOST
 MONITOR_URL = ""
 BK_DOC_URL = "https://bk.tencent.com/docs/"
@@ -939,6 +943,17 @@ IS_AJAX_PLAIN_MODE = True
 # ===============
 BKM_SPACE_API_CLASS = "apps.log_search.models.SpaceApi"
 
+# ===============
+# IP选择器配置
+# ===============
+BKM_IPCHOOSER_BKAPI_CLASS = "apps.utils.ipchooser.BkApi"
+# 是否开启动态主机配置协议适配
+ENABLE_DHCP = bool(os.getenv("BKAPP_ENABLE_DHCP", False))
+# 如果手动设置了GSE版本，则使用手动设置的版本, 否则根据ENABLE_DHCP来判断, True->v2, False->v1
+if os.getenv("BKAPP_GSE_VERSION"):
+    GSE_VERSION = os.getenv("BKAPP_GSE_VERSION", "v1")
+else:
+    GSE_VERSION = "v2" if ENABLE_DHCP else "v1"
 
 # ==============================================================================
 # Templates
@@ -1041,6 +1056,17 @@ PROMETHEUS_METRICS_TOKEN = os.environ.get("PROMETHEUS_METRICS_TOKEN", "")
 # Listening Domain, 格式 http(s)://domain_name
 SERVICE_LISTENING_DOMAIN = os.environ.get("SERVICE_LISTENING_DOMAIN", "")
 # ==============================================================================
+
+# ==============================================================================
+# 主机标识优先级, 填入CC的标准字段, 默认 bk_host_innerip,bk_host_name,bk_host_innerip_v6
+HOST_IDENTIFIER_PRIORITY = os.environ.get("HOST_IDENTIFIER_PRIORITY", "bk_host_innerip,bk_host_name,bk_host_innerip_v6")
+# ==============================================================================
+
+# ==============================================================================
+# 一键检测工具开关, 默认为关
+CHECK_COLLECTOR_SWITCH: bool = os.getenv("CHECK_COLLECTOR_SWITCH", "off") == "on"
+# ==============================================================================
+
 
 """
 以下为框架代码 请勿修改

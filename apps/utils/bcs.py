@@ -20,11 +20,24 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 from django.conf import settings
 from django.utils.functional import cached_property
 from kubernetes import client as k8s_client
+from kubernetes.client import V1ContainerImage
 from kubernetes.dynamic import client as dynamic_client
 from kubernetes.dynamic.exceptions import ResourceNotFoundError, NotFoundError
 
 from apps.utils.log import logger
 from config.domains import BCS_APIGATEWAY_ROOT
+
+
+# patch for k8s CoreV1Api list_node API
+# error: v1_container_image: ValueError: Invalid value for names, must not be None
+# details: https://github.com/kubernetes-client/python/issues/895
+# patch start
+def _v1_container_image_names(self, names):
+    self._names = names
+
+
+V1ContainerImage.names = V1ContainerImage.names.setter(_v1_container_image_names)
+# patch end
 
 
 class Bcs:
@@ -92,7 +105,7 @@ class Bcs:
             #  https://github.com/TencentBlueKing/bk-log-sidecar/blob/master/api/v1alpha1/bklogconfig_types.go
             "spec": bklog_config,
         }
-        return self.ensure_resource(
+        self.ensure_resource(
             bklog_config_name,
             resource_body,
             self.BKLOG_CONFIG_API_VERSION,
@@ -125,8 +138,8 @@ class Bcs:
             resource = d_client.resources.get(api_version=api_version, kind=kind)
         except ResourceNotFoundError:
             # 如果找不到crd，则直接退出
-            logger.debug(f"{api_version}/{kind} resource crd not found in k8s cluster, will not create any resource")
-            return False
+            logger.info(f"{api_version}/{kind} resource crd not found in k8s cluster, will not create any resource")
+            raise
 
         try:
             action = "update"
@@ -137,17 +150,6 @@ class Bcs:
         except NotFoundError:
             # 不存在则新增
             action = "create"
-            try:
-                d_client.create(resource, body=resource_body, namespace=namespace)
-            except Exception as e:  # pylint: disable=broad-except
-                # 异常捕获
-                logger.error("unexpected error in ensure resource:{}".format(e))
-                return False
-        # except Exception as e:  # pylint: disable=broad-except
-        #     # 异常捕获
-        #     logger.error("unexpected error in ensure resource:{}".format(e))
-        #     return False
-        logger.info(
-            "[%s] datasource [%s]", action, resource_name,
-        )
-        return True
+            d_client.create(resource, body=resource_body, namespace=namespace)
+
+        logger.info("[%s] datasource [%s]", action, resource_name)

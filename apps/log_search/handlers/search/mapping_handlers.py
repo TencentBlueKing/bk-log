@@ -28,7 +28,7 @@ from typing import Dict, List, Any
 from django.conf import settings
 from django.db.transaction import atomic
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
 from apps.api import BkLogApi
 from apps.log_search.constants import (
@@ -168,6 +168,19 @@ class MappingHandlers(object):
                     "field_type": "__virtual__",
                     "field_name": "__set__",
                     "field_alias": _("集群"),
+                    "is_display": False,
+                    "is_editable": True,
+                    "tag": "dimension",
+                    "es_doc_values": False,
+                    "is_analyzed": False,
+                }
+            )
+        if "bk_host_id" in fields:
+            field_list.append(
+                {
+                    "field_type": "__virtual__",
+                    "field_name": "__ipv6__",
+                    "field_alias": "IPv6",
                     "is_display": False,
                     "is_editable": True,
                     "tag": "dimension",
@@ -779,6 +792,8 @@ class MappingHandlers(object):
 
             analyze_fields_type_result = cls._analyze_fields_type(final_fields_list)
             if analyze_fields_type_result:
+                if "bk_host_id" in fields_list:
+                    judge.add("bk_host_id")
                 return {
                     "context_search_usable": context_search_usable,
                     "realtime_search_usable": realtime_search_usable,
@@ -787,6 +802,8 @@ class MappingHandlers(object):
                 }
             context_search_usable = True
             realtime_search_usable = True
+            if "bk_host_id" in fields_list:
+                judge.add("bk_host_id")
             return {
                 "context_search_usable": context_search_usable,
                 "realtime_search_usable": realtime_search_usable,

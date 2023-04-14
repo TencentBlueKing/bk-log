@@ -33,6 +33,7 @@ from apps.log_search.serializers import (
     TemplateSerializer,
     TemplateTopoSerializer,
     DynamicGroupSerializer,
+    GetDisplayNameSerializer,
 )
 from apps.utils.local import get_request_username
 
@@ -551,3 +552,42 @@ class BizsViewSet(APIViewSet):
         """
 
         return Response(BizHandler(bk_biz_id=None).list_biz_property())
+
+    @detail_route(methods=["POST"], url_path="get_display_name")
+    def get_display_name(self, request, bk_biz_id):
+        """
+        @api {post} /bizs/$$bk_biz_id/get_display_name/ 11_获取主机展示名称
+        @apiName get_display_name
+        @apiGroup 02_Biz
+        @apiParamExample {json} 成功请求:
+        {
+            "host_list": [
+                {
+                    "bk_host_id": 1,
+                },
+                {
+                    "bk_cloud_id": 0,
+                    "bk_host_innerip": "127.0.0.1"
+                }
+            ]
+        }
+        @apiSuccessExample {json} 成功返回:
+        {
+            "result": true,
+            "data": [
+                {
+                    "bk_host_id": 1,
+                    "display_name": "127.0.0.1"
+                },
+                {
+                    "bk_cloud_id": 0,
+                    "bk_host_innerip": "127.0.0.1",
+                    "display_name": "127.0.0.1"
+                }
+            ],
+            "code": 0,
+            "message": ""
+        }``
+        """
+        params = self.params_valid(GetDisplayNameSerializer)
+        return Response(BizHandler(int(bk_biz_id)).get_display_name(params["host_list"]))

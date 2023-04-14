@@ -52,7 +52,11 @@
             data-test-id="basicInformation_select_selectLinkType"
             v-model="formData.link_type"
             :clearable="false">
-            <bk-option id="common" :name="$t('内网链路')"></bk-option>
+            <bk-option
+              v-if="!isK8sDeploy || isShowCommon"
+              id="common"
+              :disabled="isDisableCommon"
+              :name="$t('内网链路')"></bk-option>
             <bk-option id="qcloud_cos" :name="$t('腾讯云链路')"></bk-option>
             <bk-option id="bk_repo" :name="$t('bk_repo链路')"></bk-option>
           </bk-select>
@@ -253,12 +257,20 @@ export default {
       },
       isAdminError: false, // 人员是否为空
       cacheOperator: [], // 缓存的人员
+      isDisableCommon: false, // 是否禁用内网链路
+      editInitLinkType: '', // 编辑初始化时的链路类型
     };
   },
   computed: {
     ...mapState({
       showRouterLeaveTip: state => state.showRouterLeaveTip,
     }),
+    isK8sDeploy() { // 是否要禁用内网链路
+      return this.$store.getters['globals/globalsData']?.is_k8s_deploy;
+    },
+    isShowCommon() { // 禁用内网链路且 编辑时初始化是内网链路则展示内网链路且禁用选项
+      return (this.$route.params.linkId && this.editInitLinkType === 'common');
+    },
   },
   created() {
     this.init();
@@ -296,6 +308,7 @@ export default {
           formData.operator = [formData.operator];
           this.formData = Object.assign({}, this.formData, formData);
           this.basicLoading = false;
+          this.editInitLinkType = this.formData.link_type;
         } catch (e) {
           console.warn(e);
           this.$router.push({
@@ -304,7 +317,14 @@ export default {
               spaceUid: this.$store.state.spaceUid,
             },
           });
+        } finally {
+          if (this.isK8sDeploy && this.editInitLinkType === 'common') {
+            this.isDisableCommon = true; // 禁用内网链路选项
+          }
         }
+      } else {
+        // 新建时 内网链路禁用则更改初始值
+        if (this.isK8sDeploy) this.formData.link_type = 'qcloud_cos';
       }
     },
     addHost() {

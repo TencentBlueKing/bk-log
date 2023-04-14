@@ -287,3 +287,16 @@ def filter_abnormal_ip_hosts(response_result):
 
     response_result["data"]["info"] = dst_host_list
     return response_result
+
+
+def adapt_space_id_before(params):
+    # 非CC业务时, 查询关联的CC业务, 如果有, 替换为其关联的CC业务
+    if params.get("bk_biz_id", 0) < 0:
+        from apps.log_search.models import SpaceApi
+
+        space_uid = bk_biz_id_to_space_uid(params["bk_biz_id"])
+        related_space = SpaceApi.get_related_space(space_uid=space_uid, related_space_type=SpaceTypeEnum.BKCC.value)
+        if related_space:
+            params["bk_biz_id"] = related_space.bk_biz_id
+
+    return params

@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
 
 BK_CUSTOM_REPORT = "bk_custom_report"
