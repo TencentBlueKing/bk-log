@@ -29,7 +29,7 @@ import yaml
 from django.conf import settings
 from django.db import IntegrityError
 from django.db import transaction
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 from rest_framework.exceptions import ErrorDetail, ValidationError
 
 from apps.api import BkDataAccessApi, CCApi, BcsCcApi
@@ -1284,6 +1284,7 @@ class CollectorHandler(object):
         for container_config in container_configs:
             contents.append(
                 {
+                    "message": container_config.status_detail,
                     "status": container_config.status,
                     "container_collector_config_id": container_config.id,
                     "name": self.generate_bklog_config_name(container_config.id),
@@ -3414,11 +3415,12 @@ class CollectorHandler(object):
             request_params = copy.deepcopy(container_config.raw_config)
             request_params["dataId"] = self.data.bk_data_id
         else:
-            filters, _ = deal_collector_scenario_param(container_config.params)
+            deal_collector_scenario_param(container_config.params)
             request_params = self.collector_container_config_to_raw_config(self.data, container_config)
         name = self.generate_bklog_config_name(container_config.id)
 
         container_config.status = ContainerCollectStatus.PENDING.value
+        container_config.status_detail = _("等待配置下发")
         container_config.save()
 
         create_container_release.delay(
@@ -3429,9 +3431,9 @@ class CollectorHandler(object):
         )
 
     def generate_bklog_config_name(self, container_config_id) -> str:
-        return "{}-{}-{}".format(self.data.collector_config_name_en, self.data.bk_biz_id, container_config_id).replace(
-            "_", "-"
-        )
+        return "{}-{}-{}".format(
+            self.data.collector_config_name_en.lower(), self.data.bk_biz_id, container_config_id
+        ).replace("_", "-")
 
     def delete_container_release(self, container_config, delete_config=False):
         from apps.log_databus.tasks.collector import delete_container_release
@@ -3516,7 +3518,7 @@ class CollectorHandler(object):
         ]
 
     def list_topo(self, topo_type, bk_biz_id, bcs_cluster_id, namespace):
-        namespace_list = namespace.split(",")
+        namespace_list = [ns for ns in namespace.split(",") if ns]
 
         collector_type = (
             ContainerCollectorType.NODE if topo_type == TopoType.NODE.value else ContainerCollectorType.CONTAINER

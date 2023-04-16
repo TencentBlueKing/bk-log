@@ -22,7 +22,7 @@ the project delivered to anyone in the future.
 import json
 import logging
 import time
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
 import requests
 from django.conf import settings

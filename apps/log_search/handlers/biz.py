@@ -28,7 +28,7 @@ from typing import List
 from pypinyin import lazy_pinyin
 
 from django.core.cache import cache
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
 from apps.api import CCApi, GseApi
 from apps.constants import DEFAULT_MAX_WORKERS

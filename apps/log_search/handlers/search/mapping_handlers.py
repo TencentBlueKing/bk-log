@@ -28,7 +28,7 @@ from typing import Dict, List, Any
 from django.conf import settings
 from django.db.transaction import atomic
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
 from apps.api import BkLogApi
 from apps.log_search.constants import (

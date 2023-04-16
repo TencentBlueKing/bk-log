@@ -21,7 +21,7 @@ the project delivered to anyone in the future.
 """
 
 from apps.log_databus.handlers.collector_scenario.base import CollectorScenario
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
 
 class CustomCollectorScenario(CollectorScenario):

@@ -29,7 +29,7 @@ from django.utils import timezone
 from six import StringIO
 from django.conf import settings
 from django.http import HttpResponse
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 from rest_framework import serializers
 from rest_framework.response import Response
 from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
