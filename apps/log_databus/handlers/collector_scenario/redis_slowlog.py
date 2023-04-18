@@ -19,6 +19,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+from django.utils.translation import ugettext as _
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.feature_toggle.plugins.constants import IS_AUTO_DEPLOY_PLUGIN
 from apps.utils.log import logger
@@ -36,7 +37,7 @@ class RedisSlowLogCollectorScenario(CollectorScenario):
     # TODO: CONFIG_NAME为插件配置名，需要确认采集器
     CONFIG_NAME = "bkunifylogbeat_redis_slowlog"
 
-    def get_subscription_steps(self, data_id, params):
+    def get_subscription_steps(self, data_id, params, collector_config_id=None):
         """
         params内包含的参数
         params.redis_host: 采集目标, list
@@ -49,6 +50,7 @@ class RedisSlowLogCollectorScenario(CollectorScenario):
             "hosts": params.get("redis_hosts", []),
             "password": params.get("redis_password", ""),
         }
+        local_params = self._add_ext_meta(local_params, params, collector_config_id)
         steps = [
             {
                 "id": self.PLUGIN_NAME,  # 这里的ID不能随意变更，需要同步修改解析的逻辑(parse_steps)
@@ -114,7 +116,7 @@ class RedisSlowLogCollectorScenario(CollectorScenario):
         """
         return {
             "option": {
-                "es_unique_field_list": ["cloudId", "serverIp"],
+                "es_unique_field_list": ["cloudId", "serverIp", "gseIndex", "iterationIndex"],
                 "separator_node_source": "",
                 "separator_node_action": "",
                 "separator_node_name": "",
@@ -149,6 +151,27 @@ class RedisSlowLogCollectorScenario(CollectorScenario):
                     "option": {"es_type": "keyword", "es_include_in_all": True}
                     if es_version.startswith("5.")
                     else {"es_type": "keyword"},
+                },
+                {
+                    "field_name": "gseIndex",
+                    "field_type": "float",
+                    "tag": "dimension",
+                    "alias_name": "gseindex",
+                    "description": _("gse索引"),
+                    "option": {"es_type": "long", "es_include_in_all": False}
+                    if es_version.startswith("5.")
+                    else {"es_type": "long"},
+                },
+                {
+                    "field_name": "iterationIndex",
+                    "field_type": "float",
+                    "tag": "dimension",
+                    "alias_name": "iterationindex",
+                    "description": _("迭代ID"),
+                    "flat_field": True,
+                    "option": {"es_type": "integer", "es_include_in_all": False}
+                    if es_version.startswith("5.")
+                    else {"es_type": "integer"},
                 },
             ],
             "time_field": {

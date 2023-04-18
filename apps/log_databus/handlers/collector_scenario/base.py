@@ -68,7 +68,7 @@ class CollectorScenario(object):
                 )
             )
 
-    def get_subscription_steps(self, data_id, params):
+    def get_subscription_steps(self, data_id, params, collector_config_id=None):
         """
         根据采集场景返回节点管理插件下发步骤
         1. 获取配置模板信息
@@ -214,7 +214,7 @@ class CollectorScenario(object):
         """
         if isinstance(collector_config.collector_config_overlay, dict):
             params["collector_config_overlay"] = collector_config.collector_config_overlay
-        steps = self.get_subscription_steps(collector_config.bk_data_id, params)
+        steps = self.get_subscription_steps(collector_config.bk_data_id, params, collector_config.collector_config_id)
 
         subscription_params = {
             "scope": {
@@ -234,7 +234,7 @@ class CollectorScenario(object):
             NodeApi.update_subscription_info(subscription_params)
         return collector_config.subscription_id
 
-    def _deal_text_public_params(self, local_params, params):
+    def _deal_text_public_params(self, local_params, params, collector_config_id=None):
         need_define_params = [
             "clean_inactive",
             "harvester_limit",
@@ -256,6 +256,19 @@ class CollectorScenario(object):
 
         if params.get("collector_config_overlay"):
             local_params.update(params["collector_config_overlay"])
+        local_params = self._add_ext_meta(local_params, params, collector_config_id)
+        return local_params
+
+    @staticmethod
+    def _add_ext_meta(local_params, params, collector_config_id=None):
+        """补充额外的标签"""
+        extra_labels = params.get("extra_labels", [])
+        if not extra_labels:
+            return local_params
+        labels = {label["key"]: label["value"] for label in extra_labels}
+        if labels.get("$body") and collector_config_id:
+            labels["$body"].update({"bk_collect_config_id": collector_config_id})
+        local_params["labels"] = labels
         return local_params
 
     @staticmethod

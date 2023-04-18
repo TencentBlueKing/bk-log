@@ -33,7 +33,7 @@ class WinEventLogScenario(CollectorScenario):
     PLUGIN_VERSION = LogPluginInfo.VERSION
     CONFIG_NAME = "bkunifylogbeat_winlog"
 
-    def get_subscription_steps(self, data_id, params):
+    def get_subscription_steps(self, data_id, params, collector_config_id=None):
         event_names = params.get("winlog_name", [])
         event_ids = params.get("winlog_event_id", [])
         event_levels = params.get("winlog_level", [])
@@ -43,6 +43,7 @@ class WinEventLogScenario(CollectorScenario):
                 for event_name in event_names
             ]
         }
+        local_params = self._add_ext_meta(local_params, params, collector_config_id)
         steps = [
             {
                 "id": self.PLUGIN_NAME,  # 这里的ID不能随意变更，需要同步修改解析的逻辑(parse_steps)

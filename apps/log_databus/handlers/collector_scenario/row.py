@@ -36,11 +36,12 @@ class RowCollectorScenario(CollectorScenario):
     PLUGIN_NAME = LogPluginInfo.NAME
     PLUGIN_VERSION = LogPluginInfo.VERSION
 
-    def get_subscription_steps(self, data_id, params):
+    def get_subscription_steps(self, data_id, params, collector_config_id=None):
         """
         获取订阅步骤
         :param data_id: 数据源ID
         :param params: 同创建采集项的请求参数
+        :param collector_config_id: 采集配置ID
         {
             "paths": ["/log/abc"],
             "conditions": {
@@ -65,7 +66,7 @@ class RowCollectorScenario(CollectorScenario):
             "filters": filters,
         }
 
-        local_params = self._deal_text_public_params(local_params, params)
+        local_params = self._deal_text_public_params(local_params, params, collector_config_id)
         steps = [
             {
                 "id": self.PLUGIN_NAME,  # 这里的ID不能随意变更，需要同步修改解析的逻辑(parse_steps)

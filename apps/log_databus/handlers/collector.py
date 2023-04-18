@@ -542,6 +542,7 @@ class CollectorHandler(object):
             "data_encoding": params["data_encoding"],
             "params": params["params"],
             "environment": params["environment"],
+            "extra_labels": params["params"].get("extra_labels", []),
         }
 
         bk_biz_id = params.get("bk_biz_id") or self.data.bk_biz_id
