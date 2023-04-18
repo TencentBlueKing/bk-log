@@ -29,7 +29,7 @@ import yaml
 from django.conf import settings
 from django.db import IntegrityError
 from django.db import transaction
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 from rest_framework.exceptions import ErrorDetail, ValidationError
 
 from apps.api import BkDataAccessApi, CCApi, BcsCcApi
@@ -2202,6 +2202,9 @@ class CollectorHandler(object):
         custom_type=None,
         category_id=None,
         description=None,
+        etl_config=None,
+        etl_params=None,
+        fields=None,
         storage_cluster_id=None,
         retention=7,
         allocation_min_days=0,
@@ -2292,7 +2295,7 @@ class CollectorHandler(object):
             from apps.log_databus.handlers.etl import EtlHandler
 
             etl_handler = EtlHandler.get_instance(self.data.collector_config_id)
-            etl_params = {
+            params = {
                 "table_id": collector_config_name_en,
                 "storage_cluster_id": storage_cluster_id,
                 "retention": retention,
@@ -2303,7 +2306,10 @@ class CollectorHandler(object):
                 "etl_config": custom_config.etl_config,
                 "fields": custom_config.fields,
             }
-            self.data.index_set_id = etl_handler.update_or_create(**etl_params)["index_set_id"]
+            if etl_params and fields:
+                # 如果传递了清洗参数，则优先使用
+                params.update({"etl_params": etl_params, "etl_config": etl_config, "fields": fields})
+            self.data.index_set_id = etl_handler.update_or_create(**params)["index_set_id"]
             self.data.save(update_fields=["index_set_id"])
 
         custom_config.after_hook(self.data)
@@ -2323,6 +2329,9 @@ class CollectorHandler(object):
         collector_config_name=None,
         category_id=None,
         description=None,
+        etl_config=None,
+        etl_params=None,
+        fields=None,
         storage_cluster_id=None,
         retention=7,
         allocation_min_days=0,
@@ -2364,12 +2373,11 @@ class CollectorHandler(object):
             LogIndexSet.objects.filter(index_set_id=self.data.index_set_id).update(index_set_name=index_set_name)
 
         custom_config = get_custom(self.data.custom_type)
-        etl_params = custom_config.etl_params
-        etl_config = custom_config.etl_config
-        fields = custom_config.fields
-
-        # 可能创建报错导致没有清洗配置 导致更新失败
-        if self.data.etl_config and custom_config.etl_config != self.data.etl_config:
+        if etl_params and fields:
+            # 1. 传递了清洗参数，则优先级最高
+            etl_params, etl_config, fields = etl_params, etl_config, fields
+        elif self.data.etl_config:
+            # 2. 如果本身配置过清洗，则直接使用
             collector_detail = self.retrieve()
             # need drop built in field
             collector_detail["fields"] = map_if(
@@ -2378,6 +2386,11 @@ class CollectorHandler(object):
             etl_params = collector_detail["etl_params"]
             etl_config = collector_detail["etl_config"]
             fields = collector_detail["fields"]
+        else:
+            # 3. 默认清洗规则，根据自定义类型来
+            etl_params = custom_config.etl_params
+            etl_config = custom_config.etl_config
+            fields = custom_config.fields
 
         # 仅在传入集群ID时更新
         if storage_cluster_id:
@@ -3567,37 +3580,125 @@ class CollectorHandler(object):
             for label_key, label_valus in obj_item["metadata"]["labels"].items()
         ]
 
-    def match_labels(self, topo_type, bcs_cluster_id, namespace, label_selector, selector_expression=""):
-        if not selector_expression:
-            match_labels = label_selector["match_labels"]
-            match_expressions = label_selector["match_expressions"]
-            match_labels_list = ["{} = {}".format(label["key"], label["value"]) for label in match_labels]
+    @classmethod
+    def filter_pods(cls, pods, bcs_cluster_id, namespaces=None, workload_type="", workload_name="", container_name=""):
+        pattern = re.compile(workload_name)
+        filtered_pods = []
+        for pod in pods.items:
+            # 命名空间匹配
+            if namespaces and pod.metadata.namespace not in namespaces:
+                continue
 
-            for expression in match_expressions:
-                if expression["operator"] == LabelSelectorOperator.IN:
-                    expr = "{} in {}".format(expression["key"], expression["value"])
-                elif expression["operator"] == LabelSelectorOperator.NOT_IN:
-                    expr = "{} notin {}".format(expression["key"], expression["value"])
-                elif expression["operator"] == LabelSelectorOperator.EXISTS:
-                    expr = "{}".format(expression["key"])
-                elif expression["operator"] == LabelSelectorOperator.DOES_NOT_EXIST:
-                    expr = "!{}".format(expression["key"])
+            # 工作负载匹配
+            if not pod.metadata.owner_references:
+                continue
+
+            pod_workload_type = pod.metadata.owner_references[0].kind
+            pod_workload_name = pod.metadata.owner_references[0].name
+
+            if pod_workload_type == "ReplicaSet":
+                # ReplicaSet 需要做特殊处理
+                pod_workload_name = pod_workload_name.rsplit("-", 1)[0]
+                pod_workload_type = "Deployment"
+
+            if workload_type and workload_type != pod_workload_type:
+                continue
+
+            if workload_name and not pattern.match(pod_workload_name):
+                continue
+
+            # 容器名匹配
+            if container_name:
+                for container in pod.spec.containers:
+                    if container.name == container_name:
+                        break
                 else:
-                    expr = "{} = {}".format(expression["key"], expression["value"])
-                match_labels_list.append(expr)
-            selector_expression = ", ".join(match_labels_list)
+                    continue
+
+            filtered_pods.append(pod)
+
+        return [f"{bcs_cluster_id}/{pod.metadata.namespace}/{pod.metadata.name}" for pod in filtered_pods]
+
+    @classmethod
+    def preview_containers(cls, bcs_cluster_id, topo_type, namespaces, label_selector, container):
+        """
+        预览匹配到的 nodes 或 pods
+        """
+        container = container or {}
+
+        # 将标签匹配条件转换为表达式
+        match_labels = label_selector["match_labels"]
+        match_expressions = label_selector["match_expressions"]
+        match_labels_list = ["{} = {}".format(label["key"], label["value"]) for label in match_labels]
+
+        for expression in match_expressions:
+            if expression["operator"] == LabelSelectorOperator.IN:
+                expr = "{} in {}".format(expression["key"], expression["value"])
+            elif expression["operator"] == LabelSelectorOperator.NOT_IN:
+                expr = "{} notin {}".format(expression["key"], expression["value"])
+            elif expression["operator"] == LabelSelectorOperator.EXISTS:
+                expr = "{}".format(expression["key"])
+            elif expression["operator"] == LabelSelectorOperator.DOES_NOT_EXIST:
+                expr = "!{}".format(expression["key"])
+            else:
+                expr = "{} = {}".format(expression["key"], expression["value"])
+            match_labels_list.append(expr)
 
         api_instance = Bcs(cluster_id=bcs_cluster_id).api_instance_core_v1
+        previews = []
+
+        # Node 预览
         if topo_type == TopoType.NODE.value:
-            nodes = api_instance.list_node(label_selector=selector_expression).to_dict()
-            return self.generate_objs(nodes)
-        if topo_type == TopoType.POD.value:
-            if not namespace:
-                return self.generate_objs(
-                    api_instance.list_pod_for_all_namespaces(label_selector=selector_expression).to_dict()
+            if match_labels_list:
+                # 如果有多条表达式，需要拆分为多个去请求，以获取每个表达式实际匹配的数量
+                for expr in match_labels_list:
+                    nodes = api_instance.list_node(label_selector=expr)
+                    previews.append(
+                        {
+                            "group": expr,
+                            "total": len(nodes.items),
+                            "items": [item.metadata.name for item in nodes.items],
+                        }
+                    )
+            else:
+                nodes = api_instance.list_node()
+                previews.append(
+                    {
+                        "group": _("所有"),
+                        "total": len(nodes.items),
+                        "items": [item.metadata.name for item in nodes.items],
+                    }
                 )
-            pods = api_instance.list_namespaced_pod(label_selector=selector_expression, namespace=namespace).to_dict()
-            return self.generate_objs(pods)
+            return previews
+
+        # Pod 预览
+        # 当存在标签表达式时，以标签表达式维度展示
+        # 当不存在标签表达式时，以namespace维度展示
+        if match_labels_list:
+            for expr in match_labels_list:
+                if not namespaces or len(namespaces) > 1:
+                    pods = api_instance.list_pod_for_all_namespaces(label_selector=expr)
+                else:
+                    pods = api_instance.list_namespaced_pod(label_selector=expr, namespace=namespaces[0])
+                pods = cls.filter_pods(pods, bcs_cluster_id=bcs_cluster_id, namespaces=namespaces, **container)
+                previews.append({"group": expr, "total": len(pods), "items": pods})
+        else:
+            if not namespaces or len(namespaces) > 1:
+                pods = api_instance.list_pod_for_all_namespaces()
+            else:
+                pods = api_instance.list_namespaced_pod(namespace=namespaces[0])
+            pods = cls.filter_pods(pods, bcs_cluster_id=bcs_cluster_id, namespaces=namespaces, **container)
+
+            # 按 namespace进行分组
+            namespace_pods = defaultdict(list)
+            for pod in pods:
+                namespace = pod.split("/", 2)[1]
+                namespace_pods[namespace].append(pod)
+
+            for namespace, ns_pods in namespace_pods.items():
+                previews.append({"group": f"namespace = {namespace}", "total": len(ns_pods), "items": ns_pods})
+
+        return previews
 
     @classmethod
     def generate_objs(cls, objs_dict):
@@ -3810,7 +3911,7 @@ class CollectorHandler(object):
         self.create_or_update_subscription(params)
 
         params["table_id"] = params["collector_config_name_en"]
-        self.create_or_update_clean_config(params)
+        self.create_or_update_clean_config(False, params)
 
         return {
             "collector_config_id": self.data.collector_config_id,
@@ -3896,28 +3997,7 @@ class CollectorHandler(object):
                 async_create_bkdata_data_id.delay(self.data.collector_config_id)
 
         params["table_id"] = self.data.collector_config_name_en
-
-        from apps.log_databus.handlers.etl import EtlHandler
-
-        result_table = TransferApi.get_result_table_storage(
-            {"result_table_list": self.data.table_id, "storage_type": "elasticsearch"}
-        )[self.data.table_id]
-        if not result_table:
-            raise ResultTableNotExistException(ResultTableNotExistException.MESSAGE.format(self.data.table_id))
-
-        default_etl_params = {
-            "etl_config": self.data.etl_config,
-            "es_shards": result_table["storage_config"]["index_settings"]["number_of_shards"],
-            "storage_replies": result_table["storage_config"]["index_settings"]["number_of_replicas"],
-            "storage_cluster_id": result_table["cluster_config"]["cluster_id"],
-            "retention": result_table["storage_config"]["retention"],
-            "allocation_min_days": params.get("allocation_min_days", 0),
-        }
-        default_etl_params.update(params)
-        params = default_etl_params
-
-        etl_handler = EtlHandler.get_instance(self.data.collector_config_id)
-        etl_handler.update_or_create(**params)
+        self.create_or_update_clean_config(True, params)
 
         return {"collector_config_id": self.data.collector_config_id}
 
@@ -3937,7 +4017,27 @@ class CollectorHandler(object):
                 # 创建数据平台data_id
                 async_create_bkdata_data_id.delay(self.data.collector_config_id)
 
-    def create_or_update_clean_config(self, params):
+    def create_or_update_clean_config(self, is_update, params):
+        table_id = params["table_id"]
+        if is_update:
+            # 更新场景，需要把之前的存储设置拿出来，和更新的配置合并一下
+            result_table_info = TransferApi.get_result_table_storage(
+                {"result_table_list": table_id, "storage_type": "elasticsearch"}
+            )
+            result_table = result_table_info.get(table_id, {})
+            if not result_table:
+                raise ResultTableNotExistException(ResultTableNotExistException.MESSAGE.format(table_id))
+
+            default_etl_params = {
+                "es_shards": result_table["storage_config"]["index_settings"]["number_of_shards"],
+                "storage_replies": result_table["storage_config"]["index_settings"]["number_of_replicas"],
+                "storage_cluster_id": result_table["cluster_config"]["cluster_id"],
+                "retention": result_table["storage_config"]["retention"],
+                "allocation_min_days": params.get("allocation_min_days", 0),
+            }
+            default_etl_params.update(params)
+            params = default_etl_params
+
         from apps.log_databus.handlers.etl import EtlHandler
 
         etl_handler = EtlHandler.get_instance(self.data.collector_config_id)

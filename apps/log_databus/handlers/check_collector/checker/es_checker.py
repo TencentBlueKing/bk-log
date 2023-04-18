@@ -20,7 +20,7 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import datetime
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
 from apps.api import TransferApi
 from apps.log_databus.constants import RETRY_TIMES, INDEX_WRITE_PREFIX, INDEX_READ_SUFFIX

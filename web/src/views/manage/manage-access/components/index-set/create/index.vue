@@ -122,7 +122,7 @@
               </bk-table-column>
               <bk-table-column :label="$t('字段名')" prop="field_name"></bk-table-column>
               <bk-table-column :label="$t('字段类型')" prop="field_type"></bk-table-column>
-              <bk-table-column :label="$t('中文名称')" prop="ch_name"></bk-table-column>
+              <bk-table-column :label="$t('别名')" prop="ch_name"></bk-table-column>
               <bk-table-column :label="$t('数据类型')" prop="data_type"></bk-table-column>
               <bk-table-column :label="$t('匹配结果')">
                 <div
