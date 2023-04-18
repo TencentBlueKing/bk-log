@@ -29,7 +29,7 @@ import yaml
 from django.conf import settings
 from django.db import IntegrityError
 from django.db import transaction
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 from rest_framework.exceptions import ErrorDetail, ValidationError
 
 from apps.api import BkDataAccessApi, CCApi, BcsCcApi
@@ -2202,6 +2202,9 @@ class CollectorHandler(object):
         custom_type=None,
         category_id=None,
         description=None,
+        etl_config=None,
+        etl_params=None,
+        fields=None,
         storage_cluster_id=None,
         retention=7,
         allocation_min_days=0,
@@ -2292,7 +2295,7 @@ class CollectorHandler(object):
             from apps.log_databus.handlers.etl import EtlHandler
 
             etl_handler = EtlHandler.get_instance(self.data.collector_config_id)
-            etl_params = {
+            params = {
                 "table_id": collector_config_name_en,
                 "storage_cluster_id": storage_cluster_id,
                 "retention": retention,
@@ -2303,7 +2306,14 @@ class CollectorHandler(object):
                 "etl_config": custom_config.etl_config,
                 "fields": custom_config.fields,
             }
-            self.data.index_set_id = etl_handler.update_or_create(**etl_params)["index_set_id"]
+            if etl_params and fields:
+                # 如果传递了清洗参数，则优先使用
+                params.update({
+                    "etl_params": etl_params,
+                    "etl_config": etl_config,
+                    "fields": fields,
+                })
+            self.data.index_set_id = etl_handler.update_or_create(**params)["index_set_id"]
             self.data.save(update_fields=["index_set_id"])
 
         custom_config.after_hook(self.data)
@@ -2323,6 +2333,9 @@ class CollectorHandler(object):
         collector_config_name=None,
         category_id=None,
         description=None,
+        etl_config=None,
+        etl_params=None,
+        fields=None,
         storage_cluster_id=None,
         retention=7,
         allocation_min_days=0,
@@ -2364,12 +2377,11 @@ class CollectorHandler(object):
             LogIndexSet.objects.filter(index_set_id=self.data.index_set_id).update(index_set_name=index_set_name)
 
         custom_config = get_custom(self.data.custom_type)
-        etl_params = custom_config.etl_params
-        etl_config = custom_config.etl_config
-        fields = custom_config.fields
-
-        # 可能创建报错导致没有清洗配置 导致更新失败
-        if self.data.etl_config and custom_config.etl_config != self.data.etl_config:
+        if etl_params and fields:
+            # 1. 传递了清洗参数，则优先级最高
+            etl_params, etl_config, fields = etl_params, etl_config, fields
+        elif self.data.etl_config:
+            # 2. 如果本身配置过清洗，则直接使用
             collector_detail = self.retrieve()
             # need drop built in field
             collector_detail["fields"] = map_if(
@@ -2378,6 +2390,11 @@ class CollectorHandler(object):
             etl_params = collector_detail["etl_params"]
             etl_config = collector_detail["etl_config"]
             fields = collector_detail["fields"]
+        else:
+            # 3. 默认清洗规则，根据自定义类型来
+            etl_params = custom_config.etl_params
+            etl_config = custom_config.etl_config
+            fields = custom_config.fields
 
         # 仅在传入集群ID时更新
         if storage_cluster_id:
@@ -3810,7 +3827,7 @@ class CollectorHandler(object):
         self.create_or_update_subscription(params)
 
         params["table_id"] = params["collector_config_name_en"]
-        self.create_or_update_clean_config(params)
+        self.create_or_update_clean_config(False, params)
 
         return {
             "collector_config_id": self.data.collector_config_id,
@@ -3896,28 +3913,7 @@ class CollectorHandler(object):
                 async_create_bkdata_data_id.delay(self.data.collector_config_id)
 
         params["table_id"] = self.data.collector_config_name_en
-
-        from apps.log_databus.handlers.etl import EtlHandler
-
-        result_table = TransferApi.get_result_table_storage(
-            {"result_table_list": self.data.table_id, "storage_type": "elasticsearch"}
-        )[self.data.table_id]
-        if not result_table:
-            raise ResultTableNotExistException(ResultTableNotExistException.MESSAGE.format(self.data.table_id))
-
-        default_etl_params = {
-            "etl_config": self.data.etl_config,
-            "es_shards": result_table["storage_config"]["index_settings"]["number_of_shards"],
-            "storage_replies": result_table["storage_config"]["index_settings"]["number_of_replicas"],
-            "storage_cluster_id": result_table["cluster_config"]["cluster_id"],
-            "retention": result_table["storage_config"]["retention"],
-            "allocation_min_days": params.get("allocation_min_days", 0),
-        }
-        default_etl_params.update(params)
-        params = default_etl_params
-
-        etl_handler = EtlHandler.get_instance(self.data.collector_config_id)
-        etl_handler.update_or_create(**params)
+        self.create_or_update_clean_config(True, params)
 
         return {"collector_config_id": self.data.collector_config_id}
 
@@ -3937,7 +3933,27 @@ class CollectorHandler(object):
                 # 创建数据平台data_id
                 async_create_bkdata_data_id.delay(self.data.collector_config_id)
 
-    def create_or_update_clean_config(self, params):
+    def create_or_update_clean_config(self, is_update, params):
+        table_id = params["table_id"]
+        if is_update:
+            # 更新场景，需要把之前的存储设置拿出来，和更新的配置合并一下
+            result_table_info = TransferApi.get_result_table_storage(
+                {"result_table_list": table_id, "storage_type": "elasticsearch"}
+            )
+            result_table = result_table_info.get(table_id, {})
+            if not result_table:
+                raise ResultTableNotExistException(ResultTableNotExistException.MESSAGE.format(table_id))
+
+            default_etl_params = {
+                "es_shards": result_table["storage_config"]["index_settings"]["number_of_shards"],
+                "storage_replies": result_table["storage_config"]["index_settings"]["number_of_replicas"],
+                "storage_cluster_id": result_table["cluster_config"]["cluster_id"],
+                "retention": result_table["storage_config"]["retention"],
+                "allocation_min_days": params.get("allocation_min_days", 0),
+            }
+            default_etl_params.update(params)
+            params = default_etl_params
+
         from apps.log_databus.handlers.etl import EtlHandler
 
         etl_handler = EtlHandler.get_instance(self.data.collector_config_id)

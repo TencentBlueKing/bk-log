@@ -560,6 +560,8 @@ export default {
 @import '@/scss/mixins/flex.scss';
 
 .log-cluster-table-container {
+  overflow: hidden;
+
   .cluster-nav {
     min-width: 1150px;
     margin-bottom: 12px;

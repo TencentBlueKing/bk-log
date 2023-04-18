@@ -597,6 +597,7 @@ export default {
         font-weight: 700;
         font-size: 14px;
         margin-right: 16px;
+        flex-shrink: 0;
       }
 
       .bk-icon {

@@ -32,6 +32,7 @@ import methods from './plugins/methods';
 import VueJsonPretty from 'vue-json-pretty';
 import 'vue-json-pretty/lib/styles.css';
 import cursor from '@/directives/cursor';
+import './directives/index';
 import LogButton from '@/components/log-button';
 import docsLinkMixin from '@/mixins/docs-link-mixin';
 import { renderHeader } from './common/util';

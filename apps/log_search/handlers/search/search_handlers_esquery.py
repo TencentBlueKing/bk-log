@@ -26,7 +26,7 @@ import hashlib
 from typing import List, Dict, Any, Union
 from django.core.cache import cache
 from django.conf import settings
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
 from apps.api import MonitorApi
 from apps.api.base import DataApiRetryClass
