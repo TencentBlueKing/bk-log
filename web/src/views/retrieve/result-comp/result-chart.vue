@@ -63,7 +63,7 @@
     <div
       class="converge-cycle"
       v-if="!isEmptyChart && !isFold"
-      :style="convergeStyle">
+      v-en-style="'left: 110px'">
       <span>{{ $t('汇聚周期') }}</span>
       <bk-select
         style="width: 80px"
@@ -162,9 +162,6 @@ export default {
     chartKey() {
       this.getInterval();
       return this.$store.state.retrieve.chartKey;
-    },
-    convergeStyle() {
-      return `left: ${this.$store.state.isEnLanguage ? '110' : '80'}px`;
     },
     // chartInterval() {
     //   return this.retrieveParams.interval;

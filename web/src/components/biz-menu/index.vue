@@ -56,7 +56,10 @@
         @change="handleBizSearch"
       >
       </bk-input>
-      <ul class="space-type-list" v-if="spaceTypeIdList.length > 1">
+      <ul
+        id="space-type-ul"
+        class="space-type-list"
+        v-if="spaceTypeIdList.length > 1">
         <li
           v-for="(item) in spaceTypeIdList"
           class="space-type-item"
@@ -70,7 +73,7 @@
           {{item.name}}
         </li>
       </ul>
-      <div class="biz-list">
+      <div class="biz-list" :style="`width: ${bizBoxWidth}px`">
         <template v-if="allKeyWorldLength">
           <slot name="list-top"></slot>
           <template v-for="([gKey, gItem], gIndex) in Object.entries(groupList)">
@@ -170,6 +173,7 @@ export default {
       spaceTypeIdList: [],
       searchTypeId: '',
       spaceBgColor: '#3799BA',
+      bizBoxWidth: 418,
     };
   },
   computed: {
@@ -189,6 +193,13 @@ export default {
   watch: {
     keyword() {
       this.initGroupList();
+    },
+    async showBizList(val) {
+      if (val) {
+        await this.$nextTick();
+        const el = document.querySelector('#space-type-ul');
+        this.bizBoxWidth = Math.max(394, el.clientWidth ?? 394) + 24;
+      }
     },
   },
   created() {
@@ -403,13 +414,12 @@ export default {
           flex-direction: column;
           max-height: 240px;
           overflow: auto;
-          width: 380px;
           padding: 6px 0;
 
           .group-title {
             font-size: 12px;
             color: #66768e;
-            margin: 0 0 7px 16px;
+            margin: 0 0 7px 12px;
             display: inline-block;
           }
 
@@ -425,7 +435,6 @@ export default {
           }
 
           .list-item {
-            max-width: 418px;
             justify-content: space-between;
 
             @extend %list-empty;
@@ -602,7 +611,7 @@ export default {
       &-list {
         top: 106px;
         left: 16px;
-        width: 418px;
+        min-width: 418px;
         background-color: #fff;
         outline: 1px solid #dcdee5;
 
@@ -613,7 +622,7 @@ export default {
           .group-title {
             font-size: 12px;
             color: #c4c6cc;
-            margin: 0 0 7px 16px;
+            margin: 0 0 7px 12px;
             display: inline-block;
           }
 
