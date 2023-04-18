@@ -63,7 +63,6 @@ from apps.log_databus.serializers import (
     TaskDetailSerializer,
     TaskStatusSerializer,
     BCSCollectorSerializer,
-    MatchLabelsSerializer,
     ValidateContainerCollectorYamlSerializer,
     CreateContainerCollectorSerializer,
     UpdateContainerCollectorSerializer,
@@ -71,6 +70,7 @@ from apps.log_databus.serializers import (
     FastCollectorUpdateSerializer,
     ContainerCollectorConfigToYamlSerializer,
     ListBCSCollectorSerializer,
+    PreviewContainersSerializer,
 )
 from apps.log_search.constants import (
     BKDATA_OPEN,
@@ -2078,16 +2078,64 @@ class CollectorViewSet(ModelViewSet):
             )
         )
 
-    @list_route(methods=["POST"], url_path="match_labels")
-    def match_labels(self, request):
-        data = self.params_valid(MatchLabelsSerializer)
+    @list_route(methods=["POST"], url_path="preview_containers")
+    def preview_containers(self, request):
+        """
+        @api {post} /databus/collectors/preview_containers/ 容器采集目标预览
+        @apiName preview_containers
+        @apiDescription 容器采集目标预览
+        @apiGroup 10_Collector
+        @apiParam {Int} bk_biz_id 所属业务
+        @apiParam {Int} bcs_cluster_id 集群ID
+        @apiParam {String} topo_type 拓扑类型，可选 node/pod
+        @apiParam {List[String]} namespaces 命名空间列表，传空代表全部
+        @apiParam {Object} label_selector 标签选择器
+        @apiParam {Object} container 容器过滤条件 (topo_type = node 时不生效)
+        @apiParam {String} container.workload_type 容器过滤条件 - 工作负载类型
+        @apiParam {String} container.workload_name 容器过滤条件 - 工作负载名称
+        @apiParam {String} container.container_name 容器过滤条件 - 容器名
+        @apiParamExample {json} 请求样例:
+        {
+            "bk_biz_id": 2,
+            "bcs_cluster_id": "BCS-12345",
+            "topo_type": "topo",
+            "namespaces": ["a", "b", "c"],
+            "label_selector": {
+                "match_expressions": [],
+                "match_labels": [{"key": "app", "value": "kube-prometheus-stack-operator", "operator": "="}]
+            },
+            "container": {
+                "workload_type": "Deployment",
+                "workload_name": "^bk-log-",
+                "container_name": "abcd"
+            }
+        }
+        @apiSuccessExample {json} 成功返回:
+        {
+
+            "message": "",
+            "code": 0,
+            "data": [
+                {
+                    "group": "label1 = value1",
+                    "total": 110,
+                    "items": [
+                        "a/b/c1",
+                        "a/b/c2"
+                    ]
+                }
+            ],
+            "result": true
+        }
+        """
+        data = self.params_valid(PreviewContainersSerializer)
         return Response(
-            CollectorHandler().match_labels(
+            CollectorHandler().preview_containers(
                 topo_type=data["type"],
                 bcs_cluster_id=data["bcs_cluster_id"],
-                namespace=data["namespace"],
-                label_selector=data["label_selector"],
-                selector_expression=data["selector_expression"],
+                namespaces=data.get("namespaces", []),
+                label_selector=data.get("label_selector"),
+                container=data.get("container"),
             )
         )
 

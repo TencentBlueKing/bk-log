@@ -1095,17 +1095,15 @@ class BCSCollectorSerializer(serializers.Serializer):
     config = serializers.ListSerializer(label=_("容器日志配置"), child=BcsContainerConfigSerializer())
 
 
-class MatchLabelsSerializer(serializers.Serializer):
+class PreviewContainersSerializer(serializers.Serializer):
     bk_biz_id = serializers.IntegerField(label=_("业务id"))
+    bcs_cluster_id = serializers.CharField(label=_("bcs集群id"))
     type = serializers.ChoiceField(label=_("类型"), choices=TopoType.get_choices())
     label_selector = LabelSelectorSerializer(
         required=False, label=_("标签"), default={"match_labels": [], "match_expressions": []}
     )
-    namespace = serializers.CharField(label=_("namespace"), required=False, allow_null=True, allow_blank=True)
-    bcs_cluster_id = serializers.CharField(label=_("bcs集群id"))
-    selector_expression = serializers.CharField(
-        label=_("selector表达式"), required=False, allow_null=True, allow_blank=True, default=""
-    )
+    namespaces = serializers.ListSerializer(child=serializers.CharField(), required=False, label=_("命名空间"), default=[])
+    container = ContainerSerializer(required=False, label=_("指定容器"))
 
 
 class ValidateContainerCollectorYamlSerializer(serializers.Serializer):
