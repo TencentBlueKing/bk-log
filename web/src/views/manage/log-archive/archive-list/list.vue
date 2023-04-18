@@ -333,7 +333,7 @@ export default {
       return formatFileSize(size);
     },
     getExpiredDays(props) {
-      return props.row.snapshot_days ? `${props.row.snapshot_days}天` : this.$t('永久');
+      return props.row.snapshot_days ? `${props.row.snapshot_days} ${this.$t('天')}` : this.$t('永久');
     },
     handleSearchChange(val) {
       if (val === '' && !this.isTableLoading) {

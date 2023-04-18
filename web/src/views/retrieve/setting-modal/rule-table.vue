@@ -674,7 +674,6 @@ export default {
     .bk-button {
       border-radius: 3px;
       margin-left: 2px;
-      padding: 0;
     }
 
     .btn-hover {

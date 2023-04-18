@@ -321,9 +321,11 @@ export default {
   }
 
   .king-table {
-    :deep(.cell) {
-      padding-top: 8px;
-      padding-bottom: 8px;
+    :deep(.bk-table-body) {
+      .cell {
+        padding-top: 8px;
+        padding-bottom: 8px;
+      }
     }
   }
 

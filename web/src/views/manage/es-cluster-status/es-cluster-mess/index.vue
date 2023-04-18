@@ -199,6 +199,7 @@
         </bk-table-column>
         <bk-table-column type="setting" :tippy-options="{ zIndex: 3000 }">
           <bk-table-setting-content
+            v-en-style="'width: 530px'"
             :fields="clusterSetting.fields"
             :selected="clusterSetting.selectedFields"
             :max="clusterSetting.max"

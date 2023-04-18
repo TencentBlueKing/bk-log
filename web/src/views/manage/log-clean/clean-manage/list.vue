@@ -93,7 +93,7 @@
             {{ props.row.updated_at }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('操作')" :render-header="$renderHeader" width="200">
+        <bk-table-column :label="$t('操作')" :render-header="$renderHeader" :width="operateWidth">
           <div class="collect-table-operate" slot-scope="props">
             <!-- bkdata_auth_url不为null则表示需要跳转计算平台检索 -->
             <!-- 高级清洗授权 -->
@@ -204,6 +204,9 @@ export default {
         { text: this.$t('高级清洗'), value: 'bkdata_clean' },
       );
       return target;
+    },
+    operateWidth() {
+      return this.$store.state.isEnLanguage ? '240' : '200';
     },
   },
   mounted() {
