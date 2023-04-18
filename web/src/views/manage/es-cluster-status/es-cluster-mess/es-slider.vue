@@ -1173,6 +1173,7 @@ export default {
 <style lang="scss" scoped>
 @import '@/scss/mixins/flex.scss';
 @import '@/scss/space-tag-option';
+@import '@/scss/mixins/scroller.scss';
 
 .king-slider-content {
   min-height: 394px;
@@ -1378,6 +1379,10 @@ export default {
   margin-bottom: 80px;
 }
 
+:deep(.bk-form-textarea) {
+  @include scroller;
+}
+
 .test-container {
   margin-top: 10px;
   font-size: 14px;
@@ -1424,7 +1429,7 @@ export default {
 
   .space-item-label {
     min-width: 48px;
-    padding: 0 2px;
+    padding: 0 4px;
     font-size: 12px;
     color: #63656e;
     background: #fafbfd;

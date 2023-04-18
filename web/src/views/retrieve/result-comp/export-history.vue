@@ -87,14 +87,15 @@
           align="center"
           header-align="center">
           <template slot-scope="{ row }">
-            <span>
-              {{row.export_type === 'async' ? $t('异步') : $t('同步')}}
-            </span>
+            <div class="title-overflow" v-bk-overflow-tips>
+              <span>{{row.export_type === 'async' ? $t('异步') : $t('同步')}}</span>
+            </div>
           </template>
         </bk-table-column>
         <!-- 导出状态 -->
         <bk-table-column
           :label="$t('导出状态')"
+          :width="getTableWidth.export_status"
           align="center"
           header-align="center">
           <template slot-scope="{ row }">
@@ -125,18 +126,9 @@
           align="center"
           header-align="center">
           <template slot-scope="{ row }">
-            <bk-popover
-              v-if="row.export_pkg_name"
-              placement="top"
-              theme="light">
-              <div slot="content">
-                <span>{{row.export_pkg_name ? row.export_pkg_name : '--'}}</span>
-              </div>
-              <div class="file-name">
-                <span>{{row.export_pkg_name ? row.export_pkg_name : '--'}}</span>
-              </div>
-            </bk-popover>
-            <span v-else>{{row.export_pkg_name ? row.export_pkg_name : '--'}}</span>
+            <div class="title-overflow" v-bk-overflow-tips>
+              <span>{{ row.export_pkg_name || '--' }}</span>
+            </div>
           </template>
         </bk-table-column>
         <!-- 文件大小 -->
@@ -151,23 +143,30 @@
         <!-- 操作者 -->
         <bk-table-column
           :label="$t('操作者')"
-          prop="export_created_by"
           align="center"
           header-align="center">
+          <template slot-scope="{ row }">
+            <div class="title-overflow" v-bk-overflow-tips>
+              <span>{{ row.export_created_by || '--' }}</span>
+            </div>
+          </template>
         </bk-table-column>
         <!-- 操作时间 -->
         <bk-table-column
           :label="$t('操作时间')"
+          width="150"
           align="center"
           header-align="center">
           <template slot-scope="{ row }">
-            <span>{{getFormatDate(row.export_created_at)}}</span>
+            <div class="title-overflow" v-bk-overflow-tips>
+              <span>{{getFormatDate(row.export_created_at)}}</span>
+            </div>
           </template>
         </bk-table-column>
         <!-- 操作 -->
         <bk-table-column
           :label="$t('操作')"
-          width="150"
+          :width="getTableWidth.operate"
           align="center"
           header-align="center">
           <template slot-scope="{ row }">
@@ -255,11 +254,22 @@ export default {
       position: {
         top: 120,
       },
+      enTableWidth: {
+        export_status: '190',
+        operate: '220',
+      },
+      cnTableWidth: {
+        export_status: '170',
+        operate: '150',
+      },
     };
   },
   computed: {
     bkBizId() {
       return this.$store.state.bkBizId;
+    },
+    getTableWidth() {
+      return this.$store.getters.isEnLanguage ? this.enTableWidth : this.cnTableWidth;
     },
   },
   watch: {

@@ -48,6 +48,8 @@ class QueryClientBkData(QueryClientTemplate):  # pylint: disable=invalid-name
         try:
             tracer = trace.get_tracer(__name__)
             with tracer.start_as_current_span("bkdata_es_query") as span:
+                if track_total_hits:
+                    body.update({"track_total_hits": True})
                 params = {"prefer_storage": "es", "sql": json.dumps({"index": index, "body": body})}
                 span.set_attribute("db.statement", str(params))
                 span.set_attribute("db.system", "elasticsearch")
