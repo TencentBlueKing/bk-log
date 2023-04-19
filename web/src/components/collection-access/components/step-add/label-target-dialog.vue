@@ -410,7 +410,7 @@ export default {
       overflow-y: auto;
 
       /* stylelint-disable-next-line declaration-no-important */
-      height: 476px !important;
+      height: 506px !important;
     }
 
     .item-slot {
@@ -473,6 +473,7 @@ export default {
     .select-container {
       border-bottom: 1px solid #dcdee5;
       padding-bottom: 22px;
+
       & + .no-choice-container {
         margin-top: 22px;
       }
@@ -484,7 +485,7 @@ export default {
 
       .is-checked {
         .specify-box {
-          background: #E1ECFF;
+          background: #e1ecff;
         }
       }
     }
@@ -495,11 +496,13 @@ export default {
 
     .view-select-container {
       margin-left: 30px;
+
       .disabled {
-        opacity: 0.6;
+        opacity: .6;
         cursor: no-drop;
+
         .operator {
-          color: #979BA5;
+          color: #979ba5;
         }
       }
     }
@@ -508,11 +511,12 @@ export default {
       align-items: center;
       padding: 4px 0;
 
+      @include flex-justify(space-between);
+
       .bk-checkbox-text {
         flex: 1;
         margin-left: 14px;
       }
-      @include flex-justify(space-between);
     }
   }
 
@@ -546,6 +550,8 @@ export default {
     height: 585px;
     flex-direction: column;
 
+    @include flex-center();
+
     p {
       font-size: 14px;
       margin-bottom: 12px;
@@ -553,10 +559,8 @@ export default {
 
     span {
       font-size: 12px;
-      color: #979BA5;
+      color: #979ba5;
     }
-
-    @include flex-center();
 
     .icon-empty {
       color: #c3cdd7;

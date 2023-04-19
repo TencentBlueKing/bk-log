@@ -184,10 +184,11 @@ export default {
       let goodJob = true;
 
       if (typeof this.submitEdit === 'function') {
+        const value = this.expressInputIsDisabled ? '' : (this.isHaveCompared ? this.matchValueArr.join(',') : this.matchValue);
         goodJob = this.submitEdit({
           key: this.matchKey,
           operator: this.matchOperator,
-          value: this.isHaveCompared ? this.matchValueArr.join(',') : this.matchValue,
+          value,
         });
         if (typeof goodJob.then === 'function') {
           return goodJob.then(() => {
@@ -242,7 +243,7 @@ export default {
   width: 100%;
 }
 
-.specify-main:hover .edit{
+.specify-main:hover .edit {
   visibility: visible;
 }
 
@@ -264,6 +265,7 @@ export default {
     position: relative;
     z-index: 999;
     margin-right: -1px;
+
     :deep(.bk-form-input) {
       border-top-right-radius: 0;
       border-bottom-right-radius: 0;
@@ -274,6 +276,7 @@ export default {
     border-radius: 0;
     margin-right: -1px;
     min-width: 100px;
+
     &.is-focus {
       z-index: 999;
     }
@@ -281,6 +284,7 @@ export default {
 
   .fill-value {
     width: 100%;
+
     :deep(.bk-form-input) {
       border-top-left-radius: 0;
       border-bottom-left-radius: 0;
@@ -358,15 +362,18 @@ export default {
 
 .edit {
   visibility: hidden;
-  color: #979BA5;
+  color: #979ba5;
   font-size: 18px;
+
   .bk-icon {
     cursor: pointer;
   }
+
   .icon-edit-line {
     font-size: 16px;
     margin: 0 8px;
   }
+
   .icon-close-line-2 {
     margin-right: 8px;
   }
