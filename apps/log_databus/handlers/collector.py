@@ -2308,11 +2308,7 @@ class CollectorHandler(object):
             }
             if etl_params and fields:
                 # 如果传递了清洗参数，则优先使用
-                params.update({
-                    "etl_params": etl_params,
-                    "etl_config": etl_config,
-                    "fields": fields,
-                })
+                params.update({"etl_params": etl_params, "etl_config": etl_config, "fields": fields})
             self.data.index_set_id = etl_handler.update_or_create(**params)["index_set_id"]
             self.data.save(update_fields=["index_set_id"])
 
@@ -3584,37 +3580,128 @@ class CollectorHandler(object):
             for label_key, label_valus in obj_item["metadata"]["labels"].items()
         ]
 
-    def match_labels(self, topo_type, bcs_cluster_id, namespace, label_selector, selector_expression=""):
-        if not selector_expression:
-            match_labels = label_selector["match_labels"]
-            match_expressions = label_selector["match_expressions"]
-            match_labels_list = ["{} = {}".format(label["key"], label["value"]) for label in match_labels]
+    @classmethod
+    def filter_pods(cls, pods, bcs_cluster_id, namespaces=None, workload_type="", workload_name="", container_name=""):
+        container_names = container_name.split(",") if container_name else []
+        pattern = re.compile(workload_name)
+        filtered_pods = []
+        for pod in pods.items:
+            # 命名空间匹配
+            if namespaces and pod.metadata.namespace not in namespaces:
+                continue
 
-            for expression in match_expressions:
-                if expression["operator"] == LabelSelectorOperator.IN:
-                    expr = "{} in {}".format(expression["key"], expression["value"])
-                elif expression["operator"] == LabelSelectorOperator.NOT_IN:
-                    expr = "{} notin {}".format(expression["key"], expression["value"])
-                elif expression["operator"] == LabelSelectorOperator.EXISTS:
-                    expr = "{}".format(expression["key"])
-                elif expression["operator"] == LabelSelectorOperator.DOES_NOT_EXIST:
-                    expr = "!{}".format(expression["key"])
+            # 工作负载匹配
+            if not pod.metadata.owner_references:
+                continue
+
+            pod_workload_type = pod.metadata.owner_references[0].kind
+            pod_workload_name = pod.metadata.owner_references[0].name
+
+            if pod_workload_type == "ReplicaSet":
+                # ReplicaSet 需要做特殊处理
+                pod_workload_name = pod_workload_name.rsplit("-", 1)[0]
+                pod_workload_type = "Deployment"
+
+            if workload_type and workload_type != pod_workload_type:
+                continue
+
+            if workload_name and not pattern.match(pod_workload_name):
+                continue
+
+            # 容器名匹配
+            if container_names:
+                for container in pod.spec.containers:
+                    if container.name in container_names:
+                        break
                 else:
-                    expr = "{} = {}".format(expression["key"], expression["value"])
-                match_labels_list.append(expr)
-            selector_expression = ", ".join(match_labels_list)
+                    continue
+
+            filtered_pods.append(pod)
+
+        return [f"{bcs_cluster_id}/{pod.metadata.namespace}/{pod.metadata.name}" for pod in filtered_pods]
+
+    @classmethod
+    def preview_containers(cls, bcs_cluster_id, topo_type, label_selector=None, namespaces=None, container=None):
+        """
+        预览匹配到的 nodes 或 pods
+        """
+        container = container or {}
+        namespaces = namespaces or []
+        label_selector = label_selector or {}
+
+        # 将标签匹配条件转换为表达式
+        match_labels = label_selector.get("match_labels", [])
+        match_expressions = label_selector.get("match_expressions", [])
+        match_labels_list = ["{} = {}".format(label["key"], label["value"]) for label in match_labels]
+
+        for expression in match_expressions:
+            if expression["operator"] == LabelSelectorOperator.IN:
+                expr = "{} in {}".format(expression["key"], expression["value"])
+            elif expression["operator"] == LabelSelectorOperator.NOT_IN:
+                expr = "{} notin {}".format(expression["key"], expression["value"])
+            elif expression["operator"] == LabelSelectorOperator.EXISTS:
+                expr = "{}".format(expression["key"])
+            elif expression["operator"] == LabelSelectorOperator.DOES_NOT_EXIST:
+                expr = "!{}".format(expression["key"])
+            else:
+                expr = "{} = {}".format(expression["key"], expression["value"])
+            match_labels_list.append(expr)
 
         api_instance = Bcs(cluster_id=bcs_cluster_id).api_instance_core_v1
+        previews = []
+
+        # Node 预览
         if topo_type == TopoType.NODE.value:
-            nodes = api_instance.list_node(label_selector=selector_expression).to_dict()
-            return self.generate_objs(nodes)
-        if topo_type == TopoType.POD.value:
-            if not namespace:
-                return self.generate_objs(
-                    api_instance.list_pod_for_all_namespaces(label_selector=selector_expression).to_dict()
+            if match_labels_list:
+                # 如果有多条表达式，需要拆分为多个去请求，以获取每个表达式实际匹配的数量
+                for expr in match_labels_list:
+                    nodes = api_instance.list_node(label_selector=expr)
+                    previews.append(
+                        {
+                            "group": expr,
+                            "total": len(nodes.items),
+                            "items": [item.metadata.name for item in nodes.items],
+                        }
+                    )
+            else:
+                nodes = api_instance.list_node()
+                previews.append(
+                    {
+                        "group": _("所有"),
+                        "total": len(nodes.items),
+                        "items": [item.metadata.name for item in nodes.items],
+                    }
                 )
-            pods = api_instance.list_namespaced_pod(label_selector=selector_expression, namespace=namespace).to_dict()
-            return self.generate_objs(pods)
+            return previews
+
+        # Pod 预览
+        # 当存在标签表达式时，以标签表达式维度展示
+        # 当不存在标签表达式时，以namespace维度展示
+        if match_labels_list:
+            for expr in match_labels_list:
+                if not namespaces or len(namespaces) > 1:
+                    pods = api_instance.list_pod_for_all_namespaces(label_selector=expr)
+                else:
+                    pods = api_instance.list_namespaced_pod(label_selector=expr, namespace=namespaces[0])
+                pods = cls.filter_pods(pods, bcs_cluster_id=bcs_cluster_id, namespaces=namespaces, **container)
+                previews.append({"group": expr, "total": len(pods), "items": pods})
+        else:
+            if not namespaces or len(namespaces) > 1:
+                pods = api_instance.list_pod_for_all_namespaces()
+            else:
+                pods = api_instance.list_namespaced_pod(namespace=namespaces[0])
+            pods = cls.filter_pods(pods, bcs_cluster_id=bcs_cluster_id, namespaces=namespaces, **container)
+
+            # 按 namespace进行分组
+            namespace_pods = defaultdict(list)
+            for pod in pods:
+                namespace = pod.split("/", 2)[1]
+                namespace_pods[namespace].append(pod)
+
+            for namespace, ns_pods in namespace_pods.items():
+                previews.append({"group": f"namespace = {namespace}", "total": len(ns_pods), "items": ns_pods})
+
+        return previews
 
     @classmethod
     def generate_objs(cls, objs_dict):
@@ -3780,7 +3867,9 @@ class CollectorHandler(object):
                     "container": {
                         "workload_type": config.get("workloadType", ""),
                         "workload_name": config.get("workloadName", ""),
-                        "container_name": config["containerNameMatch"][0] if config.get("containerNameMatch") else "",
+                        "container_name": ",".join(config["containerNameMatch"])
+                        if config.get("containerNameMatch")
+                        else "",
                     },
                     "label_selector": {
                         "match_labels": [
@@ -3995,7 +4084,7 @@ class CollectorHandler(object):
             "namespaceSelector": {"any": container_config.any_namespace, "matchNames": container_config.namespaces},
             "workloadType": container_config.workload_type,
             "workloadName": container_config.workload_name,
-            "containerNameMatch": [container_config.container_name] if container_config.container_name else [],
+            "containerNameMatch": container_config.container_name.split(",") if container_config.container_name else [],
             "labelSelector": {
                 "matchLabels": {label["key"]: label["value"] for label in container_config.match_labels}
                 if container_config.match_labels
