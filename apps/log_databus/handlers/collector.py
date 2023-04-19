@@ -3620,15 +3620,17 @@ class CollectorHandler(object):
         return [f"{bcs_cluster_id}/{pod.metadata.namespace}/{pod.metadata.name}" for pod in filtered_pods]
 
     @classmethod
-    def preview_containers(cls, bcs_cluster_id, topo_type, namespaces, label_selector, container):
+    def preview_containers(cls, bcs_cluster_id, topo_type, label_selector=None, namespaces=None, container=None):
         """
         预览匹配到的 nodes 或 pods
         """
         container = container or {}
+        namespaces = namespaces or []
+        label_selector = label_selector or {}
 
         # 将标签匹配条件转换为表达式
-        match_labels = label_selector["match_labels"]
-        match_expressions = label_selector["match_expressions"]
+        match_labels = label_selector.get("match_labels", [])
+        match_expressions = label_selector.get("match_expressions", [])
         match_labels_list = ["{} = {}".format(label["key"], label["value"]) for label in match_labels]
 
         for expression in match_expressions:
