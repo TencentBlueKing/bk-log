@@ -412,6 +412,7 @@
                       allow-create
                       free-paste
                       has-delete-icon
+                      @change="() => handleContainerNameChange(conIndex)"
                       @blur="(inputStr, list) => handleContainerNameBlur(inputStr, list, conIndex)">
                     </bk-tag-input>
                   </div>
@@ -1842,6 +1843,7 @@ export default {
           break;
         case 'containerName':
           config.containerNameList = [];
+          config.container.container_name = '';
           break;
         default:
           break;
@@ -1852,6 +1854,11 @@ export default {
       if (!input) return;
       const config = this.formData.configs[conIndex];
       config.containerNameList = !list.length ? [input] : [...new Set([...config.containerNameList, input])];
+      config.container.container_name = config.containerNameList.join(',');
+    },
+    handleContainerNameChange(conIndex) {
+      const config = this.formData.configs[conIndex];
+      config.container.container_name = config.containerNameList.join(',');
     },
     // 获取config里添加范围的列表
     getScopeSelectShow(conIndex) {
