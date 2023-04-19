@@ -3582,6 +3582,7 @@ class CollectorHandler(object):
 
     @classmethod
     def filter_pods(cls, pods, bcs_cluster_id, namespaces=None, workload_type="", workload_name="", container_name=""):
+        container_names = container_name.split(",") if container_name else []
         pattern = re.compile(workload_name)
         filtered_pods = []
         for pod in pods.items:
@@ -3608,9 +3609,9 @@ class CollectorHandler(object):
                 continue
 
             # 容器名匹配
-            if container_name:
+            if container_names:
                 for container in pod.spec.containers:
-                    if container.name == container_name:
+                    if container.name in container_names:
                         break
                 else:
                     continue
@@ -3866,7 +3867,9 @@ class CollectorHandler(object):
                     "container": {
                         "workload_type": config.get("workloadType", ""),
                         "workload_name": config.get("workloadName", ""),
-                        "container_name": config["containerNameMatch"][0] if config.get("containerNameMatch") else "",
+                        "container_name": ",".join(config["containerNameMatch"])
+                        if config.get("containerNameMatch")
+                        else "",
                     },
                     "label_selector": {
                         "match_labels": [
@@ -4081,7 +4084,7 @@ class CollectorHandler(object):
             "namespaceSelector": {"any": container_config.any_namespace, "matchNames": container_config.namespaces},
             "workloadType": container_config.workload_type,
             "workloadName": container_config.workload_name,
-            "containerNameMatch": [container_config.container_name] if container_config.container_name else [],
+            "containerNameMatch": container_config.container_name.split(",") if container_config.container_name else [],
             "labelSelector": {
                 "matchLabels": {label["key"]: label["value"] for label in container_config.match_labels}
                 if container_config.match_labels
