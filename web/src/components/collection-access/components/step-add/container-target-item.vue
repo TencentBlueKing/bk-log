@@ -21,66 +21,61 @@
   -->
 
 <template>
-  <bk-dialog
-    width="480"
-    theme="primary"
-    header-position="left"
-    :value="isShowDialog"
-    :mask-close="false"
-    :title="$t('指定容器')"
-    :auto-close="false"
-    :confirm-fn="handelConfirmContainer"
-    @cancel="handelCancelDialog">
-    <bk-form
-      class="specify-container"
-      form-type="vertical"
-      ref="containerFormRef"
-      :model="formData">
-      <bk-form-item :label="$t('应用类型')">
-        <bk-select
-          v-model="formData.workload_type"
-          searchable>
-          <bk-option
-            v-for="(option, index) in typeList"
-            :key="index"
-            :id="option.id"
-            :name="option.name">
-          </bk-option>
-        </bk-select>
-      </bk-form-item>
-      <bk-form-item :label="$t('应用名称')">
-        <bk-select
-          ref="loadSelectRef"
-          :class="{ 'application': formData.workload_name, 'no-click': nameCannotClick }"
-          v-model="formData.workload_name"
-          allow-create
-          searchable
-          :placeholder="placeHolderStr"
-          @toggle="(status) => isOptionOpen = status">
-          <bk-option
-            v-for="(option, index) in nameList"
-            :key="`${option.name}_${index}`"
-            :id="option.id"
-            :name="option.name">
-          </bk-option>
-        </bk-select>
-        <span :class="['bk-icon', 'icon-angle-down', isOptionOpen && 'angle-rotate']"></span>
-      </bk-form-item>
-      <bk-form-item :label="$t('容器名称')">
-        <bk-input v-model="formData.container_name"></bk-input>
-      </bk-form-item>
-    </bk-form>
-  </bk-dialog>
+  <div class="load-container">
+    <div class="flex-space-item">
+      <div class="space-item-label">{{$t('应用类型')}}</div>
+      <bk-select
+        v-model="formData.workload_type"
+        searchable
+        clearable>
+        <bk-option
+          v-for="(option, index) in typeList"
+          :key="index"
+          :id="option.id"
+          :name="option.name">
+        </bk-option>
+      </bk-select>
+    </div>
+    <div class="flex-space-item">
+      <div class="space-item-label">{{$t('应用名称')}}</div>
+      <bk-select
+        ref="loadSelectRef"
+        :class="{ 'application': formData.workload_name, 'no-click': nameCannotClick }"
+        v-model="formData.workload_name"
+        allow-create
+        searchable
+        :placeholder="placeHolderStr"
+        @toggle="(status) => isOptionOpen = status">
+        <bk-option
+          v-for="(option, index) in nameList"
+          :key="`${option.name}_${index}`"
+          :id="option.id"
+          :name="option.name">
+        </bk-option>
+      </bk-select>
+      <span :class="['bk-icon', 'icon-angle-down', isOptionOpen && 'angle-rotate']"></span>
+    </div>
+  </div>
 </template>
 <script>
+import { mapGetters } from 'vuex';
+
 export default {
   props: {
-    isShowDialog: {
-      type: Boolean,
-      default: false,
+    conItem: {
+      type: Object,
+      require: true,
     },
     container: {
       type: Object,
+      require: true,
+    },
+    typeList: {
+      type: Array,
+      default: () => [],
+    },
+    bcsClusterId: {
+      type: String,
       require: true,
     },
   },
@@ -91,23 +86,33 @@ export default {
         workload_name: '',
         container_name: '',
       },
+      timer: null,
       isOptionOpen: false, // 是否展开了应用的下拉列表
       nameCannotClick: false, // 应用列表是否正在请求中
-      typeList: [],
       nameList: [],
       placeHolderStr: `${this.$t('请输入应用名称')}, ${this.$t('支持正则匹配')}`,
     };
   },
-  computed: {},
+  computed: {
+    ...mapGetters({
+      bkBizId: 'bkBizId',
+    }),
+  },
   watch: {
-    isShowDialog(val) {
-      if (val) {
-        Object.assign(this.formData, this.container);
-        !this.typeList.length && this.getWorkLoadTypeList();
-      };
-    },
     'formData.workload_type'(val) {
-      !!val ? this.getWorkLoadNameList(val) : this.nameList = [];
+      !!val ? this.getWorkLoadNameList() : this.nameList = [];
+    },
+    'conItem.noQuestParams.namespaceStr'() {
+      clearTimeout(this.timer);
+      this.timer = setTimeout(() => {
+        this.getWorkLoadNameList();
+      }, 1000);
+    },
+    formData: {
+      handler(val) {
+        this.$emit('update:container', val);
+      },
+      deep: true,
     },
     nameCannotClick(val) {
       const inputDOM = this.$refs.loadSelectRef.$refs.createInput;
@@ -115,44 +120,21 @@ export default {
       val ? inputDOM.setAttribute('disabled', 'disabled') : inputDOM.removeAttribute('disabled');
     },
   },
+  created() {
+    Object.assign(this.formData, this.conItem.container);
+  },
   mounted() {
     this.$refs.loadSelectRef.$refs.createInput.placeholder = this.placeHolderStr;
   },
   methods: {
-    handelCancelDialog() {
-      this.$emit('update:is-show-dialog', false);
-    },
-    async handelConfirmContainer() {
-      const { workload_type, workload_name, container_name } = this.formData;
-      const containerObj = {
-        container: {
-          workload_type,
-          workload_name,
-          container_name,
-        },
+    getWorkLoadNameList() {
+      this.nameCannotClick = true;
+      const query = {
+        type: this.formData.workload_type,
+        bk_biz_id: this.bkBizId,
+        namespace: this.conItem.noQuestParams.namespaceStr,
+        bcs_cluster_id: this.bcsClusterId,
       };
-      this.$emit('configContainerChange', containerObj);
-      this.$emit('update:is-show-dialog', false);
-    },
-    getWorkLoadTypeList() {
-      this.nameCannotClick = true;
-      this.$http.request('container/getWorkLoadType').then((res) => {
-        if (res.code === 0) {
-          this.typeList = res.data.map(item => ({ id: item, name: item }));
-        }
-      })
-        .catch((err) => {
-          console.warn(err);
-        })
-        .finally(() => {
-          this.nameCannotClick = false;
-        });
-    },
-    getWorkLoadNameList(type) {
-      this.nameCannotClick = true;
-      const { bk_biz_id, namespace, bcs_cluster_id } = this.container;
-      const query = { type, bk_biz_id, namespace, bcs_cluster_id };
-      if (!namespace) delete query.namespace;
       this.$http.request('container/getWorkLoadName', { query }).then((res) => {
         if (res.code === 0) {
           this.nameList = res.data.map(item => ({ id: item, name: item }));
@@ -163,15 +145,51 @@ export default {
         })
         .finally(() => {
           this.nameCannotClick = false;
-        });;
+        });
     },
   },
 };
 </script>
 <style lang="scss" scoped>
-.specify-container {
-  .bk-form-control {
-    width: 100%;
+@import '@/scss/mixins/flex.scss';
+
+.load-container {
+  > :first-child {
+    width: 28%;
+    margin-right: 12px;
+  }
+  > :last-child {
+    flex: 1;
+  }
+  @include flex-center;
+  .flex-space-item {
+    position: relative;
+    @include flex-justify(space-between);
+
+    .bk-select,
+    .bk-form-control {
+      flex: 1;
+    }
+
+    .space-item-label {
+      flex-shrink: 0;
+    }
+
+    :deep(.bk-form-input) {
+      height: 34px;
+    }
+  }
+  .space-item-label {
+    min-width: 48px;
+    padding: 0 6px;
+    font-size: 12px;
+    color: #63656e;
+    background: #fafbfd;
+    border: 1px solid #c4c6cc;
+    border-radius: 2px 0 0 2px;
+    transform: translateX(1px);
+
+    @include flex-center;
   }
 }
 

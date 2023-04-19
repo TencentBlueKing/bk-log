@@ -35,7 +35,7 @@
             :label="index === 0 ? $t('日志路径') : ''"
             :rules="rules.paths"
             :property="'params.paths.' + index + '.value'">
-            <div class="flex-ac">
+            <div class="log-path flex-ac">
               <bk-input
                 v-model="log.value"
                 data-test-id="sourceLogBox_input_addLogPath"
@@ -50,7 +50,7 @@
                   @click="delLog(index)"></i>
               </div>
             </div>
-            <div class="tips" v-if="index === 0">
+            <div :class="['tips', showType !== 'horizontal' && 'log-tips']" v-if="index === 0">
               <i18n path="日志文件的绝对路径，可使用 {0}">
                 <span class="font-gray">{{ $t('通配符') }}</span>
               </i18n>
@@ -75,13 +75,7 @@
         </bk-form-item>
       </div>
       <!-- 过滤内容 -->
-      <div
-        :class="[
-          'config-item',
-          'filter-content',
-          showType === 'horizontal' && 'horizontal-item',
-        ]"
-        v-en-class="'en-span'">
+      <div :class="['filter-content', showType === 'horizontal' && 'horizontal-item']" v-en-class="'en-span'">
         <span v-bk-tooltips="$t('为减少传输和存储成本，可以过滤掉部分内容,更复杂的可在“清洗”功能中完成')">
           <span class="filter-title">{{$t('过滤内容')}}</span>
         </span>
@@ -182,7 +176,7 @@
             </div>
           </bk-form-item>
         </div>
-        <div :class="['row-container', 'second',showType === 'horizontal' && 'pl115']">
+        <div :class="['row-container', 'second', showType === 'horizontal' && 'pl115']">
           <i18n path="最多匹配{0}行，最大耗时{1}秒" class="i18n-style">
             <bk-form-item :rules="rules.maxLine" property="params.multiline_max_lines">
               <bk-input
@@ -667,6 +661,16 @@ export default {
     width: 184px;
     height: 32px;
   }
+}
+
+.log-path {
+  position: relative;
+}
+
+.log-tips {
+  position: absolute;
+  top: -30px;
+  left: 80px;
 }
 
 .en-span {

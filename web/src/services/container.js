@@ -96,6 +96,12 @@ const containerConfigsToYaml = {
   method: 'post',
 };
 
+// 预览
+const getLabelHitView = {
+  url: '/databus/collectors/preview_containers/',
+  method: 'post',
+};
+
 export {
   create,
   update,
@@ -109,4 +115,5 @@ export {
   getBcsList,
   yamlJudgement,
   containerConfigsToYaml,
+  getLabelHitView,
 };
