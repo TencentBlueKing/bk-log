@@ -454,5 +454,21 @@ export default {
   "自定义上报数据，可以通过采集器，或者指定协议例如otlp等方式进行上报，自定义上报有一定的使用要求，具体可以查看使用说明": "Custom reporting data, which can be reported through collectors or specified protocols such as otlp. custom reporting has certain usage requirements. for details, please refer to the usage instructions.",
   "您当前没有业务权限，请先联系对应的业务运维同学进行添加!': '您当前没有业务权限，请先联系对应的业务运维同学进行添加!": "You currently do not have business permissions, please contact the corresponding business operation and maintenance students to add!': 'you currently do not have business permissions, please contact the corresponding business operation and maintenance students to add!",
   "如果日志已经存储在Elasticsearch，可以在“集群管理”中添加Elasticsearch集群，就可以通过创建索引集来使用存储中的日志数据。": "If the logs are already stored in Elasticsearch, you can add an Elasticsearch cluster in \"cluster management\", and then use the log data in storage by creating an index set.",
-  "该功能指从查询语句中获取相应的字段，当勾选对应的字段时，将以表单的填写方式显示给收藏的使用者。（字段说明：没有字段时，为全文检索；重复的字段增加显示序号(N) ，默认不勾选任何字段)": "This function refers to getting the corresponding fields from the query statement. when the corresponding fields are checked, they will be displayed to the collector users in the form of form filling. (field description: when there is no field, it is a full-text search; duplicate fields increase the display sequence number (n), and no fields are selected by default)."
+  "该功能指从查询语句中获取相应的字段，当勾选对应的字段时，将以表单的填写方式显示给收藏的使用者。（字段说明：没有字段时，为全文检索；重复的字段增加显示序号(N) ，默认不勾选任何字段)": "This function refers to getting the corresponding fields from the query statement. when the corresponding fields are checked, they will be displayed to the collector users in the form of form filling. (field description: when there is no field, it is a full-text search; duplicate fields increase the display sequence number (n), and no fields are selected by default).",
+  "选择容器范围": "Select container scope",
+  "所有选择范围可相互叠加并作用": "All selection ranges can be stacked and act on each other",
+  "按NameSpace选择": "Select by NameSpace",
+  "按标签选择容器": "Select container by label",
+  "按工作负载选择": "Select by workload",
+  "直接指定容器名": "Directly specify the container name",
+  "容器名": "Container name",
+  "手动输入标签": "Enter tags manually",
+  "选择已有标签": "Select an existing label",
+  "预览": "preview",
+  "容器范围预览": "Container range preview",
+  "选择标签": "Select label",
+  "暂无标签": "No tags yet",
+  "请先在左侧列表进行选择": "Please select from the list on the left first",
+  "工作负载": "workload",
+  "暂无命中内容": "No hit content"
 }

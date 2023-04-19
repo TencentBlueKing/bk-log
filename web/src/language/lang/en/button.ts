@@ -129,4 +129,5 @@ export default {
   "新建自定义上报": "New",
   "按更新时间排序": "Sort by Time",
   "添加链路中转机": "Add Link Transit",
+  "添加范围": "Add range"
 }

@@ -84,27 +84,14 @@
                   <span
                     v-for="(spaceItem, spaceIndex) in configItem.namespaces"
                     :key="spaceIndex">
-                    {{spaceItem}}
+                    <span>{{spaceItem}}{{(spaceIndex + 1) !== configItem.namespaces.length ? ',' : ''}}&nbsp;</span>
                   </span>
                 </span>
                 <span v-else>{{$t('所有')}}</span>
               </div>
-              <!-- 指定容器 -->
-              <div>
-                <span>{{$t('指定容器')}}</span>
-                <div class="specify-box" v-if="isSelectorHaveValue(configItem.container)">
-                  <template
-                    v-for="([speKey, speValue], speIndex) in Object.entries(configItem.container)">
-                    <div class="specify-container" v-if="speValue" :key="speIndex" v-bk-overflow-tips>
-                      <span>{{specifyName[speKey]}}</span> : <span>{{speValue}}</span>
-                    </div>
-                  </template>
-                </div>
-                <span v-else>{{$t('所有')}}</span>
-              </div>
               <!-- 关联标签 -->
               <div>
-                <span>{{$t('关联标签')}}</span>
+                <span class="label-title">{{$t('关联标签')}}</span>
                 <div v-if="isSelectorHaveValue(configItem.label_selector)">
                   <template v-for="(labItem, labKey) in configItem.label_selector">
                     <div class="specify-box"
@@ -118,6 +105,30 @@
                         <span>{{matchItem.value}}</span>
                       </div>
                     </div>
+                  </template>
+                </div>
+                <span v-else>{{$t('所有')}}</span>
+              </div>
+              <!-- 工作负载 -->
+              <div class="content-style">
+                <span>{{$t('工作负载')}}</span>
+                <div class="container justify-bt" v-if="isSelectorHaveValue(configItem.container)">
+                  <template
+                    v-for="([speKey, speValue], speIndex) in Object.entries(configItem.container)">
+                    <div class="container-item" v-if="speValue" :key="speIndex">
+                      {{specifyName[speKey]}} : {{speValue}}
+                    </div>
+                  </template>
+                </div>
+                <span v-else>{{$t('所有')}}</span>
+              </div>
+              <!-- 容器名 -->
+              <div class="content-style">
+                <span>{{$t('容器名')}}</span>
+                <div class="container justify-bt" v-if="isContainerHaveValue(configItem.containerName)">
+                  <template
+                    v-for="(conItem, conIndex) in configItem.containerName">
+                    <div class="container-item" :key="conIndex">{{conItem}}</div>
                   </template>
                 </div>
                 <span v-else>{{$t('所有')}}</span>
@@ -266,7 +277,6 @@ export default {
       specifyName: { // 指定容器中文名
         workload_type: this.$t('应用类型'),
         workload_name: this.$t('应用名称'),
-        container_name: this.$t('容器名称'),
       },
       collectorNameMap: {
         container_log_config: 'Container',
@@ -318,7 +328,7 @@ export default {
           const {
             workload_name,
             workload_type,
-            container_name,
+            container_name: baseContainerName,
             match_expressions,
             match_labels,
             data_encoding,
@@ -330,14 +340,16 @@ export default {
           } = item;
           let container;
           let labelSelector;
+          let containerName = this.getContainerNameList(baseContainerName);
           if (data.yaml_config_enabled) {
-            container = yamlContainer;
+            const { workload_name, workload_type, container_name: yamlContainerName } = yamlContainer;
+            container = { workload_name, workload_type };
+            containerName = this.getContainerNameList(yamlContainerName);
             labelSelector = yamlSelector;
           } else {
             container =  {
               workload_type,
               workload_name,
-              container_name,
             };
             labelSelector = {
               match_labels,
@@ -350,6 +362,7 @@ export default {
             data_encoding,
             container,
             collectorName,
+            containerName,
             label_selector: labelSelector,
             params,
           };
@@ -357,6 +370,11 @@ export default {
       } catch (error) {
         console.warn(error);
       }
+    },
+    getContainerNameList(containerName = '') {
+      const splitList = containerName.split(',');
+      if (splitList.length === 1 && splitList[0] === '') return [];
+      return splitList;
     },
     async getLinkData(collectorData) {
       try {
@@ -427,9 +445,6 @@ export default {
 @import '@/scss/basic.scss';
 
 .basic-info-container {
-  display: flex;
-  justify-content: space-between;
-
   .deploy-sub > div {
     display: flex;
     margin-bottom: 33px;
@@ -458,8 +473,13 @@ export default {
 
   }
 
+  .label-title {
+    margin-top: 7px;
+  }
+
   .content-style {
     display: flex;
+    align-items: center;
 
     .win-log {
       height: 60px;
@@ -488,6 +508,18 @@ export default {
         height: 20px;
         text-align: center;
         line-height: 20px;
+      }
+    }
+
+    .container {
+      flex-wrap: wrap;
+
+      .container-item {
+        padding: 4px 10px;
+        color: #63656e;
+        background: #f0f1f5;
+        margin-right: 8px;
+        border-radius: 2px;
       }
     }
   }
@@ -522,7 +554,7 @@ export default {
     margin-left: 24px;
     display: flex;
     flex-flow: wrap;
-    padding: 8px 16px;
+    padding: 2px 16px;
     margin-bottom: 8px;
     background: #f5f7fa;
     border-radius: 2px;
@@ -530,7 +562,7 @@ export default {
     .specify-container {
       width: 50%;
       height: 30px;
-      line-height: 30px;
+      line-height: 28px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -559,7 +591,7 @@ export default {
 
 .span-warp {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
 }
 
 .justify-bt {

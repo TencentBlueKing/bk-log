@@ -207,7 +207,7 @@ export default {
   .yaml-container {
     width: 74%;
     min-width: 800px;
-    margin: 10px 0 0 115px;
+    margin: 20px 0 0 115px;
   }
 
   .load {
