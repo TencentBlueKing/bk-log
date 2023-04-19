@@ -3582,6 +3582,7 @@ class CollectorHandler(object):
 
     @classmethod
     def filter_pods(cls, pods, bcs_cluster_id, namespaces=None, workload_type="", workload_name="", container_name=""):
+        container_names = container_name.split(",") if container_name else []
         pattern = re.compile(workload_name)
         filtered_pods = []
         for pod in pods.items:
@@ -3608,9 +3609,9 @@ class CollectorHandler(object):
                 continue
 
             # 容器名匹配
-            if container_name:
+            if container_names:
                 for container in pod.spec.containers:
-                    if container.name == container_name:
+                    if container.name in container_names:
                         break
                 else:
                     continue
@@ -3620,15 +3621,17 @@ class CollectorHandler(object):
         return [f"{bcs_cluster_id}/{pod.metadata.namespace}/{pod.metadata.name}" for pod in filtered_pods]
 
     @classmethod
-    def preview_containers(cls, bcs_cluster_id, topo_type, namespaces, label_selector, container):
+    def preview_containers(cls, bcs_cluster_id, topo_type, label_selector=None, namespaces=None, container=None):
         """
         预览匹配到的 nodes 或 pods
         """
         container = container or {}
+        namespaces = namespaces or []
+        label_selector = label_selector or {}
 
         # 将标签匹配条件转换为表达式
-        match_labels = label_selector["match_labels"]
-        match_expressions = label_selector["match_expressions"]
+        match_labels = label_selector.get("match_labels", [])
+        match_expressions = label_selector.get("match_expressions", [])
         match_labels_list = ["{} = {}".format(label["key"], label["value"]) for label in match_labels]
 
         for expression in match_expressions:
@@ -3864,7 +3867,9 @@ class CollectorHandler(object):
                     "container": {
                         "workload_type": config.get("workloadType", ""),
                         "workload_name": config.get("workloadName", ""),
-                        "container_name": config["containerNameMatch"][0] if config.get("containerNameMatch") else "",
+                        "container_name": ",".join(config["containerNameMatch"])
+                        if config.get("containerNameMatch")
+                        else "",
                     },
                     "label_selector": {
                         "match_labels": [
@@ -4079,7 +4084,7 @@ class CollectorHandler(object):
             "namespaceSelector": {"any": container_config.any_namespace, "matchNames": container_config.namespaces},
             "workloadType": container_config.workload_type,
             "workloadName": container_config.workload_name,
-            "containerNameMatch": [container_config.container_name] if container_config.container_name else [],
+            "containerNameMatch": container_config.container_name.split(",") if container_config.container_name else [],
             "labelSelector": {
                 "matchLabels": {label["key"]: label["value"] for label in container_config.match_labels}
                 if container_config.match_labels

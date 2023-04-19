@@ -2087,7 +2087,7 @@ class CollectorViewSet(ModelViewSet):
         @apiGroup 10_Collector
         @apiParam {Int} bk_biz_id 所属业务
         @apiParam {Int} bcs_cluster_id 集群ID
-        @apiParam {String} topo_type 拓扑类型，可选 node/pod
+        @apiParam {String} type 拓扑类型，可选 node/pod
         @apiParam {List[String]} namespaces 命名空间列表，传空代表全部
         @apiParam {Object} label_selector 标签选择器
         @apiParam {Object} container 容器过滤条件 (topo_type = node 时不生效)
@@ -2098,7 +2098,7 @@ class CollectorViewSet(ModelViewSet):
         {
             "bk_biz_id": 2,
             "bcs_cluster_id": "BCS-12345",
-            "topo_type": "topo",
+            "type": "topo",
             "namespaces": ["a", "b", "c"],
             "label_selector": {
                 "match_expressions": [],
