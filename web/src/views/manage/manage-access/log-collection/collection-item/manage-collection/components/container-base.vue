@@ -91,7 +91,7 @@
               </div>
               <!-- 关联标签 -->
               <div>
-                <span class="label-title">{{$t('关联标签')}}</span>
+                <span :class="{ 'label-title': isSelectorHaveValue(configItem.label_selector) }">{{$t('关联标签')}}</span>
                 <div v-if="isSelectorHaveValue(configItem.label_selector)">
                   <template v-for="(labItem, labKey) in configItem.label_selector">
                     <div class="specify-box"
@@ -120,7 +120,7 @@
                     </div>
                   </template>
                 </div>
-                <span v-else>{{$t('所有')}}</span>
+                <span v-else>--</span>
               </div>
               <!-- 容器名 -->
               <div class="content-style">
@@ -131,7 +131,7 @@
                     <div class="container-item" :key="conIndex">{{conItem}}</div>
                   </template>
                 </div>
-                <span v-else>{{$t('所有')}}</span>
+                <span v-else>--</span>
               </div>
               <!-- 日志路径 -->
               <div>
@@ -580,6 +580,8 @@ export default {
         color: #ff9c01;
         background: #fff;
         border-radius: 2px;
+        font-size: 14px;
+        font-weight: 700;
       }
 
       :last-child {

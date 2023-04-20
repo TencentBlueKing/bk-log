@@ -1573,7 +1573,7 @@ export default {
           bcs_cluster_id: this.formData.bcs_cluster_id,
           type,
           namespaces,
-          label_selector: this.getLabelSelectorQueryParams(config.labelSelector),
+          label_selector: this.getLabelSelectorQueryParams(config.labelSelector, true),
           container: config.container,
         };
       }
@@ -1868,13 +1868,19 @@ export default {
     getNameSpaceStr(namespaces) {
       return (namespaces.length === 1 && namespaces[0] === '*') ? '' : namespaces.join(',');
     },
-    // 展示用的标签格式转化成存储或传参的标签格式
-    getLabelSelectorQueryParams(labelSelector) {
+    /**
+     * @desc: 展示用的标签格式转化成存储或传参的标签格式
+     * @param {Object} labelSelector 主页展示用的label_selector
+     * @param {Boolean} isViewType 是否是预览传参 in notin 操作符需要加括号
+     * @returns {Object} 返回传参用的label_selector
+     */
+    getLabelSelectorQueryParams(labelSelector, isViewType = false) {
       return labelSelector.reduce((pre, cur) => {
+        const value = (isViewType && ['NotIn', 'In'].includes(cur.operator)) ? `(${cur.value})` : cur.value;
         pre[cur.type].push({
           key: cur.key,
           operator: cur.operator,
-          value: cur.value,
+          value,
         });
         return pre;
       }, {
