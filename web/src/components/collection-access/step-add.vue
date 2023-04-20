@@ -1567,11 +1567,12 @@ export default {
           labelSelector: config.labelSelector,
         };
       } else if (dialogType === 'view') {
+        const namespaces = (config.namespaces.length === 1 && config.namespaces[0] === '*') ? [] : config.namespaces;
         this.viewQueryParams = {
           bk_biz_id: this.bkBizId,
           bcs_cluster_id: this.formData.bcs_cluster_id,
           type,
-          namespaces: config.namespaces,
+          namespaces,
           label_selector: this.getLabelSelectorQueryParams(config.labelSelector),
           container: config.container,
         };
