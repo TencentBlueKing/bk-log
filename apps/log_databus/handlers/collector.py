@@ -3646,60 +3646,47 @@ class CollectorHandler(object):
             else:
                 expr = "{} = {}".format(expression["key"], expression["value"])
             match_labels_list.append(expr)
+        selector_expression = ", ".join(match_labels_list)
 
         api_instance = Bcs(cluster_id=bcs_cluster_id).api_instance_core_v1
         previews = []
 
         # Node 预览
         if topo_type == TopoType.NODE.value:
-            if match_labels_list:
+            if selector_expression:
                 # 如果有多条表达式，需要拆分为多个去请求，以获取每个表达式实际匹配的数量
-                for expr in match_labels_list:
-                    nodes = api_instance.list_node(label_selector=expr)
-                    previews.append(
-                        {
-                            "group": expr,
-                            "total": len(nodes.items),
-                            "items": [item.metadata.name for item in nodes.items],
-                        }
-                    )
+                nodes = api_instance.list_node(label_selector=selector_expression)
             else:
                 nodes = api_instance.list_node()
-                previews.append(
-                    {
-                        "group": _("所有"),
-                        "total": len(nodes.items),
-                        "items": [item.metadata.name for item in nodes.items],
-                    }
-                )
+            previews.append(
+                {"group": "node", "total": len(nodes.items), "items": [item.metadata.name for item in nodes.items]}
+            )
             return previews
 
         # Pod 预览
         # 当存在标签表达式时，以标签表达式维度展示
         # 当不存在标签表达式时，以namespace维度展示
-        if match_labels_list:
-            for expr in match_labels_list:
-                if not namespaces or len(namespaces) > 1:
-                    pods = api_instance.list_pod_for_all_namespaces(label_selector=expr)
-                else:
-                    pods = api_instance.list_namespaced_pod(label_selector=expr, namespace=namespaces[0])
-                pods = cls.filter_pods(pods, bcs_cluster_id=bcs_cluster_id, namespaces=namespaces, **container)
-                previews.append({"group": expr, "total": len(pods), "items": pods})
+        if selector_expression:
+            if not namespaces or len(namespaces) > 1:
+                pods = api_instance.list_pod_for_all_namespaces(label_selector=selector_expression)
+            else:
+                pods = api_instance.list_namespaced_pod(label_selector=selector_expression, namespace=namespaces[0])
         else:
             if not namespaces or len(namespaces) > 1:
                 pods = api_instance.list_pod_for_all_namespaces()
             else:
                 pods = api_instance.list_namespaced_pod(namespace=namespaces[0])
-            pods = cls.filter_pods(pods, bcs_cluster_id=bcs_cluster_id, namespaces=namespaces, **container)
 
-            # 按 namespace进行分组
-            namespace_pods = defaultdict(list)
-            for pod in pods:
-                namespace = pod.split("/", 2)[1]
-                namespace_pods[namespace].append(pod)
+        pods = cls.filter_pods(pods, bcs_cluster_id=bcs_cluster_id, namespaces=namespaces, **container)
 
-            for namespace, ns_pods in namespace_pods.items():
-                previews.append({"group": f"namespace = {namespace}", "total": len(ns_pods), "items": ns_pods})
+        # 按 namespace进行分组
+        namespace_pods = defaultdict(list)
+        for pod in pods:
+            namespace = pod.split("/", 2)[1]
+            namespace_pods[namespace].append(pod)
+
+        for namespace, ns_pods in namespace_pods.items():
+            previews.append({"group": f"namespace = {namespace}", "total": len(ns_pods), "items": ns_pods})
 
         return previews
 
