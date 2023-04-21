@@ -57,7 +57,7 @@ from apps.log_databus.exceptions import (
 )
 from apps.log_databus.models import StorageCapacity, StorageUsed
 from apps.log_databus.utils.es_config import get_es_config
-from apps.log_esquery.utils.es_client import get_es_client, es_socket_ping
+from apps.log_esquery.utils.es_client import get_es_client, es_socket_ping, es_client_ping
 from apps.log_esquery.utils.es_route import EsRoute
 from apps.log_search.models import BizProperty, Scenario
 from apps.utils.cache import cache_five_minute
@@ -912,10 +912,10 @@ class StorageHandler(object):
         es_client = get_es_client(
             version="", hosts=[domain_name], username=username, password=password, port=port, schema=schema
         )
-        if not es_client.ping():
-            connect_result = False
-        else:
+        if es_client_ping(es_client):
             connect_result = True
+        else:
+            connect_result = False
 
         if not version_info:
             return connect_result
