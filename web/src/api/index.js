@@ -243,7 +243,7 @@ function handleReject(error, config) {
       nextError.message = data.message;
     }
     const resMessage = makeMessage(nextError.message, traceparent);
-    messageError(resMessage);
+    config.catchIsShowMessage && messageError(resMessage);
     console.error(nextError.message);
     return Promise.reject(nextError);
   }
@@ -265,14 +265,14 @@ function handleReject(error, config) {
         return 1;
       } else {
         const resMessage = makeMessage(message, traceparent);
-        messageError(resMessage);
+        config.catchIsShowMessage && messageError(resMessage);
       }
     }
     return Promise.reject(new Error(message));
   }
 
   const resMessage = makeMessage(error.message, traceparent);
-  messageError(resMessage);
+  config.catchIsShowMessage && messageError(resMessage);
   console.error(error.message);
   return Promise.reject(error);
 }
@@ -303,6 +303,8 @@ function initConfig(method, url, userConfig) {
     cancelWhenRouteChange: true,
     // 取消上次请求
     cancelPrevious: true,
+    // 接口报错是否弹bkMessage弹窗
+    catchIsShowMessage: true,
     span: trace.getTracer('bk-log').startSpan('api'),
   };
   return Object.assign(defaultConfig, userConfig);

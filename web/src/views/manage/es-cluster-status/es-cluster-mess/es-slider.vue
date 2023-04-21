@@ -849,17 +849,11 @@ export default {
           postData.es_auth_info.password = '';
         }
         this.connectLoading = true;
-        const res = await this.$http.request('/source/connectivityDetect', { data: postData });
-        if (res.data) {
-          this.connectResult = 'success';
-          // 连通性测试通过之后获取冷热数据
-          const attrsRes = await this.$http.request('/source/getNodeAttrs', { data: postData });
-          this.hotColdOriginList = attrsRes.data;
-        } else {
-          this.connectResult = 'failed';
-          this.connectFailedMessage = res.message;
-          this.hotColdOriginList = [];
-        }
+        await this.$http.request('/source/connectivityDetect', { data: postData }, { catchIsShowMessage: false });
+        this.connectResult = 'success';
+        // 连通性测试通过之后获取冷热数据
+        const attrsRes = await this.$http.request('/source/getNodeAttrs', { data: postData });
+        this.hotColdOriginList = attrsRes.data;
       } catch (e) {
         console.warn(e);
         this.connectResult = 'failed';
