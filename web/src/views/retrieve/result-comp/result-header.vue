@@ -101,7 +101,6 @@
         </div>
       </bk-popover>
       <bk-popover
-        v-if="isAiopsToggle"
         trigger="click"
         placement="bottom-end"
         theme="light bk-select-dropdown"
@@ -386,7 +385,7 @@ export default {
      */
     initJumpRouteList(detailStr, isFilterExtract = false) {
       if (!['log', 'es', 'bkdata', 'custom', 'setIndex'].includes(detailStr)) {
-        this.showSettingMenuList = this.settingMenuList;
+        this.showSettingMenuList = this.isAiopsToggle ? this.settingMenuList : [];
         return;
       };
       if (['es', 'bkdata'].includes(detailStr)) {
@@ -395,8 +394,8 @@ export default {
         this.detailJumpRouteKey = 'indexManage';
       } else {
         this.detailJumpRouteKey = detailStr;
-      }
-      this.showSettingMenuList = this.settingMenuList.filter(item => (isFilterExtract ? item.id !== 'extract' : true));
+      };
+      this.showSettingMenuList = this.isAiopsToggle ? this.settingMenuList.filter(item => (isFilterExtract ? item.id !== 'extract' : true)) : [];
       const extraRouteList = this[`${detailStr}DetailKey`].reduce((pre, cur) => {
         pre.push({
           id: cur,
