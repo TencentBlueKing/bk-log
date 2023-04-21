@@ -912,22 +912,14 @@ class StorageHandler(object):
         es_client = get_es_client(
             version="", hosts=[domain_name], username=username, password=password, port=port, schema=schema
         )
-        if es_client_ping(es_client):
-            connect_result = True
-        else:
-            connect_result = False
+        es_client_ping(es_client)
 
         if not version_info:
-            return connect_result
+            return True, ""
         else:
-            if connect_result:
-                info_dict = es_client.info()
-                version_number: str = self.dump_version_info(info_dict, domain_name, port)
-                return connect_result, version_number
-            else:
-                raise StorageUnKnowEsVersionException(
-                    StorageUnKnowEsVersionException.MESSAGE.format(ip=domain_name, port=port)
-                )
+            info_dict = es_client.info()
+            version_number: str = self.dump_version_info(info_dict, domain_name, port)
+            return True, version_number
 
     def dump_version_info(self, info_dict: dict, domain_name: str, port: int) -> str:
         if info_dict:
