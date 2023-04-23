@@ -349,7 +349,7 @@
                 <div class="config-item" v-if="isContainerHaveValue(conItem.container)">
                   <span>{{$t('指定容器')}}</span>
                   <div class="specify">
-                    <div class="edit" @click="handelShowDialog(conIndex, 'container')">
+                    <div class="edit" v-en-style="'left: 130px;'" @click="handelShowDialog(conIndex, 'container')">
                       <span class="bk-icon icon-edit-line"></span>
                       <span>{{$t('编辑')}}</span>
                     </div>
@@ -370,7 +370,7 @@
                 <div class="config-item" v-if="isSelectorHaveValue(conItem.label_selector)">
                   <span>{{$t('指定标签')}}</span>
                   <div class="specify">
-                    <div class="edit" @click="handelShowDialog(conIndex, 'label')">
+                    <div class="edit" v-en-style="'left: 100px;'" @click="handelShowDialog(conIndex, 'label')">
                       <span class="bk-icon icon-edit-line"></span>
                       <span>{{$t('编辑')}}</span>
                     </div>

@@ -315,9 +315,9 @@ export default {
     },
     filterOption(val) {
       if (val === 'desc') {
-        return this.$t('设为降序');
-      } if (val === 'asc') {
         return this.$t('设为升序');
+      } if (val === 'asc') {
+        return this.$t('设为降序');
       }
       return '';
     },
