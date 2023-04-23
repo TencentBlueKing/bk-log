@@ -41,7 +41,7 @@
           :class="globalEditable ? 'btn-hover' : ''"
           :disabled="!globalEditable"
           @click="reductionRule">
-          {{$t('还原默认')}}
+          {{$t('恢复默认')}}
         </bk-button>
       </div>
 

@@ -179,6 +179,10 @@ export default class GroupDialog extends tsc<IProps> {
     return this.searchAfterList.length;
   }
 
+  get getGroupLabelWidth() {
+    return this.$store.state.isEnLanguage ? 140 : 115;
+  }
+
   @Watch('selectFavoriteList', { deep: true })
   watchSelectListLength(list) {
     // 监听选择数据的数量 改变全选的check状态
@@ -573,6 +577,11 @@ export default class GroupDialog extends tsc<IProps> {
     return this.tableSetting.selectedFields.some(item => item.id === field);
   }
 
+  getGroupName(row) {
+    if (row.group_id === this.unknownGroupID) return this.groupNameMap.unknown;
+    return row.group_name;
+  }
+
   renderHeader(h) {
     return h(FingerSelectColumn, {
       class: {
@@ -674,7 +683,7 @@ export default class GroupDialog extends tsc<IProps> {
           on-change={() => this.handleChangeGroup(row)}
         >
           <div slot="trigger">
-            <span class="overflow-tips" style="padding: 0 10px;" v-bk-overflow-tips>{row.group_name}</span>
+            <span class="overflow-tips" style="padding: 0 10px;" v-bk-overflow-tips>{this.getGroupName(row)}</span>
           </div>
           {row[
             row.visible_type === 'private'
@@ -853,7 +862,7 @@ export default class GroupDialog extends tsc<IProps> {
             <TableColumn
               label={this.$t('所属组')}
               render-header={this.$renderHeader}
-              width="112"
+              width={this.getGroupLabelWidth}
               key={'column_group_name'}
               prop={'group_name'}
               scopedSlots={groupSlot}

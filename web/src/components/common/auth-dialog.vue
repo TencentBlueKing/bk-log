@@ -53,7 +53,7 @@
     <bk-dialog
       v-model="showConfirmDialog"
       :title="$t('权限申请单已提交？')"
-      :ok-text="$t('刷新页面')"
+      :ok-text="$t('刷新')"
       @confirm="confirmHasApply"
       @cancel="closeAuth">
       {{$t('请在权限中心填写权限申请单')}}
