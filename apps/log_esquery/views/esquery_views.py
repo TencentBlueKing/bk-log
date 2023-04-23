@@ -19,10 +19,13 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+import time
+
 from django.conf import settings
 from rest_framework import serializers
 from rest_framework.response import Response
 from apps.generic import APIViewSet
+from apps.log_esquery import metrics
 
 from apps.log_esquery.qos import QosThrottle, qos_recover
 from apps.utils.drf import list_route
@@ -222,7 +225,27 @@ class EsQueryViewSet(APIViewSet):
         data = self.params_valid(EsQuerySearchAttrSerializer)
         # 调用EsQuery实例
         esquery = EsQuery(data)
-        return Response(esquery.search())
+
+        start_at = time.time()
+        exc = None
+
+        try:
+            result = esquery.search()
+        except Exception as e:
+            exc = e
+            raise
+        finally:
+            labels = {
+                "index_set_id": data.get("index_set_id") or -1,
+                "indices": data.get("indices") or "",
+                "scenario_id": data.get("scenario_id") or "",
+                "storage_cluster_id": data.get("storage_cluster_id") or -1,
+                "status": str(exc),
+            }
+            metrics.ESQUERY_SEARCH_LATENCY.labels(**labels).observe(time.time() - start_at)
+            metrics.ESQUERY_SEARCH_COUNT.labels(**labels).inc()
+
+        return Response(result)
 
     @list_route(methods=["POST"], url_path="dsl/")
     def dsl(self, request):
