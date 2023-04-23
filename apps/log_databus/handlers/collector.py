@@ -2308,11 +2308,13 @@ class CollectorHandler(object):
             }
             if etl_params and fields:
                 # 如果传递了清洗参数，则优先使用
-                params.update({
-                    "etl_params": etl_params,
-                    "etl_config": etl_config,
-                    "fields": fields,
-                })
+                params.update(
+                    {
+                        "etl_params": etl_params,
+                        "etl_config": etl_config,
+                        "fields": fields,
+                    }
+                )
             self.data.index_set_id = etl_handler.update_or_create(**params)["index_set_id"]
             self.data.save(update_fields=["index_set_id"])
 
@@ -3834,6 +3836,7 @@ class CollectorHandler(object):
             "bk_data_id": self.data.bk_data_id,
             "subscription_id": self.data.subscription_id,
             "task_id_list": self.data.task_id_list,
+            "index_set_id": self.data.index_set_id,
         }
 
     def fast_update(self, params: dict) -> dict:
@@ -3934,8 +3937,8 @@ class CollectorHandler(object):
                 async_create_bkdata_data_id.delay(self.data.collector_config_id)
 
     def create_or_update_clean_config(self, is_update, params):
-        table_id = params["table_id"]
         if is_update:
+            table_id = self.data.table_id
             # 更新场景，需要把之前的存储设置拿出来，和更新的配置合并一下
             result_table_info = TransferApi.get_result_table_storage(
                 {"result_table_list": table_id, "storage_type": "elasticsearch"}
@@ -3950,6 +3953,7 @@ class CollectorHandler(object):
                 "storage_cluster_id": result_table["cluster_config"]["cluster_id"],
                 "retention": result_table["storage_config"]["retention"],
                 "allocation_min_days": params.get("allocation_min_days", 0),
+                "etl_config": self.data.etl_config,
             }
             default_etl_params.update(params)
             params = default_etl_params

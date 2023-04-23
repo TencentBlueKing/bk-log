@@ -630,4 +630,14 @@ export default {
     text-overflow: inherit;
     overflow: hidden;
   }
+
+  // .bk-label {
+  //   .bk-label-text {
+  //     font-size: 12px;
+  //   }
+
+  //   &::after {
+  //     top: 54%;
+  //   }
+  // }
 </style>
