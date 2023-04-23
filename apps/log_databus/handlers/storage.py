@@ -57,7 +57,7 @@ from apps.log_databus.exceptions import (
 )
 from apps.log_databus.models import StorageCapacity, StorageUsed
 from apps.log_databus.utils.es_config import get_es_config
-from apps.log_esquery.utils.es_client import get_es_client, es_socket_ping
+from apps.log_esquery.utils.es_client import get_es_client, es_socket_ping, es_client_ping
 from apps.log_esquery.utils.es_route import EsRoute
 from apps.log_search.models import BizProperty, Scenario
 from apps.utils.cache import cache_five_minute
@@ -912,22 +912,14 @@ class StorageHandler(object):
         es_client = get_es_client(
             version="", hosts=[domain_name], username=username, password=password, port=port, schema=schema
         )
-        if not es_client.ping():
-            connect_result = False
-        else:
-            connect_result = True
+        es_client_ping(es_client)
 
         if not version_info:
-            return connect_result
+            return True, ""
         else:
-            if connect_result:
-                info_dict = es_client.info()
-                version_number: str = self.dump_version_info(info_dict, domain_name, port)
-                return connect_result, version_number
-            else:
-                raise StorageUnKnowEsVersionException(
-                    StorageUnKnowEsVersionException.MESSAGE.format(ip=domain_name, port=port)
-                )
+            info_dict = es_client.info()
+            version_number: str = self.dump_version_info(info_dict, domain_name, port)
+            return True, version_number
 
     def dump_version_info(self, info_dict: dict, domain_name: str, port: int) -> str:
         if info_dict:
