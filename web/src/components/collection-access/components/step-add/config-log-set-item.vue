@@ -665,6 +665,10 @@ export default {
 
 .log-path {
   position: relative;
+
+  .bk-form-control {
+    width: 320px;
+  }
 }
 
 .log-tips {

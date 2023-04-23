@@ -25,13 +25,20 @@
     <template>
       <div class="customize-box" v-if="isEdit || onlyShowSelectEdit">
         <div class="customize-left justify-sb">
-          <bk-input
-            v-model.trim="matchKey"
-            :ext-cls="`fill-key ${isKeyError && 'input-error'}`">
-          </bk-input>
+          <bk-form
+            ref="keyRef"
+            ext-cls="fill-key"
+            :model="verifyData"
+            :rules="rules"
+            :label-width="0">
+            <bk-form-item property="matchKey">
+              <bk-input v-model="verifyData.matchKey"></bk-input>
+            </bk-form-item>
+          </bk-form>
           <bk-select
             ext-cls="fill-operate"
             :clearable="false"
+            :popover-min-width="116"
             v-model="matchOperator">
             <bk-option
               v-for="item of expressOperatorList"
@@ -68,7 +75,7 @@
       <div
         class="specify-main match-container justify-sb"
         v-show="!isEdit">
-        <div class="specify-box">
+        <div :class="['specify-box', { 'is-edit': showEdit }]">
           <div class="specify-container">
             <span class="title-overflow" v-bk-overflow-tips>{{matchItem.key}}</span>
           </div>
@@ -111,14 +118,30 @@ export default {
   },
   data() {
     return {
-      matchKey: '', // 自定义匹配键名
+      verifyData: {
+        matchKey: '',
+      },
+      rules: {
+        matchKey: [
+          {
+            validator: this.checkName,
+            message: this.$t('标签名称不符合正则{n}', { n: '([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9]' }),
+            trigger: 'blur',
+          },
+          {
+            required: true,
+            message: this.$t('必填项'),
+            trigger: 'blur',
+          },
+        ],
+      },
       matchValue: '', // 自定义匹配值
       matchValueArr: [],
       matchOperator: '=', // 自定义匹配操作
       expressOperatorList: [{ // 表达式操作选项
         id: '=',
         name: '=',
-      }, { // 表达式操作选项
+      }, {
         id: 'In',
         name: 'In',
       }, {
@@ -147,9 +170,6 @@ export default {
     },
   },
   watch: {
-    matchKey() {
-      return this.isKeyError = false;
-    },
     matchValue() {
       return this.isValueError = false;
     },
@@ -165,41 +185,36 @@ export default {
   created() {},
   methods: {
     handleAddMatch() {
-      if (this.expressInputIsDisabled) {
-        // 输入框禁止的时候 value可以为空
-        if (!this.matchKey) {
-          !this.matchKey && (this.isKeyError = true);
-          return;
-        }
-      } else {
-        const matchValueError = this.isHaveCompared ? !this.matchValueArr.length : !this.matchValue;
-        // key value 不能为空
-        if (!this.matchKey || matchValueError) {
-          !this.matchKey && (this.isKeyError = true);
-          matchValueError && (this.isValueError = true);
-          return;
-        }
-      }
+      this.$refs.keyRef.validate().then(() => {
+        if (!this.expressInputIsDisabled) {
+          const matchValueError = this.isHaveCompared ? !this.matchValueArr.length : !this.matchValue;
+          // key value 不能为空
+          if (matchValueError) {
+            matchValueError && (this.isValueError = true);
+            return;
+          }
+        };
 
-      let goodJob = true;
+        let goodJob = true;
 
-      if (typeof this.submitEdit === 'function') {
-        const value = this.expressInputIsDisabled ? '' : (this.isHaveCompared ? this.matchValueArr.join(',') : this.matchValue);
-        goodJob = this.submitEdit({
-          key: this.matchKey,
-          operator: this.matchOperator,
-          value,
-        });
-        if (typeof goodJob.then === 'function') {
-          return goodJob.then(() => {
-            this.resetStatus();
+        if (typeof this.submitEdit === 'function') {
+          const value = this.expressInputIsDisabled ? '' : (this.isHaveCompared ? this.matchValueArr.join(',') : this.matchValue);
+          goodJob = this.submitEdit({
+            key: this.verifyData.matchKey,
+            operator: this.matchOperator,
+            value,
           });
+          if (typeof goodJob.then === 'function') {
+            return goodJob.then(() => {
+              this.resetStatus();
+            });
+          }
         }
-      }
 
-      if (goodJob) {
-        this.resetStatus();
-      }
+        if (goodJob) {
+          this.resetStatus();
+        }
+      });
     },
     handleCancelMatch() {
       this.$emit('cancelEdit');
@@ -209,7 +224,7 @@ export default {
       const { key, operator, value, id } = this.matchItem;
 
       this.matchOperator = operator;
-      this.matchKey = key;
+      this.verifyData.matchKey = key;
       if (this.isHaveCompared) {
         this.matchValueArr = value.split(',');
       } else {
@@ -225,12 +240,16 @@ export default {
       if (!input) return;
       this.matchValueArr = !list.length ? [input] : [...new Set([...this.matchValueArr, input])];
     },
+    checkName() {
+      if (this.verifyData.matchKey === '') return true;
+      return /^([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9]$/.test(this.verifyData.matchKey);
+    },
     resetStatus() {
       this.isEdit = false;
       this.isKeyError = false;
       this.isValueError = false;
       this.matchValue = '';
-      this.matchKey = '';
+      this.verifyData.matchKey = '';
       this.matchValueArr = [];
     },
   },
@@ -255,6 +274,7 @@ export default {
 
   .customize-left {
     width: 53%;
+    flex-shrink: 0;
   }
 
   .customize-right {
@@ -262,6 +282,7 @@ export default {
   }
 
   .fill-key {
+    width: 100%;
     position: relative;
     z-index: 999;
     margin-right: -1px;
@@ -358,6 +379,10 @@ export default {
       border-radius: 2px;
     }
   }
+}
+
+.is-edit {
+  width: calc( 100% - 60px );
 }
 
 .edit {

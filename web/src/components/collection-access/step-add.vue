@@ -301,7 +301,7 @@
                 <div class="config-cluster-box">
                   <div class="config-cluster-title justify-bt">
                     <div>
-                      <span class="title">{{$t('选择容器范围')}}</span>
+                      <span class="title">{{$t('选择{n}范围', { n: isNode ? $t('节点') : $t('容器') })}}</span>
                       <span>
                         <span class="bk-icon icon-info-circle"></span>
                         <span>{{$t('所有选择范围可相互叠加并作用')}}</span>
@@ -348,7 +348,7 @@
 
                   <div class="config-item" v-if="isShowScopeItem(conIndex, 'label')">
                     <div class="config-item-title flex-ac">
-                      <span>{{$t('按标签选择容器')}}</span>
+                      <span>{{$t('按标签选择{n}', { n: isNode ? $t('节点') : $t('容器') })}}</span>
                       <span
                         class="bk-icon icon-delete"
                         @click="handleDeleteConfigParamsItem(conIndex, 'label')">
@@ -412,6 +412,7 @@
                       allow-create
                       free-paste
                       has-delete-icon
+                      ext-cls="container-input"
                       @change="() => handleContainerNameChange(conIndex)"
                       @blur="(inputStr, list) => handleContainerNameBlur(inputStr, list, conIndex)">
                     </bk-tag-input>
@@ -535,11 +536,11 @@
       <label-target-dialog
         :is-show-dialog.sync="isShowLabelTargetDialog"
         :label-params="currentSelector"
-        @configLabelChange="(val) => handelFormChange(val, 'dialogChange')">
-      </label-target-dialog>
+        @configLabelChange="(val) => handelFormChange(val, 'dialogChange')" />
 
       <config-view-dialog
         :is-show-dialog.sync="isShowViewDialog"
+        :is-node="isNode"
         :view-query-params="viewQueryParams" />
 
       <!-- <bk-dialog
@@ -813,8 +814,8 @@ export default {
       ],
       typeList: [],
       scopeNameList: {
-        namespace: this.$t('按NameSpace选择'),
-        label: this.$t('按标签选择容器'),
+        namespace: this.$t('按命名空间选择'),
+        label: this.$t('按标签选择{n}', { n: this.isNode ? this.$t('节点') : this.$t('容器') }),
         load: this.$t('按工作负载选择'),
         containerName: this.$t('直接指定容器名'),
       },
@@ -1768,10 +1769,13 @@ export default {
         && newValue.value === item.value
         && newValue.operator === item.operator;
       });
+
+      const type = newValue.operator === '=' ? 'match_labels' : 'match_expressions';
+
       return new Promise((resolve) => {
         if (!isRepeat) {
           const labelIndex = labelSelector.findIndex(item => item.id === matchID);
-          const newMatchObject = { ...labelSelector[labelIndex], ...newValue, type: 'match_expressions' };
+          const newMatchObject = { ...labelSelector[labelIndex], ...newValue, type };
           labelSelector.splice(labelIndex, 1, newMatchObject);
         }
         resolve(true);
@@ -1998,10 +2002,6 @@ export default {
 
   .bk-label {
     color: #90929a;
-  }
-
-  .bk-form-control {
-    width: 320px;
   }
 
   .w520 {
@@ -2541,6 +2541,12 @@ export default {
 
         &:hover .icon-delete {
           display: inline-block;
+        }
+      }
+
+      .container-input {
+        .input {
+          max-width: none;
         }
       }
 

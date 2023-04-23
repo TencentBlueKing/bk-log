@@ -27,7 +27,7 @@
     header-position="left"
     :value="isShowDialog"
     :mask-close="false"
-    :title="$t('容器范围预览')"
+    :title="$t('{n}范围预览', { n: isNode ? $t('节点') : $t('容器') })"
     :auto-close="false"
     :show-footer="false"
     @cancel="handelCancelDialog">
@@ -71,6 +71,10 @@ export default {
     },
     viewQueryParams: {
       type: Object,
+      require: true,
+    },
+    isNode: {
+      type: Boolean,
       require: true,
     },
   },
@@ -127,31 +131,33 @@ export default {
     max-height: 264px;
     margin-bottom: 12px;
     box-sizing: border-box;
-    border: 1px solid #DCDEE5;
+    border: 1px solid #dcdee5;
     border-radius: 2px;
 
     .view-title {
-      border-bottom: 1px solid #DCDEE5;
+      border-bottom: 1px solid #dcdee5;
       padding: 6px 12px;
-      background: #F0F1F5;
+      background: #f0f1f5;
       cursor: pointer;
+
+      @include flex-justify(space-between);
 
       .match {
         font-weight: 700;
-        color: #63656E;
-      }
-      .number {
-        font-weight: 700;
-        color: #3A84FF;
+        color: #63656e;
       }
 
-      @include flex-justify(space-between);
+      .number {
+        font-weight: 700;
+        color: #3a84ff;
+      }
     }
 
     .hidden-bottom {
       /* stylelint-disable-next-line declaration-no-important */
       border-bottom: none !important;
     }
+
     .view-target {
       max-height: 232px;
       overflow-y: auto;
