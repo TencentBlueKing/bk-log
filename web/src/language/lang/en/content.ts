@@ -457,7 +457,6 @@ export default {
   "该功能指从查询语句中获取相应的字段，当勾选对应的字段时，将以表单的填写方式显示给收藏的使用者。（字段说明：没有字段时，为全文检索；重复的字段增加显示序号(N) ，默认不勾选任何字段)": "This function refers to getting the corresponding fields from the query statement. when the corresponding fields are checked, they will be displayed to the collector users in the form of form filling. (field description: when there is no field, it is a full-text search; duplicate fields increase the display sequence number (n), and no fields are selected by default).",
   "选择{n}范围": "Select {n} scope",
   "所有选择范围可相互叠加并作用": "All selection ranges can be stacked and act on each other",
-  "按NameSpace选择": "Select by NameSpace",
   "按命名空间选择": "Select by NameSpace",
   "按标签选择{n}": "Select {n} by label",
   "按工作负载选择": "Select by workload",

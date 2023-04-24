@@ -278,7 +278,8 @@ export default {
   }
 
   .customize-right {
-    width: 47%;
+    width: calc(47% - 60px);
+    flex-shrink: 0;
   }
 
   .fill-key {
@@ -305,6 +306,11 @@ export default {
 
   .fill-value {
     width: 100%;
+    flex-shrink: 0;
+
+    .input {
+      max-width: none;
+    }
 
     :deep(.bk-form-input) {
       border-top-left-radius: 0;
