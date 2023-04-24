@@ -164,6 +164,7 @@
             <div class="flex-ac">
               <bk-input
                 data-test-id="sourceLogBox_input_beginningRegular"
+                style="width: 320px;"
                 v-model.trim="subFormData.params.multiline_pattern"
               ></bk-input>
               <bk-button

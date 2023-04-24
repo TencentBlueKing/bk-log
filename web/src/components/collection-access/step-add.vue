@@ -320,7 +320,7 @@
                     class="config-item hover-light"
                     v-if="isShowScopeItem(conIndex, 'namespace')">
                     <div class="config-item-title flex-ac">
-                      <span>{{$t('按NameSpace选择')}}</span>
+                      <span>{{$t('按命名空间选择')}}</span>
                       <span
                         class="bk-icon icon-delete"
                         @click="handleDeleteConfigParamsItem(conIndex, 'namespace')">
@@ -539,8 +539,8 @@
         @configLabelChange="(val) => handelFormChange(val, 'dialogChange')" />
 
       <config-view-dialog
-        :is-show-dialog.sync="isShowViewDialog"
         :is-node="isNode"
+        :is-show-dialog.sync="isShowViewDialog"
         :view-query-params="viewQueryParams" />
 
       <!-- <bk-dialog
@@ -815,7 +815,7 @@ export default {
       typeList: [],
       scopeNameList: {
         namespace: this.$t('按命名空间选择'),
-        label: this.$t('按标签选择{n}', { n: this.isNode ? this.$t('节点') : this.$t('容器') }),
+        label: this.$t('按标签选择{n}', { n: this.$t('容器') }),
         load: this.$t('按工作负载选择'),
         containerName: this.$t('直接指定容器名'),
       },
@@ -885,14 +885,19 @@ export default {
       return isPhysics;
     },
     // 是否是Node环境
-    isNode() {
-      if (this.currentEnvironment === 'node_log_config') {
-        this.formData.configs.forEach((item) => {
-          item.container = this.allContainer;
-          item.namespaces = [];
-        });
-      };
-      return this.currentEnvironment === 'node_log_config';
+    isNode: {
+      get() {
+        return this.currentEnvironment === 'node_log_config';
+      },
+      set(newVal) {
+        if (newVal) {
+          this.formData.configs.forEach((item) => {
+            item.container = this.allContainer;
+            item.namespaces = [];
+          });
+        };
+        this.scopeNameList.label =  this.$t('按标签选择{n}', { n: newVal ? this.$t('节点') : this.$t('容器') });
+      },
     },
     // 获取日志类型列表
     getCollectorScenario() {
@@ -932,6 +937,7 @@ export default {
       }
       if (['std_log_config', 'container_log_config', 'node_log_config'].includes(nVal)) {
         this.formData.environment = 'container';
+        this.isNode = nVal === 'node_log_config';
         !this.clusterList.length && this.getBcsClusterList();
         !this.typeList.length && this.getWorkLoadTypeList();
         if (nVal === 'node_log_config' && this.getIsSharedCluster()) { // 选中node环境时 如果存在已选的共享集群 则清空
@@ -1791,10 +1797,11 @@ export default {
       });
       return new Promise((resolve) => {
         if (!isRepeat) {
+          const type = val.operator === '=' ? 'match_labels' : 'match_expressions';
           configs.labelSelector.unshift({
             ...val,
             id: random(10),
-            type: 'match_expressions',
+            type,
           });
         }
         configs.noQuestParams.handleEditLabel = false;
