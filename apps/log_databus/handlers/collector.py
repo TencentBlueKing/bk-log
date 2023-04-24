@@ -3819,7 +3819,7 @@ class CollectorHandler(object):
         params["params"]["encoding"] = params["data_encoding"]
         # 如果没传入集群ID, 则随机给一个公共集群
         if not params.get("storage_cluster_id"):
-            storage_cluster_id = get_random_public_cluster_id()
+            storage_cluster_id = get_random_public_cluster_id(bk_biz_id=params["bk_biz_id"])
             if not storage_cluster_id:
                 raise PublicESClusterNotExistException()
             params["storage_cluster_id"] = storage_cluster_id
@@ -4079,8 +4079,10 @@ class CollectorHandler(object):
         return yaml.safe_dump_all(result)
 
 
-def get_random_public_cluster_id() -> int:
-    clusters = TransferApi.get_cluster_info({"cluster_type": STORAGE_CLUSTER_TYPE, "no_request": True})
+def get_random_public_cluster_id(bk_biz_id: int) -> int:
+    from apps.log_databus.handlers.storage import StorageHandler
+
+    clusters = StorageHandler().list(bk_biz_id=bk_biz_id)
     for cluster in clusters:
         if cluster["cluster_config"]["registered_system"] == "_default":
             return cluster["cluster_config"]["cluster_id"]
