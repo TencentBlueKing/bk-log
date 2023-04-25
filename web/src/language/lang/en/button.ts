@@ -99,7 +99,6 @@ export default {
   "数据指纹": "Data Fingerprint",
   "下载历史": "Download History",
   "动态拓扑": "Dynamic Topology",
-  "历史查询": "Historical Query",
   "服务模板": "Service Template",
   "共享目录": "Shared directory",
   "存储设置": "Storage Settings",
@@ -129,4 +128,5 @@ export default {
   "新建自定义上报": "New",
   "按更新时间排序": "Sort by Time",
   "添加链路中转机": "Add Transit",
+  "离开": "LEAVE"
 }

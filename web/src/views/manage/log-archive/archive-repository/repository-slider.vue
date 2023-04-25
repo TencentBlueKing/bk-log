@@ -28,7 +28,7 @@
       :is-show="showSlider"
       :width="676"
       :quick-close="true"
-      :before-close="handleCloseSideslider"
+      :before-close="handleCloseSidebar"
       @animation-end="$emit('hidden')"
       @update:isShow="updateIsShow">
       <div v-bkloading="{ isLoading: sliderLoading }" slot="content" class="repository-slider-content">
@@ -243,6 +243,7 @@
 <script>
 import { mapGetters } from 'vuex';
 import * as authorityMap from '../../../../common/authority-map';
+import SidebarDiffMixin from '@/mixins/sidebar-diff-mixin';
 
 const cosConfigForm = () => {
   return {
@@ -274,6 +275,7 @@ const fsConfigForm = () => {
 };
 
 export default {
+  mixins: [SidebarDiffMixin],
   props: {
     showSlider: {
       type: Boolean,
@@ -327,6 +329,7 @@ export default {
     showSlider(val) {
       if (val) {
         this.getEsClusterList();
+        this.initSidebarFormData(this.formData);
         if (this.isEdit) {
         } else {
           //
@@ -480,25 +483,12 @@ export default {
         this.$bkLoading.hide();
       }
     },
-    async handleCloseSideslider() {
-      return await this.showDeleteAlert();
-    },
     /**
-     * @desc: 如果提交可用则点击遮罩时进行二次确认弹窗
+     * @desc: 是否改变过侧边弹窗的数据
+     * @returns {Boolean} true为没改 false为改了 触发二次弹窗
      */
-    showDeleteAlert() {
-      return new Promise((reject) => {
-        this.$bkInfo({
-          type: 'warning',
-          title: this.$t('是否放弃本次操作？'),
-          confirmFn: () => {
-            reject(true);
-          },
-          close: () => {
-            reject(false);
-          },
-        });
-      });
+    async handleCloseSidebar() {
+      return await this.$isSidebarClosed(this.formData);
     },
   },
 };

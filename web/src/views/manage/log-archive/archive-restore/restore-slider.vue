@@ -28,7 +28,7 @@
       :is-show="showSlider"
       :width="676"
       :quick-close="true"
-      :before-close="handleCloseSideslider"
+      :before-close="handleCloseSidebar"
       @animation-end="$emit('hidden')"
       @update:isShow="updateIsShow">
       <div v-bkloading="{ isLoading: sliderLoading }" slot="content" class="restore-slider-content">
@@ -119,11 +119,13 @@
 import { mapGetters } from 'vuex';
 import ValidateUserSelector from '../../manage-extract/manage-extract-permission/validate-user-selector';
 import * as authorityMap from '../../../../common/authority-map';
+import SidebarDiffMixin from '@/mixins/sidebar-diff-mixin';
 
 export default {
   components: {
     ValidateUserSelector,
   },
+  mixins: [SidebarDiffMixin],
   props: {
     showSlider: {
       type: Boolean,
@@ -149,7 +151,7 @@ export default {
       formData: {
         index_set_name: '',
         archive_config_id: '',
-        datePickerValue: [],
+        datePickerValue: ['', ''],
         datePickerExpired: '',
         expired_time: '',
         notice_user: [],
@@ -207,22 +209,25 @@ export default {
             datePickerValue: [start_time, end_time],
             datePickerExpired: expired_time,
           });
+          this.initSidebarFormData(this.formData);
         } else {
           const { userMeta } = this.$store.state;
           if (userMeta && userMeta.username) {
             this.formData.notice_user.push(userMeta.username);
           }
+          this.initSidebarFormData(this.formData);
         }
 
         if (this.archiveId) { // 从归档列表新建回溯
           this.formData.archive_config_id = this.archiveId;
+          this.initSidebarFormData(this.formData);
         }
       } else {
         // 清空表单数据
         this.formData = {
           index_set_name: '',
           archive_config_id: '',
-          datePickerValue: [],
+          datePickerValue: ['', ''],
           expired_time: '',
           datePickerExpired: '',
           notice_user: [],
@@ -364,25 +369,12 @@ export default {
         this.confirmLoading = false;
       }
     },
-    async handleCloseSideslider() {
-      return await this.showDeleteAlert();
-    },
     /**
-     * @desc: 如果提交可用则点击遮罩时进行二次确认弹窗
+     * @desc: 是否改变过侧边弹窗的数据
+     * @returns {Boolean} true为没改 false为改了 触发二次弹窗
      */
-    showDeleteAlert() {
-      return new Promise((reject) => {
-        this.$bkInfo({
-          type: 'warning',
-          title: this.$t('是否放弃本次操作？'),
-          confirmFn: () => {
-            reject(true);
-          },
-          close: () => {
-            reject(false);
-          },
-        });
-      });
+    async handleCloseSidebar() {
+      return await this.$isSidebarClosed(this.formData);
     },
   },
 };

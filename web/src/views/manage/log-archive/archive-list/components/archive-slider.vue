@@ -28,7 +28,7 @@
       :is-show="showSlider"
       :width="676"
       :quick-close="true"
-      :before-close="handleCloseSideslider"
+      :before-close="handleCloseSidebar"
       @animation-end="$emit('hidden')"
       @update:isShow="updateIsShow">
       <div v-bkloading="{ isLoading: sliderLoading }" slot="content" class="archive-slider-content">
@@ -137,9 +137,11 @@
 
 <script>
 import { mapGetters } from 'vuex';
+import SidebarDiffMixin from '@/mixins/sidebar-diff-mixin';
 import * as authorityMap from '../../../../../common/authority-map';
 
 export default {
+  mixins: [SidebarDiffMixin],
   props: {
     showSlider: {
       type: Boolean,
@@ -212,6 +214,7 @@ export default {
         await this.getCollectorList();
         await this.getRepoList();
         this.updateDaysList();
+        this.initSidebarFormData(this.formData);
 
         if (this.isEdit) {
           const {
@@ -226,6 +229,7 @@ export default {
             snapshot_days,
           });
           this.collectorType = instanceType;
+          this.initSidebarFormData(this.formData);
         }
       } else {
         // 清空表单数据
@@ -382,25 +386,12 @@ export default {
         this.confirmLoading = false;
       }
     },
-    async handleCloseSideslider() {
-      return await this.showDeleteAlert();
-    },
     /**
-     * @desc: 如果提交可用则点击遮罩时进行二次确认弹窗
+     * @desc: 是否改变过侧边弹窗的数据
+     * @returns {Boolean} true为没改 false为改了 触发二次弹窗
      */
-    showDeleteAlert() {
-      return new Promise((reject) => {
-        this.$bkInfo({
-          type: 'warning',
-          title: this.$t('是否放弃本次操作？'),
-          confirmFn: () => {
-            reject(true);
-          },
-          close: () => {
-            reject(false);
-          },
-        });
-      });
+    async handleCloseSidebar() {
+      return await this.$isSidebarClosed(this.formData);
     },
   },
 };
