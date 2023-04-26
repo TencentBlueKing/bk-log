@@ -22,10 +22,7 @@ from apps.log_search.handlers.index_set import IndexSetHandler
 from apps.log_search.models import Scenario
 
 
-from rich.console import Console
-
 BASE_DIR = os.getcwd()
-console = Console()
 
 # CC映射表
 ENV_OFFSET_TABLE = "cc_EnvIDOffset"
@@ -57,21 +54,33 @@ class PromptColorEnum:
 class Prompt:
     """提示"""
 
+    COLORS = {
+        "black": "\033[30m",
+        "red": "\033[31m",
+        "green": "\033[32m",
+        "yellow": "\033[33m",
+        "blue": "\033[34m",
+        "magenta": "\033[35m",
+        "cyan": "\033[36m",
+        "white": "\033[37m",
+        "reset": "\033[0m",
+    }
+
     @classmethod
     def print(cls, msg: Any, **kwargs):
         if kwargs:
             for key, value in kwargs.items():
                 msg = msg.replace(f"{{{key}}}", f"{value}")
-        console.print(msg)
+        print(msg)
 
     @classmethod
     def fprint(cls, level: str, msg: Any, **kwargs):
-        color = PromptColorEnum.__dict__[level.upper()]
-        msg = f"[{color}][{level.upper()}][/{color}]\t" + msg
+        color = cls.COLORS[PromptColorEnum.__dict__[level.upper()]]
+        msg = f"{color}[{level.upper()}]{cls.COLORS['reset']}\t" + msg
         if kwargs:
             for key, value in kwargs.items():
-                msg = msg.replace(f"{{{key}}}", f"[{color}]{value}[/{color}]")
-        console.print(msg)
+                msg = msg.replace(f"{{{key}}}", f"{color}{value}{cls.COLORS['reset']}")
+        print(msg)
 
     @classmethod
     def debug(cls, msg: Any, **kwargs):
