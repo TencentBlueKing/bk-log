@@ -194,11 +194,12 @@ class Database:
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
-        parser.add_argument("-e", "--env", help="需要导入的环境", required=True)
+        parser.add_argument("-e", "--env", help="需要导入的环境", type=str, required=True)
         parser.add_argument("-b", "--bk_biz_id", help="需要导入的业务, 不传时导入所有的业务", type=int, default=0)
         parser.add_argument(
             "-c",
             "--collector_config_data",
+            type=str,
             help="需要导入的采集项数据, 默认为: log_databus_collectorconfig.json",
             default=os.path.join(BASE_DIR, "log_databus_collectorconfig.json"),
         )
@@ -210,16 +211,20 @@ class Command(BaseCommand):
             default=os.path.join(BASE_DIR, "log_search_logindexset.json"),
         )
         parser.add_argument("--index_set_id_list", help="需要导入的索引集ID, 不传时导入所有的索引集, 例如: 1,2,3", type=str, default="")
-        parser.add_argument("--mysql_host", help="公共数据库地址")
-        parser.add_argument("--mysql_port", help="公共数据库端口", default=3306)
-        parser.add_argument("--mysql_user", help="公共数据库用户", default="root")
-        parser.add_argument("--mysql_db", help="公共数据库链接库名称", default="sg_migration")
-        parser.add_argument("--mysql_password", help="公共数据库密码")
-        parser.add_argument("--env_offset_table", help="环境映射表", default=ENV_OFFSET_TABLE)
-        parser.add_argument("--env_biz_map_table", help="业务映射表", default=ENV_BIZ_MAP_TABLE)
+        parser.add_argument("--mysql_host", type=str, help="公共数据库地址")
+        parser.add_argument("--mysql_port", help="公共数据库端口", type=int, default=3306)
+        parser.add_argument("--mysql_user", help="公共数据库用户", type=str, default="root")
+        parser.add_argument("--mysql_db", help="公共数据库链接库名称", type=str, default="sg_migration")
+        parser.add_argument("--mysql_password", type=str, help="公共数据库密码")
+        parser.add_argument("--env_offset_table", help="环境映射表", type=str, default=ENV_OFFSET_TABLE)
+        parser.add_argument("--env_biz_map_table", help="业务映射表", type=str, default=ENV_BIZ_MAP_TABLE)
         parser.add_argument(
-            "--bk_log_search_resource_mapping_table", help="日志平台映射表", default=BK_LOG_SEARCH_RESOURCE_MAPPING_TABLE
+            "--bk_log_search_resource_mapping_table",
+            help="日志平台映射表",
+            type=str,
+            default=BK_LOG_SEARCH_RESOURCE_MAPPING_TABLE,
         )
+        parser.add_argument("-s", "--storage_cluster_id", help="采集项存储ID, 不传时则使用系统随机分配的公共集群", type=int, default=0)
 
     def handle(self, *args, **options):
         mysql_config = {
@@ -245,6 +250,7 @@ class Command(BaseCommand):
             bk_log_search_resource_mapping_table=options["bk_log_search_resource_mapping_table"],
             collector_config_id_list=options["collector_config_id_list"],
             index_set_id_list=options["index_set_id_list"],
+            storage_cluster_id=options["storage_cluster_id"],
         ).handle()
         # 导入索引集
         IndexSetMigrateTool(
@@ -318,12 +324,14 @@ class MigrateToolBase:
         bk_log_search_resource_mapping_table: str,
         collector_config_id_list: str = "",
         index_set_id_list: str = "",
+        storage_cluster_id: int = 0,
     ):
         self.bk_biz_id = bk_biz_id
         self.cc_env = cc_env
         self.bk_log_search_resource_mapping_table = bk_log_search_resource_mapping_table
         self.collector_config_id_list = parse_str_int_list(collector_config_id_list)
         self.index_set_id_list = parse_str_int_list(index_set_id_list)
+        self.storage_cluster_id = storage_cluster_id
         self.db = Database(**mysql_config)
         self.db.connect()
         if os.path.exists(filepath):
@@ -466,7 +474,7 @@ class CollectorConfigMigrateTool(MigrateToolBase):
         mapping = super().transform(data)
         # 根据offset转换target_nodes
         target_nodes = []
-        if data["target_node_type"] == TargetNodeTypeEnum.TOPO:
+        if data["target_node_type"] == TargetNodeTypeEnum.TOPO.value:
             for item in json.loads(data["target_nodes"]):
                 item["bk_inst_id"] += self.cc_env["offset"]
                 target_nodes.append(item)
@@ -498,6 +506,8 @@ class CollectorConfigMigrateTool(MigrateToolBase):
             # 旧采集项缺少params, 从节点管理拉到的造了一个steps, [{"id": "bkunifylogbeat", "params": {}}]
             "params": collector_scenario.parse_steps(data["steps"]),
         }
+        if self.storage_cluster_id:
+            params["storage_cluster_id"] = self.storage_cluster_id
         slz = FastCollectorCreateSerializer(data=params)
         slz.is_valid()
         return CollectorHandler().fast_create(params=slz.data)
