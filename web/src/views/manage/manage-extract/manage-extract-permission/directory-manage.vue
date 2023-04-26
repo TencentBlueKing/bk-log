@@ -194,6 +194,7 @@
 import ModuleSelect from './module-select';
 import ValidateInput from './validate-input';
 import ValidateUserSelector from './validate-user-selector';
+import SidebarDiffMixin from '@/mixins/sidebar-diff-mixin';
 
 export default {
   components: {
@@ -202,6 +203,7 @@ export default {
     ValidateInput,
     ValidateUserSelector,
   },
+  mixins: [SidebarDiffMixin],
   props: {
     strategyData: {
       type: Object,
@@ -249,6 +251,13 @@ export default {
               && this.manageStrategyData.modules.length
               && this.manageStrategyData.operator;
     },
+    // 侧边栏需要对比的formData
+    _watchFormData_({ manageStrategyData }) {
+      return { manageStrategyData };
+    },
+  },
+  mounted() {
+    this.initSidebarFormData(['manageStrategyData']);
   },
   methods: {
     // 校验授权目录
@@ -319,6 +328,13 @@ export default {
     },
     handleConfirm() {
       this.$emit('confirm', this.manageStrategyData);
+    },
+    /**
+     * @desc: 是否改变过侧边弹窗的数据
+     * @returns {Boolean} true为没改 false为改了 触发二次弹窗
+     */
+    async handleCloseSidebar() {
+      return await this.$isSidebarClosed();
     },
   },
 };

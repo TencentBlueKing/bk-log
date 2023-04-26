@@ -209,19 +209,17 @@ export default {
             datePickerValue: [start_time, end_time],
             datePickerExpired: expired_time,
           });
-          this.initSidebarFormData(this.formData);
         } else {
           const { userMeta } = this.$store.state;
           if (userMeta && userMeta.username) {
             this.formData.notice_user.push(userMeta.username);
           }
-          this.initSidebarFormData(this.formData);
         }
 
         if (this.archiveId) { // 从归档列表新建回溯
           this.formData.archive_config_id = this.archiveId;
-          this.initSidebarFormData(this.formData);
-        }
+        };
+        this.initSidebarFormData();
       } else {
         // 清空表单数据
         this.formData = {
@@ -231,6 +229,8 @@ export default {
           expired_time: '',
           datePickerExpired: '',
           notice_user: [],
+          start_time: '',
+          end_time: '',
         };
       }
     },
@@ -374,7 +374,7 @@ export default {
      * @returns {Boolean} true为没改 false为改了 触发二次弹窗
      */
     async handleCloseSidebar() {
-      return await this.$isSidebarClosed(this.formData);
+      return await this.$isSidebarClosed();
     },
   },
 };

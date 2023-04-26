@@ -329,11 +329,11 @@ export default {
     showSlider(val) {
       if (val) {
         this.getEsClusterList();
-        this.initSidebarFormData(this.formData);
         if (this.isEdit) {
         } else {
           //
         }
+        this.initSidebarFormData();
       } else {
         // 清空表单数据
         this.formData = {
@@ -488,7 +488,7 @@ export default {
      * @returns {Boolean} true为没改 false为改了 触发二次弹窗
      */
     async handleCloseSidebar() {
-      return await this.$isSidebarClosed(this.formData);
+      return await this.$isSidebarClosed();
     },
   },
 };

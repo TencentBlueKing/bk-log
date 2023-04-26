@@ -214,7 +214,6 @@ export default {
         await this.getCollectorList();
         await this.getRepoList();
         this.updateDaysList();
-        this.initSidebarFormData(this.formData);
 
         if (this.isEdit) {
           const {
@@ -229,8 +228,8 @@ export default {
             snapshot_days,
           });
           this.collectorType = instanceType;
-          this.initSidebarFormData(this.formData);
         }
+        this.initSidebarFormData();
       } else {
         // 清空表单数据
         this.formData = {
@@ -391,7 +390,7 @@ export default {
      * @returns {Boolean} true为没改 false为改了 触发二次弹窗
      */
     async handleCloseSidebar() {
-      return await this.$isSidebarClosed(this.formData);
+      return await this.$isSidebarClosed();
     },
   },
 };

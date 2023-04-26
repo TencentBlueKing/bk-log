@@ -211,15 +211,11 @@ export default {
         select_type: 'topo',
         modules: [],
       };
-      await this.$nextTick();
-      this.initSidebarFormData(this.$refs.directoryRef.manageStrategyData);
     },
-    async handleEditStrategy(row) {
+    handleEditStrategy(row) {
       this.type = 'edit';
       this.showManageDialog = true;
       this.strategyData = row;
-      await this.$nextTick();
-      this.initSidebarFormData(this.$refs.directoryRef.manageStrategyData);
     },
     handleDeleteStrategy(row) {
       this.$bkInfo({
@@ -289,19 +285,15 @@ export default {
         }
       }
     },
-    /**
-     * @desc: 是否改变过侧边弹窗的数据
-     * @returns {Boolean} true为没改 false为改了 触发二次弹窗
-     */
-    async handleCloseSidebar() {
-      return await this.$isSidebarClosed(this.$refs.directoryRef.manageStrategyData);
-    },
     handleOperation(type) {
       if (type === 'refresh') {
         this.emptyType = 'empty';
         this.initStrategyList();
         return;
       }
+    },
+    async handleCloseSidebar() {
+      return await this.$refs.directoryRef.handleCloseSidebar();
     },
   },
 };

@@ -20,23 +20,42 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
  */
 
+import { deepClone, deepEqual } from '../common/util';
+
 export default {
   data () {
     return {
-      _initDataStr_: ''// 初始化状态
+      _initCloneData_: null,// 初始化时的formData
+      _isChange_: false,
+      _isDataInit_: false,
     };
+  },
+  computed: {
+    // 监听的formData对象 如果有多个监听则不使用mixin的默认值 自行在组件内设置计算属性
+    _watchFormData_({ formData }) {
+      return { formData };
+    }
+  },
+  watch: {
+    _watchFormData_: {
+      deep: true,
+      handler(newVal: object) {
+        // 已经修改过 或 未初始化formData的值时不对比
+        if (this._isChange_ || !this._isDataInit_) return;
+        // 对比是否进行过修改
+        if (!deepEqual(newVal, this._initCloneData_)) this._isChange_ = true;
+      }
+    },
   },
   methods: {
     /**
      * 侧边栏离开，二次确认
      * @returns {Boolean} 是否编辑过
      */
-    $isSidebarClosed (targetData: object): Promise<boolean> {
-      const isEqual = this._initDataStr_ === JSON.stringify(targetData);
+    $isSidebarClosed(): Promise<boolean> {
+      const _this = this;
       return new Promise((resolve, reject) => {
-        if (isEqual) { // 未编辑
-          resolve(true);
-        } else {// 已编辑
+        if (this._isChange_) { // 已编辑
           this.$bkInfo({
             extCls: 'sideslider-close-cls',
             title: this.$t('确认离开当前页？'),
@@ -44,16 +63,30 @@ export default {
             okText: this.$t('离开'),
             confirmFn () {
               resolve(true);
+              _this._isChange_ = false;
+              _this._isDataInit_ = false;
             },
             cancelFn () {
               resolve(false);
             }
           });
+        } else { // 未编辑
+          resolve(true);
+          _this._isChange_ = false;
+          _this._isDataInit_ = false;
         }
       });
     },
-    initSidebarFormData (data: object): void {
-      this._initDataStr_ = JSON.stringify(data);
-    }
+    /**
+     * @desc: 初始化对比时的formData值
+     * @param {Array} watchKyeStrList 所需要对比的key列表
+     */
+    initSidebarFormData(watchKyeStrList: Array<string> = ['formData']): void {
+      this._initCloneData_ = watchKyeStrList.reduce((pre:object, cur:string)=> {
+        pre[cur] = deepClone(this[cur]);
+        return pre;
+      }, {});
+      this._isDataInit_ = true;
+    },
   }
 };
