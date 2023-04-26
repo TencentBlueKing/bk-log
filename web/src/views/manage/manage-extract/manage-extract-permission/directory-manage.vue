@@ -257,7 +257,7 @@ export default {
     },
   },
   mounted() {
-    this.initSidebarFormData(['manageStrategyData']);
+    this.initSidebarFormData();
   },
   methods: {
     // 校验授权目录
@@ -328,13 +328,6 @@ export default {
     },
     handleConfirm() {
       this.$emit('confirm', this.manageStrategyData);
-    },
-    /**
-     * @desc: 是否改变过侧边弹窗的数据
-     * @returns {Boolean} true为没改 false为改了 触发二次弹窗
-     */
-    async handleCloseSidebar() {
-      return await this.$isSidebarClosed();
     },
   },
 };

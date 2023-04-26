@@ -635,7 +635,7 @@ export default {
         } else {
           // 集群负责人默认本人
           this.formData.admin = [this.userMeta.username];
-          this.initSidebarFormData(['formData', 'basicFormData']);
+          this.initSidebarFormData();
         }
         this.updateDaysList();
         this.getBizPropertyId();
@@ -797,7 +797,7 @@ export default {
           visible_config: res.data.cluster_config.custom_option?.visible_config || {},
         };
         Object.assign(this.formData, this.basicFormData);
-        this.initSidebarFormData(['formData', 'basicFormData']);
+        this.initSidebarFormData();
         res.data.cluster_config.custom_option.visible_config?.visible_bk_biz.forEach((val) => {
           const target = this.mySpaceList.find(project => project.bk_biz_id === String(val.bk_biz_id));
           if (target) {
@@ -1146,13 +1146,6 @@ export default {
         return false;
       }
       return true;
-    },
-    /**
-     * @desc: 是否改变过侧边弹窗的数据
-     * @returns {Boolean} true为没改 false为改了 触发二次弹窗
-     */
-    async handleCloseSidebar() {
-      return await this.$isSidebarClosed();
     },
   },
 };

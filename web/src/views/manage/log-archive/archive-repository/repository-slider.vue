@@ -483,13 +483,6 @@ export default {
         this.$bkLoading.hide();
       }
     },
-    /**
-     * @desc: 是否改变过侧边弹窗的数据
-     * @returns {Boolean} true为没改 false为改了 触发二次弹窗
-     */
-    async handleCloseSidebar() {
-      return await this.$isSidebarClosed();
-    },
   },
 };
 </script>

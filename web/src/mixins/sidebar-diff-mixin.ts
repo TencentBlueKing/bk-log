@@ -79,14 +79,21 @@ export default {
     },
     /**
      * @desc: 初始化对比时的formData值
-     * @param {Array} watchKyeStrList 所需要对比的key列表
      */
-    initSidebarFormData(watchKyeStrList: Array<string> = ['formData']): void {
-      this._initCloneData_ = watchKyeStrList.reduce((pre:object, cur:string)=> {
+    initSidebarFormData(): void {
+      // 从计算属性中获取所需要对比的key列表
+      this._initCloneData_ = Object.keys(this._watchFormData_).reduce((pre:object, cur:string)=> {
         pre[cur] = deepClone(this[cur]);
         return pre;
       }, {});
       this._isDataInit_ = true;
+    },
+        /**
+     * @desc: 是否改变过侧边弹窗的数据
+     * @returns {Boolean} true为没改 false为改了 触发二次弹窗
+     */
+    async handleCloseSidebar(): Promise<boolean> {
+      return await this.$isSidebarClosed();
     },
   }
 };
