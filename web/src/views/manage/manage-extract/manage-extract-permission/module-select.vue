@@ -143,7 +143,7 @@ export default {
         this.topoCheckedNodes = topoCheckedNodes;
         if (topoCheckedNodes.length) { // 父亲勾选后子孙禁用勾选
           this.$nextTick(() => {
-            const rootNode = this.$refs.topoTreeRef.nodes[0];
+            const rootNode = this.$refs.topoTreeRef?.nodes[0];
             if (rootNode?.children?.length) {
               this.recursiveDealCheckedNode(rootNode.children, rootNode.checked);
             }
