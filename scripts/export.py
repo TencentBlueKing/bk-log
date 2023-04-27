@@ -249,6 +249,7 @@ class LogSearchLogIndexSet(Table):
         "source_app_code",
         "time_field_type",
         "time_field_unit",
+        "view_roles",
     ]
 
     def __init__(self, index_set_data: Dict[str, Any] = None, mysql_config: Dict[str, Any] = None) -> None:
