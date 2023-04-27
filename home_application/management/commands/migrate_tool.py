@@ -1,6 +1,7 @@
 import os
 import json
 import sys
+import traceback
 from typing import Any, List, Dict
 
 import pymysql
@@ -16,7 +17,7 @@ from apps.utils.thread import generate_request
 from bkm_space.utils import bk_biz_id_to_space_uid
 
 from apps.log_databus.constants import TargetNodeTypeEnum
-from apps.log_databus.handlers.collector import CollectorHandler
+from apps.log_databus.handlers.collector import CollectorHandler, get_random_public_cluster_id
 
 from apps.log_search.handlers.index_set import IndexSetHandler
 from apps.log_search.models import Scenario
@@ -119,7 +120,7 @@ def parse_str_int_list(str_list: str) -> List[int]:
     try:
         if not str_list:
             return []
-        return [int(i) for i in str_list.split(",")]
+        return [int(i) for i in str_list.split(",") if i]
     except Exception:
         raise Exception(f"解析失败: {str_list}, 请输入逗号分隔的数字")
 
@@ -261,6 +262,7 @@ class Command(BaseCommand):
             bk_log_search_resource_mapping_table=options["bk_log_search_resource_mapping_table"],
             collector_config_id_list=options["collector_config_id_list"],
             index_set_id_list=options["index_set_id_list"],
+            storage_cluster_id=options["storage_cluster_id"],
         ).handle()
 
 
@@ -340,7 +342,7 @@ class MigrateToolBase:
             self._datas = []
             Prompt.warning(msg="文件不存在: {filepath}", filepath=filepath)
 
-    def _migrate(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def migrate(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
         迁移数据, 各个子类实现
         各个类返回要求是一个字典, 且必须包含以下字段
@@ -379,9 +381,9 @@ class MigrateToolBase:
         return mapping
 
     @staticmethod
-    def merge_fail_mapping(mapping: Dict[str, Any], exception: str) -> Dict[str, Any]:
+    def merge_fail_mapping(mapping: Dict[str, Any], details: str) -> Dict[str, Any]:
         """合并失败mapping"""
-        mapping.update({"status": MigrateStatus.FAIL, "details": exception})
+        mapping.update({"status": MigrateStatus.FAIL, "details": details})
         return mapping
 
     def check_record(self, mapping: Dict[str, Any]) -> bool:
@@ -432,12 +434,27 @@ class MigrateToolBase:
             # 检查是否已经迁移过
             if self.check_record(mapping):
                 continue
+            # 如果没有指定存储集群, 则查询该业务下存不存在公共集群，如果不存在，则跳过
+            # 放在这里是避免进了业务逻辑后, 再去查询公共集群，导致迁移直接失败
+            if not self.storage_cluster_id:
+                storage_cluster_id = get_random_public_cluster_id(mapping["bk_biz_id"])
+                if not storage_cluster_id:
+                    Prompt.warning(msg="业务{bk_biz_id}没有可用的公共存储集群, 跳过", bk_biz_id=mapping["bk_biz_id"])
+                    continue
+                else:
+                    self.storage_cluster_id = storage_cluster_id
             try:
-                result = self._migrate(data)
+                result = self.migrate(data)
                 mapping = self.merge_success_mapping(mapping, result)
                 self.success(data=data, result=result, mapping=mapping)
             except Exception as e:
-                mapping = self.merge_fail_mapping(mapping, str(e))
+                details = json.dumps(
+                    {
+                        "exception": str(e),
+                        "traceback": traceback.format_exc(),
+                    }
+                )
+                mapping = self.merge_fail_mapping(mapping, details)
                 self.fail(data=data, mapping=mapping)
             finally:
                 self.record(mapping)
@@ -470,8 +487,8 @@ class CollectorConfigMigrateTool(MigrateToolBase):
 
     def transform(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """转换数据"""
-        data = self.filter_collector_config_name_en(data)
         mapping = super().transform(data)
+        data = self.filter_collector_config_name_en(data)
         # 根据offset转换target_nodes
         target_nodes = []
         if data["target_node_type"] == TargetNodeTypeEnum.TOPO.value:
@@ -486,7 +503,7 @@ class CollectorConfigMigrateTool(MigrateToolBase):
         data["scenario_id"] = Scenario.LOG
         return mapping
 
-    def _migrate(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def migrate(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
         利用fast_create迁移数据
         """
@@ -505,9 +522,8 @@ class CollectorConfigMigrateTool(MigrateToolBase):
             "target_nodes": data["target_nodes"],
             # 旧采集项缺少params, 从节点管理拉到的造了一个steps, [{"id": "bkunifylogbeat", "params": {}}]
             "params": collector_scenario.parse_steps(data["steps"]),
+            "storage_cluster_id": self.storage_cluster_id,
         }
-        if self.storage_cluster_id:
-            params["storage_cluster_id"] = self.storage_cluster_id
         slz = FastCollectorCreateSerializer(data=params)
         slz.is_valid()
         return CollectorHandler().fast_create(params=slz.data)
@@ -527,7 +543,7 @@ class CollectorConfigMigrateTool(MigrateToolBase):
 
     def fail(self, data: Dict[str, Any], mapping: Dict[str, Any]) -> None:
         Prompt.error(
-            msg=("采集项[{c_old_id}] {collector_config_name}迁移失败, 错误信息: {error}"),
+            msg="采集项[{c_old_id}] {collector_config_name}迁移失败, 错误信息: {error}",
             c_old_id=data["collector_config_id"],
             collector_config_name=data["collector_config_name"],
             error=mapping["details"],
@@ -537,8 +553,29 @@ class CollectorConfigMigrateTool(MigrateToolBase):
 class IndexSetMigrateTool(MigrateToolBase):
     """索引集迁移工具"""
 
+    def transform(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """转换数据"""
+        mapping = super().transform(data)
+        # 更改view_roles的类型
+        view_roles = data["view_roles"]
+        data["view_roles"] = parse_str_int_list(view_roles)
+        # 更改result_table_id的前缀
+        origin_bk_biz_id = mapping["origin_bk_biz_id"]
+        bk_biz_id = mapping["bk_biz_id"]
+        if data["scenario_id"] == Scenario.BKDATA:
+            # bkdata索引集, 需要把bk_biz_id和result_table_id都替换掉
+            for index in data["indexes"]:
+                result_table_id = index["result_table_id"]
+                if index["bk_biz_id"] == origin_bk_biz_id and result_table_id.startswith(str(origin_bk_biz_id)):
+                    index["result_table_id"] = result_table_id.replace(str(origin_bk_biz_id), str(bk_biz_id))
+                    index["bk_biz_id"] = bk_biz_id
+        data["storage_cluster_id"] = self.storage_cluster_id
+        return mapping
+
     @staticmethod
     def _migrate_bkdata(data: Dict[str, Any]) -> Dict[str, Any]:
+        # 把创建人给带过来
+        activate_request(generate_request(data["created_by"]))
         params = {
             "space_uid": bk_biz_id_to_space_uid(data["bk_biz_id"]),
             "index_set_name": data["index_set_name"],
@@ -547,44 +584,20 @@ class IndexSetMigrateTool(MigrateToolBase):
             "is_trace_log": True if data["is_trace_log"] else False,
             "time_field": data["time_field"],
             "time_field_type": data["time_field_type"],
-            "time_filed_unit": data["time_filed_unit"],
+            "time_field_unit": data["time_field_unit"],
             "bk_app_code": data["source_app_code"],
             "username": data["created_by"],
-            # TODO: 缺少映射, 而且没找到怎么传
-            "bkdata_project_id": data["bkdata_project_id"],
+            "view_roles": data["view_roles"],
         }
         index_set = IndexSetHandler.create(**params)
         return {
-            "index_set_id": index_set["index_set_id"],
+            "index_set_id": index_set.index_set_id,
         }
 
-    def _migrate(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        if data["scenario_id"] == Scenario.BKDATA.value:
+    def migrate(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        if data["scenario_id"] == Scenario.BKDATA:
             return self._migrate_bkdata(data)
         # TODO: 暂不迁移第三方ES索引集
-        # if data["scenario_id"] == Scenario.ES.value:
-        #     return self._migrate_es(data)
-
-    # @staticmethod
-    # def _migrate_es(data: Dict[str, Any]) -> Dict[str, Any]:
-    #     params = {
-    #         "space_uid": bk_biz_id_to_space_uid(data["bk_biz_id"]),
-    #         "index_set_name": data["index_set_name"],
-    #         # TODO: 该字段需要做映射
-    #         "storage_cluster_id": data["storage_cluster_id"],
-    #         "scenario_id": data["scenario_id"],
-    #         "indexes": data["indexes"],
-    #         "is_trace_log": True if data["is_trace_log"] else False,
-    #         "time_field": data["time_field"],
-    #         "time_field_type": data["time_field_type"],
-    #         "time_filed_unit": data["time_filed_unit"],
-    #         "bk_app_code": data["source_app_code"],
-    #         "username": data["created_by"],
-    #     }
-    #     index_set = IndexSetHandler.create(**params)
-    #     return {
-    #         "index_set_id": index_set["index_set_id"],
-    #     }
 
     def success(self, data: Dict[str, Any], result: Dict[str, Any], mapping: Dict[str, Any]) -> None:
         Prompt.info(

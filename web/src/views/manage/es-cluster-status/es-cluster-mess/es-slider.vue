@@ -28,7 +28,7 @@
       :is-show="showSlider"
       :width="640"
       :quick-close="true"
-      :before-close="handleCloseSideslider"
+      :before-close="handleCloseSidebar"
       @animation-end="$emit('hidden')"
       @update:isShow="updateIsShow">
       <div v-bkloading="{ isLoading: sliderLoading }" slot="content" class="king-slider-content">
@@ -453,12 +453,14 @@
 import EsDialog from './es-dialog';
 import { mapState, mapGetters } from 'vuex';
 import BkUserSelector from '@blueking/user-selector';
+import SidebarDiffMixin from '@/mixins/sidebar-diff-mixin';
 
 export default {
   components: {
     EsDialog,
     BkUserSelector,
   },
+  mixins: [SidebarDiffMixin],
   props: {
     showSlider: {
       type: Boolean,
@@ -619,6 +621,10 @@ export default {
     isDisableClickSubmit() {
       return this.connectResult !== 'success' || this.invalidHotSetting || this.isRulesCheckSubmit;
     },
+    // 侧边栏需要对比的formData
+    _watchFormData_({ formData, basicFormData }) {
+      return { formData, basicFormData };
+    },
   },
   watch: {
     showSlider(val) {
@@ -629,6 +635,7 @@ export default {
         } else {
           // 集群负责人默认本人
           this.formData.admin = [this.userMeta.username];
+          this.initSidebarFormData();
         }
         this.updateDaysList();
         this.getBizPropertyId();
@@ -790,6 +797,7 @@ export default {
           visible_config: res.data.cluster_config.custom_option?.visible_config || {},
         };
         Object.assign(this.formData, this.basicFormData);
+        this.initSidebarFormData();
         res.data.cluster_config.custom_option.visible_config?.visible_bk_biz.forEach((val) => {
           const target = this.mySpaceList.find(project => project.bk_biz_id === String(val.bk_biz_id));
           if (target) {
@@ -1138,27 +1146,6 @@ export default {
         return false;
       }
       return true;
-    },
-    async handleCloseSideslider() {
-      return await this.showDeleteAlert();
-    },
-    /**
-     * @desc: 如果提交可用则点击遮罩时进行二次确认弹窗
-     */
-    showDeleteAlert() {
-      if (this.isDisableClickSubmit) return true;
-      return new Promise((reject) => {
-        this.$bkInfo({
-          type: 'warning',
-          title: this.$t('是否放弃本次操作？'),
-          confirmFn: () => {
-            reject(true);
-          },
-          close: () => {
-            reject(false);
-          },
-        });
-      });
     },
   },
 };
