@@ -3829,14 +3829,13 @@ class CollectorHandler(object):
         self.create_or_update_subscription(params)
 
         params["table_id"] = params["collector_config_name_en"]
-        self.create_or_update_clean_config(False, params)
-
+        index_set_id = self.create_or_update_clean_config(False, params).get("index_set_id", 0)
         return {
             "collector_config_id": self.data.collector_config_id,
             "bk_data_id": self.data.bk_data_id,
             "subscription_id": self.data.subscription_id,
             "task_id_list": self.data.task_id_list,
-            "index_set_id": self.data.index_set_id,
+            "index_set_id": index_set_id,
         }
 
     def fast_update(self, params: dict) -> dict:
