@@ -177,11 +177,13 @@ class Database:
 
     def insert(self, table_name: str, data: Dict[str, Any]) -> None:
         """插入数据"""
-        fields = ",".join(data.keys())
-        values = ",".join([f"'{i}'" for i in data.values()])
-        sql = f"INSERT INTO {table_name} ({fields}) VALUES ({values})"
+        fields = ",".join(list(data.keys()))
+        placeholder = ",".join(["%s" for _ in range(len(data))])
+        sql = f"INSERT INTO {table_name} ({fields}) VALUES ({placeholder})"
         try:
-            self.execute_sql(sql)
+            with self.conn.cursor() as cursor:
+                cursor.execute(sql, list(data.values()))
+                cursor.fetchall()
             self.conn.commit()
         except Exception as e:
             Prompt.error(
@@ -336,11 +338,31 @@ class MigrateToolBase:
         self.storage_cluster_id = storage_cluster_id
         self.db = Database(**mysql_config)
         self.db.connect()
+        self.create_table_if_not_exists()
         if os.path.exists(filepath):
             self._datas = JsonFile.read(filepath)
         else:
             self._datas = []
             Prompt.warning(msg="文件不存在: {filepath}", filepath=filepath)
+
+    def create_table_if_not_exists(self) -> None:
+        """创建日志mapping表"""
+        sql = """
+        CREATE TABLE IF NOT EXISTS `{table_name}` (
+          `id` int NOT NULL AUTO_INCREMENT,
+          `bk_biz_id` int NOT NULL,
+          `origin_bk_biz_id` int NOT NULL,
+          `index_set_id` int DEFAULT 0,
+          `origin_index_set_id` int NOT NULL,
+          `space_uid` varchar(255) NOT NULL,
+          `status` varchar(32) NOT NULL,
+          `details` text ,
+          PRIMARY KEY (`id`)
+        ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+        """.format(
+            table_name=self.bk_log_search_resource_mapping_table
+        )
+        self.db.execute_sql(sql)
 
     def migrate(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -588,6 +610,7 @@ class IndexSetMigrateTool(MigrateToolBase):
             "bk_app_code": data["source_app_code"],
             "username": data["created_by"],
             "view_roles": data["view_roles"],
+            "storage_cluster_id": data["storage_cluster_id"],
         }
         index_set = IndexSetHandler.create(**params)
         return {

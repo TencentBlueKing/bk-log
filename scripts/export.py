@@ -25,6 +25,16 @@ LOG_SEARCH_INDEX_SET_TABLE = "log_search_logindexset"
 LOG_SEARCH_INDEX_SET_DATA_TABLE = "log_search_logindexsetdata"
 
 
+class Scenario(object):
+    """
+    接入场景
+    """
+
+    LOG = "log"
+    BKDATA = "bkdata"
+    ES = "es"
+
+
 class Config:
     """配置文件"""
 
@@ -271,10 +281,10 @@ class LogSearchLogIndexSet(Table):
 
     def query_data(self) -> None:
         """查询数据"""
-        # 因为索引集和采集项一一对应, 所以仅导出BKDATA的索引集
-        # TODO: 因为第三方ES的集群映射关系不确定, 所以暂时不导出第三方ES的索引集
-        sql = "SELECT {fields} FROM {table_name} WHERE is_deleted=0 AND scenario_id='{scenario}'".format(
-            fields=",".join(self.FIELDS), table_name=self.table_name, scenario="bkdata"
+        # 因为索引集和采集项一一对应, 所以仅导出计算平台和第三方ES的索引集
+        scenario = f"('{Scenario.BKDATA}', '{Scenario.ES}')"
+        sql = "SELECT {fields} FROM {table_name} WHERE is_deleted=0 AND scenario_id IN {scenario}".format(
+            fields=",".join(self.FIELDS), table_name=self.table_name, scenario=scenario
         )
         for data in self.db.execute_sql(sql):
             self.append_data(data=self.transform_data(data=data))
