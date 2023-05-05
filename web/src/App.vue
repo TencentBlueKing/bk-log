@@ -626,9 +626,8 @@ export default {
   }
 
   .bk-dialog-type-header .header {
-    white-space: normal;
-    text-overflow: inherit;
-    overflow: hidden;
+    /* stylelint-disable-next-line declaration-no-important */
+    white-space: normal !important;
   }
 
   // .bk-label {
