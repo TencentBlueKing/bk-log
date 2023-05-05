@@ -89,6 +89,12 @@ const getEtlPreview = {
   method: 'post',
 };
 
+// 清洗清洗列表-删除
+const deleteParsing = {
+  url: '/databus/clean/:collector_config_id/destroy_clean/',
+  method: 'delete',
+};
+
 export {
   getCleanStash,
   updateCleanStash,
@@ -102,4 +108,5 @@ export {
   updateTemplate,
   deleteTemplate,
   getEtlPreview,
+  deleteParsing,
 };

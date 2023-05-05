@@ -128,5 +128,7 @@ export default {
   "新建自定义上报": "New",
   "按更新时间排序": "Sort by Time",
   "添加链路中转机": "Add Transit",
-  "离开": "LEAVE"
+  "离开": "LEAVE",
+  "button-确定": "YES",
+  "button-取消": "NO"
 }
