@@ -6222,8 +6222,6 @@ msgid "有延迟"
 msgstr "There is a delay"
 
 #: apps/log_search/constants.py:47 config/default.py:594 config/default.py:693
-#, fuzzy
-#| msgid "数据平台元数据模块"
 msgid "计算平台"
 msgstr "BK-Base"
 
@@ -8508,8 +8506,6 @@ msgid "清洗列表"
 msgstr "Parsing List"
 
 #: config/default.py:636
-#, fuzzy
-#| msgid "日志归档"
 msgid "归档"
 msgstr "Archive"
 
