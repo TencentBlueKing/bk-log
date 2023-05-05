@@ -43,7 +43,8 @@ class WinEventLogScenario(CollectorScenario):
                 for event_name in event_names
             ]
         }
-        local_params = self._add_ext_meta(local_params, params, collector_config_id)
+        local_params = self._add_ext_labels(local_params, params, collector_config_id)
+        local_params = self._add_ext_meta(local_params, params)
         steps = [
             {
                 "id": self.PLUGIN_NAME,  # 这里的ID不能随意变更，需要同步修改解析的逻辑(parse_steps)

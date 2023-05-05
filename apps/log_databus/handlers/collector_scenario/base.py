@@ -20,7 +20,7 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import copy
-from typing import Optional
+from typing import Optional, Dict, Any
 
 from django.conf import settings
 from django.utils.module_loading import import_string
@@ -256,19 +256,32 @@ class CollectorScenario(object):
 
         if params.get("collector_config_overlay"):
             local_params.update(params["collector_config_overlay"])
-        local_params = self._add_ext_meta(local_params, params, collector_config_id)
+        local_params = self._add_ext_labels(local_params, params, collector_config_id)
+        local_params = self._add_ext_meta(local_params, params)
         return local_params
 
     @staticmethod
-    def _add_ext_meta(local_params, params, collector_config_id=None):
-        """补充额外的标签"""
-        extra_labels = params.get("extra_labels", [])
-        if not extra_labels:
+    def _add_ext_labels(local_params: Dict[str, Any], params: Dict[str, Any], collector_config_id: int = None):
+        """
+        补充额外的标签, ext_labels是个列表
+        此处针对collector_config_id进行了特殊处理
+        因为在创建采集项时，生成的collector_config_id未知，所以需要在内部流程透传
+        """
+        ext_labels = params.get("ext_labels", [])
+        if not ext_labels:
             return local_params
-        labels = {label["key"]: label["value"] for label in extra_labels}
+        labels = {label["key"]: label["value"] for label in ext_labels}
         if labels.get("$body") and collector_config_id:
             labels["$body"].update({"bk_collect_config_id": collector_config_id})
         local_params["labels"] = labels
+        return local_params
+
+    @staticmethod
+    def _add_ext_meta(local_params: Dict[str, Any], params: Dict[str, Any]):
+        """
+        补充额外的元数据, ext_meta是个字典
+        """
+        local_params["ext_meta"] = params.get("ext_meta", {})
         return local_params
 
     @staticmethod

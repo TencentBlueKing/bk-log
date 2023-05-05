@@ -34,7 +34,6 @@ class RedisSlowLogCollectorScenario(CollectorScenario):
 
     PLUGIN_NAME = LogPluginInfo.NAME
     PLUGIN_VERSION = LogPluginInfo.VERSION
-    # TODO: CONFIG_NAME为插件配置名，需要确认采集器
     CONFIG_NAME = "bkunifylogbeat_redis_slowlog"
 
     def get_subscription_steps(self, data_id, params, collector_config_id=None):
@@ -50,7 +49,8 @@ class RedisSlowLogCollectorScenario(CollectorScenario):
             "hosts": params.get("redis_hosts", []),
             "password": params.get("redis_password", ""),
         }
-        local_params = self._add_ext_meta(local_params, params, collector_config_id)
+        local_params = self._add_ext_labels(local_params, params, collector_config_id)
+        local_params = self._add_ext_meta(local_params, params)
         steps = [
             {
                 "id": self.PLUGIN_NAME,  # 这里的ID不能随意变更，需要同步修改解析的逻辑(parse_steps)
@@ -116,7 +116,7 @@ class RedisSlowLogCollectorScenario(CollectorScenario):
         """
         return {
             "option": {
-                "es_unique_field_list": ["cloudId", "serverIp", "gseIndex", "iterationIndex"],
+                "es_unique_field_list": ["cloudId", "serverIp", "gseIndex", "iterationIndex", "bk_host_id"],
                 "separator_node_source": "",
                 "separator_node_action": "",
                 "separator_node_name": "",
@@ -127,7 +127,7 @@ class RedisSlowLogCollectorScenario(CollectorScenario):
                     "field_type": "object",
                     "tag": "dimension",
                     "alias_name": "ext",
-                    "description": "额外信息字段",
+                    "description": _("额外信息字段"),
                     "option": {"es_type": "object", "es_include_in_all": False}
                     if es_version.startswith("5.")
                     else {"es_type": "object"},
@@ -137,7 +137,7 @@ class RedisSlowLogCollectorScenario(CollectorScenario):
                     "field_type": "float",
                     "tag": "dimension",
                     "alias_name": "cloudid",
-                    "description": "云区域ID",
+                    "description": _("云区域ID"),
                     "option": {"es_type": "integer", "es_include_in_all": False}
                     if es_version.startswith("5.")
                     else {"es_type": "integer"},
@@ -179,7 +179,7 @@ class RedisSlowLogCollectorScenario(CollectorScenario):
                 "field_type": "timestamp",
                 "tag": "dimension",
                 "alias_name": "utctime",
-                "description": "数据时间",
+                "description": _("数据时间"),
                 "option": {
                     "es_type": "date",
                     "es_include_in_all": False,
