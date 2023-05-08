@@ -169,7 +169,7 @@ class PluginParamSerializer(serializers.Serializer):
     close_inactive = serializers.IntegerField(label=_("FD关联间隔"), required=False, min_value=1)
     harvester_limit = serializers.IntegerField(label=_("同时采集数"), required=False, min_value=1)
     clean_inactive = serializers.IntegerField(label=_("采集进度清理时间"), required=False, min_value=1)
-
+    # winlog相关参数
     winlog_name = serializers.ListField(
         label=_("windows事件名称"), child=serializers.CharField(max_length=255), required=False
     )
@@ -179,10 +179,12 @@ class PluginParamSerializer(serializers.Serializer):
     winlog_event_id = serializers.ListField(
         label=_("windows事件ID"), child=serializers.CharField(max_length=255), required=False
     )
+    # Redis慢日志相关参数
     redis_hosts = serializers.ListField(
         label=_("redis目标"), child=serializers.CharField(max_length=255), required=False, default=[]
     )
     redis_password = serializers.CharField(label=_("redis密码"), required=False, allow_blank=True)
+    # 额外元数据以及标签
     ext_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=ExtraLabelsSerializer())
     ext_meta = serializers.DictField(label=_("额外元数据"), required=False, default={})
 
