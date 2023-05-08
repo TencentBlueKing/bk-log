@@ -396,7 +396,6 @@ export default {
 
     .fixed-steps {
       position: relative;
-      width: 170px;
       max-height: 100%;
       margin-top: 40px;
 

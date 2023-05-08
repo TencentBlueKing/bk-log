@@ -73,7 +73,7 @@
       </div>
       <bk-table v-bkloading="{ isLoading: tableLoading2 }" :data="fieldsData">
         <bk-table-column :label="$t('字段名')" prop="field_name"></bk-table-column>
-        <bk-table-column :label="$t('中文名')">
+        <bk-table-column :label="$t('别名')">
           <template slot-scope="{ row }">
             {{ row.field_alias || '--' }}
           </template>

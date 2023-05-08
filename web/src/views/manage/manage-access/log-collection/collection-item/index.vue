@@ -150,7 +150,7 @@
           min-width="50">
           <template slot-scope="props">
             <span :class="{ 'text-disabled': props.row.status === 'stop' }">
-              {{ props.row.retention ? `${props.row.retention}${$t('天')}` : '--' }}
+              {{ props.row.retention ? `${props.row.retention} ${$t('天')}` : '--' }}
             </span>
           </template>
         </bk-table-column>
@@ -436,6 +436,7 @@
         </bk-table-column>
         <bk-table-column type="setting">
           <bk-table-setting-content
+            v-en-style="'width: 470px'"
             :fields="columnSetting.fields"
             :selected="columnSetting.selectedFields"
             :size="columnSetting.size"

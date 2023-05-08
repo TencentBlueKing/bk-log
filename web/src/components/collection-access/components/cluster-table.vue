@@ -70,7 +70,7 @@
         </bk-table>
         <div class="cluster-illustrate" v-show="!!activeItem">
           <p class="illustrate-title">{{$t('说明')}}</p>
-          <div :class="`illustrate-container ${getIsEnLanguage && 'en-div'}`">
+          <div class="illustrate-container" v-en-class="'en-container'">
             <div v-for="[key, value] of Object.entries(illustrateLabelData)" :key="key">
               <span class="illustrate-label">{{key}}：</span>
               <span class="illustrate-value">{{value}}</span>
@@ -145,9 +145,6 @@ export default {
     }),
     tableShowType() {
       return this.tableType !== 'exclusive';
-    },
-    getIsEnLanguage() {
-      return this.$store.getters.isEnLanguage;
     },
   },
   watch: {
@@ -291,9 +288,9 @@ export default {
 
         @include flex-justify(space-between);
 
-        &.en-div div {
+        &.en-container div {
           display: flex;
-          flex-direction: column;
+          flex-wrap: wrap;
         }
       }
 

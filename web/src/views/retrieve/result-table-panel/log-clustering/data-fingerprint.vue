@@ -893,6 +893,7 @@ export default {
 }
 
 .new-finger {
+  margin-left: 6px;
   width: 40px;
   height: 16px;
   font-size: 12px;
@@ -902,6 +903,7 @@ export default {
   background: #fee;
   border: 1px solid #fd9c9c;
   border-radius: 9px;
+  flex-shrink: 0;
 }
 
 .link-color {

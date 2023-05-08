@@ -30,7 +30,7 @@
       </div>
     </bk-alert>
     <bk-form
-      :label-width="115"
+      :label-width="labelWidth"
       :model="formData"
       ref="validateForm"
       data-test-id="addNewCollectionItem_form_acquisitionConfig">
@@ -327,7 +327,8 @@
                         </div>
                       </span>
                       <span
-                        v-if="!isSelectorHaveValue(conItem.label_selector)" class="span-box"
+                        v-if="!isSelectorHaveValue(conItem.label_selector)"
+                        :class="{ 'span-box': true, 'hidden-before': isNode }"
                         v-bk-tooltips.top="{ content: $t('请先选择集群'), delay: 500 }"
                         :disabled="!!formData.bcs_cluster_id">
                         <div
@@ -348,7 +349,7 @@
                 <div class="config-item" v-if="isContainerHaveValue(conItem.container)">
                   <span>{{$t('指定容器')}}</span>
                   <div class="specify">
-                    <div class="edit" @click="handelShowDialog(conIndex, 'container')">
+                    <div class="edit" v-en-style="'left: 130px;'" @click="handelShowDialog(conIndex, 'container')">
                       <span class="bk-icon icon-edit-line"></span>
                       <span>{{$t('编辑')}}</span>
                     </div>
@@ -369,7 +370,7 @@
                 <div class="config-item" v-if="isSelectorHaveValue(conItem.label_selector)">
                   <span>{{$t('指定标签')}}</span>
                   <div class="specify">
-                    <div class="edit" @click="handelShowDialog(conIndex, 'label')">
+                    <div class="edit" v-en-style="'left: 100px;'" @click="handelShowDialog(conIndex, 'label')">
                       <span class="bk-icon icon-edit-line"></span>
                       <span>{{$t('编辑')}}</span>
                     </div>
@@ -423,6 +424,7 @@
               outline
               icon="plus"
               class="add-config-item"
+              v-en-style="'margin-left: 140px'"
               @click="handleAddNewContainerConfig">
               {{$t('添加配置项')}}
             </bk-button>
@@ -844,6 +846,9 @@ export default {
     updateCollectorConfigID() { // 若是新增容器日志 返回上一步 则使用curCollect缓存的collector_config_id更新;
       const { collectorId } = this.$route.params;
       return !!collectorId ? Number(collectorId) : Number(this.curCollect.collector_config_id);
+    },
+    labelWidth() {
+      return this.$store.state.isEnLanguage ? 140 : 115;
     },
   },
   watch: {
@@ -2053,6 +2058,12 @@ export default {
     display: none !important;
   }
 
+  .hidden-before {
+    &::before {
+      display: none;
+    }
+  }
+
   .is-selected {
     /* stylelint-disable-next-line declaration-no-important */
     z-index: 2 !important;
@@ -2223,17 +2234,19 @@ export default {
         position: relative;
 
         .span-box {
-          &:not(:last-child) {
-            margin-right: 24px;
+          margin-right: 24px;
+
+          &:not(:first-child) {
+            margin-right: 0;
             position: relative;
 
-            &::after {
+            &::before {
               content: ' ';
               width: 1px;
               height: 16px;
               background-color: #dcdee5;
               position: absolute;
-              left: 87px;
+              left: -11px;
               top: 3px;
             }
           }

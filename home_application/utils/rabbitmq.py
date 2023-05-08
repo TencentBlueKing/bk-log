@@ -104,3 +104,25 @@ class RabbitMQClient(object):
             result["status"] = False
             result["message"] = f"queue_len is larger than {ALARM_QUEUE_LEN}"
         return result
+
+    def get_queue_metrics(self, queue_name):
+        metrics = {}
+        try:
+            channel = self.connection.channel()
+            declare_queue_result = channel.queue_declare(queue=queue_name, durable=True)
+            metrics["message_count"] = declare_queue_result.method.message_count
+            metrics["consumer_count"] = declare_queue_result.method.consumer_count
+            channel.close()
+        except ChannelClosedByBroker as e:
+            x_max_priority = str(e).split("received none but current is the value '")[1].split("' of type")[0]
+            x_max_priority = int(x_max_priority)
+            channel = self.connection.channel()
+            declare_queue_result = channel.queue_declare(
+                queue=queue_name, durable=True, arguments={"x-max-priority": x_max_priority}
+            )
+            metrics["message_count"] = declare_queue_result.method.message_count
+            metrics["consumer_count"] = declare_queue_result.method.consumer_count
+            channel.close()
+        except Exception as e:  # pylint: disable=broad-except
+            logger.exception(f"failed to get llen[{queue_name}], err: {e}")
+        return metrics

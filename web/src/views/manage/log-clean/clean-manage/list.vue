@@ -93,7 +93,7 @@
             {{ props.row.updated_at }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('操作')" :render-header="$renderHeader" width="200">
+        <bk-table-column :label="$t('操作')" :render-header="$renderHeader" :width="operateWidth">
           <div class="collect-table-operate" slot-scope="props">
             <!-- bkdata_auth_url不为null则表示需要跳转计算平台检索 -->
             <!-- 高级清洗授权 -->
@@ -205,6 +205,9 @@ export default {
       );
       return target;
     },
+    operateWidth() {
+      return this.$store.state.isEnLanguage ? '240' : '200';
+    },
   },
   mounted() {
     this.search();
@@ -305,6 +308,31 @@ export default {
         const id = row.bk_data_id;
         const jumpUrl = `${window.BKDATA_URL}/#/data-access/data-detail/${id}/3`;
         window.open(jumpUrl, '_blank');
+        return;
+      }
+      if (operateType === 'delete' && row.etl_config !== 'bkdata_clean') {
+        const h = this.$createElement;
+        this.$bkInfo({
+          title: this.$t('确定要删除清洗：{n}？', { n: row.collector_config_name }),
+          subHeader: h('div', this.$t('请注意！删除后不能恢复。')),
+          type: 'warning',
+          confirmLoading: true,
+          confirmFn: async () => {
+            try {
+              const res = await this.$http.request('clean/deleteParsing', {
+                params: { collector_config_id: row.collector_config_id },
+              });
+              if (res.data) {
+                this.messageSuccess(this.$t('删除成功'));
+                this.search();
+              }
+            } catch (err) {
+              console.warn(err);
+            }
+          },
+          okText: this.$t('button-确定').replace('button-', ''),
+          cancelText: this.$t('button-取消').replace('button-', ''),
+        });
         return;
       }
       if (operateType === 'edit') { // 基础清洗
