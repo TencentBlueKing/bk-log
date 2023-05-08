@@ -23,7 +23,11 @@
 <template>
   <div class="basic-info-container" v-bkloading="{ isLoading: basicLoading }">
     <div>
-      <div class="deploy-sub" v-if="!isContainer">
+      <div
+        class="deploy-sub"
+        v-en-class="'en-deploy'"
+        v-if="!isContainer"
+      >
         <!-- 数据ID -->
         <div>
           <span>{{ $t('数据ID') }}</span>
@@ -435,6 +439,13 @@ export default {
 .basic-info-container {
   display: flex;
   justify-content: space-between;
+
+  .en-deploy > div {
+    > span:nth-child(1) {
+      /* stylelint-disable-next-line declaration-no-important */
+      width: 110px !important;
+    }
+  }
 
   .deploy-sub > div {
     display: flex;

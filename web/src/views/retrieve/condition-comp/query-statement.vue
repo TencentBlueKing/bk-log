@@ -55,7 +55,7 @@
       <!-- 历史记录 -->
       <div class="history-button">
         <span class="log-icon icon-lishijilu"></span>
-        <span @click="handleClickHistoryButton">{{$t('历史查询')}}</span>
+        <span @click="handleClickHistoryButton">{{$t('查询历史')}}</span>
       </div>
       <div v-show="false">
         <ul ref="historyUlRef" class="retrieve-history-list">

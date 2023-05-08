@@ -28,7 +28,7 @@
     :style="`padding-right: ${introWidth + 20}px;`"
     class="custom-create-container">
     <bk-form
-      :label-width="103"
+      :label-width="getLabelWidth"
       :model="formData"
       ref="validateForm">
       <div class="create-form">
@@ -460,6 +460,9 @@ export default {
     },
     showGroupText() {
       return Number(this.bkBizId) > 0 ? `${this.bkBizId}_bklog_` : `space_${Math.abs(Number(this.bkBizId))}_bklog_`;
+    },
+    getLabelWidth() {
+      return this.$store.getters.isEnLanguage ? 133 : 103;
     },
   },
   watch: {
