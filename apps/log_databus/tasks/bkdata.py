@@ -19,10 +19,12 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 We undertake not to change the open source license (MIT license) applicable to the current version of
 the project delivered to anyone in the future.
 """
+from typing import Dict, Any
 
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 
+from apps.api import CCApi
 from apps.api.modules.bkdata_access import BkDataAccessApi
 from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.feature_toggle.plugins.constants import FEATURE_BKDATA_DATAID, SCENARIO_BKDATA
@@ -43,6 +45,7 @@ from apps.log_databus.models import CollectorConfig
 from apps.log_databus.utils.bkdata_clean import BKDataCleanUtils
 from apps.utils.function import ignored
 from apps.utils.log import logger
+from apps.api.modules.utils import get_non_bkcc_space_related_bkcc_biz_id
 
 
 @task(ignore_result=True)
@@ -59,12 +62,20 @@ def create_bkdata_data_id(collector_config: CollectorConfig, platform_username: 
     if not collector_config.bk_data_id or collector_config.bkdata_data_id:
         return
 
-    maintainers = {collector_config.updated_by, collector_config.created_by}
-    if platform_username:
-        maintainers.add(platform_username)
-    maintainers.discard(ADMIN_REQUEST_USER)
-    if not maintainers:
-        raise BaseException(f"dont have enough maintainer only {ADMIN_REQUEST_USER}")
+    # 检验非CC业务的空间是否关联了CC业务, 如果不关联, 则跳过同步
+    bk_biz_id = collector_config.get_bk_biz_id()
+    if bk_biz_id < 0:
+        related_bk_biz_id = get_non_bkcc_space_related_bkcc_biz_id(bk_biz_id)
+        if related_bk_biz_id < 0:
+            return
+        bk_biz_id = related_bk_biz_id
+
+    # 获取采集项的维护人员maintainers, 请求bkdata的platform_username
+    collector_maintainers_and_platform_username = get_collector_maintainers_and_platform_username(
+        collector_config=collector_config, bk_biz_id=bk_biz_id, platform_username=platform_username
+    )
+    maintainers = collector_maintainers_and_platform_username["maintainers"]
+    platform_username = collector_maintainers_and_platform_username["platform_username"]
 
     if not (collector_config.collector_config_name_en or collector_config.table_id):
         logger.error(
@@ -83,7 +94,7 @@ def create_bkdata_data_id(collector_config: CollectorConfig, platform_username: 
             "data_scenario": BKDATA_DATA_SCENARIO,
             "data_scenario_id": BKDATA_DATA_SCENARIO_ID,
             "permission": BKDATA_PERMISSION,
-            "bk_biz_id": collector_config.get_bk_biz_id(),
+            "bk_biz_id": bk_biz_id,
             "description": collector_config.description,
             "access_raw_data": {
                 "tags": BKDATA_TAGS,
@@ -168,3 +179,50 @@ def sync_clean(bk_biz_id: int):
         )
     finally:
         BKDataCleanUtils.unlock_sync_clean(bk_biz_id=bk_biz_id)
+
+
+def get_collector_maintainers_and_platform_username(
+    collector_config: CollectorConfig, bk_biz_id: int, platform_username: str = None
+) -> Dict[str, Any]:
+    """
+    获取当前采集项的维护人(maintainers)
+    以及请求bkdata的用户名(platform_username)
+    这里指定传bk_biz_id是因为非bkcc的业务会转换成关联bkcc的业务, 避免二次查关联
+    """
+    result = {
+        "maintainers": set(),
+        "platform_username": platform_username,
+    }
+
+    params = {
+        "biz_property_filter": {
+            "condition": "AND",
+            "rules": [
+                {
+                    "field": "bk_biz_id",
+                    "operator": "equal",
+                    "value": bk_biz_id,
+                },
+            ],
+        },
+        "fields": ["bk_biz_maintainer"],
+    }
+    app_list = CCApi.get_app_list(params)
+    if app_list and app_list["info"]:
+        for maintainer in app_list["info"][0].get("bk_biz_maintainer", "").split(","):
+            result["maintainers"].add(maintainer)
+    # 去除ADMIN_REQUEST_USER
+    if ADMIN_REQUEST_USER in result["maintainers"]:
+        result["maintainers"].discard(ADMIN_REQUEST_USER)
+
+    if not result["maintainers"]:
+        raise BaseException(f"dont have enough maintainer only {ADMIN_REQUEST_USER}")
+
+    # 如果指定了平台运维人员，且在业务运维人员中，则使用指定的平台运维人员, 否则使用业务运维人员中的一个
+    if platform_username and platform_username in result["maintainers"]:
+        result["platform_username"] = list(result["maintainers"])[0]
+
+    # 最后添加创建人和更新人, 是因为创建人和更新人可能不在业务运维人员中, 没有bkdata的权限导致platform_username没有权限
+    result["maintainers"].add(collector_config.created_by)
+    result["maintainers"].add(collector_config.updated_by)
+    return result
