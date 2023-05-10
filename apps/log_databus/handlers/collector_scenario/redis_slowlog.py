@@ -43,11 +43,13 @@ class RedisSlowLogCollectorScenario(CollectorScenario):
             redis_hosts = ["host1:port1", "host2:port2"]
         params.redis_password: redis密码, str
             redis_password = "password"
+        params.redis_password_file: redis密码文件, str
         """
 
         local_params = {
             "hosts": params.get("redis_hosts", []),
             "password": params.get("redis_password", ""),
+            "password_file": params.get("redis_password_file", ""),
         }
         local_params = self._add_ext_labels(local_params, params, collector_config_id)
         local_params = self._add_ext_meta(local_params, params)

@@ -184,6 +184,7 @@ class PluginParamSerializer(serializers.Serializer):
         label=_("redis目标"), child=serializers.CharField(max_length=255), required=False, default=[]
     )
     redis_password = serializers.CharField(label=_("redis密码"), required=False, allow_blank=True)
+    redis_password_file = serializers.CharField(label=_("redis密码文件"), required=False, allow_blank=True)
     # 额外元数据以及标签
     ext_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=ExtraLabelsSerializer())
     ext_meta = serializers.DictField(label=_("额外元数据"), required=False, default={})
