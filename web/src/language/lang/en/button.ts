@@ -43,7 +43,6 @@ export default {
   "完成": "Complete",
   "下载": "Download",
   "复制": "Duplicate",
-  "button-收藏": "Add to Favorite",
   "回溯": "Rehydrate",
   "全屏": "Full-Screen",
   "申请": "Apply",
@@ -78,7 +77,6 @@ export default {
   "点击获取": "Click to get",
   "数据存储": "Data Storage",
   "下载日志": "Download log",
-  "button-字段清洗": "Field Parsing",
   "更多详情": "More details",
   "添加条件": "Add Condition",
   "说明文档": "Documentation",
@@ -96,7 +94,6 @@ export default {
   // "还原默认": "Restore default", // 改为 恢复默认 与上面的词条重复
   "选择模版": "Select template",
   "静态拓扑": "Static Topology",
-  "button-数据指纹": "Data Fingerprint",
   "下载历史": "Download History",
   "动态拓扑": "Dynamic Topology",
   "服务模板": "Service Template",
@@ -130,5 +127,8 @@ export default {
   "添加链路中转机": "Add Transit",
   "离开": "LEAVE",
   "button-确定": "YES",
-  "button-取消": "NO"
+  "button-取消": "NO",
+  "button-收藏": "Add to Favorite",
+  "button-字段清洗": "Field Parsing",
+  "button-数据指纹": "Data Fingerprint"
 }
