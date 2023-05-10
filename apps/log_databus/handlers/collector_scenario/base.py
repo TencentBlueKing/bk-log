@@ -269,13 +269,14 @@ class CollectorScenario(object):
         此处针对collector_config_id进行了特殊处理
         因为在创建采集项时，生成的collector_config_id未知，所以需要在内部流程透传
         """
-        labels: List[Dict[str, Dict[str, Any]]] = params.get("extra_template_labels", [])
-        if not labels:
+        extra_template_labels: List[Dict[str, Dict[str, Any]]] = params.get("extra_template_labels", [])
+        if not extra_template_labels:
             return local_params
-        for label in labels:
-            if label.get("$body") and collector_config_id:
-                label["$body"].update({"bk_collect_config_id": collector_config_id})
-                break
+        labels = []
+        for extra_template_label in extra_template_labels:
+            if extra_template_label["key"] == "$body" and collector_config_id:
+                extra_template_label["value"].update({"bk_collect_config_id": collector_config_id})
+            labels.append({extra_template_label["key"]: extra_template_label["value"]})
         local_params["labels"] = labels
         return local_params
 
@@ -287,9 +288,9 @@ class CollectorScenario(object):
         即 接口参数 extra_labels -> 采集器 ext_meta
         采集器内的ext_meta的格式为: Dict[str, str], 所以传给采集器的ext_meta需要做一次转换
         """
-        ext_meta = params.get("extra_labels")
+        ext_meta = params.get("extra_labels", [])
         if not ext_meta:
-            return params
+            return local_params
         local_params["ext_meta"] = {em["key"]: em["value"] for em in ext_meta}
         return local_params
 
