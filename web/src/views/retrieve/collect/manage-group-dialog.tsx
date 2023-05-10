@@ -950,6 +950,7 @@ export default class GroupDialog extends tsc<IProps> {
 
           <TableColumn type="setting">
             <TableSettingContent
+              v-en-style="width: 510px;"
               key={`${this.tableKey}__settings`}
               fields={this.tableSetting.fields}
               size={this.tableSetting.size}

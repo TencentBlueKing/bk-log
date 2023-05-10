@@ -1295,7 +1295,9 @@ export default {
     }
 
     .scope-radio {
-      margin: 0 26px 14px 0;
+      &:not(:last-child) {
+        margin: 0 26px 14px 0;
+      }
     }
 
     .visible-scope-box {

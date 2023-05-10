@@ -187,7 +187,7 @@ export default {
         name: this.$t('忽略符号'),
       }, {
         id: 'dataFingerprint',
-        name: this.$t('数据指纹'),
+        name: this.$t('button-数据指纹'),
       }],
       fingerOperateData: {
         patternSize: 0, // slider当前值
