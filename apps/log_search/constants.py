@@ -496,12 +496,14 @@ class CollectorScenarioEnum(ChoicesEnum):
     SECTION = "section"
     WIN_EVENT = "wineventlog"
     CUSTOM = "custom"
+    REDIS_SLOWLOG = "redis_slowlog"
 
     _choices_labels = (
         (ROW, _("行日志文件")),
         (SECTION, _("段日志文件")),
         (WIN_EVENT, _("win event日志")),
         (CUSTOM, _("自定义")),
+        (REDIS_SLOWLOG, _("Redis慢日志")),
     )
 
     @classmethod
