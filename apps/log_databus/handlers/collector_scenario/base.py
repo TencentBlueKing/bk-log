@@ -272,12 +272,11 @@ class CollectorScenario(object):
         extra_template_labels: List[Dict[str, Dict[str, Any]]] = params.get("extra_template_labels", [])
         if not extra_template_labels:
             return local_params
-        labels = []
+        local_params["labels"] = {}
         for extra_template_label in extra_template_labels:
             if extra_template_label["key"] == "$body" and collector_config_id:
                 extra_template_label["value"].update({"bk_collect_config_id": collector_config_id})
-            labels.append({extra_template_label["key"]: extra_template_label["value"]})
-        local_params["labels"] = labels
+            local_params["labels"][extra_template_label["key"]] = extra_template_label["value"]
         return local_params
 
     @staticmethod
