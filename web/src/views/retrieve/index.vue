@@ -248,7 +248,7 @@
                       @click="handleClickFavorite">
                       <span class="favorite-btn-text">
                         <span class="icon bk-icon icon-star"></span>
-                        <span>{{ $t('收藏') }}</span>
+                        <span>{{ $t('button-收藏').replace('button-', '') }}</span>
                       </span>
                     </bk-button>
                     <span
@@ -2305,7 +2305,7 @@ export default {
               position: relative;
 
               .favorite-btn {
-                width: 86px;
+                // width: 86px;
                 margin: 0 8px;
                 font-size: 12px
               }
