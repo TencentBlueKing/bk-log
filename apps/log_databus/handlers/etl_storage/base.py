@@ -142,7 +142,7 @@ class EtlStorage(object):
                 raise ValidationError(_("字段名不符合变量规则"))
 
             # option, 非时间字段的option里的time_zone和time_format都为"", 不需要入库
-            field_option = {k: v for k, v in field["option"].items() if k not in ["time_zone", "time_format"]}
+            field_option = {k: v for k, v in field.get("option", {}).items() if k not in ["time_zone", "time_format"]}
             field_option["field_index"] = etl_field_index
             etl_field_index += 1
 
