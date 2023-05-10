@@ -76,8 +76,8 @@
       <bk-table-column
         :label="$t('数量')"
         :render-header="$renderHeader"
+        :width="getTableWidth.number"
         sortable
-        width="91"
         prop="number">
         <template slot-scope="{ row }">
           <span
@@ -90,8 +90,8 @@
       <bk-table-column
         :label="$t('占比')"
         :render-header="$renderHeader"
+        :width="getTableWidth.percentage"
         sortable
-        width="96"
         prop="percentage">
         <template slot-scope="{ row }">
           <span
@@ -105,9 +105,9 @@
       <template v-if="requestData.year_on_year_hour >= 1 ">
         <bk-table-column
           sortable
-          width="101"
           align="center"
           header-align="center"
+          :width="getTableWidth.year_on_year_count"
           :label="$t('同比数量')"
           :render-header="$renderHeader"
           :sort-by="'year_on_year_count'">
@@ -118,9 +118,9 @@
 
         <bk-table-column
           sortable
-          width="101"
           align="center"
           header-align="center"
+          :width="getTableWidth.year_on_year_percentage"
           :label="$t('同比变化')"
           :render-header="$renderHeader"
           :sort-by="'year_on_year_percentage'">
@@ -335,7 +335,24 @@ export default {
             message: this.$t('{n}不规范, 包含特殊符号.', { n: this.$t('标签') }),
             trigger: 'blur',
           },
+          {
+            max: 50,
+            message: this.$t('不能多于50个字符'),
+            trigger: 'blur',
+          },
         ],
+      },
+      enTableWidth: {
+        number: '110',
+        percentage: '116',
+        year_on_year_count: '171',
+        year_on_year_percentage: '171',
+      },
+      cnTableWidth: {
+        number: '91',
+        percentage: '96',
+        year_on_year_count: '101',
+        year_on_year_percentage: '101',
       },
     };
   },
@@ -352,6 +369,9 @@ export default {
     },
     getLeaveText() {
       return !this.clusterSwitch ? this.$t('当前日志聚类未启用，请前往设置') : this.$t('当前数据指纹未启用，请前往设置');
+    },
+    getTableWidth() {
+      return this.$store.getters.isEnLanguage ? this.enTableWidth : this.cnTableWidth;
     },
   },
   watch: {
@@ -734,7 +754,6 @@ export default {
       margin-top: 1px;
 
       span {
-        width: 95px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -874,6 +893,7 @@ export default {
 }
 
 .new-finger {
+  margin-left: 6px;
   width: 40px;
   height: 16px;
   font-size: 12px;
@@ -883,6 +903,7 @@ export default {
   background: #fee;
   border: 1px solid #fd9c9c;
   border-radius: 9px;
+  flex-shrink: 0;
 }
 
 .link-color {

@@ -22,7 +22,7 @@
 
 <template>
   <div class="basic-info-container">
-    <div class="deploy-sub">
+    <div class="deploy-sub" v-en-class="'en-deploy'">
       <!-- 数据ID -->
       <div>
         <span>{{ $t('数据ID') }}</span>
@@ -132,7 +132,7 @@
               </div>
               <!-- 日志字符集 -->
               <div>
-                <span>{{ $t('日志字符集') }}</span>
+                <span>{{ $t('字符集') }}</span>
                 <span>{{ configItem.data_encoding || '-' }}</span>
               </div>
               <!-- 过滤内容 -->
@@ -429,6 +429,13 @@ export default {
 .basic-info-container {
   display: flex;
   justify-content: space-between;
+
+  .en-deploy > div {
+    > span:nth-child(1) {
+      /* stylelint-disable-next-line declaration-no-important */
+      width: 110px !important;
+    }
+  }
 
   .deploy-sub > div {
     display: flex;

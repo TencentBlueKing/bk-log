@@ -61,12 +61,11 @@ urlpatterns = [
     url(r"^{}".format(config.ENTRANCE_URL), include("version_log.urls")),
     url(r"^api/v1/log_extract/", include("apps.log_extract.urls")),
     url(r"^api/v1/", include("apps.log_measure.urls")),
+    url(r"^api/v1/ipchooser/", include("bkm_ipchooser.urls")),
 ]
 
 
 if settings.IS_K8S_DEPLOY_MODE:
     urlpatterns.extend(
-        [
-            url(r"^static/(?P<path>.*)$", static.serve, {"document_root": settings.STATIC_ROOT}, name="static"),
-        ]
+        [url(r"^static/(?P<path>.*)$", static.serve, {"document_root": settings.STATIC_ROOT}, name="static")]
     )

@@ -24,7 +24,7 @@
   <div v-if="scenarioId !== 'wineventlog'">
     <bk-form
       ref="validateForm"
-      :label-width="getLabelWidth"
+      :label-width="labelWidth"
       :form-type="showType"
       :model="subFormData">
       <div v-if="!isStandardOutput">
@@ -58,7 +58,7 @@
           </bk-form-item>
         </div>
         <!-- 日志字符集 -->
-        <bk-form-item class="mt" :label="$t('日志字符集')" required>
+        <bk-form-item class="mt" :label="$t('字符集')" required>
           <bk-select
             data-test-id="sourceLogBox_div_changeLogCharacterTet"
             style="width: 320px;"
@@ -75,7 +75,13 @@
         </bk-form-item>
       </div>
       <!-- 过滤内容 -->
-      <div :class="['config-item', 'filter-content',showType === 'horizontal' && 'horizontal-item']">
+      <div
+        :class="[
+          'config-item',
+          'filter-content',
+          showType === 'horizontal' && 'horizontal-item',
+        ]"
+        v-en-class="'en-span'">
         <span v-bk-tooltips="$t('为减少传输和存储成本，可以过滤掉部分内容,更复杂的可在“清洗”功能中完成')">
           <span class="filter-title">{{$t('过滤内容')}}</span>
         </span>
@@ -210,7 +216,7 @@
     <!-- 日志种类 -->
     <bk-form
       ref="validateForm"
-      :label-width="getLabelWidth"
+      :label-width="labelWidth"
       :form-type="showType"
       :model="subFormData"
       class="mt">
@@ -231,6 +237,7 @@
             </bk-checkbox>
             <bk-tag-input
               v-model="otherSpeciesList"
+              free-paste
               :class="otherRules ? 'tagRulesColor' : ''"
               :allow-auto-match="true"
               :has-delete-icon="true"
@@ -243,7 +250,7 @@
       </bk-form-item>
     </bk-form>
     <!-- win-过滤内容 -->
-    <div :class="['config-item','mt', showType === 'horizontal' && 'win-content']">
+    <div :class="['config-item','mt', showType === 'horizontal' && 'win-content']" v-en-class="'en-span'">
       <span v-bk-tooltips="$t('为减少传输和存储成本，可以过滤掉部分内容,更复杂的可在“清洗”功能中完成')">
         <span class="filter-title">{{$t('过滤内容')}}</span>
       </span>
@@ -252,7 +259,7 @@
           class="select-div"
           v-model="item.type"
           :clearable="false"
-          @selected="tagBlurRules(item,index)">
+          @selected="tagBlurRules(item, index)">
           <bk-option
             v-for="option in selectEventList"
             :key="option.id"
@@ -264,12 +271,13 @@
         <bk-tag-input
           class="tag-input"
           v-model="item.list"
+          free-paste
           :class="item.isCorrect ? '' : 'tagRulesColor'"
           :allow-auto-match="true"
           :has-delete-icon="true"
           :allow-create="true"
-          @blur="tagBlurRules(item,index)"
-          @remove="tagBlurRules(item,index)">
+          @blur="tagBlurRules(item, index)"
+          @remove="tagBlurRules(item, index)">
         </bk-tag-input>
         <div class="ml9">
           <i :class="
@@ -461,9 +469,8 @@ export default {
     isClickTypeRadio() {
       return this.subFormData.params.conditions.type !== '';
     },
-    // 获取label宽度
-    getLabelWidth() {
-      return this.showType === 'horizontal' ? 115 : 200;
+    labelWidth() {
+      return this.$store.state.isEnLanguage ? 140 : 115;
     },
     // 是否是标准输出
     isStandardOutput() {
@@ -617,7 +624,7 @@ export default {
     },
     otherBlurRules(input, tags) {
       if (!tags) return;
-      this.otherRules = !tags.every(el => /^[a-zA-Z /]*$/.test(el));
+      this.otherRules = !tags.every(Boolean);
       tags.length === 0 && (this.otherRules = false);
       const slist = this.selectLogSpeciesList;
       if (slist.length === 1 && slist[0] === 'Other' && !this.otherSpeciesList.length) {
@@ -627,10 +634,10 @@ export default {
     tagBlurRules(item, index) {
       switch (item.type) {
         case 'winlog_event_id':
-          this.eventSettingList[index].isCorrect =  item.list.every(el => /^[\d -]+$/.test(el));
+          this.eventSettingList[index].isCorrect =  item.list.every(el => /^[\d]+$/.test(el));
           break;
         case 'winlog_level':
-          this.eventSettingList[index].isCorrect =  item.list.every(el => /^[A-Za-z]+$/.test(el));
+          this.eventSettingList[index].isCorrect =  item.list.every(Boolean);
           break;
       }
     },
@@ -659,6 +666,14 @@ export default {
   .bk-select {
     width: 184px;
     height: 32px;
+  }
+}
+
+.en-span {
+  left: 140px;
+
+  > span {
+    left: -110px;
   }
 }
 

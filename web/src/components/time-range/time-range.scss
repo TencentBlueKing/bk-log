@@ -70,6 +70,9 @@
   }
 
   .shortcuts-list {
+    position: relative;
+    z-index: 999;
+
     .shortcuts-item {
       height: 32px;
       line-height: 32px;
@@ -89,5 +92,20 @@
   .time-range-tips-content {
     text-align: center;
     line-height: 20px;
+  }
+}
+
+.is-en-timer-list {
+  .bk-picker-panel-sidebar {
+    width: 210px;
+  }
+
+  .time-range-custom,
+  .time-range-footer {
+    padding-right: 216px;
+  }
+
+  .bk-picker-panel-body {
+    margin-right: 60px;
   }
 }

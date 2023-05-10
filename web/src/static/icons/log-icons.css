@@ -380,3 +380,7 @@
 .icon-ellipsis-more:before {
   content: '\e17f';
 }
+
+.icon-position:before {
+  content: '\e180';
+}

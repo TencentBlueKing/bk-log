@@ -28,7 +28,7 @@
     :style="`padding-right: ${introWidth + 20}px;`"
     class="custom-create-container">
     <bk-form
-      :label-width="103"
+      :label-width="getLabelWidth"
       :model="formData"
       ref="validateForm">
       <div class="create-form">
@@ -182,7 +182,7 @@
         </bk-form-item>
         <!-- 索引集名称 -->
         <bk-form-item
-          :label="$t('存储索引名')"
+          :label="$t('索引名')"
           class="form-inline-div"
           :rules="storageRules.table_id"
           :property="'table_id'">
@@ -306,14 +306,13 @@
 
     <div class="submit-btn">
       <bk-button
-        class="fl"
+        style="margin-right: 20px;"
         theme="primary"
         :loading="submitLoading"
         @click="handleSubmitChange">
         {{$t('提交')}}
       </bk-button>
       <bk-button
-        class="fr"
         theme="default"
         @click="cancel">
         {{$t('取消')}}
@@ -461,6 +460,9 @@ export default {
     },
     showGroupText() {
       return Number(this.bkBizId) > 0 ? `${this.bkBizId}_bklog_` : `space_${Math.abs(Number(this.bkBizId))}_bklog_`;
+    },
+    getLabelWidth() {
+      return this.$store.getters.isEnLanguage ? 133 : 103;
     },
   },
   watch: {
@@ -692,10 +694,7 @@ export default {
     }
 
     .submit-btn {
-      width: 140px;
       margin: 20px 20px 100px ;
-
-      @include clearfix;
     }
 
     .intro-container {

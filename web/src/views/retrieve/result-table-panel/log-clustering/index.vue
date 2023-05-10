@@ -163,6 +163,10 @@ export default {
       type: Object,
       required: true,
     },
+    isChangeTableNav: {
+      type: Boolean,
+      default: false,
+    },
   },
   data() {
     return {
@@ -183,7 +187,7 @@ export default {
         name: this.$t('忽略符号'),
       }, {
         id: 'dataFingerprint',
-        name: this.$t('数据指纹'),
+        name: this.$t('button-数据指纹'),
       }],
       fingerOperateData: {
         patternSize: 0, // slider当前值
@@ -254,7 +258,7 @@ export default {
       return this.totalFields.some(item => item.is_analyzed);
     },
     signatureSwitch() { // 数据指纹开关
-      return this.configData.extra.signature_switch;
+      return this.configData.extra?.signature_switch;
     },
   },
   watch: {
@@ -266,11 +270,9 @@ export default {
         // 日志聚类开关赋值
         this.clusterSwitch = val.is_active;
         // 数据指纹开关赋值
-        this.fingerOperateData.signatureSwitch = this.signatureSwitch;
+        this.fingerOperateData.signatureSwitch = val.extra.signature_switch;
         this.configID = this.cleanConfig.extra?.collector_config_id;
         this.isClickFingerNav = false;
-        // 若数据指纹开启则自动显示数据指纹
-        if (!this.isInitPage && this.signatureSwitch) this.active = 'dataFingerprint';
         // 当前nav为数据指纹且数据指纹开启点击指纹nav则不再重复请求
         if (this.active === 'dataFingerprint' && this.signatureSwitch) {
           this.isClickFingerNav = true;
@@ -307,8 +309,7 @@ export default {
       handler(newList) {
         if (newList.length) {
           // 过滤条件变化及当前活跃为数据指纹并且数据指纹打开时才发送请求
-          if (this.indexId === this.$route.params.indexId
-          && this.fingerOperateData.signatureSwitch) {
+          if (this.indexId === this.$route.params.indexId && this.signatureSwitch) {
             this.requestFinger();
           } else {
             this.indexId = this.$route.params.indexId;
@@ -319,10 +320,17 @@ export default {
     requestData: {
       deep: true,
       handler() {
-        if (this.fingerOperateData.signatureSwitch) {
+        if (this.signatureSwitch) {
           this.requestFinger();
         }
       },
+    },
+    isChangeTableNav(val) {
+      // 若数据指纹开启则自动显示数据指纹
+      if (val && this.signatureSwitch) {
+        this.active = 'dataFingerprint';
+        this.$emit('update:is-change-table-nav', false);
+      };
     },
   },
   methods: {
@@ -374,8 +382,11 @@ export default {
       });
       Object.assign(this.requestData, queryRequestData);
       this.$nextTick(() => {
+        if (this.isInitPage && this.signatureSwitch && JSON.stringify(this.clusterRouteParams) === '{}') {
+          this.active = 'dataFingerprint';
+        };
         // 初始化nav如果是数据指纹 且打开数据指纹 则初始化时请求一次数据指纹
-        if (this.isInitPage && this.clusterRouteParams.activeNav === 'dataFingerprint' && this.signatureSwitch) {
+        if (this.active === 'dataFingerprint' && this.signatureSwitch) {
           this.requestFinger();
         };
         this.isInitPage = false;
@@ -486,8 +497,8 @@ export default {
           ...this.retrieveParams,
           ...this.requestData,
         },
-      })
-        .then(async (res) => {
+      }, { cancelWhenRouteChange: false }) // 由于回填指纹的数据导致路由变化，故路由变化时不取消请求
+        .then((res) => {
           this.fingerPage = 1;
           this.fingerList = [];
           this.allFingerList = res.data;
@@ -530,7 +541,7 @@ export default {
           return { id, name: alias ? `${id}(${alias})` : id };
         });
       this.fingerOperateData.groupList = filterList;
-      this.requestData.group_by = [];
+      this.requestData.group_by.splice(0, this.requestData.group_by.length);
     },
     scrollToTop() {
       this.$easeScroll(0, 300, this.scrollEl);
@@ -549,8 +560,10 @@ export default {
 @import '@/scss/mixins/flex.scss';
 
 .log-cluster-table-container {
+  overflow: hidden;
+
   .cluster-nav {
-    min-width: 760px;
+    min-width: 1150px;
     margin-bottom: 12px;
     color: #63656e;
 

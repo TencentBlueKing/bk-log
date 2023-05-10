@@ -171,6 +171,8 @@ export default {
     if (isFormatDate === 'false') {
       this.$store.commit('updateIsFormatDate', false);
     }
+    const isEnLanguage = (jsCookie.get('blueking_language') || 'zh-cn') === 'en';
+    this.$store.commit('updateIsEnLanguage', isEnLanguage);
 
     // 弹窗登录
     window.bus.$on('show-login-modal', (loginData) => {
@@ -484,10 +486,38 @@ export default {
   }
   // 采集项管理、索引集管理通用样式
   .access-manage-container {
-    padding: 20px 24px;
+    padding: 28px 24px;
 
     .bk-tab-section {
       display: none;
+    }
+
+    .go-search {
+      // position: fixed;
+      position: absolute;
+      right: 0;
+      font-size: 12px;
+      z-index: 999;
+
+      .icon-info {
+        color: #979ba5;
+        font-size: 14px;
+      }
+
+      .search-button {
+        display: inline-block;
+        color: #3a84ff;
+        cursor: pointer;
+      }
+
+      .search-text {
+        height: 32px;
+        line-height: 32px;
+        background: #fff;
+        box-shadow: 0 2px 4px 0 #1919290d;
+        border-radius: 2px;
+        padding: 0 9px;
+      }
     }
 
     .tab-content {
@@ -495,7 +525,7 @@ export default {
       overflow: auto;
       padding: 20px;
       background-color: #fff;
-      border: 1px solid #dcdee5;
+      box-shadow: 0 2px 4px 0 #1919290d;
       border-top: none;
 
       @include scroller($backgroundColor: #C4C6CC, $width: 4px);
@@ -594,4 +624,19 @@ export default {
     margin-left: 2px;
     padding-top: 3px;
   }
+
+  .bk-dialog-type-header .header {
+    /* stylelint-disable-next-line declaration-no-important */
+    white-space: normal !important;
+  }
+
+  // .bk-label {
+  //   .bk-label-text {
+  //     font-size: 12px;
+  //   }
+
+  //   &::after {
+  //     top: 54%;
+  //   }
+  // }
 </style>

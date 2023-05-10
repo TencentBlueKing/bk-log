@@ -345,7 +345,7 @@
         },
         {
           prop: 'bk_cloud_name',
-          label: this.$t('云区域'),
+          label: this.$t('管控区域'),
         },
         {
           prop: 'bk_os_type',
@@ -775,7 +775,7 @@
       const index = this.previewData.findIndex(item => item.id === 'INSTANCE')
       if (index > -1) {
         const { data = [] } = this.previewData[index]
-        const hasCloudId = !data[0] || Object.prototype.hasOwnProperty.call(data[0], 'bk_cloud_id') // 兼容拨测选择的IP不带云区域问题
+        const hasCloudId = !data[0] || Object.prototype.hasOwnProperty.call(data[0], 'bk_cloud_id') // 兼容拨测选择的IP不带管控区域问题
         const dataMap = (JSON.parse(JSON.stringify(data)) as any[]).reduce<any>((pre, next, index) => {
           next.index = index
           const key = this.getIpKey(next, hasCloudId)
@@ -949,7 +949,7 @@
     }
     // 判断IP是否一样
     private identityIp (pre: any, next: any) {
-      // 有云区域id时，云区域ID加IP唯一标识一个IP，没有云区域时IP作为唯一ID
+      // 有管控区域id时，管控区域ID加IP唯一标识一个IP，没有管控区域时IP作为唯一ID
       return (Object.prototype.hasOwnProperty.call(pre, 'bk_cloud_id')
         ? (pre.ip === next.ip) && (pre.bk_cloud_id === next.bk_cloud_id)
         : pre.ip === next.ip)

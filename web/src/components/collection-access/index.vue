@@ -396,7 +396,6 @@ export default {
 
     .fixed-steps {
       position: relative;
-      width: 170px;
       max-height: 100%;
       margin-top: 40px;
 
@@ -411,6 +410,8 @@ export default {
       .bk-step {
         color: #7a7c85;
         height: 70px;
+        display: flex;
+        white-space: normal;
 
         &::after {
           width: 1px;
@@ -433,7 +434,15 @@ export default {
           box-shadow: 0px 2px 4px 0px rgba(0, 130, 255, .15);
         }
 
+        .bk-step-content {
+          width: 78%;
+          overflow: hidden;
+          display: inline-block;
+          hyphens: auto;
+        }
+
         .bk-step-title {
+          display: inline;
           color: #6e7079;
         }
 

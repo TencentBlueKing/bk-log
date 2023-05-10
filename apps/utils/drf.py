@@ -22,7 +22,7 @@ the project delivered to anyone in the future.
 import json
 
 from django.core.serializers.json import DjangoJSONEncoder
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 import six
 from django.db import models
 
@@ -62,7 +62,7 @@ def format_serializer_errors(errors, fields, params, prefix="  "):
                 sub_message = json.dumps(field_errors)
         else:
             field = fields[key]
-            label = f"{field.label}({field.field_name})" or field.field_name
+            label = field.field_name
             if (
                 hasattr(field, "child")
                 and isinstance(field_errors, list)
@@ -145,7 +145,9 @@ class GeneralSerializer(ModelSerializer):
             super(GeneralSerializer, self).is_valid(raise_exception)
         except ValidationError:
             if self._errors and raise_exception:
-                raise ValidationError(format_serializer_errors(self.errors, self.fields, self.initial_data),)
+                raise ValidationError(
+                    format_serializer_errors(self.errors, self.fields, self.initial_data),
+                )
 
         return not bool(self._errors)
 

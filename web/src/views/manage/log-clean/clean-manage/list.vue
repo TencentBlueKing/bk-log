@@ -61,7 +61,7 @@
         @filter-change="handleFilterChange"
         @page-change="handlePageChange"
         @page-limit-change="handleLimitChange">
-        <bk-table-column :label="$t('采集项名称')" :render-header="$renderHeader">
+        <bk-table-column :label="$t('名称')" :render-header="$renderHeader">
           <template slot-scope="props">
             {{ props.row.collector_config_name }}
           </template>
@@ -93,7 +93,7 @@
             {{ props.row.updated_at }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('操作')" :render-header="$renderHeader" width="200">
+        <bk-table-column :label="$t('操作')" :render-header="$renderHeader" :width="operateWidth">
           <div class="collect-table-operate" slot-scope="props">
             <!-- bkdata_auth_url不为null则表示需要跳转计算平台检索 -->
             <!-- 高级清洗授权 -->
@@ -135,7 +135,7 @@
               ext-cls="mr10 king-button"
               :tips-conf="''"
               :button-text="$t('删除')"
-              :disabled="props.row.etl_config !== 'bkdata_clean'"
+              :disabled="props.row.etl_config === 'bkdata_clean'"
               :cursor-active="!(props.row.permission && props.row.permission[authorityMap.MANAGE_COLLECTION_AUTH])"
               @on-click="operateHandler(props.row, 'delete')">
             </log-button>
@@ -204,6 +204,9 @@ export default {
         { text: this.$t('高级清洗'), value: 'bkdata_clean' },
       );
       return target;
+    },
+    operateWidth() {
+      return this.$store.state.isEnLanguage ? '240' : '200';
     },
   },
   mounted() {
@@ -307,6 +310,31 @@ export default {
         window.open(jumpUrl, '_blank');
         return;
       }
+      if (operateType === 'delete' && row.etl_config !== 'bkdata_clean') {
+        const h = this.$createElement;
+        this.$bkInfo({
+          title: this.$t('确定要删除清洗：{n}？', { n: row.collector_config_name }),
+          subHeader: h('div', this.$t('请注意！删除后不能恢复。')),
+          type: 'warning',
+          confirmLoading: true,
+          confirmFn: async () => {
+            try {
+              const res = await this.$http.request('clean/deleteParsing', {
+                params: { collector_config_id: row.collector_config_id },
+              });
+              if (res.data) {
+                this.messageSuccess(this.$t('删除成功'));
+                this.search();
+              }
+            } catch (err) {
+              console.warn(err);
+            }
+          },
+          okText: this.$t('button-确定').replace('button-', ''),
+          cancelText: this.$t('button-取消').replace('button-', ''),
+        });
+        return;
+      }
       if (operateType === 'edit') { // 基础清洗
         if (!(row.permission?.[authorityMap.MANAGE_COLLECTION_AUTH])) { // 管理权限
           return this.getOptionApplyData({
@@ -336,6 +364,7 @@ export default {
       if (operateType === 'edit') {
         routeName = 'clean-edit';
         query.spaceUid = this.$store.state.spaceUid;
+        query.editName = row.collector_config_name;
         params.collectorId = row.collector_config_id;
       } else if (operateType === 'search') {
         routeName = 'retrieve';

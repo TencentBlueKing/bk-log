@@ -24,11 +24,11 @@
   <div class="archive-slider-container">
     <bk-sideslider
       transfer
-      :title="isEdit ? $t('编辑归档') : $t('新增归档')"
+      :title="isEdit ? $t('编辑归档') : $t('新建归档')"
       :is-show="showSlider"
       :width="676"
       :quick-close="true"
-      :before-close="handleCloseSideslider"
+      :before-close="handleCloseSidebar"
       @animation-end="$emit('hidden')"
       @update:isShow="updateIsShow">
       <div v-bkloading="{ isLoading: sliderLoading }" slot="content" class="archive-slider-content">
@@ -36,7 +36,7 @@
           v-if="!sliderLoading"
           data-test-id="addNewArchive_div_formContainer"
           :model="formData"
-          :label-width="160"
+          :label-width="350"
           :rules="basicRules"
           form-type="vertical"
           ref="validateForm"
@@ -137,9 +137,11 @@
 
 <script>
 import { mapGetters } from 'vuex';
+import SidebarDiffMixin from '@/mixins/sidebar-diff-mixin';
 import * as authorityMap from '../../../../../common/authority-map';
 
 export default {
+  mixins: [SidebarDiffMixin],
   props: {
     showSlider: {
       type: Boolean,
@@ -227,6 +229,7 @@ export default {
           });
           this.collectorType = instanceType;
         }
+        this.initSidebarFormData();
       } else {
         // 清空表单数据
         this.formData = {
@@ -381,26 +384,6 @@ export default {
       } finally {
         this.confirmLoading = false;
       }
-    },
-    async handleCloseSideslider() {
-      return await this.showDeleteAlert();
-    },
-    /**
-     * @desc: 如果提交可用则点击遮罩时进行二次确认弹窗
-     */
-    showDeleteAlert() {
-      return new Promise((reject) => {
-        this.$bkInfo({
-          type: 'warning',
-          title: this.$t('是否放弃本次操作？'),
-          confirmFn: () => {
-            reject(true);
-          },
-          close: () => {
-            reject(false);
-          },
-        });
-      });
     },
   },
 };

@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
 
 BK_CUSTOM_REPORT = "bk_custom_report"
@@ -23,7 +23,7 @@ def render_otlp_report_config() -> str:
         return ""
     config = bk_custom_report.feature_config
     service_list = [
-        str(_(f"    云区域ID {cloud_id} {service}"))
+        str(_("    云区域ID {cloud_id} {service}").format(cloud_id=cloud_id, service=service))
         for cloud_id, services in config.get(CONFIG_OTLP_FIELD, {}).items()
         for service in services
     ]

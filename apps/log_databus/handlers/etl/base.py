@@ -24,7 +24,7 @@ import arrow
 from django.conf import settings
 from django.db import transaction
 from django.utils.module_loading import import_string
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 
 from apps.api import TransferApi
 from apps.constants import UserOperationTypeEnum, UserOperationActionEnum
@@ -290,6 +290,7 @@ class EtlHandler(object):
                 view_roles = index_set_handler.data.view_roles
             index_set = index_set_handler.update(
                 index_set_name=index_set_name,
+                storage_cluster_id=storage_cluster_id,
                 view_roles=view_roles,
                 category_id=self.data.category_id,
                 indexes=indexes,

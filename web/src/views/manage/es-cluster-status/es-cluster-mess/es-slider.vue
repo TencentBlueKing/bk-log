@@ -28,14 +28,14 @@
       :is-show="showSlider"
       :width="640"
       :quick-close="true"
-      :before-close="handleCloseSideslider"
+      :before-close="handleCloseSidebar"
       @animation-end="$emit('hidden')"
       @update:isShow="updateIsShow">
       <div v-bkloading="{ isLoading: sliderLoading }" slot="content" class="king-slider-content">
         <bk-form
           v-if="!sliderLoading"
           :model="basicFormData"
-          :label-width="150"
+          :label-width="170"
           :rules="basicRules"
           form-type="vertical"
           ref="validateForm"
@@ -224,7 +224,6 @@
                 <div class="flex-space-item">
                   <div class="space-item-label">{{$t('默认')}}</div>
                   <bk-select
-                    style="width: 320px;"
                     v-model="formData.setup_config.retention_days_default"
                     :clearable="false"
                     data-test-id="storageBox_select_selectExpiration">
@@ -254,7 +253,6 @@
                 <div class="flex-space-item">
                   <div class="space-item-label">{{$t('最大')}}</div>
                   <bk-select
-                    style="width: 320px;"
                     v-model="formData.setup_config.retention_days_max"
                     :clearable="false"
                     data-test-id="storageBox_select_selectExpiration">
@@ -417,7 +415,7 @@
               </div>
             </bk-form-item>
             <!-- 集群说明 -->
-            <bk-form-item :label="$t('集群说明')" class="illustrate">
+            <bk-form-item :label="$t('说明')" class="illustrate">
               <bk-input
                 type="textarea"
                 :rows="3"
@@ -455,12 +453,14 @@
 import EsDialog from './es-dialog';
 import { mapState, mapGetters } from 'vuex';
 import BkUserSelector from '@blueking/user-selector';
+import SidebarDiffMixin from '@/mixins/sidebar-diff-mixin';
 
 export default {
   components: {
     EsDialog,
     BkUserSelector,
   },
+  mixins: [SidebarDiffMixin],
   props: {
     showSlider: {
       type: Boolean,
@@ -621,6 +621,10 @@ export default {
     isDisableClickSubmit() {
       return this.connectResult !== 'success' || this.invalidHotSetting || this.isRulesCheckSubmit;
     },
+    // 侧边栏需要对比的formData
+    _watchFormData_({ formData, basicFormData }) {
+      return { formData, basicFormData };
+    },
   },
   watch: {
     showSlider(val) {
@@ -631,6 +635,7 @@ export default {
         } else {
           // 集群负责人默认本人
           this.formData.admin = [this.userMeta.username];
+          this.initSidebarFormData();
         }
         this.updateDaysList();
         this.getBizPropertyId();
@@ -792,6 +797,7 @@ export default {
           visible_config: res.data.cluster_config.custom_option?.visible_config || {},
         };
         Object.assign(this.formData, this.basicFormData);
+        this.initSidebarFormData();
         res.data.cluster_config.custom_option.visible_config?.visible_bk_biz.forEach((val) => {
           const target = this.mySpaceList.find(project => project.bk_biz_id === String(val.bk_biz_id));
           if (target) {
@@ -851,17 +857,11 @@ export default {
           postData.es_auth_info.password = '';
         }
         this.connectLoading = true;
-        const res = await this.$http.request('/source/connectivityDetect', { data: postData });
-        if (res.data) {
-          this.connectResult = 'success';
-          // 连通性测试通过之后获取冷热数据
-          const attrsRes = await this.$http.request('/source/getNodeAttrs', { data: postData });
-          this.hotColdOriginList = attrsRes.data;
-        } else {
-          this.connectResult = 'failed';
-          this.connectFailedMessage = res.message;
-          this.hotColdOriginList = [];
-        }
+        await this.$http.request('/source/connectivityDetect', { data: postData }, { catchIsShowMessage: false });
+        this.connectResult = 'success';
+        // 连通性测试通过之后获取冷热数据
+        const attrsRes = await this.$http.request('/source/getNodeAttrs', { data: postData });
+        this.hotColdOriginList = attrsRes.data;
       } catch (e) {
         console.warn(e);
         this.connectResult = 'failed';
@@ -1147,27 +1147,6 @@ export default {
       }
       return true;
     },
-    async handleCloseSideslider() {
-      return await this.showDeleteAlert();
-    },
-    /**
-     * @desc: 如果提交可用则点击遮罩时进行二次确认弹窗
-     */
-    showDeleteAlert() {
-      if (this.isDisableClickSubmit) return true;
-      return new Promise((reject) => {
-        this.$bkInfo({
-          type: 'warning',
-          title: this.$t('是否放弃本次操作？'),
-          confirmFn: () => {
-            reject(true);
-          },
-          close: () => {
-            reject(false);
-          },
-        });
-      });
-    },
   },
 };
 </script>
@@ -1175,6 +1154,7 @@ export default {
 <style lang="scss" scoped>
 @import '@/scss/mixins/flex.scss';
 @import '@/scss/space-tag-option';
+@import '@/scss/mixins/scroller.scss';
 
 .king-slider-content {
   min-height: 394px;
@@ -1301,7 +1281,6 @@ export default {
     }
 
     .es-cluster-management {
-      max-width: 120px;
       font-size: 14px;
       display: flex;
       align-items: center;
@@ -1316,7 +1295,9 @@ export default {
     }
 
     .scope-radio {
-      margin: 0 26px 14px 0;
+      &:not(:last-child) {
+        margin: 0 26px 14px 0;
+      }
     }
 
     .visible-scope-box {
@@ -1381,6 +1362,10 @@ export default {
   margin-bottom: 80px;
 }
 
+:deep(.bk-form-textarea) {
+  @include scroller;
+}
+
 .test-container {
   margin-top: 10px;
   font-size: 14px;
@@ -1415,6 +1400,11 @@ export default {
 
     @include flex-justify(space-between);
 
+    .bk-select,
+    .bk-form-control {
+      flex: 1;
+    }
+
     :deep(.bk-form-input) {
       height: 34px;
     }
@@ -1422,6 +1412,7 @@ export default {
 
   .space-item-label {
     min-width: 48px;
+    padding: 0 4px;
     font-size: 12px;
     color: #63656e;
     background: #fafbfd;

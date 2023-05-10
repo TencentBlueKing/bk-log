@@ -60,7 +60,10 @@
       </svg>
       <span class="text">{{ $t('暂无数据') }}</span>
     </div>
-    <div class="converge-cycle" v-if="!isEmptyChart && !isFold">
+    <div
+      class="converge-cycle"
+      v-if="!isEmptyChart && !isFold"
+      v-en-style="'left: 110px'">
       <span>{{ $t('汇聚周期') }}</span>
       <bk-select
         style="width: 80px"

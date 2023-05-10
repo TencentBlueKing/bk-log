@@ -22,7 +22,7 @@ the project delivered to anyone in the future.
 import os
 
 from django.conf import settings
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 from pipeline.component_framework.component import Component
 from pipeline.core.flow import StaticIntervalGenerator, Service
 from apps.log_extract.constants import DownloadStatus, ExtractLinkType
@@ -40,8 +40,8 @@ class CosUploadService(BaseService):
 
     def outputs(self):
         return [
-            Service.OutputItem(name=_("job instance id"), key="task_instance_id", type="int"),
-            Service.OutputItem(name=_("pack file name"), key="pack_file_name", type="str"),
+            Service.OutputItem(name=_("任务实例ID"), key="task_instance_id", type="int"),
+            Service.OutputItem(name=_("打包文件名称"), key="pack_file_name", type="str"),
         ]
 
     def _poll_status(self, task_instance_id, operator, bk_biz_id):
@@ -68,7 +68,13 @@ class CosUploadService(BaseService):
         task_result = FileServer.execute_script(
             content=script["content"],
             script_params=script["script_params"],
-            ip=[{"ip": transit_server.ip, "bk_cloud_id": transit_server.bk_cloud_id}],
+            ip=[
+                {
+                    "ip": transit_server.ip,
+                    "bk_cloud_id": transit_server.bk_cloud_id,
+                    "bk_host_id": transit_server.bk_host_id,
+                }
+            ],
             bk_biz_id=bk_biz_id,
             operator=operator,
             account=account,
@@ -96,7 +102,9 @@ class CosUploadService(BaseService):
 
         for item in FileServer.get_detail_for_ips(query_result):
             if item["exit_code"] != 0:
-                raise Exception(_("上传网盘异常: {}").format(FileServer.get_job_tag(query_result)))
+                raise Exception(
+                    _("上传网盘异常: {}, status: {}").format(FileServer.get_job_tag(item), item.get("status", ""))
+                )
 
         # 如果是提取链路bkrepo类型 需要上传bkrepo
         if extract_link.link_type == ExtractLinkType.BK_REPO.value:

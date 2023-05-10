@@ -28,7 +28,7 @@
       :is-show="showSlider"
       :width="676"
       :quick-close="true"
-      :before-close="handleCloseSideslider"
+      :before-close="handleCloseSidebar"
       @animation-end="$emit('hidden')"
       @update:isShow="updateIsShow">
       <div v-bkloading="{ isLoading: sliderLoading }" slot="content" class="repository-slider-content">
@@ -76,8 +76,8 @@
               <span>{{ esClusterSource }}</span>
             </p>
           </bk-form-item>
-          <h3 class="form-title">{{ $t('仓库配置') }}</h3>
-          <bk-form-item :label="$t('仓库类型')" ext-cls="repository-item" required>
+          <h3 class="form-title">{{ $t('配置') }}</h3>
+          <bk-form-item :label="$t('类型')" ext-cls="repository-item" required>
             <div
               :class="{ 'repository-card': true, 'is-active': formData.es_config.type === card.id }"
               v-for="card in repository"
@@ -243,6 +243,7 @@
 <script>
 import { mapGetters } from 'vuex';
 import * as authorityMap from '../../../../common/authority-map';
+import SidebarDiffMixin from '@/mixins/sidebar-diff-mixin';
 
 const cosConfigForm = () => {
   return {
@@ -274,6 +275,7 @@ const fsConfigForm = () => {
 };
 
 export default {
+  mixins: [SidebarDiffMixin],
   props: {
     showSlider: {
       type: Boolean,
@@ -331,6 +333,7 @@ export default {
         } else {
           //
         }
+        this.initSidebarFormData();
       } else {
         // 清空表单数据
         this.formData = {
@@ -479,26 +482,6 @@ export default {
       } finally {
         this.$bkLoading.hide();
       }
-    },
-    async handleCloseSideslider() {
-      return await this.showDeleteAlert();
-    },
-    /**
-     * @desc: 如果提交可用则点击遮罩时进行二次确认弹窗
-     */
-    showDeleteAlert() {
-      return new Promise((reject) => {
-        this.$bkInfo({
-          type: 'warning',
-          title: this.$t('是否放弃本次操作？'),
-          confirmFn: () => {
-            reject(true);
-          },
-          close: () => {
-            reject(false);
-          },
-        });
-      });
     },
   },
 };

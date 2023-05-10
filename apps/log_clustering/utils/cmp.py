@@ -39,7 +39,7 @@ def cmp(src_json_obj, target_json_obj, ignore_keys=None):
                 )
             )
             return
-        for index, _ in enumerate(src_json_obj):
+        for index, __ in enumerate(src_json_obj):
             cmp(src_json_obj[index], target_json_obj[index], ignore_keys=ignore_keys)
 
     if isinstance(src_json_obj, dict):

@@ -25,6 +25,7 @@ from apps.utils.log import logger
 from apps.log_databus.handlers.collector_scenario.base import CollectorScenario
 from apps.log_databus.handlers.collector_scenario.utils import deal_collector_scenario_param
 from apps.log_databus.constants import LogPluginInfo
+from django.utils.translation import ugettext as _
 
 
 class SectionCollectorScenario(CollectorScenario):
@@ -77,12 +78,7 @@ class SectionCollectorScenario(CollectorScenario):
                     "plugin_version": self.PLUGIN_VERSION,
                     "config_templates": [{"name": f"{self.PLUGIN_NAME}.conf", "version": "latest"}],
                 },
-                "params": {
-                    "context": {
-                        "dataid": data_id,
-                        "local": [local_params],
-                    }
-                },
+                "params": {"context": {"dataid": data_id, "local": [local_params]}},
             },
         ]
 
@@ -219,18 +215,28 @@ class SectionCollectorScenario(CollectorScenario):
         """
         return {
             "option": {
-                "es_unique_field_list": ["cloudId", "serverIp", "path", "gseIndex", "iterationIndex"],
+                "es_unique_field_list": ["cloudId", "serverIp", "path", "gseIndex", "iterationIndex", "bk_host_id"],
                 "separator_node_source": "",
                 "separator_node_action": "",
                 "separator_node_name": "",
             },
             "fields": [
                 {
+                    "field_name": "bk_host_id",
+                    "field_type": "float",
+                    "tag": "dimension",
+                    "alias_name": "bk_host_id",
+                    "description": "主机ID",
+                    "option": {"es_type": "integer", "es_include_in_all": False}
+                    if es_version.startswith("5.")
+                    else {"es_type": "integer"},
+                },
+                {
                     "field_name": "__ext",
                     "field_type": "object",
                     "tag": "dimension",
                     "alias_name": "ext",
-                    "description": "额外信息字段",
+                    "description": _("额外信息字段"),
                     "option": {"es_type": "object", "es_include_in_all": False}
                     if es_version.startswith("5.")
                     else {"es_type": "object"},
@@ -240,7 +246,7 @@ class SectionCollectorScenario(CollectorScenario):
                     "field_type": "float",
                     "tag": "dimension",
                     "alias_name": "cloudid",
-                    "description": "云区域ID",
+                    "description": _("云区域ID"),
                     "option": {"es_type": "integer", "es_include_in_all": False}
                     if es_version.startswith("5.")
                     else {"es_type": "integer"},
@@ -260,7 +266,7 @@ class SectionCollectorScenario(CollectorScenario):
                     "field_type": "string",
                     "tag": "dimension",
                     "alias_name": "filename",
-                    "description": "日志路径",
+                    "description": _("日志路径"),
                     "option": {"es_type": "keyword", "es_include_in_all": True}
                     if es_version.startswith("5.")
                     else {"es_type": "keyword"},
@@ -270,7 +276,7 @@ class SectionCollectorScenario(CollectorScenario):
                     "field_type": "float",
                     "tag": "dimension",
                     "alias_name": "gseindex",
-                    "description": "gse索引",
+                    "description": _("gse索引"),
                     "option": {"es_type": "long", "es_include_in_all": False}
                     if es_version.startswith("5.")
                     else {"es_type": "long"},
@@ -280,7 +286,7 @@ class SectionCollectorScenario(CollectorScenario):
                     "field_type": "float",
                     "tag": "dimension",
                     "alias_name": "iterationindex",
-                    "description": "迭代ID",
+                    "description": _("迭代ID"),
                     "flat_field": True,
                     "option": {"es_type": "integer", "es_include_in_all": False}
                     if es_version.startswith("5.")
@@ -292,7 +298,7 @@ class SectionCollectorScenario(CollectorScenario):
                 "field_type": "timestamp",
                 "tag": "dimension",
                 "alias_name": "utctime",
-                "description": "数据时间",
+                "description": _("数据时间"),
                 "option": {
                     "es_type": "date",
                     "es_include_in_all": False,

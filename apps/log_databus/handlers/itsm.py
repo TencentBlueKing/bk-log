@@ -20,6 +20,7 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import json
+from django.utils.translation import ugettext as _
 
 from django.conf import settings
 from django.db import transaction
@@ -168,17 +169,17 @@ class ItsmHandler(object):
 
     def _generate_collector_detail(self, collector: CollectorConfig):
         form_value = [
-            {"label": "名称：", "scheme": "base_text_scheme", "value": collector.collector_config_name},
+            {"label": _("名称："), "scheme": "base_text_scheme", "value": collector.collector_config_name},
             {"label": "备注说明：", "scheme": "base_text_scheme", "value": collector.description},
             {
-                "label": "日志类型：",
+                "label": _("日志类型："),
                 "scheme": "base_text_scheme",
                 "value": str(CollectorScenarioEnum.get_choice_label(collector.collector_scenario_id)),
             },
-            {"label": "日志字符集：", "scheme": "base_text_scheme", "value": collector.data_encoding},
+            {"label": _("日志字符集："), "scheme": "base_text_scheme", "value": collector.data_encoding},
         ]
         paths = [
-            {"label": f"日志路径-{index}：", "scheme": "base_text_scheme", "value": path}
+            {"label": _("日志路径-{index}：").format(index=index), "scheme": "base_text_scheme", "value": path}
             for index, path in enumerate(collector.params.get("paths", []), 1)
         ]
         form_value.extend(paths)

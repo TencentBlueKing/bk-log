@@ -91,7 +91,7 @@
           <bk-table-column :label="$t('过期时间')" :render-header="$renderHeader" min-width="50">
             <template slot-scope="props">
               <span>
-                {{ props.row.retention ? `${props.row.retention}${$t('天')}` : '--' }}
+                {{ props.row.retention ? `${props.row.retention} ${$t('天')}` : '--' }}
               </span>
             </template>
           </bk-table-column>
@@ -300,6 +300,7 @@ export default {
       }
 
       let backRoute;
+      let editName;
       const params = {};
       const query = {};
       const routeMap = {
@@ -323,6 +324,10 @@ export default {
         backRoute = this.$route.name;
       }
 
+      if (operateType === 'edit') {
+        editName = row.collector_config_name;
+      }
+
       const targetRoute = routeMap[operateType];
       // this.$store.commit('collect/setCurCollect', row);
       this.$router.push({
@@ -332,6 +337,7 @@ export default {
           ...query,
           spaceUid: this.$store.state.spaceUid,
           backRoute,
+          editName,
         },
       });
     },

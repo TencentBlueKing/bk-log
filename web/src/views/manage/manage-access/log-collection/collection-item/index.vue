@@ -150,7 +150,7 @@
           min-width="50">
           <template slot-scope="props">
             <span :class="{ 'text-disabled': props.row.status === 'stop' }">
-              {{ props.row.retention ? `${props.row.retention}${$t('天')}` : '--' }}
+              {{ props.row.retention ? `${props.row.retention} ${$t('天')}` : '--' }}
             </span>
           </template>
         </bk-table-column>
@@ -436,6 +436,7 @@
         </bk-table-column>
         <bk-table-column type="setting">
           <bk-table-setting-content
+            v-en-style="'width: 470px'"
             :fields="columnSetting.fields"
             :selected="columnSetting.selectedFields"
             :size="columnSetting.size"
@@ -537,7 +538,6 @@ export default {
       size: 'small',
       needGuide: false,
       timer: null,
-      timerNum: 0,
       loadingStatus: false,
       isTableLoading: true,
       pagination: {
@@ -560,7 +560,7 @@ export default {
         selectedFields: settingFields.slice(1, 8),
       },
       // 是否支持一键检测
-      enableCheckCollector: window.ENABLE_CHECK_COLLECTOR,
+      enableCheckCollector: JSON.parse(window.ENABLE_CHECK_COLLECTOR),
       // 一键检测弹窗配置
       reportDetailShow: false,
       // 一键检测采集项标识
@@ -568,6 +568,7 @@ export default {
       emptyType: 'empty',
       filterSearchObj: {},
       isFilterSearch: false,
+      isShouldPollCollect: false, // 当前列表是否需要轮询
     };
   },
   computed: {
@@ -613,11 +614,10 @@ export default {
   },
   mounted() {
     this.needGuide = !localStorage.getItem('needGuide');
-    this.timerNum = 0;
     !this.authGlobalInfo && this.search();
   },
   destroyed() {
-    this.timerNum = -1;
+    this.isShouldPollCollect = false;
     this.stopStatusPolling();
   },
   methods: {
@@ -742,11 +742,9 @@ export default {
     },
     // 轮询
     startStatusPolling() {
-      this.timerNum += 1;
-      const timerNum = this.timerNum;
       this.stopStatusPolling();
       this.timer = setTimeout(() => {
-        timerNum === this.timerNum && this.collectorIdStr && this.requestCollectStatus(true);
+        this.isShouldPollCollect && this.collectorIdStr && this.requestCollectStatus(true);
       }, 10000);
     },
     stopStatusPolling() {
@@ -853,24 +851,17 @@ export default {
       });
     },
     requestCollectStatus(isPrivate) {
-      const timerNum = this.timerNum;
       this.$http.request('collect/getCollectStatus', {
         query: {
           collector_id_list: this.collectorIdStr,
         },
       }).then((res) => {
-        if (timerNum === this.timerNum) {
-          this.statusHandler(res.data || []);
-          this.startStatusPolling();
-        }
-        if (!isPrivate) {
-          this.loadingStatus = true;
-        }
+        this.statusHandler(res.data || []);
+        if (this.isShouldPollCollect) this.startStatusPolling();
+        if (!isPrivate) this.loadingStatus = true;
       })
         .catch(() => {
-          if (isPrivate) {
-            this.stopStatusPolling();
-          }
+          if (isPrivate) this.stopStatusPolling();
         });
     },
     // 启用
@@ -894,8 +885,11 @@ export default {
           row.status_name = statusName;
         });
     },
+    // PREPARE  RUNNING  UNKNOWN
     statusHandler(data) {
+      this.isShouldPollCollect = false;
       data.forEach((item) => {
+        if (['prepare', 'running', 'unknown'].includes(item.status.toLowerCase())) this.isShouldPollCollect = true;
         this.collectList.forEach((row) => {
           if (row.collector_config_id === item.collector_id) {
             row.status = item.status.toLowerCase();

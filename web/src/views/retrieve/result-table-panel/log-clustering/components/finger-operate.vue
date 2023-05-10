@@ -296,10 +296,13 @@ export default {
 @import '@/scss/mixins/flex.scss';
 
 .fingerprint-setting {
-  width: 700px;
   height: 24px;
   line-height: 24px;
   font-size: 12px;
+
+  > div {
+    margin-left: 20px;
+  }
 
   .is-near24 {
     @include flex-center;

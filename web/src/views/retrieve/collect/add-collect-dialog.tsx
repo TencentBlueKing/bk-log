@@ -61,7 +61,7 @@ interface IProps {
 export default class CollectDialog extends tsc<IProps> {
   @Model('change', { type: Boolean, default: false }) value: IProps['value'];
   @Prop({ type: Number, default: -1 }) favoriteID: number; // 编辑收藏ID
-  @Prop({ type: Object, default: () => ({}) }) addFavoriteData: object; // 新增收藏的数据
+  @Prop({ type: Object, default: () => ({}) }) addFavoriteData: object; // 新建收藏的数据
   @Prop({ type: Object, default: () => ({}) }) replaceData: object; // 替换收藏的params数据
   @Prop({ type: Boolean, default: false }) isClickFavoriteEdit: boolean; // 当前编辑的收藏是否是点击活跃的
   @Prop({ type: Array, default: () => [] }) visibleFields: Array<any>; // 字段
@@ -270,7 +270,7 @@ export default class CollectDialog extends tsc<IProps> {
       await this.requestGroupList(); // 获取组列表
       if (this.isCreateFavorite) {
         // 判断是否是新增
-        Object.assign(this.favoriteData, this.addFavoriteData); // 合并新增收藏详情
+        Object.assign(this.favoriteData, this.addFavoriteData); // 合并新建收藏详情
         this.favoriteData.params.search_fields = [];
         this.favoriteData.group_id = null;
       } else {
@@ -364,13 +364,20 @@ export default class CollectDialog extends tsc<IProps> {
       id,
       is_enable_display_fields,
     } = subData;
-    const { host_scopes, addition, keyword, search_fields } = params;
+    const {
+      // host_scopes,
+      ip_chooser,
+      addition,
+      keyword,
+      search_fields,
+    } = params;
     const data = {
       name,
       group_id,
       display_fields,
       visible_type,
-      host_scopes,
+      // host_scopes,
+      ip_chooser,
       addition,
       keyword,
       search_fields,
@@ -438,7 +445,7 @@ export default class CollectDialog extends tsc<IProps> {
     return (
       <Dialog
         value={this.value}
-        title={ this.isCreateFavorite ? this.$t('新增收藏') : this.$t('编辑收藏') }
+        title={ this.isCreateFavorite ? this.$t('新建收藏') : this.$t('编辑收藏') }
         ok-text={ this.isCreateFavorite ? this.$t('确定') : this.$t('保存') }
         header-position="left"
         ext-cls="add-collect-dialog"

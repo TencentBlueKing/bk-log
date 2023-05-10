@@ -118,13 +118,13 @@ export default {
         { id: 'copy', icon: 'log-icon icon-copy' },
       ],
       toolMenuTips: {
-        is: this.$t('添加 {n} 过滤项', { n: 'is' }),
-        not: this.$t('添加 {n} 过滤项', { n: 'is not' }),
+        is: this.$t('添加 {n} 过滤项', { n: '=' }),
+        not: this.$t('添加 {n} 过滤项', { n: '!=' }),
         hiddenField: this.$t('隐藏字段'),
         displayField: this.$t('显示字段'),
         copy: this.$t('复制'),
-        text_is: this.$t('文本类型不支持 {n} 操作', { n: 'is' }),
-        text_not: this.$t('文本类型不支持 {n} 操作', { n: 'is not' }),
+        text_is: this.$t('文本类型不支持 {n} 操作', { n: '=' }),
+        text_not: this.$t('文本类型不支持 {n} 操作', { n: '!=' }),
       },
       mappingKay: { // is is not 值映射
         is: '=',
@@ -145,6 +145,9 @@ export default {
     },
     filedSettingConfigID() { // 当前索引集的显示字段ID
       return this.$store.state.retrieve.filedSettingConfigID;
+    },
+    isHaveBkHostIDAndHaveValue() { // 当前是否有bk_host_id字段且有值
+      return !!this.data?.bk_host_id;
     },
   },
   methods: {
@@ -257,12 +260,16 @@ export default {
         // 主机监控
         case 'serverIp':
         case 'ip':
-          path = `/?bizId=${this.bkBizId}#/performance/detail/${this.data[field]}-0`;
+        case 'bk_host_id':
+          {
+            const endStr = `${this.data[field]}${(field === 'bk_host_id' && this.isHaveBkHostIDAndHaveValue) ? '' : '-0'}`;
+            path = `/?bizId=${this.bkBizId}#/performance/detail/${endStr}`;
+          }
           break;
         // 容器
         case 'container_id':
         case '__ext.container_id':
-          path = `/?bizId=${this.bkBizId}#/k8s`;
+          path = `/?bizId=${this.bkBizId}#/k8s?dashboardId=pod`;
           break;
         default:
           break;
@@ -287,7 +294,14 @@ export default {
         // 主机监控
         case 'serverip':
         case 'ip':
-          return this.$t('主机');
+        case 'bk_host_id': {
+          if (this.isHaveBkHostIDAndHaveValue && ['serverip', 'ip'].includes(key)) return; // bk_host_id有值, 不展示ip和serverIp的主机;
+          const lowerKeyData = Object.entries(this.data).reduce((pre, [curKey, curVal]) => {
+            pre[curKey.toLowerCase()] = curVal;
+            return pre;
+          }, {});
+          return !!lowerKeyData[key] ? this.$t('主机') : null; // 判断ip和serverIp是否有值 无值则不显示主机
+        }
         // 容器
         case 'container_id':
         case '__ext.container_id':

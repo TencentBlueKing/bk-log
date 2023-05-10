@@ -41,7 +41,7 @@
           :class="globalEditable ? 'btn-hover' : ''"
           :disabled="!globalEditable"
           @click="reductionRule">
-          {{$t('还原默认')}}
+          {{$t('恢复默认')}}
         </bk-button>
       </div>
 
@@ -106,8 +106,8 @@
     </div>
     <!-- 原始日志 -->
     <div class="container-item debug-container">
-      <div class="fl-jfsb debug-tool" @click="handleClickDebugButton">
-        <p>{{$t('调试工具')}}</p>
+      <div class="debug-tool" @click="handleClickDebugButton">
+        <span>{{$t('调试工具')}}</span>
         <span :class="['bk-icon','icon-angle-double-down', isClickAlertIcon ? 'bk-icon-rotate' : '']"></span>
       </div>
 
@@ -565,15 +565,16 @@ export default {
       margin-top: -24px;
 
       .debug-tool {
-        width: 86px;
+        display: flex;
+        align-items: center;
         font-size: 14px;
         margin-bottom: 4px;
         color: #3a84ff;
         cursor: pointer;
 
         .bk-icon {
+          display: inline-block;
           font-size: 24px;
-          transform: translateY(-2px);
         }
 
         .bk-icon-rotate {
@@ -673,7 +674,6 @@ export default {
     .bk-button {
       border-radius: 3px;
       margin-left: 2px;
-      padding: 0;
     }
 
     .btn-hover {

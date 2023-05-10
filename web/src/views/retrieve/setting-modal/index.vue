@@ -53,8 +53,10 @@
             :class="['setting-option',currentChoice === item.id ? 'current-color' : '']"
             :data-test-id="`settingContainer_div_select${item.id}`"
             @click="handleNavClick(item)">
-            <span class="log-icon icon-block-shape"></span>
-            <span style="width: 110px">{{item.name}}</span>
+            <div>
+              <span class="log-icon icon-block-shape"></span>
+              <span>{{item.name}}</span>
+            </div>
             <div @click.stop="stopChangeSwitch(item)">
               <bk-switcher
                 theme="primary"
@@ -74,7 +76,7 @@
               <p><span>{{$t('来源')}}：</span>{{indexSetItem.scenario_name}}</p>
             </div>
             <div
-              style="color: #3a84ff; cursor: pointer;"
+              class="more-message"
               v-if="isCollector"
               @click="handleClickDetail">
               {{$t('更多详情')}}
@@ -418,6 +420,10 @@ export default {
           align-items: center;
           transition: all .3s;
 
+          .log-icon {
+            margin-right: 20px;
+          }
+
           &:hover {
             @extend %current-color;
           }
@@ -448,6 +454,12 @@ export default {
               }
             }
           }
+        }
+
+        .more-message {
+          min-width: 102px;
+          color: #3a84ff;
+          cursor: pointer;
         }
 
         .operation-container {

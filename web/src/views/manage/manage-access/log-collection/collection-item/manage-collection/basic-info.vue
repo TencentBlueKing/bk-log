@@ -23,7 +23,11 @@
 <template>
   <div class="basic-info-container" v-bkloading="{ isLoading: basicLoading }">
     <div>
-      <div class="deploy-sub" v-if="!isContainer">
+      <div
+        class="deploy-sub"
+        v-en-class="'en-deploy'"
+        v-if="!isContainer"
+      >
         <!-- 数据ID -->
         <div>
           <span>{{ $t('数据ID') }}</span>
@@ -106,7 +110,7 @@
           </div>
           <!-- 日志字符集 -->
           <div>
-            <span>{{ $t('日志字符集') }}</span>
+            <span>{{ $t('字符集') }}</span>
             <span>{{ collectorData.data_encoding || '-' }}</span>
           </div>
           <!-- 采集目标 -->
@@ -121,7 +125,7 @@
           </div>
           <!-- 存储索引名 -->
           <div>
-            <span>{{ $t('存储索引名') }}</span>
+            <span>{{ $t('索引名') }}</span>
             <span v-if="collectorData.table_id">{{ collectorData.table_id_prefix }}{{ collectorData.table_id }}</span>
             <span v-else>-</span>
           </div>
@@ -229,7 +233,7 @@
         </div>
         <!-- 存储索引名 -->
         <div>
-          <span>{{ $t('存储索引名') }}</span>
+          <span>{{ $t('索引名') }}</span>
           <span>{{ collectorData.table_id_prefix + collectorData.table_id || '-' }}</span>
         </div>
         <!-- 过期时间 -->
@@ -239,21 +243,26 @@
         </div>
       </div>
       <container-base v-else :collector-data="collectorData" :is-loading.sync="basicLoading"></container-base>
-      <p class="button-place">
-        <bk-button
-          :theme="'primary'"
-          v-cursor="{ active: !editAuth }"
-          @click="handleClickEdit"
-          class="mr10">
-          {{ $t('编辑') }}
-        </bk-button>
-      </p>
     </div>
-    <div class="create-name-and-time">
-      <div v-for="item in createAndTimeData" :key="item.key">
-        <span>{{ item.label }}</span>
-        <span>{{ item.value }}</span>
-      </div>
+    <div>
+      <bk-button
+        :theme="'default'"
+        ext-cls=""
+        style="min-width: 88px; color: #3a84ff;"
+        v-cursor="{ active: !editAuth }"
+        @click="handleClickEdit"
+        class="mr10">
+        {{ $t('编辑') }}
+      </bk-button>
+      <bk-popover placement="bottom-end">
+        <bk-button class="log-icon icon-lishijilu"></bk-button>
+        <div slot="content" class="create-name-and-time">
+          <div v-for="item in createAndTimeData" :key="item.key">
+            <span>{{ item.label }}</span>
+            <span>{{ item.value }}</span>
+          </div>
+        </div>
+      </bk-popover>
     </div>
   </div>
 </template>
@@ -431,6 +440,13 @@ export default {
   display: flex;
   justify-content: space-between;
 
+  .en-deploy > div {
+    > span:nth-child(1) {
+      /* stylelint-disable-next-line declaration-no-important */
+      width: 110px !important;
+    }
+  }
+
   .deploy-sub > div {
     display: flex;
     margin-bottom: 33px;
@@ -506,10 +522,6 @@ export default {
     }
   }
 
-  .button-place {
-    margin-left: 118px;
-    padding-bottom: 100px;
-  }
 
   .create-name-and-time {
     border-top: 1px solid #dcdee5;

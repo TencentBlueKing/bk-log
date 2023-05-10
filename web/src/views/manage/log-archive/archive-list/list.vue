@@ -64,7 +64,7 @@
             {{ props.row.archive_config_id }}
           </template>
         </bk-table-column>
-        <bk-table-column :label="$t('采集项名称')" :render-header="$renderHeader">
+        <bk-table-column :label="$t('名称')" :render-header="$renderHeader">
           <template slot-scope="props">
             {{ props.row.instance_name }}
           </template>
@@ -143,7 +143,7 @@
       @updated="handleUpdated"
     />
 
-    <!-- 新增回溯 -->
+    <!-- 新建回溯 -->
     <restore-slider
       :show-slider.sync="showRestoreSlider"
       :archive-id="editArchiveId"
@@ -333,7 +333,7 @@ export default {
       return formatFileSize(size);
     },
     getExpiredDays(props) {
-      return props.row.snapshot_days ? `${props.row.snapshot_days}天` : this.$t('永久');
+      return props.row.snapshot_days ? `${props.row.snapshot_days} ${this.$t('天')}` : this.$t('永久');
     },
     handleSearchChange(val) {
       if (val === '' && !this.isTableLoading) {

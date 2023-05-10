@@ -74,11 +74,13 @@
             <ul class="select-list">
               <li
                 class="select-item"
+                style="cursor: pointer;"
                 v-for="item in shadowTotal"
                 :key="item.field_name"
-                v-show="activeFieldTab === 'visible' ? !item.is_display : (!item.isSorted && item.es_doc_values)">
+                v-show="activeFieldTab === 'visible' ? !item.is_display : (!item.isSorted && item.es_doc_values)"
+                @click="addField(item)">
                 <span class="field-name" v-bk-overflow-tips>{{ getFiledDisplay(item.field_name) }}</span>
-                <span class="icon log-icon icon-filled-right-arrow" @click="addField(item)"></span>
+                <span class="icon log-icon icon-filled-right-arrow"></span>
               </li>
             </ul>
           </div>
@@ -113,15 +115,17 @@
               <span class="clear-all text-action" @click="deleteAllField">{{ $t('取消') }}</span>
             </div>
             <div class="sort-list-header">
-              <span style="width: calc(100% - 146px);padding-left: 32px;">{{ $t('字段名') }}</span>
-              <span style="width: 42px;">{{ $t('状态') }}</span>
-              <span style="width: 50px;">{{ $t('选择方式') }}</span>
+              <span :style="`width: calc(100% - ${fieldWidth}px); padding-left: 32px;`">{{ $t('字段名') }}</span>
+              <span style="min-width: 42px;">{{ $t('状态') }}</span>
+              <span style="min-width: 50px;">{{ $t('选择方式') }}</span>
             </div>
             <vue-draggable class="select-list" v-bind="dragOptions" v-model="shadowSort">
               <transition-group>
                 <li class="select-item" v-for="(item, index) in shadowSort" :key="item[0]">
                   <span class="icon log-icon icon-drag-dots"></span>
-                  <span class="field-name" v-bk-overflow-tips>{{ getFiledDisplay(item[0]) }}</span>
+                  <span class="field-name"
+                        :style="`width: calc(100% - ${fieldWidth}px);`"
+                        v-bk-overflow-tips>{{ getFiledDisplay(item[0]) }}</span>
                   <span class="status">{{ filterStatus(item[1]) }}</span>
                   <span class="option text-action" @click="setOrder(item)">{{ filterOption(item[1]) }}</span>
                   <span class="delete text-action" @click="deleteField(item[0], index)">{{ $t('删除') }}</span>
@@ -214,6 +218,9 @@ export default {
     },
     currentClickConfigData() { // 当前选中的配置
       return this.configTabPanels.find(item => item.id === this.currentClickConfigID) || this.configTabPanels[0];
+    },
+    fieldWidth() {
+      return this.$store.state.isEnLanguage ? '170' : '146';
     },
   },
   watch: {
@@ -308,9 +315,9 @@ export default {
     },
     filterOption(val) {
       if (val === 'desc') {
-        return this.$t('设为降序');
-      } if (val === 'asc') {
         return this.$t('设为升序');
+      } if (val === 'asc') {
+        return this.$t('设为降序');
       }
       return '';
     },
@@ -787,7 +794,6 @@ export default {
 
       .sort-fields-list {
         flex-shrink: 0;
-        width: 360px;
 
         .sort-list-header {
           display: flex;

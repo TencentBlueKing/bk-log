@@ -22,6 +22,7 @@ the project delivered to anyone in the future.
 import json
 import logging
 import time
+from django.utils.translation import ugettext as _
 
 import requests
 from django.conf import settings
@@ -56,24 +57,24 @@ class TransferChecker(Checker):
 
     def _run(self):
         if not self.latest_log:
-            self.append_normal_info("kafka内没有数据, 跳过清洗检查")
+            self.append_normal_info(_("kafka内没有数据, 跳过清洗检查"))
         else:
             self.clean_data()
         self.get_metrics()
 
     def clean_data(self):
         if self.etl_config == EtlConfig.BK_LOG_TEXT or not self.etl_config:
-            self.append_normal_info("[测试清洗] 无清洗规则, 跳过检查清洗")
+            self.append_normal_info(_("[测试清洗] 无清洗规则, 跳过检查清洗"))
             return
         etl_storage = EtlStorage.get_instance(etl_config=self.etl_config)
         success_count = 0
         for data in self.latest_log:
             fields = etl_storage.etl_preview(data, self.etl_params)
             if fields:
-                self.append_normal_info(f"[测试清洗] data: [{fields}]")
+                self.append_normal_info(_("[测试清洗] data: [{fields}]").format(fields=fields))
                 success_count += 1
         if success_count == 0:
-            self.append_error_info("[测试清洗] 清洗数据失败")
+            self.append_error_info(_("[测试清洗] 清洗数据失败"))
 
     def get_metrics(self):
         for metric_name in TRANSFER_METRICS:
@@ -133,21 +134,27 @@ class TransferChecker(Checker):
                 result = response.json()
 
                 if not result["result"]:
-                    message = f"[请求监控接口] [unify query] 获取 {metric_name} 数据失败, err: {result['message']}"
+                    message = _("[请求监控接口] [unify query] 获取 {metric_name} 数据失败, err: {err}").format(
+                        metric_name=metric_name, err=result["message"]
+                    )
                     logger.error(message)
                     self.append_warning_info(message)
                     return
 
                 series = result["data"].get("series", [])
                 if not series:
-                    message = f"[请求监控接口] [unify query] 获取 {metric_name} 数据为空"
+                    message = _("[请求监控接口] [unify query] 获取 {metric_name} 数据为空").format(metric_name=metric_name)
                     self.append_warning_info(message)
                     return
 
-                value, _ = series[0]["datapoints"][-1]
-                self.append_normal_info(f"[请求监控接口] [unify query] {metric_name}: {value}")
+                value, __ = series[0]["datapoints"][-1]
+                self.append_normal_info(
+                    _("[请求监控接口] [unify query] {metric_name}: {value}").format(metric_name=metric_name, value=value)
+                )
             except Exception as e:
-                message = f"[请求监控接口] [unify query] 获取 {metric_name} 数据失败, err: {e}"
+                message = _("[请求监控接口] [unify query] 获取 {metric_name} 数据失败, err: {e}").format(
+                    metric_name=metric_name, e=e
+                )
                 logger.error(message)
                 self.append_warning_info(message)
         else:
@@ -167,12 +174,18 @@ class TransferChecker(Checker):
                 for ts_data in result["list"]:
                     value = ts_data[metric_name]
                     if ts_data["id"] == self.bk_data_id:
-                        self.append_normal_info(f"[请求监控接口] [get_ts_data] {metric_name}: {value}")
+                        self.append_normal_info(
+                            _("[请求监控接口] [get_ts_data] {metric_name}: {value}").format(
+                                metric_name=metric_name, value=value
+                            )
+                        )
                         return
-                message = f"[请求监控接口] [get_ts_data] 获取 {metric_name} 数据为空"
+                message = _("[请求监控接口] [get_ts_data] 获取 {metric_name} 数据为空").format(metric_name=metric_name)
                 self.append_warning_info(message)
 
             except Exception as e:
-                message = f"[请求监控接口] [get_ts_data] 获取 {metric_name} 数据失败, err: {e}"
+                message = _("[请求监控接口] [get_ts_data] 获取 {metric_name} 数据失败, err: {e}").format(
+                    metric_name=metric_name, e=e
+                )
                 logger.error(message)
                 self.append_warning_info(message)

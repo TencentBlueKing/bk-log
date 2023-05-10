@@ -29,7 +29,7 @@ import yaml
 from django.conf import settings
 from django.db import IntegrityError
 from django.db import transaction
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 from rest_framework.exceptions import ErrorDetail, ValidationError
 
 from apps.api import BkDataAccessApi, CCApi, BcsCcApi
@@ -1118,10 +1118,10 @@ class CollectorHandler(object):
             if data_items:
                 etl_message.update(
                     {
-                        "data": data_items[0]["data"],
-                        "log": data_items[0]["data"],
-                        "iterationindex": data_items[0]["iterationindex"],
-                        "batch": [_item["data"] for _item in data_items],
+                        "data": data_items[0].get("data", ""),
+                        "log": data_items[0].get("data", ""),
+                        "iterationindex": data_items[0].get("iterationindex", ""),
+                        "batch": [_item.get("data", "") for _item in data_items],
                     }
                 )
             else:
@@ -1317,6 +1317,7 @@ class CollectorHandler(object):
                 "bk_inst_name": "adminserver",
                 "child": [
                     {
+                        "bk_host_id": 1,
                         "status": "FAILED",
                         "ip": "127.0.0.1",
                         "bk_cloud_id": 0,
@@ -1365,7 +1366,7 @@ class CollectorHandler(object):
                 {
                     "is_label": False,
                     "label_name": "",
-                    "bk_obj_name": "主机",
+                    "bk_obj_name": _("主机"),
                     "node_path": "主机",
                     "bk_obj_id": "host",
                     "bk_inst_id": "",
@@ -1406,8 +1407,10 @@ class CollectorHandler(object):
                 # delete 标签如果订阅任务状态action不为UNINSTALL
                 if label_name == "delete" and instance_obj["steps"].get(LogPluginInfo.NAME) != "UNINSTALL":
                     continue
-                host_key = {"bk_host_innerip": instance_obj["ip"], "bk_cloud_id": instance_obj["bk_cloud_id"]}
-                if host_key in host_result:
+                # 因为instance_obj兼容新版IP选择器的字段名, 所以这里的bk_cloud_id->cloud_id, bk_host_id->host_id
+                if (instance_obj["ip"], instance_obj["cloud_id"]) in host_result or instance_obj[
+                    "host_id"
+                ] in host_result:
                     content_obj["child"].append(instance_obj)
             content_data.append(content_obj)
         return {"task_ready": task_ready, "contents": content_data}
@@ -1448,9 +1451,8 @@ class CollectorHandler(object):
         for host in host_result:
             for inst_id in host["parent_inst_id"]:
                 key = "{}|{}".format(str(host["bk_obj_id"]), str(inst_id))
-                host_result_dict[key].append(
-                    {"bk_host_innerip": host["bk_host_innerip"], "bk_cloud_id": host["bk_cloud_id"]}
-                )
+                host_result_dict[key].append((host["bk_host_innerip"], host["bk_cloud_id"]))
+                host_result_dict[key].append(host["bk_host_id"])
         return host_result_dict
 
     def _get_mapping(self, node_collect):
@@ -1558,26 +1560,34 @@ class CollectorHandler(object):
         host_list = list()
         latest_id = self.data.task_id_list[-1]
         if self.data.target_node_type == TargetNodeTypeEnum.INSTANCE.value:
-            host_list = [(_node["ip"], _node["bk_cloud_id"]) for _node in self.data.target_nodes]
+            for node in self.data.target_nodes:
+                if "bk_host_id" in node:
+                    host_list.append(node["bk_host_id"])
+                else:
+                    host_list.append((node["ip"], node["bk_cloud_id"]))
 
         for instance_obj in instance_data:
             bk_cloud_id = instance_obj["instance_info"]["host"]["bk_cloud_id"]
             if isinstance(bk_cloud_id, list):
                 bk_cloud_id = bk_cloud_id[0]["bk_inst_id"]
             bk_host_innerip = instance_obj["instance_info"]["host"]["bk_host_innerip"]
+            bk_host_id = instance_obj["instance_info"]["host"]["bk_host_id"]
 
             # 静态节点：排除订阅任务历史IP（不是最新订阅且不在当前节点范围的ip）
             if (
                 self.data.target_node_type == TargetNodeTypeEnum.INSTANCE.value
                 and str(instance_obj["task_id"]) != latest_id
-                and (bk_host_innerip, bk_cloud_id) not in host_list
+                and ((bk_host_innerip, bk_cloud_id) not in host_list and bk_host_id not in host_list)
             ):
                 continue
             instance_list.append(
                 {
+                    "host_id": bk_host_id,
                     "status": instance_obj["status"],
                     "ip": bk_host_innerip,
-                    "bk_cloud_id": bk_cloud_id,
+                    "ipv6": instance_obj["instance_info"]["host"].get("bk_host_innerip_v6", ""),
+                    "host_name": instance_obj["instance_info"]["host"]["bk_host_name"],
+                    "cloud_id": bk_cloud_id,
                     "log": self.get_instance_log(instance_obj),
                     "instance_id": instance_obj["instance_id"],
                     "instance_name": bk_host_innerip,
@@ -1865,7 +1875,7 @@ class CollectorHandler(object):
                     {
                         "is_label": False,
                         "label_name": "",
-                        "bk_obj_name": "主机",
+                        "bk_obj_name": _("主机"),
                         "node_path": "主机",
                         "bk_obj_id": "host",
                         "bk_inst_id": "",
@@ -1875,7 +1885,7 @@ class CollectorHandler(object):
                 ]
             }
         param = {"subscription_id_list": [self.data.subscription_id]}
-        status_result, *_ = NodeApi.get_subscription_instance_status(param)
+        status_result, *__ = NodeApi.get_subscription_instance_status(param)
         instance_status = self.format_subscription_instance_status(status_result)
 
         # 如果采集目标是HOST-INSTANCE
@@ -1884,7 +1894,7 @@ class CollectorHandler(object):
                 {
                     "is_label": False,
                     "label_name": "",
-                    "bk_obj_name": "主机",
+                    "bk_obj_name": _("主机"),
                     "node_path": "主机",
                     "bk_obj_id": "host",
                     "bk_inst_id": "",
@@ -1922,8 +1932,10 @@ class CollectorHandler(object):
             }
 
             for instance_obj in instance_status:
-                host_key = {"bk_host_innerip": instance_obj["ip"], "bk_cloud_id": instance_obj["bk_cloud_id"]}
-                if host_key in host_result:
+                # 因为instance_obj兼容新版IP选择器的字段名, 所以这里的bk_cloud_id->cloud_id, bk_host_id->host_id
+                if (instance_obj["ip"], instance_obj["cloud_id"]) in host_result or instance_obj[
+                    "host_id"
+                ] in host_result:
                     content_obj["child"].append(instance_obj)
             content_data.append(content_obj)
         return {"contents": content_data}
@@ -1967,8 +1979,11 @@ class CollectorHandler(object):
             status_obj = {
                 "status": status,
                 "status_name": status_name,
+                "host_id": instance_obj["instance_info"]["host"]["bk_host_id"],
                 "ip": instance_obj["instance_info"]["host"]["bk_host_innerip"],
-                "bk_cloud_id": bk_cloud_id,
+                "ipv6": instance_obj["instance_info"]["host"].get("bk_host_innerip_v6", ""),
+                "cloud_id": bk_cloud_id,
+                "host_name": instance_obj["instance_info"]["host"]["bk_host_name"],
                 "instance_id": instance_obj["instance_id"],
                 "instance_name": instance_obj["instance_info"]["host"]["bk_host_innerip"],
                 "plugin_name": host_statuses.get("name"),
@@ -2095,36 +2110,47 @@ class CollectorHandler(object):
         target_nodes = params.get("target_nodes", [])
         bk_biz_id = params["bk_biz_id"] if not self.data else self.data.bk_biz_id
         if target_node_type and target_node_type == TargetNodeTypeEnum.INSTANCE.value:
-            illegal_ips = self._filter_illegal_ips(
-                bk_biz_id=bk_biz_id, ip_list=[target_node["ip"] for target_node in target_nodes]
+            illegal_ips, illegal_bk_host_ids = self._filter_illegal_ip_and_host_id(
+                bk_biz_id=bk_biz_id,
+                ips=[target_node["ip"] for target_node in target_nodes if "ip" in target_node],
+                bk_host_ids=[target_node["bk_host_id"] for target_node in target_nodes if "bk_host_id" in target_node],
             )
-            if illegal_ips:
-                logger.error("cat illegal IPs: {illegal_ips}".format(illegal_ips=illegal_ips))
+            if illegal_ips or illegal_bk_host_ids:
+                illegal_items = [str(item) for item in (illegal_ips + illegal_bk_host_ids)]
+                logger.error("cat illegal ip or bk_host_id: {illegal_ips}".format(illegal_ips=illegal_items))
                 raise CollectorIllegalIPException(
-                    CollectorIllegalIPException.MESSAGE.format(bk_biz_id=bk_biz_id, illegal_ips=illegal_ips)
+                    CollectorIllegalIPException.MESSAGE.format(bk_biz_id=bk_biz_id, illegal_ips=illegal_items)
                 )
 
     @classmethod
-    def _filter_illegal_ips(cls, bk_biz_id: int, ip_list: list):
+    def _filter_illegal_ip_and_host_id(cls, bk_biz_id: int, ips: list = None, bk_host_ids: list = None):
         """
         过滤出非法ip列表
         @param bk_biz_id [Int] 业务id
-        @param ip_list [List] ip列表
+        @param ips [List] ip列表
         """
-        legal_ip_list = CCApi.list_biz_hosts.bulk_request(
+        ips = ips or []
+        bk_host_ids = bk_host_ids or []
+        legal_host_list = CCApi.list_biz_hosts.bulk_request(
             {
                 "bk_biz_id": bk_biz_id,
                 "host_property_filter": {
                     "condition": "OR",
-                    "rules": [{"field": "bk_host_innerip", "operator": "in", "value": [host for host in ip_list]}],
+                    "rules": [
+                        {"field": "bk_host_innerip", "operator": "in", "value": ips},
+                        {"field": "bk_host_id", "operator": "in", "value": bk_host_ids},
+                    ],
                 },
                 "fields": CMDB_HOST_SEARCH_FIELDS,
             }
         )
 
-        legal_ip_set = {legal_ip["bk_host_innerip"] for legal_ip in legal_ip_list}
+        legal_ip_set = {legal_host["bk_host_innerip"] for legal_host in legal_host_list}
+        legal_host_id_set = {legal_host["bk_host_id"] for legal_host in legal_host_list}
 
-        return [ip for ip in ip_list if ip not in legal_ip_set]
+        illegal_ips = [ip for ip in ips if ip not in legal_ip_set]
+        illegal_bk_host_ids = [host_id for host_id in bk_host_ids if host_id not in legal_host_id_set]
+        return illegal_ips, illegal_bk_host_ids
 
     def get_clean_stash(self):
         clean_stash = CleanStash.objects.filter(collector_config_id=self.collector_config_id).first()
@@ -2176,6 +2202,9 @@ class CollectorHandler(object):
         custom_type=None,
         category_id=None,
         description=None,
+        etl_config=None,
+        etl_params=None,
+        fields=None,
         storage_cluster_id=None,
         retention=7,
         allocation_min_days=0,
@@ -2266,7 +2295,7 @@ class CollectorHandler(object):
             from apps.log_databus.handlers.etl import EtlHandler
 
             etl_handler = EtlHandler.get_instance(self.data.collector_config_id)
-            etl_params = {
+            params = {
                 "table_id": collector_config_name_en,
                 "storage_cluster_id": storage_cluster_id,
                 "retention": retention,
@@ -2277,7 +2306,16 @@ class CollectorHandler(object):
                 "etl_config": custom_config.etl_config,
                 "fields": custom_config.fields,
             }
-            self.data.index_set_id = etl_handler.update_or_create(**etl_params)["index_set_id"]
+            if etl_params and fields:
+                # 如果传递了清洗参数，则优先使用
+                params.update(
+                    {
+                        "etl_params": etl_params,
+                        "etl_config": etl_config,
+                        "fields": fields,
+                    }
+                )
+            self.data.index_set_id = etl_handler.update_or_create(**params)["index_set_id"]
             self.data.save(update_fields=["index_set_id"])
 
         custom_config.after_hook(self.data)
@@ -2297,6 +2335,9 @@ class CollectorHandler(object):
         collector_config_name=None,
         category_id=None,
         description=None,
+        etl_config=None,
+        etl_params=None,
+        fields=None,
         storage_cluster_id=None,
         retention=7,
         allocation_min_days=0,
@@ -2338,12 +2379,11 @@ class CollectorHandler(object):
             LogIndexSet.objects.filter(index_set_id=self.data.index_set_id).update(index_set_name=index_set_name)
 
         custom_config = get_custom(self.data.custom_type)
-        etl_params = custom_config.etl_params
-        etl_config = custom_config.etl_config
-        fields = custom_config.fields
-
-        # 可能创建报错导致没有清洗配置 导致更新失败
-        if self.data.etl_config and custom_config.etl_config != self.data.etl_config:
+        if etl_params and fields:
+            # 1. 传递了清洗参数，则优先级最高
+            etl_params, etl_config, fields = etl_params, etl_config, fields
+        elif self.data.etl_config:
+            # 2. 如果本身配置过清洗，则直接使用
             collector_detail = self.retrieve()
             # need drop built in field
             collector_detail["fields"] = map_if(
@@ -2352,6 +2392,11 @@ class CollectorHandler(object):
             etl_params = collector_detail["etl_params"]
             etl_config = collector_detail["etl_config"]
             fields = collector_detail["fields"]
+        else:
+            # 3. 默认清洗规则，根据自定义类型来
+            etl_params = custom_config.etl_params
+            etl_config = custom_config.etl_config
+            fields = custom_config.fields
 
         # 仅在传入集群ID时更新
         if storage_cluster_id:
@@ -3774,7 +3819,7 @@ class CollectorHandler(object):
         params["params"]["encoding"] = params["data_encoding"]
         # 如果没传入集群ID, 则随机给一个公共集群
         if not params.get("storage_cluster_id"):
-            storage_cluster_id = get_random_public_cluster_id()
+            storage_cluster_id = get_random_public_cluster_id(bk_biz_id=params["bk_biz_id"])
             if not storage_cluster_id:
                 raise PublicESClusterNotExistException()
             params["storage_cluster_id"] = storage_cluster_id
@@ -3784,13 +3829,13 @@ class CollectorHandler(object):
         self.create_or_update_subscription(params)
 
         params["table_id"] = params["collector_config_name_en"]
-        self.create_or_update_clean_config(params)
-
+        index_set_id = self.create_or_update_clean_config(False, params).get("index_set_id", 0)
         return {
             "collector_config_id": self.data.collector_config_id,
             "bk_data_id": self.data.bk_data_id,
             "subscription_id": self.data.subscription_id,
             "task_id_list": self.data.task_id_list,
+            "index_set_id": index_set_id,
         }
 
     def fast_update(self, params: dict) -> dict:
@@ -3870,28 +3915,7 @@ class CollectorHandler(object):
                 async_create_bkdata_data_id.delay(self.data.collector_config_id)
 
         params["table_id"] = self.data.collector_config_name_en
-
-        from apps.log_databus.handlers.etl import EtlHandler
-
-        result_table = TransferApi.get_result_table_storage(
-            {"result_table_list": self.data.table_id, "storage_type": "elasticsearch"}
-        )[self.data.table_id]
-        if not result_table:
-            raise ResultTableNotExistException(ResultTableNotExistException.MESSAGE.format(self.data.table_id))
-
-        default_etl_params = {
-            "etl_config": self.data.etl_config,
-            "es_shards": result_table["storage_config"]["index_settings"]["number_of_shards"],
-            "storage_replies": result_table["storage_config"]["index_settings"]["number_of_replicas"],
-            "storage_cluster_id": result_table["cluster_config"]["cluster_id"],
-            "retention": result_table["storage_config"]["retention"],
-            "allocation_min_days": params.get("allocation_min_days", 0),
-        }
-        default_etl_params.update(params)
-        params = default_etl_params
-
-        etl_handler = EtlHandler.get_instance(self.data.collector_config_id)
-        etl_handler.update_or_create(**params)
+        self.create_or_update_clean_config(True, params)
 
         return {"collector_config_id": self.data.collector_config_id}
 
@@ -3911,7 +3935,28 @@ class CollectorHandler(object):
                 # 创建数据平台data_id
                 async_create_bkdata_data_id.delay(self.data.collector_config_id)
 
-    def create_or_update_clean_config(self, params):
+    def create_or_update_clean_config(self, is_update, params):
+        if is_update:
+            table_id = self.data.table_id
+            # 更新场景，需要把之前的存储设置拿出来，和更新的配置合并一下
+            result_table_info = TransferApi.get_result_table_storage(
+                {"result_table_list": table_id, "storage_type": "elasticsearch"}
+            )
+            result_table = result_table_info.get(table_id, {})
+            if not result_table:
+                raise ResultTableNotExistException(ResultTableNotExistException.MESSAGE.format(table_id))
+
+            default_etl_params = {
+                "es_shards": result_table["storage_config"]["index_settings"]["number_of_shards"],
+                "storage_replies": result_table["storage_config"]["index_settings"]["number_of_replicas"],
+                "storage_cluster_id": result_table["cluster_config"]["cluster_id"],
+                "retention": result_table["storage_config"]["retention"],
+                "allocation_min_days": params.get("allocation_min_days", 0),
+                "etl_config": self.data.etl_config,
+            }
+            default_etl_params.update(params)
+            params = default_etl_params
+
         from apps.log_databus.handlers.etl import EtlHandler
 
         etl_handler = EtlHandler.get_instance(self.data.collector_config_id)
@@ -4033,8 +4078,10 @@ class CollectorHandler(object):
         return yaml.safe_dump_all(result)
 
 
-def get_random_public_cluster_id() -> int:
-    clusters = TransferApi.get_cluster_info({"cluster_type": STORAGE_CLUSTER_TYPE, "no_request": True})
+def get_random_public_cluster_id(bk_biz_id: int) -> int:
+    from apps.log_databus.handlers.storage import StorageHandler
+
+    clusters = StorageHandler().list(bk_biz_id=bk_biz_id)
     for cluster in clusters:
         if cluster["cluster_config"]["registered_system"] == "_default":
             return cluster["cluster_config"]["cluster_id"]

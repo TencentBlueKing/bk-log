@@ -24,11 +24,11 @@
   <div class="restore-slider-container">
     <bk-sideslider
       transfer
-      :title="isEdit ? $t('编辑回溯') : $t('新增回溯')"
+      :title="isEdit ? $t('编辑回溯') : $t('新建回溯')"
       :is-show="showSlider"
       :width="676"
       :quick-close="true"
-      :before-close="handleCloseSideslider"
+      :before-close="handleCloseSidebar"
       @animation-end="$emit('hidden')"
       @update:isShow="updateIsShow">
       <div v-bkloading="{ isLoading: sliderLoading }" slot="content" class="restore-slider-content">
@@ -119,11 +119,13 @@
 import { mapGetters } from 'vuex';
 import ValidateUserSelector from '../../manage-extract/manage-extract-permission/validate-user-selector';
 import * as authorityMap from '../../../../common/authority-map';
+import SidebarDiffMixin from '@/mixins/sidebar-diff-mixin';
 
 export default {
   components: {
     ValidateUserSelector,
   },
+  mixins: [SidebarDiffMixin],
   props: {
     showSlider: {
       type: Boolean,
@@ -149,7 +151,7 @@ export default {
       formData: {
         index_set_name: '',
         archive_config_id: '',
-        datePickerValue: [],
+        datePickerValue: ['', ''],
         datePickerExpired: '',
         expired_time: '',
         notice_user: [],
@@ -214,18 +216,21 @@ export default {
           }
         }
 
-        if (this.archiveId) { // 从归档列表新增回溯
+        if (this.archiveId) { // 从归档列表新建回溯
           this.formData.archive_config_id = this.archiveId;
-        }
+        };
+        this.initSidebarFormData();
       } else {
         // 清空表单数据
         this.formData = {
           index_set_name: '',
           archive_config_id: '',
-          datePickerValue: [],
+          datePickerValue: ['', ''],
           expired_time: '',
           datePickerExpired: '',
           notice_user: [],
+          start_time: '',
+          end_time: '',
         };
       }
     },
@@ -363,26 +368,6 @@ export default {
       } finally {
         this.confirmLoading = false;
       }
-    },
-    async handleCloseSideslider() {
-      return await this.showDeleteAlert();
-    },
-    /**
-     * @desc: 如果提交可用则点击遮罩时进行二次确认弹窗
-     */
-    showDeleteAlert() {
-      return new Promise((reject) => {
-        this.$bkInfo({
-          type: 'warning',
-          title: this.$t('是否放弃本次操作？'),
-          confirmFn: () => {
-            reject(true);
-          },
-          close: () => {
-            reject(false);
-          },
-        });
-      });
     },
   },
 };

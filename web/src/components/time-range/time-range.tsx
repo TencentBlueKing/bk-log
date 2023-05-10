@@ -168,6 +168,7 @@ export default class TimeRange extends tsc<IProps, IEvents> {
       <div class="time-range-wrap">
         <bk-date-picker
           class="date-picker"
+          v-en-class="is-en-timer-list"
           ext-popover-cls="time-range-popover"
           value={this.timestamp}
           open={this.isShow}
@@ -222,7 +223,7 @@ export default class TimeRange extends tsc<IProps, IEvents> {
             class="shortcuts-list">
             {
               this.shortcuts.map(item => (
-                <li class="shortcuts-item" onClick={() => this.handleShortcutChange(item)}>{item.text}</li>
+                <li class="shortcuts-item title-overflow" v-bk-overflow-tips onClick={() => this.handleShortcutChange(item)}>{item.text}</li>
               ))
             }
           </ul>

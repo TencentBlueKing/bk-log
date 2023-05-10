@@ -218,7 +218,7 @@ class TasksViewSet(ModelViewSet):
                 filter_content=data.get("filter_content"),
                 remark=data.get("remark"),
                 preview_directory=data.get("preview_directory"),
-                preview_ip=data.get("preview_ip"),
+                preview_ip_list=data.get("preview_ip_list"),
                 preview_time_range=data.get("preview_time_range"),
                 preview_is_search_child=data.get("preview_is_search_child"),
                 preview_start_time=data.get("preview_start_time"),

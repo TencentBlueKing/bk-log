@@ -66,7 +66,7 @@ interface IFavoriteItem {
   search_fields_select_list?: any[];
   visible_option: any[];
   group_option: any[];
-  params: object;
+  params: Record<string, any>;
 }
 
 const settingFields = [ // 设置显示的字段
@@ -177,6 +177,10 @@ export default class GroupDialog extends tsc<IProps> {
 
   get showFavoriteCount() {
     return this.searchAfterList.length;
+  }
+
+  get getGroupLabelWidth() {
+    return this.$store.state.isEnLanguage ? 140 : 115;
   }
 
   @Watch('selectFavoriteList', { deep: true })
@@ -394,7 +398,7 @@ export default class GroupDialog extends tsc<IProps> {
       if (res.result) {
         this.$bkMessage({
           theme: 'success',
-          message: this.$t('新增成功'),
+          message: this.$t('新建成功'),
         });
         this.getGroupList(true);
       }
@@ -541,7 +545,8 @@ export default class GroupDialog extends tsc<IProps> {
       visible_type: item.visible_type,
       display_fields: item.display_fields,
       is_enable_display_fields: item.is_enable_display_fields,
-      host_scopes: item.params.host_scopes,
+      // host_scopes: item.params.host_scopes,
+      ip_chooser: item.params.ip_chooser,
       addition: item.params.addition,
     }));
     try {
@@ -570,6 +575,11 @@ export default class GroupDialog extends tsc<IProps> {
 
   checkFields(field) {
     return this.tableSetting.selectedFields.some(item => item.id === field);
+  }
+
+  getGroupName(row) {
+    if (row.group_id === this.unknownGroupID) return this.groupNameMap.unknown;
+    return row.group_name;
   }
 
   renderHeader(h) {
@@ -673,7 +683,7 @@ export default class GroupDialog extends tsc<IProps> {
           on-change={() => this.handleChangeGroup(row)}
         >
           <div slot="trigger">
-            <span class="overflow-tips" style="padding: 0 10px;" v-bk-overflow-tips>{row.group_name}</span>
+            <span class="overflow-tips" style="padding: 0 10px;" v-bk-overflow-tips>{this.getGroupName(row)}</span>
           </div>
           {row[
             row.visible_type === 'private'
@@ -852,7 +862,7 @@ export default class GroupDialog extends tsc<IProps> {
             <TableColumn
               label={this.$t('所属组')}
               render-header={this.$renderHeader}
-              width="112"
+              width={this.getGroupLabelWidth}
               key={'column_group_name'}
               prop={'group_name'}
               scopedSlots={groupSlot}
@@ -940,6 +950,7 @@ export default class GroupDialog extends tsc<IProps> {
 
           <TableColumn type="setting">
             <TableSettingContent
+              v-en-style="width: 510px;"
               key={`${this.tableKey}__settings`}
               fields={this.tableSetting.fields}
               size={this.tableSetting.size}

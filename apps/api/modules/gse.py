@@ -23,7 +23,7 @@ from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 from apps.api.base import DataAPI
 from apps.api.modules.utils import add_esb_info_before_request
-from config.domains import GSE_APIGATEWAY_ROOT_V2
+from config.domains import GSE_APIGATEWAY_ROOT_V2, GSE_APIGATEWAY_ROOT_V3
 
 
 def get_agent_status_before(params):
@@ -48,9 +48,25 @@ def get_agent_status_after(response_result):
 
 
 class _GseApi:
-    MODULE = _("GSE")
+    MODULE = _("GSE管控平台")
 
     def __init__(self):
+        self.get_agent_status_raw = DataAPI(
+            method="POST",
+            url=GSE_APIGATEWAY_ROOT_V2 + "get_agent_status",
+            module=self.MODULE,
+            description=_("获取agent状态(原始数据)"),
+            before_request=add_esb_info_before_request,
+            after_request=None,
+        )
+        self.get_agent_status_raw_v2 = DataAPI(
+            method="POST",
+            url=GSE_APIGATEWAY_ROOT_V3 + "api/v2/cluster/list_agent_state",
+            module=self.MODULE,
+            description=_("V2版本获取agent状态(原始数据)"),
+            before_request=add_esb_info_before_request,
+            after_request=None,
+        )
         self.get_agent_status = DataAPI(
             method="POST",
             url=GSE_APIGATEWAY_ROOT_V2 + "get_agent_status",

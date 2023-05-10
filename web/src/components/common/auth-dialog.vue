@@ -27,7 +27,7 @@
       :mask-close="false"
       :close-icon="false"
       :width="740"
-      :ok-text="$t('去申请')"
+      :ok-text="$t('申请')"
       @confirm="confirmSourceApply"
       @cancel="closeAuth">
       <div class="apply-authority-dialog-container">
@@ -53,7 +53,7 @@
     <bk-dialog
       v-model="showConfirmDialog"
       :title="$t('权限申请单已提交？')"
-      :ok-text="$t('刷新页面')"
+      :ok-text="$t('刷新')"
       @confirm="confirmHasApply"
       @cancel="closeAuth">
       {{$t('请在权限中心填写权限申请单')}}

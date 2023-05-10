@@ -21,7 +21,6 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import re
-import socket
 from typing import Any, Dict
 
 from django.conf import settings
@@ -39,11 +38,10 @@ from apps.log_esquery.exceptions import (
     EsClientMetaInfoException,
     EsClientScrollException,
     EsClientSearchException,
-    EsClientSocketException,
     EsException,
 )
 from apps.log_esquery.type_constants import type_mapping_dict
-from apps.log_esquery.utils.es_client import get_es_client
+from apps.log_esquery.utils.es_client import get_es_client, es_socket_ping
 from apps.log_search.exceptions import IndexResultTableApiException
 from apps.utils.cache import cache_five_minute
 from apps.utils.log import logger
@@ -165,17 +163,7 @@ class QueryClientLog(QueryClientTemplate):  # pylint: disable=invalid-name
         if not self.host or not self.port:
             raise EsClientConnectInfoException()
 
-        cs = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        es_address: tuple = (str(self.host), int(self.port))
-        cs.settimeout(2)
-        try:
-            status: int = cs.connect_ex(es_address)
-            # this status is returnback from tcpserver
-            if status != 0:
-                raise EsClientSocketException(EsClientSocketException.MESSAGE.format(error=""))
-        except Exception as e:  # pylint: disable=broad-except
-            raise EsClientSocketException(EsClientSocketException.MESSAGE.format(error=e))
-        cs.close()
+        es_socket_ping(host=self.host, port=self.port)
 
         logger.info(f"[esquery]get connection with {self.host}:{self.port} by {self.username}")
 

@@ -79,6 +79,7 @@ from apps.log_search.constants import (
 from bkm_space.api import AbstractSpaceApi
 from bkm_space.define import Space as SpaceDefine
 from bkm_space.utils import space_uid_to_bk_biz_id
+from bkm_ipchooser.constants import CommonEnum
 from apps.utils.time_handler import timestamp_to_datetime, datetime_to_timestamp, timestamp_to_timeformat
 
 
@@ -137,6 +138,14 @@ class GlobalConfig(models.Model):
         configs[GlobalTypeEnum.LOG_CLUSTERING_YEAR_ON_YEAR.value] = YearOnYearEnum.get_choices_list_dict()
         # 自定义上报
         configs[GlobalTypeEnum.DATABUS_CUSTOM.value] = CustomTypeEnum.get_choices_list_dict()
+        # 主机标识优先级
+        configs[GlobalTypeEnum.HOST_IDENTIFIER_PRIORITY.value] = []
+        host_identifier_priority = settings.HOST_IDENTIFIER_PRIORITY.split(",")
+        for i in host_identifier_priority:
+            if i in CommonEnum.DEFAULT_HOST_FIELDS.value and i in CommonEnum.IPCHOOSER_FIELD_MAP.value:
+                configs[GlobalTypeEnum.HOST_IDENTIFIER_PRIORITY.value].append(CommonEnum.IPCHOOSER_FIELD_MAP.value[i])
+        # 是否容器化部署
+        configs[GlobalTypeEnum.IS_K8S_DEPLOY.value] = settings.IS_K8S_DEPLOY_MODE
         return configs
 
     class Meta:
@@ -266,10 +275,11 @@ class AccessSourceConfig(SoftDeleteModel):
                     and source.source_id != self.source_id
                 ):
                     raise SourceDuplicateException(
-                        _(
-                            f"此空间[{self.space_uid}]下已存在"
-                            f"{self.properties['es_host']}:{self.properties['es_port']}的ES数据源"
-                            f"——名称为：[{source.source_name}]"
+                        _("此空间[{space_uid}]下已存在 {es_host}:{es_port}的ES数据源 ——名称为：[{source_name}]").format(
+                            space_uid=self.space_uid,
+                            es_host=self.properties["es_host"],
+                            es_port=self.properties["es_port"],
+                            source_name=source.source_name,
                         )
                     )
 
@@ -339,9 +349,11 @@ class LogIndexSet(SoftDeleteModel):
 
     def list_operate(self):
         return format_html(
-            '<a href="../logindexsetdata/?index_set_id=%s">详情</a>&nbsp;&nbsp;' % self.index_set_id
-            + '<a href="../../log_auth/authpolicyinfo/?action_id=index_set.retrieve&resource_scope_id=%s">'
-            "查看权限</a>&nbsp;&nbsp;" % self.index_set_id
+            _(
+                '<a href="../logindexsetdata/?index_set_id={index_set_id}">详情</a>&nbsp;&nbsp;'
+                '<a href="../../log_auth/authpolicyinfo/?action_id=index_set.retrieve'
+                '&resource_scope_id={index_set_id}">查看权限</a>&nbsp;&nbsp;'
+            ).format(index_set_id=self.index_set_id)
         )
 
     list_operate.__name__ = "操作列表"
@@ -622,7 +634,7 @@ class LogIndexSetData(SoftDeleteModel):
     apply_status = models.CharField(_("审核状态"), max_length=64, choices=Status.StatusChoices, default=Status.PENDING)
 
     def list_operate(self):
-        return format_html('<a href="../logindexset/?index_set_id=%s">索引集</a>&nbsp;&nbsp;' % self.index_set_id)
+        return format_html(_('<a href="../logindexset/?index_set_id=%s">索引集</a>&nbsp;&nbsp;') % self.index_set_id)
 
     list_operate.__name__ = "操作列表"
 
@@ -848,7 +860,10 @@ class FavoriteGroup(OperateRecordModel):
         ungrouped_group = cls.get_or_create_ungrouped_group(space_uid=space_uid)
         groups[ungrouped_group.id] = model_to_dict(ungrouped_group)
         # 公共组
-        public_groups = cls.objects.filter(group_type=FavoriteGroupType.PUBLIC.value, space_uid=space_uid,)
+        public_groups = cls.objects.filter(
+            group_type=FavoriteGroupType.PUBLIC.value,
+            space_uid=space_uid,
+        )
         for gi in public_groups:
             groups[gi.id] = model_to_dict(gi)
         return groups

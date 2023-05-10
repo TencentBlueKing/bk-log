@@ -18,14 +18,25 @@ from io import open
 
 import mistune
 
+from apps.utils.local import get_request_language_code
 import version_log.config as config
+
+
+def get_md_files_dir_with_language_code():
+    """获取md文件夹路径"""
+    return os.path.join(config.MD_FILES_DIR, get_request_language_code())
+
+
+def get_html_file_path_with_language_code(version: str):
+    """获取html文件路径"""
+    return os.path.join(config.PARSED_HTML_FILES_DIR, "{}_{}.html".format(version, get_request_language_code()))
 
 
 def get_parsed_html(log_version):
     """获取版本日志对应的html代码"""
-
+    md_files_path = get_md_files_dir_with_language_code()
     # 根据版本号获取对应md文件
-    filenames = [filename for filename in os.listdir(config.MD_FILES_DIR)]
+    filenames = [filename for filename in os.listdir(md_files_path)]
     md_filename = ""
     for filename in filenames:
         if log_version in filename:
@@ -36,9 +47,8 @@ def get_parsed_html(log_version):
     if md_filename == "":
         return None
 
-    md_file_path = os.path.join(config.MD_FILES_DIR, md_filename)
-
-    html_file_path = os.path.join(config.PARSED_HTML_FILES_DIR, "{}.html".format(log_version))
+    md_file_path = os.path.join(md_files_path, md_filename)
+    html_file_path = get_html_file_path_with_language_code(log_version)
     # 已有解析好的版本
     if os.path.isfile(html_file_path) and _is_html_file_generated_after_md_file(html_file_path, md_file_path):
         with open(html_file_path, encoding="utf-8") as f:
@@ -53,14 +63,15 @@ def get_version_list():
     获取md日志版本列表
     :return (版本号, 文件上传时间) 元组列表，列表根据版本号从大到小排列
     """
-    if not os.path.isdir(config.MD_FILES_DIR):  # md文件夹不存在
+    md_files_dir = get_md_files_dir_with_language_code()
+    if not os.path.isdir(md_files_dir):  # md文件夹不存在
         return None
     version_list = []
-    for filename in os.listdir(config.MD_FILES_DIR):
+    for filename in os.listdir(md_files_dir):
         full_name = os.path.splitext(filename)[0]
         version, _, date_updated = full_name.partition("_")
         if date_updated == "":
-            date_updated = _get_file_modified_date(os.path.join(config.MD_FILES_DIR, filename))
+            date_updated = _get_file_modified_date(os.path.join(md_files_dir, filename))
         else:
             date_updated = _transform_datetime_format(date_updated, config.FILE_TIME_FORMAT)
         version_values = _get_version_parsed_list(version)
