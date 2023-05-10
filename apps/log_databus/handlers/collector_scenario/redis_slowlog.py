@@ -51,7 +51,7 @@ class RedisSlowLogCollectorScenario(CollectorScenario):
             "password": params.get("redis_password", ""),
             "password_file": params.get("redis_password_file", ""),
         }
-        local_params = self._add_ext_labels(local_params, params, collector_config_id)
+        local_params = self._add_labels(local_params, params, collector_config_id)
         local_params = self._add_ext_meta(local_params, params)
         steps = [
             {

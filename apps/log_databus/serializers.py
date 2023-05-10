@@ -185,9 +185,10 @@ class PluginParamSerializer(serializers.Serializer):
     )
     redis_password = serializers.CharField(label=_("redis密码"), required=False, allow_blank=True)
     redis_password_file = serializers.CharField(label=_("redis密码文件"), required=False, allow_blank=True)
-    # 额外元数据以及标签
-    ext_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=ExtraLabelsSerializer())
-    ext_meta = serializers.DictField(label=_("额外元数据"), required=False, default={})
+    # 标签, List[str], 会以kv的形式传递给采集器
+    extra_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=LabelsSerializer())
+    # 额外模板标签, List[Dict], 会以列表的形式传递给采集器
+    extra_template_labels = serializers.ListSerializer(label=_("额外模板标签"), required=False, child=ExtraLabelsSerializer())
 
 
 class DataLinkListSerializer(serializers.Serializer):

@@ -43,7 +43,7 @@ class WinEventLogScenario(CollectorScenario):
                 for event_name in event_names
             ]
         }
-        local_params = self._add_ext_labels(local_params, params, collector_config_id)
+        local_params = self._add_labels(local_params, params, collector_config_id)
         local_params = self._add_ext_meta(local_params, params)
         steps = [
             {
