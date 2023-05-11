@@ -210,6 +210,8 @@ def get_collector_maintainers_and_platform_username(
     app_list = CCApi.get_app_list(params)
     if app_list and app_list["info"]:
         for maintainer in app_list["info"][0].get("bk_biz_maintainer", "").split(","):
+            if not maintainer:
+                continue
             result["maintainers"].add(maintainer)
     # 去除ADMIN_REQUEST_USER
     if ADMIN_REQUEST_USER in result["maintainers"]:
@@ -219,10 +221,14 @@ def get_collector_maintainers_and_platform_username(
         raise BaseException(f"dont have enough maintainer only {ADMIN_REQUEST_USER}")
 
     # 如果指定了平台运维人员，且在业务运维人员中，则使用指定的平台运维人员, 否则使用业务运维人员中的一个
-    if platform_username and platform_username in result["maintainers"]:
+    if not platform_username or platform_username not in result["maintainers"]:
         result["platform_username"] = list(result["maintainers"])[0]
+    else:
+        result["platform_username"] = platform_username
 
     # 最后添加创建人和更新人, 是因为创建人和更新人可能不在业务运维人员中, 没有bkdata的权限导致platform_username没有权限
-    result["maintainers"].add(collector_config.created_by)
-    result["maintainers"].add(collector_config.updated_by)
+    if collector_config.created_by:
+        result["maintainers"].add(collector_config.created_by)
+    if collector_config.updated_by:
+        result["maintainers"].add(collector_config.updated_by)
     return result
