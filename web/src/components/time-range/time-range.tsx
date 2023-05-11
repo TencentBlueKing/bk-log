@@ -168,6 +168,7 @@ export default class TimeRange extends tsc<IProps, IEvents> {
       <div class="time-range-wrap">
         <bk-date-picker
           class="date-picker"
+          v-en-class="is-en-timer-list"
           ext-popover-cls="time-range-popover"
           value={this.timestamp}
           open={this.isShow}

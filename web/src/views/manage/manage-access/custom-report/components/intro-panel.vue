@@ -167,6 +167,7 @@ export default {
       width: 24px;
       height: 24px;
       position: absolute;
+      z-index: 999;
 
       @include flex-center;
 

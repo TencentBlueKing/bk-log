@@ -310,6 +310,31 @@ export default {
         window.open(jumpUrl, '_blank');
         return;
       }
+      if (operateType === 'delete' && row.etl_config !== 'bkdata_clean') {
+        const h = this.$createElement;
+        this.$bkInfo({
+          title: this.$t('确定要删除清洗：{n}？', { n: row.collector_config_name }),
+          subHeader: h('div', this.$t('请注意！删除后不能恢复。')),
+          type: 'warning',
+          confirmLoading: true,
+          confirmFn: async () => {
+            try {
+              const res = await this.$http.request('clean/deleteParsing', {
+                params: { collector_config_id: row.collector_config_id },
+              });
+              if (res.data) {
+                this.messageSuccess(this.$t('删除成功'));
+                this.search();
+              }
+            } catch (err) {
+              console.warn(err);
+            }
+          },
+          okText: this.$t('button-确定').replace('button-', ''),
+          cancelText: this.$t('button-取消').replace('button-', ''),
+        });
+        return;
+      }
       if (operateType === 'edit') { // 基础清洗
         if (!(row.permission?.[authorityMap.MANAGE_COLLECTION_AUTH])) { // 管理权限
           return this.getOptionApplyData({

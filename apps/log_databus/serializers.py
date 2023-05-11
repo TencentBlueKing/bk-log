@@ -55,6 +55,17 @@ from bkm_space.serializers import SpaceUIDField
 from bkm_space.utils import space_uid_to_bk_biz_id
 
 
+class LabelsSerializer(serializers.Serializer):
+    key = serializers.CharField(label=_("标签key"))
+    operator = serializers.CharField(label=_("标签连接符"), required=False, default="=")
+    value = serializers.CharField(label=_("标签value"), allow_blank=True)
+
+
+class ExtraLabelsSerializer(serializers.Serializer):
+    key = serializers.CharField(label=_("标签key"))
+    value = serializers.JSONField(label=_("标签value"))
+
+
 class PermissionGroupSerializer(serializers.Serializer):
     """
     权限组序列化
@@ -158,7 +169,7 @@ class PluginParamSerializer(serializers.Serializer):
     close_inactive = serializers.IntegerField(label=_("FD关联间隔"), required=False, min_value=1)
     harvester_limit = serializers.IntegerField(label=_("同时采集数"), required=False, min_value=1)
     clean_inactive = serializers.IntegerField(label=_("采集进度清理时间"), required=False, min_value=1)
-
+    # winlog相关参数
     winlog_name = serializers.ListField(
         label=_("windows事件名称"), child=serializers.CharField(max_length=255), required=False
     )
@@ -168,6 +179,16 @@ class PluginParamSerializer(serializers.Serializer):
     winlog_event_id = serializers.ListField(
         label=_("windows事件ID"), child=serializers.CharField(max_length=255), required=False
     )
+    # Redis慢日志相关参数
+    redis_hosts = serializers.ListField(
+        label=_("redis目标"), child=serializers.CharField(max_length=255), required=False, default=[]
+    )
+    redis_password = serializers.CharField(label=_("redis密码"), required=False, allow_blank=True)
+    redis_password_file = serializers.CharField(label=_("redis密码文件"), required=False, allow_blank=True)
+    # 标签, List[str], 会以kv的形式传递给采集器
+    extra_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=LabelsSerializer())
+    # 额外模板标签, List[Dict], 会以列表的形式传递给采集器
+    extra_template_labels = serializers.ListSerializer(label=_("额外模板标签"), required=False, child=ExtraLabelsSerializer())
 
 
 class DataLinkListSerializer(serializers.Serializer):
@@ -202,18 +223,12 @@ class ContainerSerializer(serializers.Serializer):
     container_name = serializers.CharField(label=_("容器名称"), required=False, allow_blank=True, default="")
 
 
-class LablesSerializer(serializers.Serializer):
-    key = serializers.CharField(label=_("标签key"))
-    operator = serializers.CharField(label=_("标签连接符"), required=False, default="=")
-    value = serializers.CharField(label=_("标签value"), allow_blank=True)
-
-
 class LabelSelectorSerializer(serializers.Serializer):
     match_labels = serializers.ListSerializer(
-        child=LablesSerializer(), label=_("指定标签"), required=False, allow_empty=True
+        child=LabelsSerializer(), label=_("指定标签"), required=False, allow_empty=True
     )
     match_expressions = serializers.ListSerializer(
-        child=LablesSerializer(), label=_("指定表达式"), required=False, allow_empty=True
+        child=LabelsSerializer(), label=_("指定表达式"), required=False, allow_empty=True
     )
 
 
@@ -292,7 +307,7 @@ class CreateContainerCollectorSerializer(serializers.Serializer):
     configs = serializers.ListSerializer(label=_("容器日志配置"), child=ContainerConfigSerializer())
     bcs_cluster_id = serializers.CharField(label=_("bcs集群id"))
     add_pod_label = serializers.BooleanField(label=_("是否自动添加pod中的labels"), default=False)
-    extra_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=LablesSerializer())
+    extra_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=LabelsSerializer())
     yaml_config_enabled = serializers.BooleanField(label=_("是否使用yaml配置模式"), default=False)
     yaml_config = serializers.CharField(label=_("yaml配置内容"), default="", allow_blank=True)
     platform_username = serializers.CharField(label=_("平台用户"), required=False)
@@ -340,7 +355,7 @@ class UpdateContainerCollectorSerializer(serializers.Serializer):
     configs = serializers.ListSerializer(label=_("容器日志配置"), child=ContainerConfigSerializer())
     bcs_cluster_id = serializers.CharField(label=_("bcs集群id"))
     add_pod_label = serializers.BooleanField(label=_("是否自动添加pod中的labels"))
-    extra_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=LablesSerializer())
+    extra_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=LabelsSerializer())
     yaml_config_enabled = serializers.BooleanField(label=_("是否使用yaml配置模式"), default=False)
     yaml_config = serializers.CharField(label=_("yaml配置内容"), default="", allow_blank=True)
 
@@ -1091,7 +1106,7 @@ class BCSCollectorSerializer(serializers.Serializer):
     environment = serializers.CharField(label=_("环境"), required=False, default="container")
     bcs_cluster_id = serializers.CharField(label=_("bcs集群id"))
     add_pod_label = serializers.BooleanField(label=_("是否自动添加pod中的labels"))
-    extra_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=LablesSerializer(), default=[])
+    extra_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=LabelsSerializer(), default=[])
     config = serializers.ListSerializer(label=_("容器日志配置"), child=BcsContainerConfigSerializer())
 
 
@@ -1399,7 +1414,7 @@ class FastCollectorUpdateSerializer(serializers.Serializer):
 class ContainerCollectorConfigToYamlSerializer(serializers.Serializer):
     configs = serializers.ListSerializer(label=_("容器日志配置"), child=ContainerConfigSerializer())
     add_pod_label = serializers.BooleanField(label=_("上报时是否把标签带上"), default=False)
-    extra_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=LablesSerializer())
+    extra_labels = serializers.ListSerializer(label=_("额外标签"), required=False, child=LabelsSerializer())
 
 
 class CheckCollectorSerializer(serializers.Serializer):

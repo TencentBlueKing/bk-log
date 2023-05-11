@@ -50,7 +50,7 @@
           <div>{{ props.row.etl.datetime }}</div>
         </template>
       </bk-table-column>
-      <bk-table-column :label="$t('操作')" width="200">
+      <bk-table-column :label="$t('操作')" width="210">
         <template slot-scope="props">
           <div>
             <span class="option-text" @click="copyText(props.row.etl.batch, 'log')">{{ $t('复制') }}</span>

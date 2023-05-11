@@ -143,7 +143,7 @@
           <ul class="host-list" ref="hostListRef">
             <li class="host-item header">
               <div class="min-box dir-container" :title="$t('挂载目录')">{{ $t('挂载目录') }}</div>
-              <div class="min-box id-container" :title="$t('主机云区域ID')">{{ $t('主机云区域ID') }}</div>
+              <div class="min-box id-container" :title="$t('主机管控区域ID')">{{ $t('主机管控区域ID') }}</div>
               <div class="min-box ip-container" :title="$t('主机IP')">{{ $t('主机IP') }}</div>
               <div class="min-box operation-container" :title="$t('操作')">{{ $t('操作') }}</div>
             </li>
@@ -225,7 +225,7 @@ export default {
         hosts: [{
           keyId: Date.now(),
           target_dir: '', // 挂载目录
-          bk_cloud_id: '', // 主机云区域id
+          bk_cloud_id: '', // 主机管控区域id
           ip: '', // 主机ip
         }], // 中转机列表
       },
@@ -331,7 +331,7 @@ export default {
       this.formData.hosts.push({
         keyId: Date.now(),
         target_dir: '', // 挂载目录
-        bk_cloud_id: '', // 主机云区域id
+        bk_cloud_id: '', // 主机管控区域id
         ip: '', // 主机ip
       });
     },

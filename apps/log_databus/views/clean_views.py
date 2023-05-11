@@ -110,6 +110,27 @@ class CleanViewSet(ModelViewSet):
             )
         )
 
+    @detail_route(methods=["DELETE"], url_path="destroy_clean")
+    def destroy_clean(self, request, collector_config_id=None):
+        """
+        @api {destroy} /databus/clean/$collector_config_id/destroy_clean 1_清洗-删除清洗
+        @apiName destroy_clean
+        @apiGroup 22_clean
+        @apiDescription 删除清洗配置
+        @apiParam {Int} $collector_config_id 采集项ID
+        @apiSuccess {Bool} 删除结果
+        @apiSuccessExample {json} 成功返回
+        {
+            "message": "",
+            "code": 0,
+            "data": {
+                true
+            },
+            "result": true
+        }
+        """
+        return Response(CleanFilterUtils().delete(collector_config_id))
+
     @detail_route(methods=["GET"])
     def refresh(self, request, *args, collector_config_id=None, **kwargs):
         """

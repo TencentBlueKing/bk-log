@@ -20,7 +20,7 @@ We undertake not to change the open source license (MIT license) applicable to t
 the project delivered to anyone in the future.
 """
 import copy
-from typing import Optional
+from typing import Optional, Dict, Any, List
 
 from django.conf import settings
 from django.utils.module_loading import import_string
@@ -40,7 +40,7 @@ from apps.utils.log import logger
 
 class CollectorScenario(object):
     """
-    采集场景：行日志、段日志、window event
+    采集场景：行日志、段日志、window event, Redis慢日志
     1. 根据采集场景加载具体实现的类
     2.
     """
@@ -52,6 +52,7 @@ class CollectorScenario(object):
             CollectorScenarioEnum.SECTION.value: "SectionCollectorScenario",
             CollectorScenarioEnum.WIN_EVENT.value: "WinEventLogScenario",
             CollectorScenarioEnum.CUSTOM.value: "CustomCollectorScenario",
+            CollectorScenarioEnum.REDIS_SLOWLOG.value: "RedisSlowLogCollectorScenario",
         }
         try:
             collector_scenario = import_string(
@@ -67,7 +68,7 @@ class CollectorScenario(object):
                 )
             )
 
-    def get_subscription_steps(self, data_id, params):
+    def get_subscription_steps(self, data_id, params, collector_config_id=None):
         """
         根据采集场景返回节点管理插件下发步骤
         1. 获取配置模板信息
@@ -213,7 +214,7 @@ class CollectorScenario(object):
         """
         if isinstance(collector_config.collector_config_overlay, dict):
             params["collector_config_overlay"] = collector_config.collector_config_overlay
-        steps = self.get_subscription_steps(collector_config.bk_data_id, params)
+        steps = self.get_subscription_steps(collector_config.bk_data_id, params, collector_config.collector_config_id)
 
         subscription_params = {
             "scope": {
@@ -233,7 +234,7 @@ class CollectorScenario(object):
             NodeApi.update_subscription_info(subscription_params)
         return collector_config.subscription_id
 
-    def _deal_text_public_params(self, local_params, params):
+    def _deal_text_public_params(self, local_params, params, collector_config_id=None):
         need_define_params = [
             "clean_inactive",
             "harvester_limit",
@@ -255,6 +256,41 @@ class CollectorScenario(object):
 
         if params.get("collector_config_overlay"):
             local_params.update(params["collector_config_overlay"])
+        local_params = self._add_labels(local_params, params, collector_config_id)
+        local_params = self._add_ext_meta(local_params, params)
+        return local_params
+
+    @staticmethod
+    def _add_labels(local_params: Dict[str, Any], params: Dict[str, Any], collector_config_id: int = None):
+        """
+        补充采集器模板里的labels, 采集器里的labels格式为: List[Dict[str, Dict[str, Any]]]
+        params里的取值是: extra_template_labels, 格式为: List[Dict[str, Dict[str, Any]]]
+        即 接口参数 extra_template_labels -> 采集器 labels
+        此处针对collector_config_id进行了特殊处理
+        因为在创建采集项时，生成的collector_config_id未知，所以需要在内部流程透传
+        """
+        extra_template_labels: List[Dict[str, Dict[str, Any]]] = params.get("extra_template_labels", [])
+        if not extra_template_labels:
+            return local_params
+        local_params["labels"] = {}
+        for extra_template_label in extra_template_labels:
+            if extra_template_label["key"] == "$body" and collector_config_id:
+                extra_template_label["value"].update({"bk_collect_config_id": collector_config_id})
+            local_params["labels"][extra_template_label["key"]] = extra_template_label["value"]
+        return local_params
+
+    @staticmethod
+    def _add_ext_meta(local_params: Dict[str, Any], params: Dict[str, Any]):
+        """
+        补充采集器里的元数据ext_meta
+        params里的取值是extra_labels(容器日志历史遗留字段), 格式为: List[Dict[str, str]]
+        即 接口参数 extra_labels -> 采集器 ext_meta
+        采集器内的ext_meta的格式为: Dict[str, str], 所以传给采集器的ext_meta需要做一次转换
+        """
+        ext_meta = params.get("extra_labels", [])
+        if not ext_meta:
+            return local_params
+        local_params["ext_meta"] = {em["key"]: em["value"] for em in ext_meta}
         return local_params
 
     @staticmethod

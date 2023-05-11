@@ -53,7 +53,7 @@ class CleanFilterUtils:
     )
     KEYWORD = ["collector_config_name", "result_table_id"]
 
-    def __init__(self, bk_biz_id):
+    def __init__(self, bk_biz_id=None):
         self.bk_biz_id = bk_biz_id
         self.space_uid = bk_biz_id_to_space_uid(self.bk_biz_id)
         self.cleans = []
@@ -140,3 +140,14 @@ class CleanFilterUtils:
         if page and pagesize:
             return {"total": len(sorted_res), "list": sorted_res[(page - 1) * pagesize : page * pagesize]}
         return sorted_res
+
+    @staticmethod
+    def delete(collector_config_id: int):
+        from apps.log_databus.handlers.collector import CollectorHandler
+        from apps.log_databus.serializers import FastCollectorUpdateSerializer
+
+        params = {"etl_config": EtlConfig.BK_LOG_TEXT, "etl_params": {}}
+        ser = FastCollectorUpdateSerializer(data=params)
+        ser.is_valid(raise_exception=True)
+        CollectorHandler(collector_config_id=collector_config_id).fast_update(ser.data)
+        return True
