@@ -92,11 +92,12 @@
       :is-show.sync="showManageDialog"
       :width="520"
       :quick-close="true"
-      :before-close="handleCloseSideslider"
+      :before-close="handleCloseSidebar"
       :title="type === 'create' ? $t('新增') : $t('编辑')">
       <directory-manage
         v-bkloading="{ isLoading: isSliderLoading }"
         slot="content"
+        ref="directoryRef"
         :user-api="userApi"
         :allow-create="allowCreate"
         :strategy-data="strategyData"
@@ -110,6 +111,7 @@ import { mapGetters } from 'vuex';
 import DirectoryManage from './directory-manage';
 import * as authorityMap from '../../../../common/authority-map';
 import EmptyStatus from '@/components/empty-status';
+import SidebarDiffMixin from '@/mixins/sidebar-diff-mixin';
 
 export default {
   name: 'ManageExtract',
@@ -117,6 +119,7 @@ export default {
     DirectoryManage,
     EmptyStatus,
   },
+  mixins: [SidebarDiffMixin],
   data() {
     return {
       isLoading: true,
@@ -282,32 +285,15 @@ export default {
         }
       }
     },
-    async handleCloseSideslider() {
-      return await this.showDeleteAlert();
-    },
-    /**
-     * @desc: 如果提交可用则点击遮罩时进行二次确认弹窗
-     */
-    showDeleteAlert() {
-      return new Promise((reject) => {
-        this.$bkInfo({
-          type: 'warning',
-          title: this.$t('是否放弃本次操作？'),
-          confirmFn: () => {
-            reject(true);
-          },
-          close: () => {
-            reject(false);
-          },
-        });
-      });
-    },
     handleOperation(type) {
       if (type === 'refresh') {
         this.emptyType = 'empty';
         this.initStrategyList();
         return;
       }
+    },
+    async handleCloseSidebar() {
+      return await this.$refs.directoryRef.handleCloseSidebar();
     },
   },
 };

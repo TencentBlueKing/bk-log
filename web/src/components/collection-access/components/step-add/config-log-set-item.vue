@@ -619,7 +619,7 @@ export default {
     },
     otherBlurRules(input, tags) {
       if (!tags) return;
-      this.otherRules = !tags.every(el => /^[a-zA-Z /]*$/.test(el));
+      this.otherRules = !tags.every(Boolean);
       tags.length === 0 && (this.otherRules = false);
       const slist = this.selectLogSpeciesList;
       if (slist.length === 1 && slist[0] === 'Other' && !this.otherSpeciesList.length) {
@@ -629,10 +629,10 @@ export default {
     tagBlurRules(item, index) {
       switch (item.type) {
         case 'winlog_event_id':
-          this.eventSettingList[index].isCorrect =  item.list.every(el => /^[\d -]+$/.test(el));
+          this.eventSettingList[index].isCorrect =  item.list.every(el => /^[\d]+$/.test(el));
           break;
         case 'winlog_level':
-          this.eventSettingList[index].isCorrect =  item.list.every(el => /^[A-Za-z]+$/.test(el));
+          this.eventSettingList[index].isCorrect =  item.list.every(Boolean);
           break;
       }
     },

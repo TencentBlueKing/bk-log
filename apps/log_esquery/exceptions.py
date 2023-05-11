@@ -133,6 +133,11 @@ class EsClientBaseException(BaseException):
     MESSAGE = _("客户端版本异常")
 
 
+class EsClientAuthenticatorException(EsClientBaseException):
+    ERROR_CODE = "950"
+    MESSAGE = _("EsClient认证错误, 请检查连接ES的账号密码")
+
+
 class EsClientConnectInfoException(EsClientBaseException):
     ERROR_CODE = "951"
     MESSAGE = _("缺少连接ES的账号密码")

@@ -25,7 +25,7 @@
            v-bkloading="{ isLoading: basicLoading }">
     <auth-container-page v-if="authPageInfo" :info="authPageInfo"></auth-container-page>
     <div class="access-container" v-else-if="!basicLoading && !isCleaning">
-      <section class="access-step-wrapper" v-en-style="'width: 258px'">
+      <section class="access-step-wrapper">
         <div class="fixed-steps" :style="{ height: (stepList.length * 76) + 'px' }">
           <bk-steps
             v-if="stepList.length"

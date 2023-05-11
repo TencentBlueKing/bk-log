@@ -22,10 +22,8 @@ the project delivered to anyone in the future.
 import markdown
 from django.conf import settings
 from django.db.models import TextChoices
-from django.utils import translation
 from django.utils.translation import ugettext_lazy as _
 
-from apps.feature_toggle.handlers.toggle import FeatureToggleObject
 from apps.utils import ChoicesEnum
 
 META_PARAMS_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -84,40 +82,62 @@ class EsSourceType(ChoicesEnum):
         (PRIVATE, _("私有自建")),
     )
 
+    help_md = {
+        AWS: _(
+            "OpenSearch 是一种分布式开源搜索和分析套件，可用于一组广泛的使用案例，如实时应用程序监控、日志分析和网站搜索。"
+            "OpenSearch 提供了一个高度可扩展的系统，通过集成的可视化工具 OpenSearch 控制面板为大量数据提供快速访问和响应，"
+            "使用户可以轻松地探索他们的数据。与 Elasticsearch 和 Apache Solr 相同的是，"
+            "OpenSearch 由 Apache Lucene 搜索库提供支持。"
+        ),
+        QCLOUD: _(
+            "腾讯云 Elasticsearch Service（ES）是基于开源搜索引擎 Elasticsearch 打造的高可用、"
+            "可伸缩的云端全托管的 Elasticsearch 服务，包含 Kibana 及常用插件，并集成了安全、SQL、机器学习、告警、"
+            "监控等高级特性（X-Pack）。使用腾讯云 ES，您可以快速部署、轻松管理、按需扩展您的集群，简化复杂运维操作，"
+            "快速构建日志分析、异常监控、网站搜索、企业搜索、BI 分析等各类业务。"
+        ),
+        GOOGLE: _(
+            "Elastic 和 Google Cloud 已建立稳固的合作关系，可以帮助各种规模的企业在 Google Cloud 上部署 Elastic 企业搜索、"
+            "可观测性和安全解决方案，让您能够在数分钟内从数据中获得强大的实时见解。"
+        ),
+    }
+
+    button_list = {
+        AWS: [
+            {
+                "type": "blank",
+                "url": "https://aws.amazon.com/cn/opensearch-service/the-elk-stack/what-is-opensearch/",
+            }
+        ],
+        QCLOUD: [{"type": "blank", "url": "https://cloud.tencent.com/document/product/845"}],
+        GOOGLE: [{"type": "blank", "url": "https://www.elastic.co/cn/partners/google-cloud"}],
+    }
+
     @classmethod
     def get_choices(cls):
-        es_config = FeatureToggleObject.toggle(FEATURE_TOGGLE_ES_CLUSTER_TYPE)
-        if not es_config:
-            return super().get_choices()
-        es_config = es_config.feature_config
-        return [
-            (key, es_config[key]["name_en"] if translation.get_language() == "en" else es_config[key]["name"])
-            for key, config in es_config.items()
-        ]
+        choices = super().get_choices()
+        # _choices_labels: (_choices_labels, label)
+        return [(key, choices[key][1]) for key in range(len(choices))]
 
     @classmethod
     def get_choices_list_dict(cls):
-        es_config = FeatureToggleObject.toggle(FEATURE_TOGGLE_ES_CLUSTER_TYPE)
-        if not es_config:
-            return super().get_choices_list_dict()
-        es_config = es_config.feature_config
+        es_config = super().get_choices_list_dict()
         return [
             {
-                "id": es_config[key]["id"],
-                "name": es_config[key]["name_en"] if translation.get_language() == "en" else es_config[key]["name"],
-                "help_md": markdown.markdown(es_config[key]["help_md"]),
-                "button_list": es_config[key].get("button_list", []),
+                "id": config["id"],
+                "name": config["name"],
+                "help_md": markdown.markdown(cls.get_help_md(config["id"])),
+                "button_list": cls.get_button_list(config["id"]),
             }
-            for key, config in es_config.items()
+            for config in es_config
         ]
 
     @classmethod
-    def get_keys(cls):
-        es_config = FeatureToggleObject.toggle(FEATURE_TOGGLE_ES_CLUSTER_TYPE)
-        if not es_config:
-            return super().get_keys()
-        es_config = es_config.feature_config
-        return [key for key in es_config.keys()]
+    def get_help_md(cls, _id: str):
+        return getattr(cls, "help_md").value.get(_id, "")
+
+    @classmethod
+    def get_button_list(cls, _id: str):
+        return getattr(cls, "button_list").value.get(_id, [])
 
 
 class StrategyKind(ChoicesEnum):

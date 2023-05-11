@@ -1925,8 +1925,6 @@ msgid "AWS"
 msgstr "AWS"
 
 #: apps/log_databus/constants.py:81
-#, fuzzy
-#| msgid "腾讯云cos链路"
 msgid "腾讯云"
 msgstr "Tencent Cloud"
 
@@ -1941,6 +1939,42 @@ msgstr "google"
 #: apps/log_databus/constants.py:84
 msgid "私有自建"
 msgstr "Private self-built"
+
+#: apps/log_databus/constants.py:89
+msgid ""
+"OpenSearch 是一种分布式开源搜索和分析套件，可用于一组广泛的使用案例，如实时应"
+"用程序监控、日志分析和网站搜索。OpenSearch 提供了一个高度可扩展的系统，通过集"
+"成的可视化工具 OpenSearch 控制面板为大量数据提供快速访问和响应，使用户可以轻"
+"松地探索他们的数据。与 Elasticsearch 和 Apache Solr 相同的是，OpenSearch 由 "
+"Apache Lucene 搜索库提供支持。"
+msgstr "OpenSearch is a distributed open source search and analytics suite for a broad set of use cases, "
+"such as real-time application monitoring, log analysis, and website search. "
+"OpenSearch provides a highly scalable system that provides fast access and response to large amounts of data "
+"through an integrated visualization tool, the OpenSearch Dashboard, allowing users to easily explore their data. "
+"Like Elasticsearch and Apache Solr, OpenSearch is powered by the Apache Lucene search library."
+
+#: apps/log_databus/constants.py:95
+msgid ""
+"腾讯云 Elasticsearch Service（ES）是基于开源搜索引擎 Elasticsearch 打造的高可"
+"用、可伸缩的云端全托管的 Elasticsearch 服务，包含 Kibana 及常用插件，并集成了"
+"安全、SQL、机器学习、告警、监控等高级特性（X-Pack）。使用腾讯云 ES，您可以快"
+"速部署、轻松管理、按需扩展您的集群，简化复杂运维操作，快速构建日志分析、异常"
+"监控、网站搜索、企业搜索、BI 分析等各类业务。"
+msgstr "Tencent Cloud Elasticsearch Service (ES) is a highly available and scalable cloud fully managed "
+"Elasticsearch service based on the open source search engine Elasticsearch. It includes Kibana and common plug-ins, "
+"and integrates advanced features such as security, SQL, machine learning, alarms, and monitoring. (X-Pack). "
+"Using Tencent Cloud ES, you can quickly deploy, easily manage, and expand your clusters on demand, "
+"simplify complex O&M operations, and quickly build various services such as log analysis, exception monitoring, "
+"website search, enterprise search, and BI analysis."
+
+#: apps/log_databus/constants.py:101
+msgid ""
+"Elastic 和 Google Cloud 已建立稳固的合作关系，可以帮助各种规模的企业在 "
+"Google Cloud 上部署 Elastic 企业搜索、可观测性和安全解决方案，让您能够在数分"
+"钟内从数据中获得强大的实时见解。"
+msgstr "Elastic and Google Cloud have built a strong partnership to help businesses of all sizes deploy "
+"Elastic enterprise search, observability and security solutions on Google Cloud, "
+"enabling you to gain powerful real-time insights from your data in minutes ."
 
 #: apps/log_databus/constants.py:127
 #: apps/log_measure/handlers/metric_collectors/cluster.py:93
@@ -6222,8 +6256,6 @@ msgid "有延迟"
 msgstr "There is a delay"
 
 #: apps/log_search/constants.py:47 config/default.py:594 config/default.py:693
-#, fuzzy
-#| msgid "数据平台元数据模块"
 msgid "计算平台"
 msgstr "BK-Base"
 
@@ -8508,8 +8540,6 @@ msgid "清洗列表"
 msgstr "Parsing List"
 
 #: config/default.py:636
-#, fuzzy
-#| msgid "日志归档"
 msgid "归档"
 msgstr "Archive"
 

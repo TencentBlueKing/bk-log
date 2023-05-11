@@ -27,7 +27,16 @@ from elasticsearch import Elasticsearch as Elasticsearch
 from elasticsearch5 import Elasticsearch as Elasticsearch5
 from elasticsearch6 import Elasticsearch as Elasticsearch6
 
-from apps.log_esquery.exceptions import EsClientSocketException, EsClientHostPortException
+from elasticsearch import exceptions as ElasticsearchExceptions
+from elasticsearch5 import exceptions as Elasticsearch5Exceptions
+from elasticsearch6 import exceptions as Elasticsearch6Exceptions
+
+
+from apps.log_esquery.exceptions import (
+    EsClientSocketException,
+    EsClientHostPortException,
+    EsClientAuthenticatorException,
+)
 
 
 def get_es_client(
@@ -91,3 +100,20 @@ def es_socket_ping(host: str, port: int):
     if status != 0:
         raise EsClientSocketException(EsClientSocketException.MESSAGE.format(error=_("IP or PORT can not be reached")))
     cs.close()
+
+
+def es_client_ping(es_client):
+    try:
+        result = es_client.transport.perform_request("HEAD", "/", params=None)
+    except (
+        ElasticsearchExceptions.AuthenticationException,
+        Elasticsearch5Exceptions.AuthenticationException,
+        Elasticsearch6Exceptions.AuthenticationException,
+    ):
+        raise EsClientAuthenticatorException()
+    except Exception as error:
+        raise EsClientSocketException(EsClientSocketException.MESSAGE.format(error=error))
+    if not result:
+        raise EsClientSocketException(EsClientSocketException.MESSAGE.format(error=_("ES is not alive")))
+
+    return result

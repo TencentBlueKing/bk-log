@@ -542,6 +542,7 @@ class CollectorHandler(object):
             "data_encoding": params["data_encoding"],
             "params": params["params"],
             "environment": params["environment"],
+            "extra_labels": params["params"].get("extra_labels", []),
         }
 
         bk_biz_id = params.get("bk_biz_id") or self.data.bk_biz_id
@@ -756,6 +757,7 @@ class CollectorHandler(object):
             "params": params["params"],
             "is_active": True,
             "is_display": is_display,
+            "extra_labels": params["params"].get("extra_labels", []),
         }
 
         if "environment" in params:
@@ -3893,7 +3895,7 @@ class CollectorHandler(object):
         params["params"]["encoding"] = params["data_encoding"]
         # 如果没传入集群ID, 则随机给一个公共集群
         if not params.get("storage_cluster_id"):
-            storage_cluster_id = get_random_public_cluster_id()
+            storage_cluster_id = get_random_public_cluster_id(bk_biz_id=params["bk_biz_id"])
             if not storage_cluster_id:
                 raise PublicESClusterNotExistException()
             params["storage_cluster_id"] = storage_cluster_id
@@ -3903,13 +3905,13 @@ class CollectorHandler(object):
         self.create_or_update_subscription(params)
 
         params["table_id"] = params["collector_config_name_en"]
-        self.create_or_update_clean_config(False, params)
-
+        index_set_id = self.create_or_update_clean_config(False, params).get("index_set_id", 0)
         return {
             "collector_config_id": self.data.collector_config_id,
             "bk_data_id": self.data.bk_data_id,
             "subscription_id": self.data.subscription_id,
             "task_id_list": self.data.task_id_list,
+            "index_set_id": index_set_id,
         }
 
     def fast_update(self, params: dict) -> dict:
@@ -3921,7 +3923,14 @@ class CollectorHandler(object):
         )
         self.cat_illegal_ips(params)
 
-        collector_config_fields = ["collector_config_name", "description", "target_node_type", "target_nodes", "params"]
+        collector_config_fields = [
+            "collector_config_name",
+            "description",
+            "target_node_type",
+            "target_nodes",
+            "params",
+            "extra_labels",
+        ]
         model_fields = {i: params[i] for i in collector_config_fields if params.get(i)}
 
         with transaction.atomic():
@@ -4010,8 +4019,8 @@ class CollectorHandler(object):
                 async_create_bkdata_data_id.delay(self.data.collector_config_id)
 
     def create_or_update_clean_config(self, is_update, params):
-        table_id = params["table_id"]
         if is_update:
+            table_id = self.data.table_id
             # 更新场景，需要把之前的存储设置拿出来，和更新的配置合并一下
             result_table_info = TransferApi.get_result_table_storage(
                 {"result_table_list": table_id, "storage_type": "elasticsearch"}
@@ -4026,6 +4035,7 @@ class CollectorHandler(object):
                 "storage_cluster_id": result_table["cluster_config"]["cluster_id"],
                 "retention": result_table["storage_config"]["retention"],
                 "allocation_min_days": params.get("allocation_min_days", 0),
+                "etl_config": self.data.etl_config,
             }
             default_etl_params.update(params)
             params = default_etl_params
@@ -4151,8 +4161,10 @@ class CollectorHandler(object):
         return yaml.safe_dump_all(result)
 
 
-def get_random_public_cluster_id() -> int:
-    clusters = TransferApi.get_cluster_info({"cluster_type": STORAGE_CLUSTER_TYPE, "no_request": True})
+def get_random_public_cluster_id(bk_biz_id: int) -> int:
+    from apps.log_databus.handlers.storage import StorageHandler
+
+    clusters = StorageHandler().list(bk_biz_id=bk_biz_id)
     for cluster in clusters:
         if cluster["cluster_config"]["registered_system"] == "_default":
             return cluster["cluster_config"]["cluster_id"]

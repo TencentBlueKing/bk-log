@@ -290,7 +290,7 @@ export default {
 
         &.en-container div {
           display: flex;
-          flex-direction: column;
+          flex-wrap: wrap;
         }
       }
 

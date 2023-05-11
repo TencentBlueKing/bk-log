@@ -28,7 +28,7 @@
       :is-show="showSlider"
       :width="676"
       :quick-close="true"
-      :before-close="handleCloseSideslider"
+      :before-close="handleCloseSidebar"
       @animation-end="$emit('hidden')"
       @update:isShow="updateIsShow">
       <div v-bkloading="{ isLoading: sliderLoading }" slot="content" class="archive-slider-content">
@@ -137,9 +137,11 @@
 
 <script>
 import { mapGetters } from 'vuex';
+import SidebarDiffMixin from '@/mixins/sidebar-diff-mixin';
 import * as authorityMap from '../../../../../common/authority-map';
 
 export default {
+  mixins: [SidebarDiffMixin],
   props: {
     showSlider: {
       type: Boolean,
@@ -227,6 +229,7 @@ export default {
           });
           this.collectorType = instanceType;
         }
+        this.initSidebarFormData();
       } else {
         // 清空表单数据
         this.formData = {
@@ -381,26 +384,6 @@ export default {
       } finally {
         this.confirmLoading = false;
       }
-    },
-    async handleCloseSideslider() {
-      return await this.showDeleteAlert();
-    },
-    /**
-     * @desc: 如果提交可用则点击遮罩时进行二次确认弹窗
-     */
-    showDeleteAlert() {
-      return new Promise((reject) => {
-        this.$bkInfo({
-          type: 'warning',
-          title: this.$t('是否放弃本次操作？'),
-          confirmFn: () => {
-            reject(true);
-          },
-          close: () => {
-            reject(false);
-          },
-        });
-      });
     },
   },
 };

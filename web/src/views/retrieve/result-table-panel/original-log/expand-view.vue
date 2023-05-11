@@ -82,7 +82,13 @@ export default {
   },
   computed: {
     kvListData() {
-      return this.totalFields.filter(item => this.kvShowFieldsList.includes(item.field_name));
+      return this.totalFields
+        .filter(item => this.kvShowFieldsList.includes(item.field_name))
+        .sort((a, b) => {
+          const sortA = a.field_name.replace(/^__+|__+/g, 'z');
+          const sortB = b.field_name.replace(/^__+|__+/g, 'z');
+          return sortA.localeCompare(sortB);
+        });
     },
     jsonShowData() {
       return this.kvListData.reduce((pre, cur) => {
