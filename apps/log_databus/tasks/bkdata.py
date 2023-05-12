@@ -88,6 +88,9 @@ def create_bkdata_data_id(collector_config: CollectorConfig, platform_username: 
     with ignored(Exception):
         _, table_id = collector_config.table_id.split(".")
 
+    # 这里可能遇到的exception有:
+    # - 权限不足, 无法创建, 可以看下计算平台的权限与CC的业务运维权限人员是否能对应
+    # - 解析关联的channel_id失败，[1500004] 对象不存在：databus_channel[name=xxx], 链路新增了kafka集群, 需要联系计算平台同步
     BkDataAccessApi.deploy_plan_post(
         params={
             "bk_username": platform_username or collector_config.get_updated_by(),
