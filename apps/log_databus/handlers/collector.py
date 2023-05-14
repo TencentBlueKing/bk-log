@@ -542,6 +542,7 @@ class CollectorHandler(object):
             "data_encoding": params["data_encoding"],
             "params": params["params"],
             "environment": params["environment"],
+            "extra_labels": params["params"].get("extra_labels", []),
         }
 
         bk_biz_id = params.get("bk_biz_id") or self.data.bk_biz_id
@@ -756,6 +757,7 @@ class CollectorHandler(object):
             "params": params["params"],
             "is_active": True,
             "is_display": is_display,
+            "extra_labels": params["params"].get("extra_labels", []),
         }
 
         if "environment" in params:
@@ -3847,7 +3849,14 @@ class CollectorHandler(object):
         )
         self.cat_illegal_ips(params)
 
-        collector_config_fields = ["collector_config_name", "description", "target_node_type", "target_nodes", "params"]
+        collector_config_fields = [
+            "collector_config_name",
+            "description",
+            "target_node_type",
+            "target_nodes",
+            "params",
+            "extra_labels",
+        ]
         model_fields = {i: params[i] for i in collector_config_fields if params.get(i)}
 
         with transaction.atomic():
