@@ -2752,14 +2752,23 @@ class CollectorHandler(object):
                 )
 
         ContainerCollectorConfig.objects.bulk_create(container_collector_config_list)
-        container_configs = ContainerCollectorConfig.objects.filter(
-            collector_config_id__in=[
-                path_collector_config.collector_config_id,
-                std_collector_config.collector_config_id,
-            ]
-        )
-        for config in container_configs:
-            self.create_container_release(config)
+        for collector_config_id in [path_collector_config.collector_config_id, std_collector_config.collector_config_id]:
+            collector_config = CollectorConfig.objects.filter(
+                collector_config_id=collector_config_id,
+            ).first()
+            if not collector_config:
+                continue
+            container_config = ContainerCollectorConfig.objects.filter(
+                collector_config_id=collector_config_id,
+            ).first()
+            if not container_config:
+                continue
+            self.deal_self_call(
+                collector_config_id=collector_config.collector_config_id,
+                collector=collector_config,
+                func=self.create_container_release,
+                container_config=container_config,
+            )
         return {
             "rule_id": bcs_rule.id,
             "file_index_set_id": new_path_cls_index_set.index_set_id,
@@ -3190,7 +3199,7 @@ class CollectorHandler(object):
             # 增量比对后，需要真正删除配置
             config.delete()
 
-    def create_container_release(self, container_config: ContainerCollectorConfig):
+    def create_container_release(self, container_config: ContainerCollectorConfig, **kwargs):
         """
         创建容器采集配置
         :param container_config: 容器采集配置实例
